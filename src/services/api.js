@@ -58,7 +58,7 @@ export const fetchProducts = async () => {
                 price: record.price || 0,
                 image: imageUrl,
                 category: record.Woo_Cat_Name || "General",
-                isAvailable: true, // Default to true as 'postebl' column might be missing, or we map it if exists
+                isAvailable: record.POSTEBL === 'POSTEBL', // Check if POSTEBL column equals 'POSTEBL'
                 originalData: record
             };
         });

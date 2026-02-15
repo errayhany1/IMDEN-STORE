@@ -28,8 +28,8 @@ const ProductCard = ({ product }) => {
                 )}
 
                 {!isAvailable && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
-                        <span className="bg-slate-800 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">Out of Stock</span>
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
+                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">نفد من المخزون</span>
                     </div>
                 )}
             </div>
@@ -58,11 +58,10 @@ const ProductCard = ({ product }) => {
                         className={`flex-1 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2
                             ${isAvailable
                                 ? 'bg-primary hover:bg-primary-dark text-white'
-                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-red-100 text-red-500 cursor-not-allowed border border-red-200'
                             }`}
                     >
-                        <ShoppingCart size={18} />
-                        Add
+                        {isAvailable ? <><ShoppingCart size={18} /> Add</> : <span className="text-sm font-bold">نفد من المخزون</span>}
                     </button>
                     <button
                         onClick={() => window.open(`https://wa.me/212681652324?text=Hello, I am interested in: ${product.name} (Ref: ${product.ref})`, '_blank')}
