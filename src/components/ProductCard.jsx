@@ -4,7 +4,6 @@ import useStore from '../store/useStore';
 
 const ProductCard = ({ product }) => {
     const addToCart = useStore((state) => state.addToCart);
-    const isAvailable = product.postebl === 'POSTEBL' || product.postebl === true || product.isAvailable; // Robust check
 
     return (
         <article className="bg-surface-light rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-100 flex flex-col overflow-hidden group h-full">
@@ -18,7 +17,7 @@ const ProductCard = ({ product }) => {
                     <img
                         src={product.image}
                         alt={product.name}
-                        className={`w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 ${!isAvailable ? 'grayscale' : ''}`}
+                        className={`w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500`}
                         loading="lazy"
                     />
                 ) : (
@@ -27,11 +26,6 @@ const ProductCard = ({ product }) => {
                     </div>
                 )}
 
-                {!isAvailable && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
-                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">نفد من المخزون</span>
-                    </div>
-                )}
             </div>
 
             <div className="p-4 flex flex-col flex-grow">
@@ -53,15 +47,11 @@ const ProductCard = ({ product }) => {
 
                 <div className="mt-4 flex gap-2">
                     <button
-                        onClick={() => isAvailable && addToCart(product)}
-                        disabled={!isAvailable}
-                        className={`flex-1 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2
-                            ${isAvailable
-                                ? 'bg-primary hover:bg-primary-dark text-white'
-                                : 'bg-red-100 text-red-500 cursor-not-allowed border border-red-200'
-                            }`}
+                        onClick={() => addToCart(product)}
+                        className="flex-1 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white"
                     >
-                        {isAvailable ? <><ShoppingCart size={18} /> Add</> : <span className="text-sm font-bold">نفد من المخزون</span>}
+                        <ShoppingCart size={18} />
+                        Add
                     </button>
                     <button
                         onClick={() => window.open(`https://wa.me/212681652324?text=Hello, I am interested in: ${product.name} (Ref: ${product.ref})`, '_blank')}

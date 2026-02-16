@@ -35,8 +35,22 @@ export const fetchProducts = async () => {
             }
         }
 
-        // Map fields based on actual NocoDB schema: Title, SKU, price, Image1
-        const products = allRecords.map(record => {
+        // Category Mapping
+        const categoryMapping = {
+            1: "Accessories",      // Phone Accessories
+            2: "Audio",            // Audio
+            3: "Smart Watches",    // Smart Watches
+            4: "Gaming",           // Gaming
+            5: "Computers",        // Computer & Office
+            6: "Car",              // Car Accessories
+            7: "Home"              // Home & Gadgets
+        };
+
+        // Filter: Only show products where POSTEBL is exactly 'POSTEBL'
+        const visibleRecords = allRecords.filter(record => record.POSTEBL === 'POSTEBL');
+
+        // Map fields based on actual NocoDB schema: Title, SKU, price, Image1, Category_ID
+        const products = visibleRecords.map(record => {
             const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
             let imageUrl = null;
             if (imageObj) {
@@ -51,14 +65,18 @@ export const fetchProducts = async () => {
                 }
             }
 
+            // Resolve Category Name from ID
+            const categoryId = record.Category_ID; // Assuming column name is strictly Category_ID
+            const categoryName = categoryMapping[categoryId] || "General";
+
             return {
                 id: record.Id || record.id || Math.random().toString(36).substr(2, 9),
                 ref: record.SKU || "",
-                name: record.Title || "Unnamed Product", // Changed from record.name/title to record.Title
+                name: record.Title || "Unnamed Product",
                 price: record.price || 0,
                 image: imageUrl,
-                category: record.Woo_Cat_Name || "General",
-                isAvailable: record.POSTEBL === 'POSTEBL', // Check if POSTEBL column equals 'POSTEBL'
+                category: categoryName,
+                isAvailable: true, // Always true since we filtered out others
                 originalData: record
             };
         });

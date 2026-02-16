@@ -11,9 +11,13 @@ const CartSidebar = () => {
     const tax = subtotal * 0.08; // 8% Tax Estimate as per design
     const total = subtotal + tax;
 
-    const handleShare = () => {
+    const handleShare = async () => {
         if (cart.length === 0) return;
-        generatePDF(cart);
+
+        // 1. Generate and Download PDF
+        await generatePDF(cart);
+
+        // 2. Open WhatsApp
         const message = generateWhatsAppMessage(cart);
         const phoneNumber = "212681652324";
         const url = `https://wa.me/${phoneNumber}?text=${message}`;
@@ -121,17 +125,12 @@ const CartSidebar = () => {
                                     <span>Subtotal</span>
                                     <span className="font-medium text-slate-900">${subtotal.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>Tax Estimate (8%)</span>
-                                    <span className="font-medium text-slate-900">${tax.toFixed(2)}</span>
-                                </div>
                             </div>
                             <div className="flex justify-between items-end pt-2 pb-2">
                                 <div>
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Estimate</span>
-                                    <p className="text-xs text-slate-400 font-light">Excludes shipping</p>
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</span>
                                 </div>
-                                <span className="text-2xl font-bold text-slate-900">${total.toFixed(2)}</span>
+                                <span className="text-2xl font-bold text-slate-900">${subtotal.toFixed(2)}</span>
                             </div>
                             <button
                                 onClick={handleShare}
@@ -139,7 +138,7 @@ const CartSidebar = () => {
                                 className="w-full bg-whatsapp hover:brightness-110 text-white font-semibold py-4 px-6 rounded-lg shadow-lg shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Share2 size={24} />
-                                <span>Share via WhatsApp (PDF)</span>
+                                <span>Download PDF & Order</span>
                             </button>
                             <p className="text-center text-[11px] text-slate-400">Order generated via NocoDB & processed manually.</p>
                         </div>
