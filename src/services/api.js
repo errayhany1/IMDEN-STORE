@@ -71,7 +71,8 @@ export const fetchProducts = async () => {
             }
 
             // Resolve Category Name from ID
-            const categoryId = record.Category_ID; // Assuming column name is strictly Category_ID
+            // Check multiple potential field names from NocoDB API
+            const categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
             const categoryName = categoryMapping[categoryId] || "General";
 
             return {
