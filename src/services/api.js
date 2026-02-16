@@ -37,13 +37,18 @@ export const fetchProducts = async () => {
 
         // Category Mapping
         const categoryMapping = {
-            1: "Accessories",      // Phone Accessories
-            2: "Audio",            // Audio
-            3: "Smart Watches",    // Smart Watches
-            4: "Gaming",           // Gaming
-            5: "Computers",        // Computer & Office
-            6: "Car",              // Car Accessories
-            7: "Home"              // Home & Gadgets
+            1: "Chargers",          // الشواحن
+            2: "Audio",             // السماعات
+            3: "Smart Watches",     // ساعة الذكيه والاساور
+            4: "Gaming",            // العاب
+            5: "Mouse & Keyboard",  // الماوس والكيبورد
+            6: "Storage",           // الفلاشه والميموار
+            7: "Laptop Chargers",   // شواحن الحواسيب
+            8: "Stands",            // السبورات
+            9: "Lighting",          // الإضائة
+            10: "Cameras",          // الكمرات
+            11: "Network",          // الانترنت والشبكة
+            12: "Stabilizers"       // الستابليزاتور
         };
 
         // Filter: Only show products where POSTEBL is exactly 'POSTEBL'
