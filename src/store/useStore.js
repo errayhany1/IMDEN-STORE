@@ -3,15 +3,28 @@ import { create } from 'zustand';
 const useStore = create((set, get) => ({
     products: [],
     cart: [],
-    categories: [],
+    categories: [
+        'All',
+        'Chargers',
+        'Audio',
+        'Smart Watches',
+        'Gaming',
+        'Mouse & Keyboard',
+        'Storage',
+        'Laptop Chargers',
+        'Stands',
+        'Lighting',
+        'Cameras',
+        'Network',
+        'Stabilizers',
+        'General'
+    ],
     selectedCategory: 'All',
     isLoading: false,
     isCartOpen: false,
 
     setProducts: (data) => {
-        // Extract unique categories
-        const uniqueCategories = ['All', ...new Set(data.map(p => p.category).filter(Boolean))];
-        set({ products: data, categories: uniqueCategories });
+        set({ products: data });
     },
 
     setLoading: (loading) => set({ isLoading: loading }),
