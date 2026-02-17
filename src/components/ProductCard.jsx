@@ -51,7 +51,7 @@ const ProductCard = ({ product }) => {
                             إضافة
                         </button>
                         <button
-                            onClick={() => window.open(`https://wa.me/212681652324?text=السلام عليكم، أنا مهتم بـ: ${product.name} (Ref: ${product.ref})`, '_blank')}
+                            onClick={() => window.open(`https://wa.me/212681652324?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`, '_blank')}
                             aria-label="Inquire via WhatsApp"
                             className="bg-surface-light border border-slate-200 hover:bg-slate-100 text-whatsapp font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center"
                         >

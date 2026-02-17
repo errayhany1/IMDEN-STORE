@@ -5,9 +5,8 @@ const CategoryRail = () => {
     const { categories, selectedCategory, setCategory, categoryImages } = useStore();
 
     return (
-        <section className="mb-10">
-            <h2 className="text-lg font-semibold mb-4 px-1 text-slate-800">Browse Categories</h2>
-            <div className="flex gap-6 overflow-x-auto no-scrollbar pb-4 snap-x">
+        <section className="mb-6 mt-4">
+            <div className="flex gap-6 overflow-x-auto no-scrollbar pb-4 snap-x px-2" dir="rtl">
                 {categories.map((category) => (
                     <button
                         key={category}

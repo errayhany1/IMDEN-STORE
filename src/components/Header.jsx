@@ -11,9 +11,9 @@ const Header = () => {
             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-lg">W</div>
+                    <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-lg">I</div>
                     <span className="text-xl font-bold tracking-tight text-slate-900">
-                        Wholesale<span className="text-primary">Hub</span>
+                        IMDEN <span className="text-primary">TECHNOLOGY</span>
                     </span>
                 </div>
 
@@ -24,6 +24,7 @@ const Header = () => {
                     </span>
                     <input
                         type="text"
+                        onChange={(e) => useStore.getState().setSearchQuery(e.target.value)}
                         className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg leading-5 bg-slate-50 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-right"
                         placeholder="...ابحث بالمرجع، الاسم أو الرمز"
                     />

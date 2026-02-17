@@ -24,10 +24,13 @@ const useStore = create((set, get) => ({
     isCartOpen: false,
 
     categoryImages: {}, // Stores category images: { "Chargers": "url", ... }
+    searchQuery: "",
 
     setProducts: (data) => {
         set({ products: data });
     },
+
+    setSearchQuery: (query) => set({ searchQuery: query }),
 
     appendProducts: (newProducts) => {
         set((state) => {

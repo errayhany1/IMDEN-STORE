@@ -5,7 +5,7 @@ import ProductCard from './ProductCard';
 import PromotionalBanner from './PromotionalBanner';
 
 const ProductGrid = () => {
-    const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory } = useStore();
+    const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory, searchQuery } = useStore();
 
     useEffect(() => {
         const loadProducts = async () => {
@@ -23,9 +23,14 @@ const ProductGrid = () => {
         loadProducts();
     }, []); // Run once on mount
 
-    const filteredProducts = selectedCategory === 'All'
-        ? products
-        : products.filter(p => p.category === selectedCategory);
+    const filteredProducts = products.filter(p => {
+        const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+        const matchesSearch = searchQuery === "" ||
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.ref.toLowerCase().includes(searchQuery.toLowerCase());
+
+        return matchesCategory && matchesSearch;
+    });
 
     if (isLoading) {
         return (
