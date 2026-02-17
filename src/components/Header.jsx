@@ -24,8 +24,8 @@ const Header = () => {
                     </span>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg leading-5 bg-slate-50 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
-                        placeholder="Search by reference, name, or SKU..."
+                        className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg leading-5 bg-slate-50 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm text-right"
+                        placeholder="...ابحث بالمرجع، الاسم أو الرمز"
                     />
                 </div>
 
