@@ -4,36 +4,13 @@ const API_URL = import.meta.env.VITE_NOCODB_URL;
 const API_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const TABLE_ID = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
 
-export const fetchProducts = async () => {
+export const fetchProducts = async (onChunk) => {
     try {
         let allRecords = [];
         let offset = 0;
-        let limit = 100;
+        let limit = 50; // Smaller chunk size for faster initial render
         let hasMore = true;
-
-        while (hasMore) {
-            const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
-            const response = await axios.get(url, {
-                headers: {
-                    "xc-token": API_TOKEN,
-                    "accept": "application/json"
-                },
-                params: {
-                    limit: limit,
-                    offset: offset
-                }
-            });
-
-            const data = response.data;
-            const records = data.list || [];
-            allRecords = [...allRecords, ...records];
-
-            if (records.length < limit) {
-                hasMore = false;
-            } else {
-                offset += limit;
-            }
-        }
+        let collectedCategoryImages = {};
 
         // Category Mapping
         const categoryMapping = {
@@ -51,43 +28,86 @@ export const fetchProducts = async () => {
             12: "Stabilizers"       // الستابليزاتور
         };
 
-        // Filter: Only show products where POSTEBL is exactly 'POSTEBL'
-        const visibleRecords = allRecords.filter(record => record.POSTEBL === 'POSTEBL');
-
-        // Map fields based on actual NocoDB schema: Title, SKU, price, Image1, Category_ID
-        const products = visibleRecords.map(record => {
-            const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
-            let imageUrl = null;
-            if (imageObj) {
-                imageUrl = imageObj.signedUrl || imageObj.url;
-                // Check if thumbnails exist
-                if (imageObj.thumbnails) {
-                    if (imageObj.thumbnails.card_cover?.signedUrl) {
-                        imageUrl = imageObj.thumbnails.card_cover.signedUrl;
-                    } else if (imageObj.thumbnails.small?.signedUrl) {
-                        imageUrl = imageObj.thumbnails.small.signedUrl;
-                    }
+        while (hasMore) {
+            const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
+            const response = await axios.get(url, {
+                headers: {
+                    "xc-token": API_TOKEN,
+                    "accept": "application/json"
+                },
+                params: {
+                    limit: limit,
+                    offset: offset
                 }
+            });
+
+            const data = response.data;
+            const records = data.list || [];
+
+            if (records.length === 0) {
+                hasMore = false;
+                break;
             }
 
-            // Resolve Category Name from ID
-            // Check multiple potential field names from NocoDB API
-            const categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
-            const categoryName = categoryMapping[categoryId] || "General";
+            // Filter: Only show products where POSTEBL is exactly 'POSTEBL'
+            const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL');
 
-            return {
-                id: record.Id || record.id || Math.random().toString(36).substr(2, 9),
-                ref: record.SKU || "",
-                name: record.Title || "Unnamed Product",
-                price: record.price || 0,
-                image: imageUrl,
-                category: categoryName,
-                isAvailable: true, // Always true since we filtered out others
-                originalData: record
-            };
-        });
+            // Map fields and extract category images
+            const mappedChunk = visibleRecords.map(record => {
+                const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
+                let imageUrl = null;
+                if (imageObj) {
+                    imageUrl = imageObj.signedUrl || imageObj.url;
+                    // Check if thumbnails exist
+                    if (imageObj.thumbnails) {
+                        if (imageObj.thumbnails.card_cover?.signedUrl) {
+                            imageUrl = imageObj.thumbnails.card_cover.signedUrl;
+                        } else if (imageObj.thumbnails.small?.signedUrl) {
+                            imageUrl = imageObj.thumbnails.small.signedUrl;
+                        }
+                    }
+                }
 
-        return products;
+                // Resolve Category Name from ID
+                const categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+                const categoryName = categoryMapping[categoryId] || "General";
+
+                // Extract Category Image if available and not yet found for this category
+                const catImgObj = (record.Category_Image || record.category_image) && (record.Category_Image || record.category_image).length > 0
+                    ? (record.Category_Image || record.category_image)[0]
+                    : null;
+
+                if (catImgObj && !collectedCategoryImages[categoryName]) {
+                    collectedCategoryImages[categoryName] = catImgObj.signedUrl || catImgObj.url;
+                }
+
+                return {
+                    id: record.Id || record.id || Math.random().toString(36).substr(2, 9),
+                    ref: record.SKU || "",
+                    name: record.Title || "Unnamed Product",
+                    price: record.price || 0,
+                    image: imageUrl,
+                    category: categoryName,
+                    isAvailable: true,
+                    originalData: record
+                };
+            });
+
+            allRecords = [...allRecords, ...mappedChunk];
+
+            // Send chunk to UI immediately
+            if (onChunk) {
+                onChunk(mappedChunk, collectedCategoryImages);
+            }
+
+            if (records.length < limit) {
+                hasMore = false;
+            } else {
+                offset += limit;
+            }
+        }
+
+        return allRecords;
 
     } catch (error) {
         console.error("Error fetching products:", error);

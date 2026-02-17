@@ -23,8 +23,25 @@ const useStore = create((set, get) => ({
     isLoading: false,
     isCartOpen: false,
 
+    categoryImages: {}, // Stores category images: { "Chargers": "url", ... }
+
     setProducts: (data) => {
         set({ products: data });
+    },
+
+    appendProducts: (newProducts) => {
+        set((state) => {
+            // Avoid duplicates just in case
+            const existingIds = new Set(state.products.map(p => p.id));
+            const uniqueNew = newProducts.filter(p => !existingIds.has(p.id));
+            return { products: [...state.products, ...uniqueNew] };
+        });
+    },
+
+    updateCategoryImages: (newImages) => {
+        set((state) => ({
+            categoryImages: { ...state.categoryImages, ...newImages }
+        }));
     },
 
     setLoading: (loading) => set({ isLoading: loading }),

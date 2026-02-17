@@ -5,17 +5,23 @@ import ProductCard from './ProductCard';
 import PromotionalBanner from './PromotionalBanner';
 
 const ProductGrid = () => {
-    const { products, setProducts, setLoading, isLoading, selectedCategory } = useStore();
+    const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory } = useStore();
 
     useEffect(() => {
         const loadProducts = async () => {
             setLoading(true);
-            const data = await fetchProducts();
-            setProducts(data);
+            setProducts([]); // Clear existing
+
+            await fetchProducts((chunk, newCategoryImages) => {
+                appendProducts(chunk);
+                updateCategoryImages(newCategoryImages);
+                setLoading(false); // Disable loading as soon as first chunk arrives
+            });
+
             setLoading(false);
         };
         loadProducts();
-    }, [setProducts, setLoading]);
+    }, []); // Run once on mount
 
     const filteredProducts = selectedCategory === 'All'
         ? products
