@@ -25,10 +25,19 @@ export const generatePDF = async (cartItems) => {
     // Load images first
     const itemsWithImages = await Promise.all(cartItems.map(async (item) => {
         let maxResImage = item.image;
+
+        // Prioritize thumbnails for PDF (faster, lighter, avoids some CORS issues if main image is huge)
         if (item.originalData && item.originalData.Image1 && item.originalData.Image1.length > 0) {
-            // Try to get original or medium thumbnail for better PDF quality if available
             const imgObj = item.originalData.Image1[0];
-            maxResImage = imgObj.signedUrl || imgObj.url;
+            if (imgObj.thumbnails) {
+                if (imgObj.thumbnails.card_cover?.signedUrl) {
+                    maxResImage = imgObj.thumbnails.card_cover.signedUrl;
+                } else if (imgObj.thumbnails.small?.signedUrl) {
+                    maxResImage = imgObj.thumbnails.small.signedUrl;
+                }
+            } else {
+                maxResImage = imgObj.signedUrl || imgObj.url;
+            }
         }
 
         const base64Img = maxResImage ? await getDataUrl(maxResImage) : null;
@@ -110,21 +119,13 @@ export const generateWhatsAppMessage = (cartItems) => {
     let message = " السلام عليكم، أريد طلب هذه المنتجات (الملف مرفق):\n\n";
     let total = 0;
 
-    // Summary just in case PDF fails or for quick preview
     cartItems.forEach(item => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-        // Optimization: Don't list everything if list is long, just summary
-        if (cartItems.length <= 5) {
-            message += `- ${item.name} (${item.quantity} x ${item.price} DH)\n`;
-        }
+        message += `- ${item.name} | Ref: ${item.ref}\n  (${item.quantity} x ${item.price} DH) = ${itemTotal.toFixed(2)} DH\n\n`;
     });
 
-    if (cartItems.length > 5) {
-        message += `- ... و ${cartItems.length - 5} منتجات أخرى.\n`;
-    }
-
-    message += `\n*المجموع: ${total} DH*`;
+    message += `*المجموع: ${total.toFixed(2)} DH*`;
     message += `\n\n>> المرجو الاطلاع على ملف PDF المرفق للتفاصيل.`;
 
     return encodeURIComponent(message);

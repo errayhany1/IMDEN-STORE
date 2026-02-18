@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Minus, Plus, Trash2, Share2 } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Share2, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -132,14 +132,24 @@ const CartSidebar = () => {
                                 </div>
                                 <span className="text-2xl font-bold text-slate-900">{subtotal.toFixed(2)} DH</span>
                             </div>
-                            <button
-                                onClick={handleShare}
-                                disabled={cart.length === 0}
-                                className="w-full bg-whatsapp hover:brightness-110 text-white font-semibold py-4 px-6 rounded-lg shadow-lg shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Share2 size={24} />
-                                <span>تحميل الطلب (PDF) وإرسال</span>
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => generatePDF(cart)}
+                                    disabled={cart.length === 0}
+                                    className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-4 px-4 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Share2 size={20} />
+                                    <span>تحميل PDF</span>
+                                </button>
+                                <button
+                                    onClick={handleShare}
+                                    disabled={cart.length === 0}
+                                    className="flex-1 bg-whatsapp hover:brightness-110 text-white font-semibold py-4 px-4 rounded-lg shadow-lg shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <MessageCircle size={20} />
+                                    <span>إرسال واتساب</span>
+                                </button>
+                            </div>
                             <p className="text-center text-[11px] text-slate-400">تم إنشاء الطلب تلقائياً</p>
                         </div>
                     </motion.aside>
