@@ -17,7 +17,10 @@ const CartSidebar = () => {
         // 1. Generate and Download PDF
         await generatePDF(cart);
 
-        // 2. Open WhatsApp
+        // 2. Alert user
+        alert("تم تحميل ملف الطلبية (PDF). المرجو إرفاقه في محادثة الواتساب التي ستفتح الآن.");
+
+        // 3. Open WhatsApp
         const message = generateWhatsAppMessage(cart);
         const phoneNumber = "212681652324";
         const url = `https://wa.me/${phoneNumber}?text=${message}`;

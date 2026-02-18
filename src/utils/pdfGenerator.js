@@ -116,17 +116,11 @@ export const generatePDF = async (cartItems) => {
 };
 
 export const generateWhatsAppMessage = (cartItems) => {
-    let message = " السلام عليكم، أريد طلب هذه المنتجات (الملف مرفق):\n\n";
-    let total = 0;
+    let total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    cartItems.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        message += `- ${item.name} | Ref: ${item.ref}\n  (${item.quantity} x ${item.price} DH) = ${itemTotal.toFixed(2)} DH\n\n`;
-    });
-
-    message += `*المجموع: ${total.toFixed(2)} DH*`;
-    message += `\n\n>> المرجو الاطلاع على ملف PDF المرفق للتفاصيل.`;
+    let message = "السلام عليكم،\n";
+    message += "المرجو الاطلاع على ملف الطلبية (PDF) المرفق أسفله للتفاصيل.\n\n";
+    message += `*المجموع الكلي: ${total.toFixed(2)} DH*`;
 
     return encodeURIComponent(message);
 };
