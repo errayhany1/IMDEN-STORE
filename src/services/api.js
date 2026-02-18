@@ -57,15 +57,8 @@ export const fetchProducts = async (onChunk) => {
                 const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
                 let imageUrl = null;
                 if (imageObj) {
+                    // Always use original high-res image for best quality
                     imageUrl = imageObj.signedUrl || imageObj.url;
-                    // Check if thumbnails exist
-                    if (imageObj.thumbnails) {
-                        if (imageObj.thumbnails.card_cover?.signedUrl) {
-                            imageUrl = imageObj.thumbnails.card_cover.signedUrl;
-                        } else if (imageObj.thumbnails.small?.signedUrl) {
-                            imageUrl = imageObj.thumbnails.small.signedUrl;
-                        }
-                    }
                 }
 
                 // Resolve Category Name from ID
