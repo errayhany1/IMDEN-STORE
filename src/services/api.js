@@ -25,7 +25,8 @@ export const fetchProducts = async (onChunk) => {
             9: "Lighting",          // الإضائة
             10: "Cameras",          // الكمرات
             11: "Network",          // الانترنت والشبكة
-            12: "Stabilizers"       // الستابليزاتور
+            12: "Stabilizers",      // الستابليزاتور
+            13: "Microphones"       // الميكروفونات
         };
 
         while (hasMore) {

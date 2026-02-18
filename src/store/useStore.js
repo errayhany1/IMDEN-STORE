@@ -20,6 +20,7 @@ const useStore = create(
                 'Cameras',
                 'Network',
                 'Stabilizers',
+                'Microphones',
                 'General'
             ],
             selectedCategory: 'All',
