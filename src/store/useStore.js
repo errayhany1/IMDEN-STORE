@@ -21,6 +21,7 @@ const useStore = create(
                 'Network',
                 'Stabilizers',
                 'Microphones',
+                'Batteries & Power Banks',
                 'General'
             ],
             selectedCategory: 'All',
