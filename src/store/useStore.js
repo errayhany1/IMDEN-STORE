@@ -49,11 +49,9 @@ const useStore = create(
                 return { darkMode: next };
             }),
 
-            toggleGridColumns: () => set((state) => {
-                // Mobile: 1→2→1, Desktop: cycle includes 4
-                const cycle = { 1: 2, 2: 4, 4: 1 };
-                return { gridColumns: cycle[state.gridColumns] || 2 };
-            }),
+            toggleGridColumns: () => set((state) => ({
+                gridColumns: state.gridColumns === 2 ? 1 : 2
+            })),
 
             appendProducts: (newProducts) => {
                 set((state) => {
