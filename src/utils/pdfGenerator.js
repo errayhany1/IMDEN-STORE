@@ -111,7 +111,7 @@ export const generatePDF = async (cartItems) => {
         }
     });
 
-    doc.save(`Order_${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`IMDEN_TECHNOLOGY_0681652324_${new Date().toISOString().slice(0, 10)}.pdf`);
     return true;
 };
 
