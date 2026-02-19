@@ -4,6 +4,8 @@ import CategoryRail from './components/CategoryRail';
 import ProductGrid from './components/ProductGrid';
 import CartSidebar from './components/CartSidebar';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
+import FeaturedStrip from './components/FeaturedStrip';
+import NotificationPrompt from './components/NotificationPrompt';
 import useStore from './store/useStore';
 
 function App() {
@@ -11,16 +13,23 @@ function App() {
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
       ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-background-light text-slate-800'}`}>
+
       {/* Header */}
       <Header />
 
+      {/* Notification prompt */}
+      <NotificationPrompt />
+
       {/* Main Content */}
-      <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-8">
+      <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6">
 
         {/* Categories Rail */}
         <CategoryRail />
 
-        {/* Product Grid (includes Banners inside) */}
+        {/* Featured & New Products (hourly rotation + today's new) */}
+        <FeaturedStrip />
+
+        {/* Full Product Grid */}
         <ProductGrid />
 
       </main>
