@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 const useStore = create(
     persist(
-        (set, get) => ({
+        (set) => ({
             products: [],
             cart: [],
             categories: [
@@ -27,6 +27,8 @@ const useStore = create(
             selectedCategory: 'All',
             isLoading: false,
             isCartOpen: false,
+            darkMode: false,
+            gridColumns: 2, // 1 or 2 columns on mobile
 
             categoryImages: {}, // Stores category images: { "Chargers": "url", ... }
             searchQuery: "",
@@ -36,6 +38,20 @@ const useStore = create(
             },
 
             setSearchQuery: (query) => set({ searchQuery: query }),
+
+            toggleDarkMode: () => set((state) => {
+                const next = !state.darkMode;
+                if (next) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                return { darkMode: next };
+            }),
+
+            toggleGridColumns: () => set((state) => ({
+                gridColumns: state.gridColumns === 2 ? 1 : 2
+            })),
 
             appendProducts: (newProducts) => {
                 set((state) => {

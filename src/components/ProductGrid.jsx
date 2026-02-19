@@ -5,7 +5,7 @@ import ProductCard from './ProductCard';
 import PromotionalBanner from './PromotionalBanner';
 
 const ProductGrid = () => {
-    const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory, searchQuery } = useStore();
+    const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory, searchQuery, gridColumns } = useStore();
 
     useEffect(() => {
         const loadProducts = async () => {
@@ -32,11 +32,15 @@ const ProductGrid = () => {
         return matchesCategory && matchesSearch;
     });
 
+    // Dynamic grid class: 1 or 2 columns on mobile, always 4 on desktop
+    const gridClass = `grid ${gridColumns === 1 ? 'grid-cols-1' : 'grid-cols-2'
+        } sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-12`;
+
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-pulse">
+            <div className={gridClass + ' animate-pulse'}>
                 {[...Array(8)].map((_, i) => (
-                    <div key={i} className="aspect-[4/3] bg-slate-200 rounded-xl" />
+                    <div key={i} className="aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl" />
                 ))}
             </div>
         );
@@ -65,7 +69,7 @@ const ProductGrid = () => {
     return (
         <div className="pb-24">
             {/* First Grid Section */}
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <section className={gridClass}>
                 {firstChunk.map(product => (
                     <ProductCard key={product.id} product={product} />
                 ))}
@@ -76,7 +80,7 @@ const ProductGrid = () => {
 
             {/* Remaining Grid Section */}
             {restChunk.length > 0 && (
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <section className={gridClass}>
                     {restChunk.map(product => (
                         <ProductCard key={product.id} product={product} />
                     ))}
