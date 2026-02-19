@@ -64,26 +64,47 @@ const ProductGrid = () => {
         }
     });
 
-    // Better approach matching design: Split filtered products into chunks
-    const firstChunk = filteredProducts.slice(0, 12);
-    const restChunk = filteredProducts.slice(12);
+    // Split into responsive chunks:
+    // Mobile (2 cols): show banner after 4 products (2 rows)
+    // Desktop (4 cols): show banner after 8 products (2 rows)
+    const mobileFirst = filteredProducts.slice(0, 4);   // shown then banner on mobile
+    const desktopFirst = filteredProducts.slice(4, 8);   // combined with mobileFirst = 8 on desktop
+    const rest = filteredProducts.slice(8);
 
     return (
         <div className="pb-24">
-            {/* First Grid Section */}
+            {/* First 4 products (both mobile and desktop) */}
             <section className={gridClass}>
-                {firstChunk.map(product => (
+                {mobileFirst.map(product => (
                     <ProductCard key={product.id} product={product} />
+                ))}
+
+                {/* On desktop (lg): show 4 more products before banner */}
+                {desktopFirst.map(product => (
+                    <ProductCard
+                        key={`d-${product.id}`}
+                        product={product}
+                        className="hidden lg:block"
+                    />
                 ))}
             </section>
 
-            {/* Banner Section (Only if there are products) */}
+            {/* Banner after row 2 on desktop (8 products), row 2 on mobile (4 products) */}
             {filteredProducts.length > 0 && <PromotionalBanner />}
 
-            {/* Remaining Grid Section */}
-            {restChunk.length > 0 && (
+            {/* On mobile: show products 5–8 after the banner */}
+            {desktopFirst.length > 0 && (
+                <section className={`${gridClass} lg:hidden`}>
+                    {desktopFirst.map(product => (
+                        <ProductCard key={`m-${product.id}`} product={product} />
+                    ))}
+                </section>
+            )}
+
+            {/* Remaining products */}
+            {rest.length > 0 && (
                 <section className={gridClass}>
-                    {restChunk.map(product => (
+                    {rest.map(product => (
                         <ProductCard key={product.id} product={product} />
                     ))}
                 </section>
@@ -91,13 +112,15 @@ const ProductGrid = () => {
 
             {filteredProducts.length === 0 && (
                 <div className="text-center py-10 text-slate-500">
-                    No products found in this category.
+                    لا توجد منتجات في هذه الفئة.
                 </div>
             )}
 
             {filteredProducts.length > 0 && (
                 <div className="text-center py-6">
-                    <span className="inline-block text-slate-400 text-sm">Showing all {filteredProducts.length} products</span>
+                    <span className="inline-block text-slate-400 text-sm">
+                        عرض {filteredProducts.length} منتج
+                    </span>
                 </div>
             )}
         </div>
