@@ -51,19 +51,14 @@ const Header = () => {
                         {isMobileSearchOpen ? <X size={22} /> : <Search size={22} />}
                     </button>
 
-                    {/* Grid Toggle — Mobile: 1↔2 cols, Desktop: 2↔4 cols */}
+                    {/* Grid Toggle — Mobile only: 1↔2 cols */}
                     <button
                         onClick={toggleGridColumns}
-                        className={`p-2 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                        className={`md:hidden p-2 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
                         aria-label="تغيير عدد الأعمدة"
-                        title={gridColumns === 2 ? 'عرض بطاقة واحدة / عمودين' : 'عرض عمودين / أربعة'}
+                        title={gridColumns === 1 ? 'عرض بطاقتين' : 'عرض بطاقة واحدة'}
                     >
-                        {gridColumns === 1
-                            ? <LayoutGrid size={22} />
-                            : gridColumns === 2
-                                ? <Grid2X2 size={22} />
-                                : <Columns2 size={22} />
-                        }
+                        {gridColumns === 1 ? <LayoutGrid size={22} /> : <Columns2 size={22} />}
                     </button>
 
                     {/* Dark Mode Toggle */}

@@ -6,9 +6,11 @@ import ImageModal from './ImageModal';
 const ProductCard = ({ product }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
+    const gridColumns = useStore((state) => state.gridColumns);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const dm = darkMode;
+    const singleCol = gridColumns === 1;
 
     return (
         <>
@@ -39,9 +41,10 @@ const ProductCard = ({ product }) => {
                             <span className={`text-lg font-bold text-primary`}>{product.price} DH</span>
                         </div>
                         <div className="text-left min-w-0 flex-1">
-                            <span className={`font-mono px-1.5 py-0.5 rounded whitespace-nowrap overflow-hidden text-ellipsis block max-w-full
-                                ${dm ? 'text-[9px] bg-gray-700 text-gray-300' : 'text-[9px] bg-slate-100 text-slate-500'}`}
-                                style={{ fontSize: 'clamp(7px, 1.8vw, 10px)' }}
+                            <span
+                                className={`font-mono px-1.5 py-0.5 rounded whitespace-nowrap overflow-hidden text-ellipsis block max-w-full
+                                    ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-500'}`}
+                                style={{ fontSize: singleCol ? '0.75rem' : 'clamp(7px, 1.8vw, 10px)' }}
                             >REF: {product.ref}</span>
                         </div>
                     </div>
