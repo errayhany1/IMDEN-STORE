@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
+import ImageModal from './ImageModal';
 
 const CartSidebar = () => {
     const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode } = useStore();
     const dm = darkMode;
+    const [modalImage, setModalImage] = useState(null);
+    const [modalAlt, setModalAlt] = useState('');
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = subtotal * 0.08; // 8% Tax Estimate as per design
@@ -78,7 +81,10 @@ const CartSidebar = () => {
                             ) : (
                                 cart.map((item) => (
                                     <div key={item.id} className="group flex gap-4 flex-row-reverse">
-                                        <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
+                                        <div
+                                            className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100 cursor-zoom-in"
+                                            onClick={() => { if (item.image) { setModalImage(item.image); setModalAlt(item.name); } }}
+                                        >
                                             {item.image ? (
                                                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                             ) : (
@@ -159,6 +165,14 @@ const CartSidebar = () => {
                 </>
             )}
         </AnimatePresence>
+
+        {/* Image lightbox — rendered outside sidebar z-stack */ }
+    <ImageModal
+        isOpen={!!modalImage}
+        onClose={() => setModalImage(null)}
+        image={modalImage}
+        alt={modalAlt}
+    />
     );
 };
 

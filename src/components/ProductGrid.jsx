@@ -33,8 +33,10 @@ const ProductGrid = () => {
     });
 
     // Mobile: 1 or 2 cols (user toggle), Desktop: always 4
-    const mobileClass = gridColumns === 1 ? 'grid-cols-1' : 'grid-cols-2';
-    const gridClass = `grid ${mobileClass} sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-12`;
+    // Note: must override sm: breakpoint too when in single-col mode
+    const gridClass = gridColumns === 1
+        ? 'grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-5 mb-12'
+        : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-12';
 
     if (isLoading) {
         return (
