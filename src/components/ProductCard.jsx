@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
 import ImageModal from './ImageModal';
+import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
     const addToCart = useStore((state) => state.addToCart);
@@ -52,7 +53,7 @@ const ProductCard = ({ product }) => {
                     <div className="flex gap-2 flex-row-reverse">
                         <button
                             onClick={() => addToCart(product)}
-                            className="flex-1 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white"
+                            className="btn-add-cart flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white"
                         >
                             <ShoppingCart size={18} />
                             إضافة
