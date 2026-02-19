@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 
 const CartSidebar = () => {
-    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode } = useStore();
+    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart } = useStore();
     const dm = darkMode;
     const [modalImage, setModalImage] = useState(null);
     const [modalAlt, setModalAlt] = useState('');
+    const [confirmClear, setConfirmClear] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -48,11 +49,20 @@ const CartSidebar = () => {
                         >
                             {/* Header */}
                             <div className={`flex items-center justify-between px-6 py-5 border-b z-10 ${dm ? 'border-gray-700' : 'border-slate-100'}`} dir="rtl">
-                                <div className="flex items-baseline gap-3">
+                                <div className="flex items-baseline gap-2">
                                     <h2 className={`text-xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>عربة التسوق</h2>
                                     <span className="text-sm font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
                                         {cart.length} منتجات
                                     </span>
+                                    {/* Clear all button */}
+                                    {cart.length > 0 && (
+                                        <button
+                                            onClick={() => setConfirmClear(true)}
+                                            className="text-[11px] text-red-400 hover:text-red-600 hover:underline transition-colors"
+                                        >
+                                            حذف الكل
+                                        </button>
+                                    )}
                                 </div>
                                 <button
                                     onClick={toggleCart}
@@ -168,13 +178,50 @@ const CartSidebar = () => {
                 )}
             </AnimatePresence>
 
-            {/* Image lightbox — outside sidebar z-stack */}
+            {/* Image lightbox */}
             <ImageModal
                 isOpen={!!modalImage}
                 onClose={() => setModalImage(null)}
                 image={modalImage}
                 alt={modalAlt}
             />
+
+            {/* ── Confirm Clear Cart Modal ── */}
+            {confirmClear && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => setConfirmClear(false)}
+                    />
+                    {/* Dialog */}
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 z-10
+                        ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`}
+                        dir="rtl"
+                    >
+                        <div className="text-4xl">🗑️</div>
+                        <h3 className="text-lg font-bold">حذف جميع المنتجات؟</h3>
+                        <p className={`text-sm ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                            سيتم حذف جميع المنتجات من عربة التسوق. هل أنت متأكد؟
+                        </p>
+                        <div className="flex gap-3 pt-1">
+                            <button
+                                onClick={() => setConfirmClear(false)}
+                                className={`flex-1 py-2.5 rounded-xl font-medium transition-colors
+                                    ${dm ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                onClick={() => { clearCart(); setConfirmClear(false); }}
+                                className="flex-1 py-2.5 rounded-xl font-medium bg-red-500 hover:bg-red-600 text-white transition-colors"
+                            >
+                                حذف الكل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
