@@ -1,6 +1,7 @@
 import React from 'react';
-import { Search, ShoppingCart, Moon, Sun, LayoutGrid, Columns2, User } from 'lucide-react';
+import { Search, ShoppingCart, LayoutGrid, Columns2, User } from 'lucide-react';
 import useStore from '../store/useStore';
+import DarkModeToggle from './DarkModeToggle';
 
 const Header = () => {
     const { cart, toggleCart, searchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns } = useStore();
@@ -52,13 +53,7 @@ const Header = () => {
                     </button>
 
                     {/* Dark Mode Toggle */}
-                    <button
-                        onClick={toggleDarkMode}
-                        className={`p-2 rounded-lg transition-colors ${dm ? 'text-yellow-400 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
-                        aria-label="تبديل الوضع المظلم"
-                    >
-                        {dm ? <Sun size={22} /> : <Moon size={22} />}
-                    </button>
+                    <DarkModeToggle />
 
                     {/* Account */}
                     <button
