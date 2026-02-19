@@ -32,9 +32,10 @@ const ProductGrid = () => {
         return matchesCategory && matchesSearch;
     });
 
-    // Dynamic grid class: 1 or 2 columns on mobile, always 4 on desktop
-    const gridClass = `grid ${gridColumns === 1 ? 'grid-cols-1' : 'grid-cols-2'
-        } sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-12`;
+    // Dynamic grid class: 1, 2, or 4 columns
+    const mobileClass = gridColumns === 1 ? 'grid-cols-1' : 'grid-cols-2';
+    const desktopClass = gridColumns === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-2';
+    const gridClass = `grid ${mobileClass} sm:grid-cols-2 ${desktopClass} gap-3 md:gap-5 mb-12`;
 
     if (isLoading) {
         return (

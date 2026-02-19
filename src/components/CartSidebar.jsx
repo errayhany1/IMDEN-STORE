@@ -5,7 +5,8 @@ import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CartSidebar = () => {
-    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart } = useStore();
+    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode } = useStore();
+    const dm = darkMode;
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = subtotal * 0.08; // 8% Tax Estimate as per design
@@ -46,12 +47,12 @@ const CartSidebar = () => {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-surface-light shadow-2xl z-50 flex flex-col border-l border-slate-200"
+                        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] shadow-2xl z-50 flex flex-col border-l transition-colors duration-300
+                            ${dm ? 'bg-gray-900 border-gray-700' : 'bg-surface-light border-slate-200'}`}
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white z-10" dir="rtl">
+                        <div className={`flex items-center justify-between px-6 py-5 border-b z-10 ${dm ? 'border-gray-700 bg-gray-900' : 'border-slate-100 bg-white'}`} dir="rtl">
                             <div className="flex items-baseline gap-3">
-                                <h2 className="text-xl font-bold text-slate-900">عربة التسوق</h2>
+                                <h2 className={`text-xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>عربة التسوق</h2>
                                 <span className="text-sm font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
                                     {cart.length} منتجات
                                 </span>
@@ -87,7 +88,7 @@ const CartSidebar = () => {
                                         <div className="flex-1 flex flex-col justify-between py-0.5 text-right">
                                             <div>
                                                 <div className="flex justify-between items-start gap-2 flex-row-reverse">
-                                                    <h3 className="font-semibold text-slate-900 leading-tight line-clamp-2">{item.name}</h3>
+                                                    <h3 className={`font-semibold leading-tight line-clamp-2 ${dm ? 'text-white' : 'text-slate-900'}`}>{item.name}</h3>
                                                     <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 transition-colors">
                                                         <Trash2 size={18} />
                                                     </button>
@@ -95,7 +96,7 @@ const CartSidebar = () => {
                                                 <p className="text-xs text-slate-500 mt-1">Ref: {item.ref}</p>
                                             </div>
                                             <div className="flex items-center justify-between mt-3 flex-row-reverse">
-                                                <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50">
+                                                <div className={`flex items-center border rounded-lg ${dm ? 'border-gray-600 bg-gray-800' : 'border-slate-200 bg-slate-50'}`}>
                                                     <button
                                                         onClick={() => updateQuantity(item.id, -1)}
                                                         className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white rounded-l-lg transition-colors"
@@ -111,7 +112,7 @@ const CartSidebar = () => {
                                                     </button>
                                                 </div>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold text-slate-900">{(item.price * item.quantity).toFixed(2)} DH</p>
+                                                    <p className={`text-sm font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{(item.price * item.quantity).toFixed(2)} DH</p>
                                                     <p className="text-[10px] text-slate-400">{item.price} DH / قطعة</p>
                                                 </div>
                                             </div>
@@ -121,8 +122,7 @@ const CartSidebar = () => {
                             )}
                         </div>
 
-                        {/* Footer */}
-                        <div className="border-t border-slate-200 bg-slate-50 p-6 space-y-4">
+                        <div className={`border-t p-6 space-y-4 ${dm ? 'border-gray-700 bg-gray-900' : 'border-slate-200 bg-slate-50'}`}>
                             <div className="space-y-2 text-sm text-slate-500">
                                 <div className="flex justify-between flex-row-reverse">
                                     <span>المجموع الفرعي</span>
@@ -133,7 +133,7 @@ const CartSidebar = () => {
                                 <div>
                                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">المجموع الكلي</span>
                                 </div>
-                                <span className="text-2xl font-bold text-slate-900">{subtotal.toFixed(2)} DH</span>
+                                <span className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{subtotal.toFixed(2)} DH</span>
                             </div>
                             <div className="flex gap-2">
                                 <button
