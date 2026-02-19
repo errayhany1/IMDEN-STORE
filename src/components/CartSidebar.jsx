@@ -98,19 +98,33 @@ const CartSidebar = () => {
                                                 </div>
                                                 <div className="flex items-center justify-between mt-3 flex-row-reverse">
                                                     <div className={`flex items-center border rounded-lg ${dm ? 'border-gray-600 bg-gray-800' : 'border-slate-200 bg-slate-50'}`}>
+                                                        {/* -5 */}
+                                                        <button
+                                                            onClick={() => updateQuantity(item.id, -5)}
+                                                            className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-slate-400 hover:text-red-500 hover:bg-white rounded-l-lg transition-colors border-r border-slate-200"
+                                                            title="نقصان 5"
+                                                        >-5</button>
+                                                        {/* -1 */}
                                                         <button
                                                             onClick={() => updateQuantity(item.id, -1)}
-                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white rounded-l-lg transition-colors"
+                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white transition-colors border-r border-slate-200"
                                                         >
                                                             <Minus size={16} />
                                                         </button>
                                                         <span className={`w-10 text-center text-sm font-medium ${dm ? 'text-white' : 'text-slate-900'}`}>{item.quantity}</span>
+                                                        {/* +1 */}
                                                         <button
                                                             onClick={() => updateQuantity(item.id, 1)}
-                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white rounded-r-lg transition-colors"
+                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white transition-colors border-l border-slate-200"
                                                         >
                                                             <Plus size={16} />
                                                         </button>
+                                                        {/* +5 */}
+                                                        <button
+                                                            onClick={() => updateQuantity(item.id, 5)}
+                                                            className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-slate-400 hover:text-primary hover:bg-white rounded-r-lg transition-colors border-l border-slate-200"
+                                                            title="زيادة 5"
+                                                        >+5</button>
                                                     </div>
                                                     <div className="text-left">
                                                         <p className={`text-sm font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{(item.price * item.quantity).toFixed(2)} DH</p>
