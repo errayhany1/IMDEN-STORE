@@ -4,6 +4,7 @@ import useStore from '../store/useStore';
 import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
+import RegisterModal from './RegisterModal';
 
 const CartSidebar = () => {
     const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart } = useStore();
@@ -11,6 +12,7 @@ const CartSidebar = () => {
     const [modalImage, setModalImage] = useState(null);
     const [modalAlt, setModalAlt] = useState('');
     const [confirmClear, setConfirmClear] = useState(false);
+    const [showRegister, setShowRegister] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -22,6 +24,14 @@ const CartSidebar = () => {
         const phoneNumber = "212681652324";
         const url = `https://wa.me/${phoneNumber}?text=${message}`;
         window.open(url, '_blank');
+        // Prompt registration after order
+        if (!localStorage.getItem('customer')) setShowRegister(true);
+    };
+
+    const handlePDF = async () => {
+        if (cart.length === 0) return;
+        await generatePDF(cart);
+        if (!localStorage.getItem('customer')) setShowRegister(true);
     };
 
     return (
@@ -155,7 +165,7 @@ const CartSidebar = () => {
                                 </div>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => generatePDF(cart)}
+                                        onClick={() => handlePDF()}
                                         disabled={cart.length === 0}
                                         className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-4 px-4 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
@@ -184,6 +194,12 @@ const CartSidebar = () => {
                 onClose={() => setModalImage(null)}
                 image={modalImage}
                 alt={modalAlt}
+            />
+
+            {/* Registration prompt after order */}
+            <RegisterModal
+                isOpen={showRegister}
+                onClose={() => setShowRegister(false)}
             />
 
             {/* ── Confirm Clear Cart Modal ── */}
