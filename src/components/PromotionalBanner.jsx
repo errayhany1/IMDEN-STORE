@@ -1,5 +1,8 @@
 import React from 'react';
-import { MessageCircle } from 'lucide-react';
+import SocialButton from './SocialButton';
+
+const TELEGRAM_URL = 'https://t.me/Imden_technology';
+const WA_NUMBER = '212681652324';
 
 const PromotionalBanner = () => {
     return (
@@ -12,15 +15,24 @@ const PromotionalBanner = () => {
                         <li>📦 أقل مبلغ للطلب: 800 درهم (لإجمالي السلة وليس لمنتج واحد).</li>
                         <li>للكميات الكبيرة يمكن ان ينقص الثمن.</li>
                     </ul>
-                    <p className="mt-2 text-blue-100 text-sm font-medium">📞 للمزيد من التفاصيل، تواصل معنا عبر الواتساب:</p>
+                    <p className="mt-2 text-blue-100 text-sm font-medium">📞 للمزيد من التفاصيل، تواصل معنا:</p>
                 </div>
-                <button
-                    onClick={() => window.open('https://wa.me/212681652324', '_blank')}
-                    className="bg-whatsapp hover:brightness-110 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all transform hover:scale-105 flex items-center gap-2 whitespace-nowrap text-sm md:text-base"
-                >
-                    <MessageCircle size={20} fill="currentColor" />
-                    تواصل معنا
-                </button>
+
+                {/* Action buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <SocialButton
+                        type="whatsapp"
+                        href={`https://wa.me/${WA_NUMBER}`}
+                        label="واتساب"
+                        size="md"
+                    />
+                    <SocialButton
+                        type="telegram"
+                        href={TELEGRAM_URL}
+                        label="تلغرام"
+                        size="md"
+                    />
+                </div>
             </div>
         </section>
     );

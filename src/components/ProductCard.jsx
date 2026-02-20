@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ShoppingCart, MessageCircle } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import useStore from '../store/useStore';
 import ImageModal from './ImageModal';
+import SocialButton from './SocialButton';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
@@ -58,14 +59,13 @@ const ProductCard = ({ product }) => {
                             <ShoppingCart size={18} />
                             إضافة
                         </button>
-                        <button
+                        <SocialButton
+                            type="whatsapp"
                             onClick={() => window.open(`https://wa.me/212681652324?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`, '_blank')}
-                            aria-label="Inquire via WhatsApp"
-                            className={`border hover:brightness-110 text-whatsapp font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center
-                                ${dm ? 'bg-gray-700 border-gray-600' : 'bg-surface-light border-slate-200 hover:bg-slate-100'}`}
-                        >
-                            <MessageCircle size={20} />
-                        </button>
+                            iconOnly
+                            size="sm"
+                            className="rounded-lg"
+                        />
                     </div>
                 </div>
             </article>

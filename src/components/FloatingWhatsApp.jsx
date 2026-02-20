@@ -1,21 +1,26 @@
 import React from 'react';
-import { MessageCircle } from 'lucide-react';
+import SocialButton from './SocialButton';
 
-const FloatingWhatsApp = () => {
-    const phoneNumber = "212681652324"; // Replace with actual number if provided
-    const whatsappUrl = `https://wa.me/${phoneNumber}`;
+const TELEGRAM_URL = 'https://t.me/Imden_technology';
+const WA_NUMBER = '212681652324';
 
-    return (
-        <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-110 z-50 flex items-center justify-center"
-            aria-label="Chat on WhatsApp"
-        >
-            <MessageCircle size={32} />
-        </a>
-    );
-};
+const FloatingWhatsApp = () => (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
+        {/* Telegram */}
+        <SocialButton
+            type="telegram"
+            href={TELEGRAM_URL}
+            iconOnly
+            className="w-14 h-14 shadow-lg"
+        />
+        {/* WhatsApp */}
+        <SocialButton
+            type="whatsapp"
+            href={`https://wa.me/${WA_NUMBER}`}
+            iconOnly
+            className="w-14 h-14 shadow-lg"
+        />
+    </div>
+);
 
 export default FloatingWhatsApp;

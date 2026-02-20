@@ -1,0 +1,118 @@
+/* ─────────────────────────────────────────────
+   SocialButton — Official logos + ripple animation
+   ───────────────────────────────────────────── */
+
+/* Shared base */
+.social-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.social-btn:hover {
+    transform: scale(1.06);
+    filter: brightness(1.1);
+}
+
+.social-btn:active {
+    transform: scale(0.95);
+}
+
+/* Ripple */
+.social-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+    opacity: 0;
+    transform: scale(0);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.social-btn:active::after {
+    transform: scale(2.5);
+    opacity: 1;
+    transition: 0s;
+}
+
+/* Pulse glow on hover */
+.social-btn::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: -1;
+}
+
+.social-btn:hover::before {
+    opacity: 1;
+}
+
+/* ── WhatsApp ── */
+.social-btn-wa {
+    background: #25D366;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.30);
+}
+
+.social-btn-wa::before {
+    background: rgba(37, 211, 102, 0.35);
+    box-shadow: 0 0 18px 6px rgba(37, 211, 102, 0.50);
+}
+
+.social-btn-wa:hover {
+    box-shadow: 0 6px 22px rgba(37, 211, 102, 0.55);
+}
+
+/* ── Telegram ── */
+.social-btn-tg {
+    background: #229ED9;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(34, 158, 217, 0.30);
+}
+
+.social-btn-tg::before {
+    background: rgba(34, 158, 217, 0.35);
+    box-shadow: 0 0 18px 6px rgba(34, 158, 217, 0.50);
+}
+
+.social-btn-tg:hover {
+    box-shadow: 0 6px 22px rgba(34, 158, 217, 0.55);
+}
+
+/* Size variants */
+.social-btn-sm {
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+}
+
+.social-btn-md {
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 15px;
+}
+
+.social-btn-lg {
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-size: 16px;
+}
+
+.social-btn-icon {
+    padding: 14px;
+    border-radius: 50%;
+}

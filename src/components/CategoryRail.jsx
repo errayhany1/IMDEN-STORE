@@ -1,8 +1,14 @@
 import React from 'react';
 import useStore from '../store/useStore';
 
+// ✏️ ضع هنا رابط الصورة التي تريدها لفئة "All"
+const ALL_CATEGORY_IMAGE = 'https://cdn-icons-png.flaticon.com/512/1170/1170678.png';
+
 const CategoryRail = () => {
     const { categories, selectedCategory, setCategory, categoryImages, darkMode } = useStore();
+
+    // Merge static 'All' image with NocoDB images
+    const images = { All: ALL_CATEGORY_IMAGE, ...categoryImages };
 
     return (
         <section className="mb-6 mt-4">
@@ -19,9 +25,9 @@ const CategoryRail = () => {
                                 ? 'ring-primary scale-110'
                                 : `ring-transparent ${darkMode ? 'bg-gray-700' : 'bg-slate-200'} group-hover:ring-primary`}
                         `}>
-                            {categoryImages[category] ? (
+                            {images[category] ? (
                                 <img
-                                    src={categoryImages[category]}
+                                    src={images[category]}
                                     alt={category}
                                     className="w-full h-full object-cover"
                                 />

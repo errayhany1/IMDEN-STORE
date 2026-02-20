@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 import RegisterModal from './RegisterModal';
+import SocialButton from './SocialButton';
 
 const CartSidebar = () => {
     const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart } = useStore();
@@ -172,14 +173,13 @@ const CartSidebar = () => {
                                         <Share2 size={20} />
                                         <span>تحميل PDF</span>
                                     </button>
-                                    <button
-                                        onClick={handleShare}
-                                        disabled={cart.length === 0}
-                                        className="flex-1 bg-whatsapp hover:brightness-110 text-white font-semibold py-4 px-4 rounded-lg shadow-lg shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <MessageCircle size={20} />
-                                        <span>إرسال واتساب</span>
-                                    </button>
+                                    <SocialButton
+                                        type="whatsapp"
+                                        onClick={cart.length > 0 ? handleShare : undefined}
+                                        label="إرسال واتساب"
+                                        size="md"
+                                        className={`flex-1 py-4 rounded-lg ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                    />
                                 </div>
                                 <p className="text-center text-[11px] text-slate-400">تم إنشاء الطلب تلقائياً</p>
                             </div>
