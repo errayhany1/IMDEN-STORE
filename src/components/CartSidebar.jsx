@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
-import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
+import { generatePDF } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 import RegisterModal from './RegisterModal';
@@ -20,12 +20,10 @@ const CartSidebar = () => {
     const handleShare = async () => {
         if (cart.length === 0) return;
         await generatePDF(cart);
-        alert("تم تحميل ملف الطلبية (PDF). المرجو إرفاقه في محادثة الواتساب التي ستفتح الآن.");
-        const message = generateWhatsAppMessage(cart);
         const phoneNumber = "212681652324";
-        const url = `https://wa.me/${phoneNumber}?text=${message}`;
+        // Open WhatsApp with phone number only — user attaches the downloaded PDF manually
+        const url = `https://wa.me/${phoneNumber}`;
         window.open(url, '_blank');
-        // Prompt registration after order
         if (!localStorage.getItem('customer')) setShowRegister(true);
     };
 
