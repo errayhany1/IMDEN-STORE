@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF, generateWhatsAppMessage } from '../utils/pdfGenerator';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 import RegisterModal from './RegisterModal';
 import SocialButton from './SocialButton';
