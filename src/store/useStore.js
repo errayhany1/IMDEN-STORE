@@ -113,6 +113,8 @@ const useStore = create(
             },
 
             clearCart: () => set({ cart: [] }),
+
+            setSearchQuery: (query) => set({ searchQuery: query }),
         }),
         {
             name: 'wholesale-store-storage', // unique name
