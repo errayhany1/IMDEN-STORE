@@ -5,7 +5,7 @@ import { getRotatingFeatured } from '../utils/featuredProducts';
 import ProductCard from './ProductCard';
 
 const FeaturedStrip = () => {
-    const { products, darkMode, searchQuery } = useStore();
+    const { products, darkMode, searchQuery, selectedCategory } = useStore();
     const dm = darkMode;
 
     const [featured, setFeatured] = useState([]);
@@ -34,7 +34,7 @@ const FeaturedStrip = () => {
         return () => clearInterval(tick);
     }, [products]);
 
-    if (featured.length === 0 || searchQuery) return null;
+    if (featured.length === 0 || searchQuery || selectedCategory !== 'All') return null;
 
     // Format countdown mm:ss
     const mm = String(Math.floor(nextIn / 60)).padStart(2, '0');
