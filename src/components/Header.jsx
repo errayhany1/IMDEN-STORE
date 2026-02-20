@@ -4,7 +4,7 @@ import useStore from '../store/useStore';
 import DarkModeToggle from './DarkModeToggle';
 
 const Header = () => {
-    const { cart, toggleCart, searchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns } = useStore();
+    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     const dm = darkMode;
@@ -32,7 +32,7 @@ const Header = () => {
                     <input
                         type="text"
                         value={searchQuery}
-                        onChange={(e) => useStore.getState().setSearchQuery(e.target.value)}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className={`block w-full pl-10 pr-3 py-2 border rounded-lg text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary
                             ${dm ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'}`}
                         placeholder="...ابحث بالمرجع، الاسم أو الرمز"
@@ -86,7 +86,7 @@ const Header = () => {
                     <input
                         type="text"
                         value={searchQuery}
-                        onChange={(e) => useStore.getState().setSearchQuery(e.target.value)}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className={`block w-full py-2.5 pr-10 pl-4 border border-slate-200 rounded-xl text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
                             ${dm ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-slate-50 text-slate-900 placeholder-slate-400'}`}
                         placeholder="ابحث عن المنتجات..."

@@ -25,9 +25,9 @@ const ProductGrid = () => {
 
     const filteredProducts = products.filter(p => {
         const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-        const matchesSearch = searchQuery === "" ||
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.ref.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = !searchQuery ||
+            (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.ref || "").toLowerCase().includes(searchQuery.toLowerCase());
 
         return matchesCategory && matchesSearch;
     });
