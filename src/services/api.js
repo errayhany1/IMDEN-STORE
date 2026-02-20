@@ -39,7 +39,8 @@ export const fetchProducts = async (onChunk) => {
                 },
                 params: {
                     limit: limit,
-                    offset: offset
+                    offset: offset,
+                    sort: '-Id'  // أحدث المنتجات أولاً (نفس ترتيب النشر في تلغرام)
                 }
             });
 
