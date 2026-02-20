@@ -1,14 +1,15 @@
 import React from 'react';
 import useStore from '../store/useStore';
 
-// ✏️ ضع هنا رابط الصورة التي تريدها لفئة "All"
-const ALL_CATEGORY_IMAGE = 'https://cdn-icons-png.flaticon.com/512/1170/1170678.png';
+// ✏️ ضع الصور في مجلد public/
+const ALL_CATEGORY_IMAGE = '/all-category.png';     // صورة "Electronics Store"
+const GENERAL_CATEGORY_IMAGE = '/general-category.png'; // أضف صورة مناسبة لـ General
 
 const CategoryRail = () => {
     const { categories, selectedCategory, setCategory, categoryImages, darkMode } = useStore();
 
-    // Merge static 'All' image with NocoDB images
-    const images = { All: ALL_CATEGORY_IMAGE, ...categoryImages };
+    // Merge static category images with NocoDB images
+    const images = { All: ALL_CATEGORY_IMAGE, General: GENERAL_CATEGORY_IMAGE, ...categoryImages };
 
     return (
         <section className="mb-6 mt-4">
