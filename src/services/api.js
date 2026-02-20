@@ -25,7 +25,7 @@ export const fetchProducts = async (onChunk) => {
             9: "Lighting",          // الإضائة
             10: "Cameras",          // الكمرات
             11: "Network",          // الانترنت والشبكة
-            12: "Stabilizers",      // الستابليزاتور
+            12: "General",         // الستابليزاتور → General
             13: "Microphones",      // الميكروفونات
             14: "Batteries & Power Banks" // بطاريات وبنوك الطاقة
         };
@@ -75,6 +75,15 @@ export const fetchProducts = async (onChunk) => {
 
                 if (catImgObj && !collectedCategoryImages[categoryName]) {
                     collectedCategoryImages[categoryName] = catImgObj.signedUrl || catImgObj.url;
+                }
+
+                // Extract "All" category image from the new Category_ID1 column
+                const allImgObj = record.Category_ID1 && record.Category_ID1.length > 0
+                    ? record.Category_ID1[0]
+                    : null;
+
+                if (allImgObj && !collectedCategoryImages['All']) {
+                    collectedCategoryImages['All'] = allImgObj.signedUrl || allImgObj.url;
                 }
 
                 return {

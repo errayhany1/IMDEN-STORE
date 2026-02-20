@@ -19,7 +19,6 @@ const useStore = create(
                 'Lighting',
                 'Cameras',
                 'Network',
-                'Stabilizers',
                 'Microphones',
                 'Batteries & Power Banks',
                 'General'
@@ -113,8 +112,6 @@ const useStore = create(
             },
 
             clearCart: () => set({ cart: [] }),
-
-            setSearchQuery: (query) => set({ searchQuery: query }),
         }),
         {
             name: 'wholesale-store-storage', // unique name
