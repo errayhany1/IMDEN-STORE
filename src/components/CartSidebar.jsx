@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, Upload } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
-import { AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 import SocialButton from './SocialButton';
 
