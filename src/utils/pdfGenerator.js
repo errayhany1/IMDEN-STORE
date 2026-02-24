@@ -24,23 +24,8 @@ export const generatePDF = async (cartItems) => {
 
     // Load images first
     const itemsWithImages = await Promise.all(cartItems.map(async (item) => {
-        let maxResImage = item.image;
-
-        // Prioritize thumbnails for PDF (faster, lighter, avoids some CORS issues if main image is huge)
-        if (item.originalData && item.originalData.Image1 && item.originalData.Image1.length > 0) {
-            const imgObj = item.originalData.Image1[0];
-            if (imgObj.thumbnails) {
-                if (imgObj.thumbnails.card_cover?.signedUrl) {
-                    maxResImage = imgObj.thumbnails.card_cover.signedUrl;
-                } else if (imgObj.thumbnails.small?.signedUrl) {
-                    maxResImage = imgObj.thumbnails.small.signedUrl;
-                }
-            } else {
-                maxResImage = imgObj.signedUrl || imgObj.url;
-            }
-        }
-
-        const base64Img = maxResImage ? await getDataUrl(maxResImage) : null;
+        // Try to fetch the image as base64 to embed in PDF
+        const base64Img = item.image ? await getDataUrl(item.image) : null;
         return { ...item, base64Img };
     }));
 
