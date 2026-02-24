@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, Upload } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
-import RegisterModal from './RegisterModal';
 import SocialButton from './SocialButton';
 
 const CartSidebar = () => {
@@ -13,7 +12,6 @@ const CartSidebar = () => {
     const [modalImage, setModalImage] = useState(null);
     const [modalAlt, setModalAlt] = useState('');
     const [confirmClear, setConfirmClear] = useState(false);
-    const [showRegister, setShowRegister] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -24,13 +22,11 @@ const CartSidebar = () => {
         // Open WhatsApp with phone number only — user attaches the downloaded PDF manually
         const url = `https://wa.me/${phoneNumber}`;
         window.open(url, '_blank');
-        if (!localStorage.getItem('customer')) setShowRegister(true);
     };
 
     const handlePDF = async () => {
         if (cart.length === 0) return;
         await generatePDF(cart); // this still triggers doc.save() inside
-        if (!localStorage.getItem('customer')) setShowRegister(true);
     };
 
     const handleNativeShare = async () => {
@@ -55,8 +51,6 @@ const CartSidebar = () => {
                 alert("حدث خطأ أثناء محاولة المشاركة.");
             }
         }
-
-        if (!localStorage.getItem('customer')) setShowRegister(true);
     };
 
     return (
@@ -228,12 +222,6 @@ const CartSidebar = () => {
                 onClose={() => setModalImage(null)}
                 image={modalImage}
                 alt={modalAlt}
-            />
-
-            {/* Registration prompt after order */}
-            <RegisterModal
-                isOpen={showRegister}
-                onClose={() => setShowRegister(false)}
             />
 
             {/* ── Confirm Clear Cart Modal ── */}
