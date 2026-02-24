@@ -38,9 +38,21 @@ const ProductGrid = () => {
 
     const filteredProducts = products.filter(p => {
         const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-        const matchesSearch = !searchQuery ||
-            (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.ref || "").toLowerCase().includes(searchQuery.toLowerCase());
+        let matchesSearch = true;
+
+        if (searchQuery) {
+            // Remove common wholesale words from the query so they don't block actual product findings
+            const cleanQuery = searchQuery.toLowerCase()
+                .replace(/(جملة|بالجملة|للجملة|wholesale|gros|en gros)/g, '')
+                .trim();
+
+            if (cleanQuery !== '') {
+                // Split remaining query into words and ensure ALL words match the product info
+                const terms = cleanQuery.split(/\s+/).filter(Boolean);
+                const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""}`.toLowerCase();
+                matchesSearch = terms.every(term => searchableText.includes(term));
+            }
+        }
 
         return matchesCategory && matchesSearch;
     });

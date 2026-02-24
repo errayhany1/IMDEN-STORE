@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Minus, Plus, Trash2, Share2, Upload } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Share2, Download } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
 // eslint-disable-next-line no-unused-vars
@@ -8,7 +8,7 @@ import ImageModal from './ImageModal';
 import SocialButton from './SocialButton';
 
 const CartSidebar = () => {
-    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart } = useStore();
+    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart, products } = useStore();
     const dm = darkMode;
     const [modalImage, setModalImage] = useState(null);
     const [modalAlt, setModalAlt] = useState('');
@@ -65,7 +65,7 @@ const CartSidebar = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={toggleCart}
-                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-40"
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[90]"
                         />
 
                         {/* Sidebar */}
@@ -74,7 +74,7 @@ const CartSidebar = () => {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className={`fixed top-0 right-0 h-full w-full sm:w-[440px] shadow-2xl z-50 flex flex-col border-l transition-colors duration-300
+                            className={`fixed top-0 right-0 h-full w-full sm:w-[440px] shadow-2xl z-[100] flex flex-col border-l transition-colors duration-300
                                 ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
                         >
                             {/* Header */}
@@ -112,68 +112,74 @@ const CartSidebar = () => {
                                         </button>
                                     </div>
                                 ) : (
-                                    cart.map((item) => (
-                                        <div key={item.id} className="group flex gap-4 flex-row-reverse">
-                                            {/* Thumbnail — click to zoom */}
-                                            <div
-                                                className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100 cursor-zoom-in"
-                                                onClick={() => { if (item.image) { setModalImage(item.image); setModalAlt(item.name); } }}
-                                            >
-                                                {item.image ? (
-                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">No Img</div>
-                                                )}
-                                            </div>
+                                    cart.map((item) => {
+                                        // Fetch fresh image from products store to avoid expired signed URLs from localStorage
+                                        const liveProduct = products.find(p => p.id === item.id);
+                                        const displayImage = liveProduct?.image || item.image;
 
-                                            <div className="flex-1 flex flex-col justify-between py-0.5 text-right">
-                                                <div>
-                                                    <div className="flex justify-between items-start gap-2 flex-row-reverse">
-                                                        <h3 className={`font-semibold leading-tight line-clamp-2 ${dm ? 'text-white' : 'text-slate-900'}`}>{item.name}</h3>
-                                                        <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 mt-1">Ref: {item.ref}</p>
+                                        return (
+                                            <div key={item.id} className="group flex gap-4 flex-row-reverse">
+                                                {/* Thumbnail — click to zoom */}
+                                                <div
+                                                    className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100 cursor-zoom-in"
+                                                    onClick={() => { if (displayImage) { setModalImage(displayImage); setModalAlt(item.name); } }}
+                                                >
+                                                    {displayImage ? (
+                                                        <img src={displayImage} alt={item.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">بدون صورة</div>
+                                                    )}
                                                 </div>
-                                                <div className="flex items-center justify-between mt-3 flex-row-reverse">
-                                                    <div className={`flex items-center border rounded-lg ${dm ? 'border-gray-600 bg-gray-800' : 'border-slate-200 bg-slate-50'}`}>
-                                                        {/* -5 */}
-                                                        <button
-                                                            onClick={() => updateQuantity(item.id, -5)}
-                                                            className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-slate-400 hover:text-red-500 hover:bg-white rounded-l-lg transition-colors border-r border-slate-200"
-                                                            title="نقصان 5"
-                                                        >-5</button>
-                                                        {/* -1 */}
-                                                        <button
-                                                            onClick={() => updateQuantity(item.id, -1)}
-                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white transition-colors border-r border-slate-200"
-                                                        >
-                                                            <Minus size={16} />
-                                                        </button>
-                                                        <span className={`w-10 text-center text-sm font-medium ${dm ? 'text-white' : 'text-slate-900'}`}>{item.quantity}</span>
-                                                        {/* +1 */}
-                                                        <button
-                                                            onClick={() => updateQuantity(item.id, 1)}
-                                                            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white transition-colors border-l border-slate-200"
-                                                        >
-                                                            <Plus size={16} />
-                                                        </button>
-                                                        {/* +5 */}
-                                                        <button
-                                                            onClick={() => updateQuantity(item.id, 5)}
-                                                            className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-slate-400 hover:text-primary hover:bg-white rounded-r-lg transition-colors border-l border-slate-200"
-                                                            title="زيادة 5"
-                                                        >+5</button>
+
+                                                <div className="flex-1 flex flex-col justify-between py-0.5 text-right">
+                                                    <div>
+                                                        <div className="flex justify-between items-start gap-2 flex-row-reverse">
+                                                            <h3 className={`font-semibold leading-tight line-clamp-2 ${dm ? 'text-white' : 'text-slate-900'}`}>{item.name}</h3>
+                                                            <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                        <p className="text-xs text-slate-500 mt-1">Ref: {item.ref}</p>
                                                     </div>
-                                                    <div className="text-left">
-                                                        <p className={`text-sm font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{(item.price * item.quantity).toFixed(2)} DH</p>
-                                                        <p className="text-[10px] text-slate-400">{item.price} DH / قطعة</p>
+                                                    <div className="flex items-center justify-between mt-3 flex-row-reverse">
+                                                        <div className={`flex items-center border rounded-lg ${dm ? 'border-gray-600 bg-gray-800' : 'border-slate-200 bg-slate-50'}`}>
+                                                            {/* -5 */}
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, -5)}
+                                                                className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-slate-400 hover:text-red-500 hover:bg-white rounded-l-lg transition-colors border-r border-slate-200"
+                                                                title="نقصان 5"
+                                                            >-5</button>
+                                                            {/* -1 */}
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, -1)}
+                                                                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white transition-colors border-r border-slate-200"
+                                                            >
+                                                                <Minus size={16} />
+                                                            </button>
+                                                            <span className={`w-10 text-center text-sm font-medium ${dm ? 'text-white' : 'text-slate-900'}`}>{item.quantity}</span>
+                                                            {/* +1 */}
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, 1)}
+                                                                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-white transition-colors border-l border-slate-200"
+                                                            >
+                                                                <Plus size={16} />
+                                                            </button>
+                                                            {/* +5 */}
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, 5)}
+                                                                className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-slate-400 hover:text-primary hover:bg-white rounded-r-lg transition-colors border-l border-slate-200"
+                                                                title="زيادة 5"
+                                                            >+5</button>
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className={`text-sm font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{(item.price * item.quantity).toFixed(2)} DH</p>
+                                                            <p className="text-[10px] text-slate-400">{item.price} DH / قطعة</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
 
@@ -190,16 +196,17 @@ const CartSidebar = () => {
                                             disabled={cart.length === 0}
                                             className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                         >
-                                            <Share2 size={18} />
-                                            <span>تحميل PDF</span>
+                                            <Download size={18} />
+                                            <span>PDF تحميل</span>
                                         </button>
                                         <button
                                             onClick={handleNativeShare}
                                             disabled={cart.length === 0}
-                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm overflow-hidden relative"
                                         >
-                                            <Upload size={18} />
+                                            <Share2 size={18} className="animate-pulse" />
                                             <span>مشاركة</span>
+                                            <span className="absolute inset-0 bg-white/20 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-0 rounded-lg"></span>
                                         </button>
                                     </div>
                                     <SocialButton
