@@ -110,9 +110,12 @@ export const generatePDF = async (cartItems) => {
             }
         }
     });
+    const fileName = `IMDEN_TECHNOLOGY_0681652324_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
 
-    doc.save(`IMDEN_TECHNOLOGY_0681652324_${new Date().toISOString().slice(0, 10)}.pdf`);
-    return true;
+    // Return the File object for Web Share API
+    const pdfBlob = doc.output('blob');
+    return new File([pdfBlob], fileName, { type: 'application/pdf' });
 };
 
 export const generateWhatsAppMessage = (cartItems) => {

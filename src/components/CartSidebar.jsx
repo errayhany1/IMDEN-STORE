@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Minus, Plus, Trash2, Share2, MessageCircle } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Share2, Upload } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,7 +29,33 @@ const CartSidebar = () => {
 
     const handlePDF = async () => {
         if (cart.length === 0) return;
-        await generatePDF(cart);
+        await generatePDF(cart); // this still triggers doc.save() inside
+        if (!localStorage.getItem('customer')) setShowRegister(true);
+    };
+
+    const handleNativeShare = async () => {
+        if (cart.length === 0) return;
+
+        try {
+            const pdfFile = await generatePDF(cart); // Assuming generatePDF now returns a File object
+
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                await navigator.share({
+                    title: 'طلبية من Imden Technology',
+                    text: 'مرفق تفاصيل الطلبية.',
+                    files: [pdfFile]
+                });
+            } else {
+                alert("متصفحك لا يدعم مشاركة الملفات مباشرة. تم حفظ الملف في جهازك.");
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            // AbortError is common if the user cancels the share dialog, no need to alert
+            if (error.name !== 'AbortError') {
+                alert("حدث خطأ أثناء محاولة المشاركة.");
+            }
+        }
+
         if (!localStorage.getItem('customer')) setShowRegister(true);
     };
 
@@ -162,21 +188,31 @@ const CartSidebar = () => {
                                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">المجموع الكلي</span>
                                     <span className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{subtotal.toFixed(2)} DH</span>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handlePDF()}
-                                        disabled={cart.length === 0}
-                                        className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-4 px-4 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <Share2 size={20} />
-                                        <span>تحميل PDF</span>
-                                    </button>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handlePDF()}
+                                            disabled={cart.length === 0}
+                                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                        >
+                                            <Share2 size={18} />
+                                            <span>تحميل PDF</span>
+                                        </button>
+                                        <button
+                                            onClick={handleNativeShare}
+                                            disabled={cart.length === 0}
+                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                        >
+                                            <Upload size={18} />
+                                            <span>مشاركة</span>
+                                        </button>
+                                    </div>
                                     <SocialButton
                                         type="whatsapp"
                                         onClick={cart.length > 0 ? handleShare : undefined}
-                                        label="إرسال واتساب"
+                                        label="إرسال عبر واتساب"
                                         size="md"
-                                        className={`flex-1 py-4 rounded-lg ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                        className={`w-full py-3 rounded-lg ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                     />
                                 </div>
                                 <p className="text-center text-[11px] text-slate-400">تم إنشاء الطلب تلقائياً</p>
