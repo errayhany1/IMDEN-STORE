@@ -6,10 +6,15 @@ import { sendToTelegram } from '../utils/telegramApi';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
-    const { cart, darkMode, clearCart } = useStore();
+    const { cart, darkMode, clearCart, customerInfo, setCustomerInfo } = useStore();
     const dm = darkMode;
 
-    const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
+    // Pre-fill form with saved customer info
+    const [formData, setFormData] = useState({
+        name: customerInfo?.name || '',
+        phone: customerInfo?.phone || '',
+        address: customerInfo?.address || ''
+    });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -32,6 +37,9 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         setSuccessMessage('');
 
         try {
+            // Save the customer info to the global store (localStorage)
+            setCustomerInfo(formData);
+
             // Generate PDF file but do not save to disk
             const pdfFile = await generatePDF(cart, false);
 
@@ -50,7 +58,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             setTimeout(() => {
                 clearCart();
                 onClose();
-                setFormData({ name: '', phone: '', address: '' });
                 setSuccessMessage('');
             }, 3000);
 

@@ -6,6 +6,7 @@ const useStore = create(
         (set) => ({
             products: [],
             cart: [],
+            customerInfo: { name: '', phone: '', address: '' },
             categories: [
                 'All',
                 'Chargers',
@@ -35,6 +36,8 @@ const useStore = create(
             setProducts: (data) => {
                 set({ products: data });
             },
+
+            setCustomerInfo: (info) => set({ customerInfo: info }),
 
             setSearchQuery: (query) => set({ searchQuery: query }),
 
@@ -117,8 +120,9 @@ const useStore = create(
             name: 'wholesale-store-storage', // unique name
             partialize: (state) => ({
                 cart: state.cart,
+                customerInfo: state.customerInfo,
                 categoryImages: state.categoryImages
-            }), // Only persist cart and category images
+            }), // Only persist cart, customer info, and category images
         }
     )
 );
