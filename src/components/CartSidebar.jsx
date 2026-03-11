@@ -108,7 +108,7 @@ const CartSidebar = () => {
                                 ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
                         >
                             {/* Header */}
-                            <div className={`flex items-center justify-between px-6 py-5 border-b z-10 ${dm ? 'border-gray-700' : 'border-slate-100'}`} dir="rtl">
+                            <div className={`flex items-center justify-between px-4 sm:px-6 py-3 border-b z-10 ${dm ? 'border-gray-700' : 'border-slate-100'}`} dir="rtl">
                                 <div className="flex items-baseline gap-2">
                                     <h2 className={`text-xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>عربة التسوق</h2>
                                     <span className="text-sm font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
@@ -133,11 +133,11 @@ const CartSidebar = () => {
                             </div>
 
                             {/* Items */}
-                            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+                            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 space-y-3">
                                 {cart.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
-                                        <p>عربة التسوق فارغة</p>
-                                        <button onClick={toggleCart} className="text-primary font-semibold hover:underline">
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-3">
+                                        <p className="text-sm">عربة التسوق فارغة</p>
+                                        <button onClick={toggleCart} className="text-primary text-sm font-semibold hover:underline">
                                             تصفح المنتجات
                                         </button>
                                     </div>
@@ -148,30 +148,31 @@ const CartSidebar = () => {
                                         const displayImage = liveProduct?.image || item.image;
 
                                         return (
-                                            <div key={item.id} className="group flex gap-4 flex-row-reverse">
+                                            <div key={item.id} className={`group flex gap-3 flex-row-reverse pb-3 border-b border-dashed last:border-b-0 ${dm ? 'border-gray-700' : 'border-slate-200'}`}>
                                                 {/* Thumbnail — click to zoom */}
                                                 <div
-                                                    className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-100 cursor-zoom-in"
+                                                    className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden bg-slate-100 border border-slate-100 cursor-zoom-in"
                                                     onClick={() => { if (displayImage) { setModalImage(displayImage); setModalAlt(item.name); } }}
                                                 >
                                                     {displayImage ? (
                                                         <img src={displayImage} alt={item.name} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">بدون صورة</div>
+                                                        <div className="w-full h-full flex items-center justify-center text-[10px] sm:text-xs text-slate-400">بدون صورة</div>
                                                     )}
                                                 </div>
 
-                                                <div className="flex-1 flex flex-col justify-between py-0.5 text-right">
+                                                <div className="flex-1 flex flex-col justify-between py-0 text-right">
                                                     <div>
-                                                        <div className="flex justify-between items-start gap-2 flex-row-reverse">
-                                                            <h3 className={`font-semibold leading-tight line-clamp-2 ${dm ? 'text-white' : 'text-slate-900'}`}>{item.name}</h3>
-                                                            <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                                                                <Trash2 size={18} />
+                                                        <div className="flex justify-between items-start gap-1 sm:gap-2 flex-row-reverse">
+                                                            <h3 className={`font-semibold leading-tight text-sm sm:text-base line-clamp-2 ${dm ? 'text-white' : 'text-slate-900'}`}>{item.name}</h3>
+                                                            <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1 -m-1">
+                                                                <Trash2 size={16} />
                                                             </button>
                                                         </div>
-                                                        <p className="text-xs text-slate-500 mt-1">Ref: {item.ref}</p>
+                                                        <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">Ref: {item.ref}</p>
                                                     </div>
-                                                    <div className="flex items-center justify-between mt-3 flex-row-reverse">
+                                                    <div className="flex items-center justify-between mt-1.5 flex-row-reverse">
+
                                                         <div className={`flex items-center border rounded-lg ${dm ? 'border-gray-600 bg-gray-800' : 'border-slate-200 bg-slate-50'}`}>
                                                             {/* -5 */}
                                                             <button
@@ -214,7 +215,7 @@ const CartSidebar = () => {
                             </div>
 
                             {/* Footer */}
-                            <div className={`border-t p-6 space-y-4 ${dm ? 'border-gray-700 bg-gray-900' : 'border-slate-200 bg-slate-50'}`}>
+                            <div className={`border-t p-4 space-y-3 ${dm ? 'border-gray-700 bg-gray-900' : 'border-slate-200 bg-slate-50'}`}>
                                 <div className="flex justify-between items-end flex-row-reverse">
                                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">المجموع الكلي</span>
                                     <span className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{subtotal.toFixed(2)} DH</span>
@@ -223,7 +224,7 @@ const CartSidebar = () => {
                                     <button
                                         onClick={() => setIsCheckoutOpen(true)}
                                         disabled={cart.length === 0}
-                                        className={`w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                        className={`w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
                                         <span className="text-lg">إتمام الطلب الآن</span>
                                     </button>
@@ -234,12 +235,12 @@ const CartSidebar = () => {
                                             onClick={cart.length > 0 ? handleShare : undefined}
                                             label="واتساب"
                                             size="sm"
-                                            className={`flex-1 py-2.5 rounded-lg text-xs shadow-sm font-semibold justify-center ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                            className={`flex-1 py-2 rounded-lg text-xs shadow-sm font-semibold justify-center ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                         />
                                         <button
                                             onClick={() => handlePDF()}
                                             disabled={cart.length === 0}
-                                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2.5 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                                         >
                                             <Download size={14} />
                                             <span>PDF</span>
@@ -247,7 +248,7 @@ const CartSidebar = () => {
                                         <button
                                             onClick={handleNativeShare}
                                             disabled={cart.length === 0}
-                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs overflow-hidden relative"
+                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs overflow-hidden relative"
                                         >
                                             <Share2 size={14} className="animate-pulse" />
                                             <span>مشاركة</span>
@@ -255,7 +256,6 @@ const CartSidebar = () => {
                                         </button>
                                     </div>
                                 </div>
-                                <p className="text-center text-[11px] text-slate-400">تم إنشاء الطلب تلقائياً</p>
                             </div>
                         </motion.aside>
                     </>
