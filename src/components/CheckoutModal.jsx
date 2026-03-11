@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { sendToTelegram } from '../utils/telegramApi';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, darkMode, clearCart } = useStore();
@@ -34,9 +35,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             // Generate PDF file but do not save to disk
             const pdfFile = await generatePDF(cart, false);
 
-            const botToken = '8652359538:AAGqVf2MpKHGEAhYuZ1rD5ekk-J3XqBXfqk';
-            const chatId = '-1003868832013';
-
             const caption = `🚨 **طلبية جديدة (IMDEN TECHNOLOGY)** 🚨\n\n` +
                 `👤 **الاسم:** ${formData.name}\n` +
                 `📞 **رقم الهاتف:** ${formData.phone}\n` +
@@ -45,20 +43,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 `💰 **المجموع الكلي:** ${subtotal.toFixed(2)} DH\n\n` +
                 `📄 _مرفق مع هذه الرسالة ملف PDF يحتوي على تفاصيل المنتجات._`;
 
-            const formDataObject = new FormData();
-            formDataObject.append('chat_id', chatId);
-            formDataObject.append('document', pdfFile);
-            formDataObject.append('caption', caption);
-            formDataObject.append('parse_mode', 'Markdown');
-
-            const response = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-                method: 'POST',
-                body: formDataObject
-            });
-
-            if (!response.ok) {
-                throw new Error('فشل إرسال الطلبية.');
-            }
+            await sendToTelegram(pdfFile, caption);
 
             setSuccessMessage('تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.');
             // Clear cart and clear form after a delay

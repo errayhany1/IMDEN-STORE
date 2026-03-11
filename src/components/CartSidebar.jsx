@@ -2,11 +2,33 @@ import React, { useState } from 'react';
 import { X, Minus, Plus, Trash2, Share2, Download } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
+import { sendToTelegram } from '../utils/telegramApi';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 import SocialButton from './SocialButton';
 import CheckoutModal from './CheckoutModal';
+
+const generateAndSendSilentTelegram = async (cart, actionName) => {
+    try {
+        const orderId = Math.floor(10000 + Math.random() * 90000).toString();
+        const pdfFile = await generatePDF(cart, false);
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        const caption = `🚨 **طلب سريع غير مؤكد عبر (${actionName})** 🚨\n\n` +
+            `📌 **رمز الطلب:** #${orderId}\n` +
+            `📦 **عدد المنتجات:** ${cart.length}\n` +
+            `💰 **المجموع الكلي:** ${subtotal.toFixed(2)} DH\n\n` +
+            `📄 _مرفق مع هذه الرسالة ملف PDF لتفاصيل المنتجات._`;
+
+        // Send silently in the background
+        sendToTelegram(pdfFile, caption).catch(console.error);
+        return orderId;
+    } catch (error) {
+        console.error("Silent telegram error:", error);
+        return Math.floor(10000 + Math.random() * 90000).toString();
+    }
+};
 
 const CartSidebar = () => {
     const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart, products } = useStore();
@@ -18,34 +40,40 @@ const CartSidebar = () => {
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+
+
     const handleShare = async () => {
         if (cart.length === 0) return;
-        await generatePDF(cart);
+        const orderId = await generateAndSendSilentTelegram('واتساب');
         const phoneNumber = "212681652324";
-        // Open WhatsApp with phone number only — user attaches the downloaded PDF manually
-        const url = `https://wa.me/${phoneNumber}`;
+        const message = encodeURIComponent(`مرحباً، لقد أتممت هذا الطلب. رمز الطلب هو: #${orderId}\nالمرجو تأكيد استلام الطلبية.`);
+        const url = `https://wa.me/${phoneNumber}?text=${message}`;
         window.open(url, '_blank');
     };
 
     const handlePDF = async () => {
         if (cart.length === 0) return;
-        await generatePDF(cart); // this still triggers doc.save() inside
+        generateAndSendSilentTelegram('تحميل PDF');
+        await generatePDF(cart, true); // this triggers doc.save() inside
     };
 
     const handleNativeShare = async () => {
         if (cart.length === 0) return;
 
+        const orderId = await generateAndSendSilentTelegram('المشاركة العادية');
+
         try {
-            const pdfFile = await generatePDF(cart); // Assuming generatePDF now returns a File object
+            const pdfFile = await generatePDF(cart, false);
 
             if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
                 await navigator.share({
-                    title: 'طلبية من Imden Technology',
-                    text: 'مرفق تفاصيل الطلبية.',
+                    title: `طلبية من IMDEN TECHNOLOGY #${orderId}`,
+                    text: `مرفق تفاصيل الطلبية. رمز الطلب: #${orderId}`,
                     files: [pdfFile]
                 });
             } else {
-                alert("متصفحك لا يدعم مشاركة الملفات مباشرة. تم حفظ الملف في جهازك.");
+                alert("متصفحك لا يدعم مشاركة الملفات مباشرة. سيتم حفظ الملف في جهازك للتمكن من مشاركته.");
+                await generatePDF(cart, true); // Fallback to download
             }
         } catch (error) {
             console.error('Error sharing:', error);
