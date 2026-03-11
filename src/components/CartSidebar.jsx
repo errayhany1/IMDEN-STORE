@@ -191,40 +191,41 @@ const CartSidebar = () => {
                                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">المجموع الكلي</span>
                                     <span className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{subtotal.toFixed(2)} DH</span>
                                 </div>
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={() => setIsCheckoutOpen(true)}
+                                        disabled={cart.length === 0}
+                                        className={`w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                    >
+                                        <span className="text-lg">إتمام الطلب الآن</span>
+                                    </button>
+
                                     <div className="flex gap-2">
+                                        <SocialButton
+                                            type="whatsapp"
+                                            onClick={cart.length > 0 ? handleShare : undefined}
+                                            label="واتساب"
+                                            size="sm"
+                                            className={`flex-1 py-2.5 rounded-lg text-xs shadow-sm font-semibold justify-center ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                        />
                                         <button
                                             onClick={() => handlePDF()}
                                             disabled={cart.length === 0}
-                                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2.5 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                                         >
-                                            <Download size={18} />
-                                            <span>PDF تحميل</span>
+                                            <Download size={14} />
+                                            <span>PDF</span>
                                         </button>
                                         <button
                                             onClick={handleNativeShare}
                                             disabled={cart.length === 0}
-                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-3 rounded-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm overflow-hidden relative"
+                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs overflow-hidden relative"
                                         >
-                                            <Share2 size={18} className="animate-pulse" />
+                                            <Share2 size={14} className="animate-pulse" />
                                             <span>مشاركة</span>
                                             <span className="absolute inset-0 bg-white/20 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-0 rounded-lg"></span>
                                         </button>
                                     </div>
-                                    <button
-                                        onClick={() => setIsCheckoutOpen(true)}
-                                        disabled={cart.length === 0}
-                                        className={`w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
-                                    >
-                                        <span>إتمام الطلب الآن</span>
-                                    </button>
-                                    <SocialButton
-                                        type="whatsapp"
-                                        onClick={cart.length > 0 ? handleShare : undefined}
-                                        label="إرسال عبر واتساب"
-                                        size="md"
-                                        className={`w-full py-3 rounded-lg ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
-                                    />
                                 </div>
                                 <p className="text-center text-[11px] text-slate-400">تم إنشاء الطلب تلقائياً</p>
                             </div>
