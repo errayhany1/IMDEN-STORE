@@ -6,6 +6,7 @@ import { generatePDF } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageModal from './ImageModal';
 import SocialButton from './SocialButton';
+import CheckoutModal from './CheckoutModal';
 
 const CartSidebar = () => {
     const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart, products } = useStore();
@@ -13,6 +14,7 @@ const CartSidebar = () => {
     const [modalImage, setModalImage] = useState(null);
     const [modalAlt, setModalAlt] = useState('');
     const [confirmClear, setConfirmClear] = useState(false);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -209,6 +211,13 @@ const CartSidebar = () => {
                                             <span className="absolute inset-0 bg-white/20 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-0 rounded-lg"></span>
                                         </button>
                                     </div>
+                                    <button
+                                        onClick={() => setIsCheckoutOpen(true)}
+                                        disabled={cart.length === 0}
+                                        className={`w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                    >
+                                        <span>إتمام الطلب الآن</span>
+                                    </button>
                                     <SocialButton
                                         type="whatsapp"
                                         onClick={cart.length > 0 ? handleShare : undefined}
@@ -268,6 +277,12 @@ const CartSidebar = () => {
                     </div>
                 </div>
             )}
+
+            {/* Checkout Form Modal */}
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+            />
         </>
     );
 };

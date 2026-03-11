@@ -19,7 +19,7 @@ const getDataUrl = (url) => {
     });
 };
 
-export const generatePDF = async (cartItems) => {
+export const generatePDF = async (cartItems, saveToDisk = true) => {
     const doc = new jsPDF();
 
     // Load images first
@@ -32,7 +32,7 @@ export const generatePDF = async (cartItems) => {
     // Header
     doc.setFontSize(22);
     doc.setTextColor(25, 127, 230); // Primary Blue
-    doc.text("Wholesale Order", 14, 20);
+    doc.text("IMDEN TECHNOLOGY", 14, 20);
 
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -82,7 +82,6 @@ export const generatePDF = async (cartItems) => {
                 if (item && item.base64Img) {
                     try {
                         const dim = data.cell.height - 4; // Padding
-                        const textPos = data.cell.getTextPos();
                         doc.addImage(item.base64Img, 'JPEG', data.cell.x + 2, data.cell.y + 2, dim, dim);
                     } catch (e) {
                         // Ignore image errors
@@ -95,10 +94,14 @@ export const generatePDF = async (cartItems) => {
             }
         }
     });
-    const fileName = `IMDEN_TECHNOLOGY_0681652324_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fileName);
 
-    // Return the File object for Web Share API
+    const fileName = `IMDEN_TECHNOLOGY_0681652324_${new Date().toISOString().slice(0, 10)}.pdf`;
+    
+    if (saveToDisk) {
+        doc.save(fileName);
+    }
+
+    // Return the File object for Web Share API or Telegram Bot
     const pdfBlob = doc.output('blob');
     return new File([pdfBlob], fileName, { type: 'application/pdf' });
 };

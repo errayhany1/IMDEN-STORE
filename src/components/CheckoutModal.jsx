@@ -1,0 +1,190 @@
+import React, { useState } from 'react';
+import { X, Send } from 'lucide-react';
+import useStore from '../store/useStore';
+import { generatePDF } from '../utils/pdfGenerator';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const CheckoutModal = ({ isOpen, onClose }) => {
+    const { cart, darkMode, clearCart } = useStore();
+    const dm = darkMode;
+
+    const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const handleChange = (e) => {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.name || !formData.phone || !formData.address) {
+            setErrorMessage('المرجو إدخال جميع المعلومات.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setErrorMessage('');
+        setSuccessMessage('');
+
+        try {
+            // Generate PDF file but do not save to disk
+            const pdfFile = await generatePDF(cart, false);
+
+            const botToken = '8652359538:AAGqVf2MpKHGEAhYuZ1rD5ekk-J3XqBXfqk';
+            const chatId = '-1003868832013';
+
+            const caption = `🚨 **طلبية جديدة (IMDEN TECHNOLOGY)** 🚨\n\n` +
+                `👤 **الاسم:** ${formData.name}\n` +
+                `📞 **رقم الهاتف:** ${formData.phone}\n` +
+                `📍 **العنوان:** ${formData.address}\n\n` +
+                `📦 **عدد المنتجات:** ${cart.length}\n` +
+                `💰 **المجموع الكلي:** ${subtotal.toFixed(2)} DH\n\n` +
+                `📄 _مرفق مع هذه الرسالة ملف PDF يحتوي على تفاصيل المنتجات._`;
+
+            const formDataObject = new FormData();
+            formDataObject.append('chat_id', chatId);
+            formDataObject.append('document', pdfFile);
+            formDataObject.append('caption', caption);
+            formDataObject.append('parse_mode', 'Markdown');
+
+            const response = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+                method: 'POST',
+                body: formDataObject
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل إرسال الطلبية.');
+            }
+
+            setSuccessMessage('تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.');
+            // Clear cart and clear form after a delay
+            setTimeout(() => {
+                clearCart();
+                onClose();
+                setFormData({ name: '', phone: '', address: '' });
+                setSuccessMessage('');
+            }, 3000);
+
+        } catch (error) {
+            console.error('Checkout error:', error);
+            setErrorMessage('حدث خطأ أثناء إرسال الطلبية. المرجو المحاولة مرة أخرى.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <AnimatePresence>
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                    onClick={onClose}
+                />
+
+                <motion.div
+                    initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                    className={`relative w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 z-10 overflow-hidden flex flex-col ${dm ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}
+                    dir="rtl"
+                >
+                    <button
+                        onClick={onClose}
+                        className={`absolute top-4 left-4 p-2 rounded-full transition-colors ${dm ? 'text-gray-400 hover:bg-gray-700 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                    >
+                        <X size={20} />
+                    </button>
+
+                    <h2 className={`text-2xl font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>إتمام الطلب</h2>
+                    <p className={`text-sm mb-6 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                        المرجو إدخال معلوماتك الشخصية لتأكيد إرسال الطلبية.
+                    </p>
+
+                    {successMessage ? (
+                        <div className="bg-green-100 text-green-800 p-4 rounded-xl text-center font-medium my-4 animate-pulse">
+                            {successMessage}
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                            <div>
+                                <label className={`block text-sm font-semibold mb-1.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>الاسم الكامل <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${dm ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:border-primary' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-primary focus:bg-white'}`}
+                                    placeholder="أدخل اسمك الكامل"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={`block text-sm font-semibold mb-1.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>رقم الهاتف <span className="text-red-500">*</span></label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    required
+                                    dir="ltr"
+                                    className={`w-full px-4 py-3 text-right rounded-xl border focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${dm ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:border-primary' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-primary focus:bg-white'}`}
+                                    placeholder="06 XX XX XX XX"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={`block text-sm font-semibold mb-1.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>المدينة والعنوان <span className="text-red-500">*</span></label>
+                                <textarea
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    required
+                                    rows="3"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none ${dm ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:border-primary' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-primary focus:bg-white'}`}
+                                    placeholder="أدخل مدينتك وعنوانك بالتفصيل"
+                                    disabled={isSubmitting}
+                                ></textarea>
+                            </div>
+
+                            {errorMessage && (
+                                <p className="text-red-500 text-sm font-medium">{errorMessage}</p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || cart.length === 0}
+                                className="mt-4 w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>جاري الإرسال...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>تأكيد الطلبية</span>
+                                        <Send size={18} className="mr-2" style={{ transform: 'rotate(180deg)' }} />
+                                    </>
+                                )}
+                            </button>
+                        </form>
+                    )}
+                </motion.div>
+            </div>
+        </AnimatePresence>
+    );
+};
+
+export default CheckoutModal;
