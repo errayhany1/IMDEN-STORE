@@ -18,7 +18,7 @@ const Header = () => {
 
                 {/* Logo */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-lg">I</div>
+                    <img src="/logo.jpg" alt="IMDEN TECHNOLOGY" className="h-8 w-8 sm:h-10 sm:w-10 rounded shadow-sm object-cover" />
                     <span className={`hidden sm:block text-xl font-bold tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}>
                         IMDEN <span className="text-primary">TECHNOLOGY</span>
                     </span>

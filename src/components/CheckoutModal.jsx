@@ -27,8 +27,16 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name || !formData.phone || !formData.address) {
-            setErrorMessage('المرجو إدخال جميع المعلومات.');
+        
+        // Strict Validation
+        if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
+            setErrorMessage('المرجو إدخال جميع المعلومات بشكل صحيح.');
+            return;
+        }
+
+        const phoneRegex = /^(06|07)\d{8}$/;
+        if (!phoneRegex.test(formData.phone.trim().replace(/\s/g, ''))) {
+            setErrorMessage('المرجو إدخال رقم هاتف صحيح (يجب أن يتكون من 10 أرقام ويبدأ بـ 06 أو 07)');
             return;
         }
 

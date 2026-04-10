@@ -8,9 +8,13 @@ const ProductGrid = () => {
     const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory, searchQuery, gridColumns } = useStore();
 
     const [displayLimit, setDisplayLimit] = React.useState(20);
+    const hasFetched = React.useRef(false);
 
     useEffect(() => {
         const loadProducts = async () => {
+            if (hasFetched.current) return;
+            hasFetched.current = true;
+            
             setLoading(true);
             setProducts([]); // Clear existing
 
@@ -26,6 +30,8 @@ const ProductGrid = () => {
         // Only load if empty, to prevent reloading when navigating back to this component
         if (products.length === 0) {
             loadProducts();
+        } else {
+            hasFetched.current = true;
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
