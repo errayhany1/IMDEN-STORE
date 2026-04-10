@@ -26,8 +26,8 @@ const FeedbackModal = ({ isOpen, onClose }) => {
         setSuccessMessage('');
 
         try {
-            const caption = `💡 **رسالة أو اقتراح جديد من الموقع** 💡\n\n` +
-                `💬 **الرسالة:**\n${message}`;
+            const caption = `🛒 **طلب توفير منتج جديد** 🛒\n\n` +
+                `📦 **المنتجات المطلوبة:**\n${message}`;
 
             // Pass a simple text placeholder since sendToTelegram usually expects a file for the first arg. 
             // Wait, sendToTelegram function signature is (file, caption). If we don't have a file, it might crash.
@@ -91,9 +91,9 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                         <X size={20} />
                     </button>
 
-                    <h2 className={`text-2xl font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>رأيك يهمنا</h2>
+                    <h2 className={`text-xl font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>طلب منتجات غير متوفرة</h2>
                     <p className={`text-sm mb-6 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
-                        هل واجهتك مشكلة في الموقع؟ أو لديك اقتراح لتحسينه؟ نحن نستمع لك دائماً.
+                        اكتب لنا أسماء المنتجات أو الأجهزة التي تبحث عنها، وسنقوم بالبحث عنها واستيرادها لك بأفضل أسعار الجملة.
                     </p>
 
                     {successMessage ? (
@@ -109,7 +109,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                                     required
                                     rows="5"
                                     className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none ${dm ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:border-primary' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-primary focus:bg-white'}`}
-                                    placeholder="اكتب شكواك أو اقتراحك هنا..."
+                                    placeholder="مثال: أبحث عن طابعات صغيرة، أو أجهزة أندرويد بوكس..."
                                     disabled={isSubmitting}
                                 />
                             </div>

@@ -8,19 +8,21 @@ const CategoryRail = () => {
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     return (
-        <section className="mb-6 mt-4 px-2">
-            <div className={`p-6 rounded-2xl border text-center shadow-sm flex flex-col items-center justify-center gap-3 transition-colors
+        <section className="mb-4 mt-2 px-2">
+            <div className={`p-4 rounded-xl border text-center shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors
                 ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-primary/5 border-primary/20 text-slate-800'}`}>
-                <h2 className="text-xl font-bold">مرحباً بك في متجر IMDEN TECHNOLOGY</h2>
-                <p className={`text-sm max-w-md ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
-                    نحن نعمل على تحديث وتطوير الأقسام لتقديم أفضل تجربة لكم. نرحب بجميع اقتراحاتكم وشكاويكم لتطوير المتجر.
-                </p>
+                <div className="text-right flex-1">
+                    <h2 className="text-base sm:text-lg font-bold">هل تبحث عن منتج غير متوفر في السوق؟</h2>
+                    <p className={`text-xs sm:text-sm mt-1 ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                        اكتب لنا أسماء المنتجات أو الأجهزة التي تبحث عنها وسنقوم باستيرادها وتوفيرها لك بأفضل الأسعار.
+                    </p>
+                </div>
                 <button 
                     onClick={() => setIsFeedbackOpen(true)}
-                    className="mt-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-6 rounded-xl flex items-center gap-2 transition-transform active:scale-95 shadow-md"
+                    className="w-full sm:w-auto shrink-0 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 text-sm rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-sm"
                 >
-                    <MessageSquarePlus size={18} />
-                    أرسل اقتراحأ أو شكوى
+                    <MessageSquarePlus size={16} />
+                    اطلب منتجك الآن
                 </button>
             </div>
 
