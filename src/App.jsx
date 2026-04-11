@@ -6,6 +6,7 @@ import CartSidebar from './components/CartSidebar';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import FeaturedStrip from './components/FeaturedStrip';
 import NotificationPrompt from './components/NotificationPrompt';
+import AIChatWidget from './components/AIChatWidget';
 import useStore from './store/useStore';
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
       {/* Overlays */}
       <CartSidebar />
       <FloatingWhatsApp />
+      <AIChatWidget />
     </div>
   );
 }
