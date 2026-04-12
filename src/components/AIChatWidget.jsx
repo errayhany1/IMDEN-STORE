@@ -71,24 +71,30 @@ ${catalogStr}
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemini-2.5-flash', // Fast and cheap default parameter
+                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free', // Using a free model layer to prevent credit errors!
                     messages: apiMessages,
                     temperature: 0.7,
                 })
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to fetch AI response');
+                console.error("OpenRouter API Error:", data);
+                let errorMsg = 'حدث خطأ في الاتصال بالخادم. المرجو المحاول لاحقاً.';
+                if (data.error && data.error.message) {
+                    errorMsg = `الخادم رفض الطلب: ${data.error.message}`;
+                }
+                throw new Error(errorMsg);
             }
 
-            const data = await response.json();
             const aiReply = data.choices[0].message.content;
 
             setMessages(prev => [...prev, { role: 'assistant', content: aiReply }]);
 
         } catch (error) {
             console.error('AI Chat Error:', error);
-            setMessages(prev => [...prev, { role: 'assistant', content: 'عذراً، حدث خطأ في الاتصال بالخادم. المرجو المحاولة لاحقاً.' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: error.message || 'عذراً، حدث خطأ في الاتصال بالخادم.' }]);
         } finally {
             setIsTyping(false);
         }

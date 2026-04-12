@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg'],
+      includeAssets: ['logo.jpg'],
       manifest: {
         name: 'IMDEN TECHNOLOGY',
         short_name: 'IMDEN',
@@ -23,9 +23,9 @@ export default defineConfig({
         lang: 'ar',
         icons: [
           {
-            src: 'vite.svg',
+            src: 'logo.jpg',
             sizes: '192x192 512x512',
-            type: 'image/svg+xml',
+            type: 'image/jpeg',
             purpose: 'any maskable'
           }
         ]
