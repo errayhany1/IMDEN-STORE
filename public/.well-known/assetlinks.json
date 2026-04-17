@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "online.imdenmanadger.twa",
+        "sha256_cert_fingerprints": ["36:BC:80:E9:6D:BD:E8:3B:97:39:F6:06:98:DB:76:F0:BF:23:08:99:1E:E2:97:69:D4:38:E2:A1:27:7B:C1:36"]
+      }
+    }]
