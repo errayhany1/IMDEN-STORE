@@ -45,7 +45,7 @@ const CartSidebar = () => {
     const handleShare = async () => {
         if (cart.length === 0) return;
         const orderId = await generateAndSendSilentTelegram('واتساب');
-        const phoneNumber = "212681652324";
+        const phoneNumber = "212664630566";
         const message = encodeURIComponent(`مرحباً، لقد أتممت هذا الطلب. رمز الطلب هو: #${orderId}\nالمرجو تأكيد استلام الطلبية.`);
         const url = `https://wa.me/${phoneNumber}?text=${message}`;
         window.open(url, '_blank');

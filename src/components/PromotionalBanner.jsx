@@ -2,7 +2,7 @@ import React from 'react';
 import SocialButton from './SocialButton';
 
 const TELEGRAM_URL = 'https://t.me/Imden_technology';
-const WA_NUMBER = '212681652324';
+const WA_NUMBER = '212664630566';
 
 const PromotionalBanner = () => {
     return (

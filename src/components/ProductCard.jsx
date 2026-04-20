@@ -70,7 +70,7 @@ const ProductCard = ({ product }) => {
                         </button>
                         <SocialButton
                             type="whatsapp"
-                            onClick={() => window.open(`https://wa.me/212681652324?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`, '_blank')}
+                            onClick={() => window.open(`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`, '_blank')}
                             iconOnly
                             size="sm"
                             className="rounded-lg"
