@@ -90,9 +90,21 @@ const ProductGrid = () => {
 
     if (isLoading && products.length === 0) {
         return (
-            <div className={gridClass + ' animate-pulse'}>
+            <div className={gridClass}>
                 {[...Array(8)].map((_, i) => (
-                    <div key={i} className="aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl" />
+                    <div key={i} className="rounded-xl shadow-sm border p-3 flex flex-col gap-3 animate-pulse bg-white border-slate-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div className="w-full aspect-[3/4] bg-slate-200 dark:bg-gray-700 rounded-lg"></div>
+                        <div className="flex justify-between items-center">
+                            <div className="h-5 bg-slate-200 dark:bg-gray-700 rounded w-1/4"></div>
+                            <div className="h-6 bg-slate-200 dark:bg-gray-700 rounded w-1/3"></div>
+                        </div>
+                        <div className="h-3 bg-slate-200 dark:bg-gray-700 rounded w-full mt-1"></div>
+                        <div className="h-3 bg-slate-200 dark:bg-gray-700 rounded w-2/3 ml-auto"></div>
+                        <div className="flex gap-2 flex-row-reverse mt-2">
+                            <div className="h-10 bg-slate-200 dark:bg-gray-700 flex-1 rounded-lg"></div>
+                            <div className="h-10 w-10 bg-slate-200 dark:bg-gray-700 rounded-lg"></div>
+                        </div>
+                    </div>
                 ))}
             </div>
         );

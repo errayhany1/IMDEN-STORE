@@ -32,12 +32,14 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
     // Header
     doc.setFontSize(22);
     doc.setTextColor(25, 127, 230); // Primary Blue
-    doc.text("IMDEN TECHNOLOGY", 14, 20);
+    doc.text("IMDEN TECHNOLOGY", 14, 18);
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(100);
-    doc.text(`Date: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 28);
-    doc.text(`Items: ${cartItems.length}`, 14, 33);
+    doc.text("المتجر الأول لبيع الإلكترونيات وإكسسوارات الهواتف بالجملة", 14, 24);
+    doc.text("Website: https://imden-technology.com | WhatsApp: +212 681 652 324", 14, 29);
+    doc.text(`تاريخ الطلبية: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 34);
+    doc.text(`مجموع الأسطر: ${cartItems.length}`, 14, 39);
 
     // Table Data
     const tableData = itemsWithImages.map(item => [
@@ -59,21 +61,25 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
     autoTable(doc, {
         head: [['Image', 'Ref', 'Product', 'Price', 'Qty', 'Total']],
         body: tableData,
-        startY: 40,
+        startY: 44,
         theme: 'grid',
         headStyles: {
             fillColor: [25, 127, 230], // Primary Blue
             textColor: 255,
             fontStyle: 'bold',
-            halign: 'center'
+            halign: 'center',
+            fontSize: 9
+        },
+        bodyStyles: {
+            fontSize: 8
         },
         columnStyles: {
-            0: { cellWidth: 20, minCellHeight: 20, valign: 'middle' }, // Image column
-            1: { cellWidth: 25, valign: 'middle', halign: 'center' }, // Ref
+            0: { cellWidth: 14, minCellHeight: 14, valign: 'middle', halign: 'center' }, // Image column
+            1: { cellWidth: 22, valign: 'middle', halign: 'center' }, // Ref
             2: { valign: 'middle' }, // Product Name
-            3: { cellWidth: 25, valign: 'middle', halign: 'right' }, // Price
-            4: { cellWidth: 15, valign: 'middle', halign: 'center' }, // Qty
-            5: { cellWidth: 30, valign: 'middle', halign: 'right', fontStyle: 'bold' } // Total
+            3: { cellWidth: 20, valign: 'middle', halign: 'right' }, // Price
+            4: { cellWidth: 12, valign: 'middle', halign: 'center' }, // Qty
+            5: { cellWidth: 25, valign: 'middle', halign: 'right', fontStyle: 'bold' } // Total
         },
         footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
         didDrawCell: (data) => {
@@ -81,8 +87,8 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
                 const item = itemsWithImages[data.row.index];
                 if (item && item.base64Img) {
                     try {
-                        const dim = data.cell.height - 4; // Padding
-                        doc.addImage(item.base64Img, 'JPEG', data.cell.x + 2, data.cell.y + 2, dim, dim);
+                        const dim = 12; // Tightly fit image within 14x14 cell
+                        doc.addImage(item.base64Img, 'JPEG', data.cell.x + 1, data.cell.y + 1, dim, dim);
                     } catch (e) {
                         // Ignore image errors
                     }
