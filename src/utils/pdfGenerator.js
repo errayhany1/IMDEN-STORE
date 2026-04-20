@@ -36,16 +36,16 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
 
     doc.setFontSize(9);
     doc.setTextColor(100);
-    doc.text("المتجر الأول لبيع الإلكترونيات وإكسسوارات الهواتف بالجملة", 14, 24);
+    doc.text("Premier Magasin de Vente en Gros d'Electronique au Maroc", 14, 24);
     doc.text("Website: https://imden-technology.com | WhatsApp: +212 681 652 324", 14, 29);
-    doc.text(`تاريخ الطلبية: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 34);
-    doc.text(`مجموع الأسطر: ${cartItems.length}`, 14, 39);
+    doc.text(`Date de commande: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 34);
+    doc.text(`Total des articles: ${cartItems.length}`, 14, 39);
 
     // Table Data
     const tableData = itemsWithImages.map(item => [
         '', // Image column
         item.ref || 'N/A',
-        item.name,
+        item.name || 'Produit sans nom',
         `${item.price} DH`,
         item.quantity,
         `${(item.price * item.quantity).toFixed(2)} DH`
@@ -71,10 +71,11 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
             fontSize: 9
         },
         bodyStyles: {
-            fontSize: 8
+            fontSize: 8,
+            cellPadding: 1 // Tighten internal cell padding
         },
         columnStyles: {
-            0: { cellWidth: 14, minCellHeight: 14, valign: 'middle', halign: 'center' }, // Image column
+            0: { cellWidth: 14, minCellHeight: 10, valign: 'middle', halign: 'center' }, // Compressed Image column
             1: { cellWidth: 22, valign: 'middle', halign: 'center' }, // Ref
             2: { valign: 'middle' }, // Product Name
             3: { cellWidth: 20, valign: 'middle', halign: 'right' }, // Price
@@ -87,8 +88,8 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
                 const item = itemsWithImages[data.row.index];
                 if (item && item.base64Img) {
                     try {
-                        const dim = 12; // Tightly fit image within 14x14 cell
-                        doc.addImage(item.base64Img, 'JPEG', data.cell.x + 1, data.cell.y + 1, dim, dim);
+                        const dim = 8; // Compressed image dimension
+                        doc.addImage(item.base64Img, 'JPEG', data.cell.x + 3, data.cell.y + 1, dim, dim);
                     } catch (e) {
                         // Ignore image errors
                     }
