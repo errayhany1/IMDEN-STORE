@@ -51,6 +51,15 @@ const ProductCard = ({ product }) => {
                         </div>
                     </div>
 
+                    {product.name && product.name.trim() !== '' && (
+                        <div 
+                            className={`text-right text-xs font-medium line-clamp-2 leading-relaxed ${dm ? 'text-gray-300' : 'text-slate-600'}`} 
+                            title={product.name}
+                        >
+                            {product.name}
+                        </div>
+                    )}
+
                     <div className="flex gap-2 flex-row-reverse">
                         <button
                             onClick={() => addToCart(product)}
