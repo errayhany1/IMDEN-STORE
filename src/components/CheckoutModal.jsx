@@ -6,13 +6,13 @@ import { sendToTelegram } from '../utils/telegramApi';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
-    const { cart, darkMode, clearCart, customerInfo, setCustomerInfo } = useStore();
+    const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user } = useStore();
     const dm = darkMode;
 
-    // Pre-fill form with saved customer info
+    // Pre-fill form with saved customer info or Firebase user data
     const [formData, setFormData] = useState({
-        name: customerInfo?.name || '',
-        phone: customerInfo?.phone || '',
+        name: customerInfo?.name || user?.displayName || '',
+        phone: customerInfo?.phone || user?.phoneNumber || '',
         address: customerInfo?.address || ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);

@@ -7,6 +7,8 @@ const useStore = create(
             products: [],
             cart: [],
             customerInfo: { name: '', phone: '', address: '' },
+            user: null, // Firebase user object
+            isAuthModalOpen: false,
             categories: [
                 'All',
                 'Chargers',
@@ -32,6 +34,9 @@ const useStore = create(
 
             categoryImages: {}, // Stores category images: { "Chargers": "url", ... }
             searchQuery: "",
+
+            setUser: (user) => set({ user }),
+            setAuthModalOpen: (isOpen) => set({ isAuthModalOpen: isOpen }),
 
             setProducts: (data) => {
                 set({ products: data });

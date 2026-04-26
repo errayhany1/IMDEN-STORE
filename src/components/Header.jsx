@@ -4,7 +4,7 @@ import useStore from '../store/useStore';
 import DarkModeToggle from './DarkModeToggle';
 
 const Header = () => {
-    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns } = useStore();
+    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     const dm = darkMode;
@@ -56,12 +56,26 @@ const Header = () => {
                     <DarkModeToggle />
 
                     {/* Account */}
-                    <button
-                        className={`p-2 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
-                        aria-label="الحساب"
-                    >
-                        <User size={22} />
-                    </button>
+                    {user ? (
+                        <div className="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" 
+                             onClick={() => {
+                                 if(window.confirm('هل تريد تسجيل الخروج؟')) {
+                                     import('../services/firebase').then(m => m.auth.signOut());
+                                 }
+                             }}
+                             title="تسجيل الخروج"
+                        >
+                            <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random`} alt="User" className="w-8 h-8 rounded-full shadow-sm border border-gray-200" />
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setAuthModalOpen(true)}
+                            className={`p-2 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                            aria-label="تسجيل الدخول"
+                        >
+                            <User size={22} />
+                        </button>
+                    )}
 
                     {/* Cart */}
                     <div className="relative cursor-pointer" onClick={toggleCart}>

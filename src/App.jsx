@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Header from './components/Header';
 import CategoryRail from './components/CategoryRail';
 import ProductGrid from './components/ProductGrid';
@@ -7,10 +7,22 @@ import FloatingWhatsApp from './components/FloatingWhatsApp';
 import FeaturedStrip from './components/FeaturedStrip';
 import NotificationPrompt from './components/NotificationPrompt';
 import AIChatWidget from './components/AIChatWidget';
+import AuthModal from './components/AuthModal';
 import useStore from './store/useStore';
+import { auth } from './services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 function App() {
-  const darkMode = useStore(s => s.darkMode);
+  const { darkMode, setUser } = useStore();
+
+  useEffect(() => {
+    // Listen for Firebase Auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, [setUser]);
+
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
       ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-background-light text-slate-800'}`}>
@@ -42,6 +54,7 @@ function App() {
       <CartSidebar />
       <FloatingWhatsApp />
       <AIChatWidget />
+      <AuthModal />
     </div>
   );
 }
