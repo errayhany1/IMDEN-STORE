@@ -53,20 +53,24 @@ export const fetchProducts = async (onChunk) => {
                 break;
             }
 
-            // Filter: Only show products where POSTEBL is exactly 'POSTEBL'
-            const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL');
+            // Filter: Show POSTEBL and NO POSTEBL
+            const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL' || record.POSTEBL === 'NO POSTEBL');
 
             // Map fields and extract category images
             const mappedChunk = visibleRecords.map(record => {
+                const isOutOfStock = record.POSTEBL === 'NO POSTEBL';
+                
                 const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
                 let imageUrl = null;
                 if (imageObj) {
-                    // Always use original high-res image for best quality
                     imageUrl = imageObj.signedUrl || imageObj.url;
                 }
 
                 // Resolve Category Name from ID
-                const categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+                let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+                if (isOutOfStock) {
+                    categoryId = 15; // Force to Out of Stock category
+                }
                 const categoryName = categoryMapping[categoryId] || "General";
 
                 // Extract Category Image if available and not yet found for this category

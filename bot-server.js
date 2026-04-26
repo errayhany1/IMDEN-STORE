@@ -162,6 +162,8 @@ async function processProduct(chatId, files, caption) {
   );
 }
 
+const userState = {};
+
 // ─── WEBHOOK ENDPOINT ──────────────────────────────────────────────────────
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
@@ -169,6 +171,51 @@ app.post('/webhook', async (req, res) => {
 
   try {
     const msg = update.message;
+
+    // ── 1. TEXT MESSAGES (Commands & States) ───────────────────────────────
+    if (msg && msg.text) {
+      const chatId = msg.chat.id;
+      const text = msg.text.trim();
+
+      if (text === '/start') {
+        await sendMessage(chatId, "أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الزر بالأسفل لإيقاف منتج معين.", {
+          keyboard: [[{ text: "❌ إيقاف منتج (نفد المخزون)" }]],
+          resize_keyboard: true,
+          persistent: true
+        });
+        return;
+      }
+
+      if (text === "❌ إيقاف منتج (نفد المخزون)" || text.startsWith("/stop")) {
+        userState[chatId] = 'AWAITING_REF';
+        await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد إيقافه:");
+        return;
+      }
+
+      if (userState[chatId] === 'AWAITING_REF') {
+        delete userState[chatId];
+        const sku = text;
+        
+        // Search NocoDB for SKU
+        const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records?where=(SKU,eq,${encodeURIComponent(sku)})`;
+        const { data } = await axios.get(url, { headers: { 'xc-token': NOCODB_TOKEN } });
+        
+        if (data.list && data.list.length > 0) {
+          const recordId = data.list[0].Id || data.list[0].id;
+          
+          await axios.patch(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, 
+            { Id: recordId, POSTEBL: 'NO POSTEBL' }, 
+            { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
+          );
+          await sendMessage(chatId, `✅ تم إيقاف المنتج (المرجع: ${sku}) بنجاح وتحويله إلى "نفد من المخزون".`);
+        } else {
+          await sendMessage(chatId, `❌ لم أتمكن من العثور على منتج يحمل المرجع: ${sku}\nتأكد من كتابته بشكل صحيح.`);
+        }
+        return;
+      }
+    }
+
+    // ── 2. PHOTO OR DOCUMENT MESSAGE ───────────────────────────────────────
     if (msg && (msg.photo || (msg.document && msg.document.mime_type?.startsWith('image/')))) {
       const chatId = msg.chat.id;
 
@@ -184,7 +231,6 @@ app.post('/webhook', async (req, res) => {
       const groupId = msg.media_group_id;
 
       if (groupId) {
-        // It's an album! Buffer the files for 3 seconds.
         if (!albumBuffer[groupId]) {
           albumBuffer[groupId] = {
             files: [],
@@ -200,11 +246,11 @@ app.post('/webhook', async (req, res) => {
         albumBuffer[groupId].files.push({ fileId, extName });
         if (msg.caption) albumBuffer[groupId].caption = msg.caption;
       } else {
-        // Single image
         await processProduct(chatId, [{ fileId, extName }], msg.caption);
       }
     }
-    // Category Button Press
+
+    // ── 3. CATEGORY BUTTON PRESS ───────────────────────────────────────────
     else if (update.callback_query) {
       const cb      = update.callback_query;
       const chatId  = cb.message.chat.id;
