@@ -104,21 +104,35 @@ async function downloadTelegramFile(fileId) {
 
 // Upload image to NocoDB and create a product row
 async function createNocoDBRow(productName, productSku, productPrice, imageBuffer, imageFileName) {
-  const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
-
-  // NocoDB expects multipart/form-data to upload a file attachment
+  // Step 1: Upload the file to NocoDB storage
+  const uploadUrl = `${NOCODB_URL}/api/v2/storage/upload`;
   const form = new FormData();
-  form.append('Title',       productName);
-  form.append('SKU',         productSku);
-  form.append('price',       String(productPrice));
-  form.append('Category_ID', '12');   // default: General
-  form.append('POSTEBL',     'POSTEBL');
-  form.append('Image1',      imageBuffer, { filename: imageFileName, contentType: 'image/jpeg' });
-
-  const { data } = await axios.post(url, form, {
+  form.append('file', imageBuffer, { filename: imageFileName, contentType: 'image/jpeg' });
+  
+  const uploadRes = await axios.post(uploadUrl, form, {
     headers: {
       'xc-token': NOCODB_TOKEN,
       ...form.getHeaders()
+    }
+  });
+  
+  const uploadedFiles = uploadRes.data; // Array of file objects
+
+  // Step 2: Create the record using JSON
+  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
+  const recordData = {
+    Title: productName,
+    SKU: productSku,
+    price: productPrice,
+    Category_ID: 12,
+    POSTEBL: 'POSTEBL',
+    Image1: uploadedFiles
+  };
+
+  const { data } = await axios.post(recordUrl, recordData, {
+    headers: {
+      'xc-token': NOCODB_TOKEN,
+      'Content-Type': 'application/json'
     }
   });
 
