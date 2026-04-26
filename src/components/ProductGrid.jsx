@@ -43,7 +43,7 @@ const ProductGrid = () => {
     }, [selectedCategory, searchQuery]);
 
     const filteredProducts = products.filter(p => {
-        const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+        const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock') || p.category === selectedCategory;
         let matchesSearch = true;
 
         if (searchQuery) {
