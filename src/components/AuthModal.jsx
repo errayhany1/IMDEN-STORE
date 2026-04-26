@@ -51,33 +51,9 @@ const AuthModal = () => {
                         المتابعة باستخدام Google
                     </button>
 
-                    {/* Placeholder for Email/Phone options later if needed */}
-                    <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className={`w-full border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className={`px-2 ${darkMode ? 'bg-gray-900 text-gray-500' : 'bg-white text-gray-500'}`}>أو</span>
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={() => alert('قريباً...')}
-                        className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
-                        ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-                    >
-                        <Phone size={18} />
-                        التسجيل برقم الهاتف
-                    </button>
-
-                    <button 
-                        onClick={() => alert('قريباً...')}
-                        className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
-                        ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-                    >
-                        <Mail size={18} />
-                        التسجيل بالبريد الإلكتروني
-                    </button>
+                    <p className={`text-xs text-center mt-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        * التسجيل عبر البريد الإلكتروني ورقم الهاتف سيكون متاحاً قريباً
+                    </p>
                 </div>
             </div>
         </div>
