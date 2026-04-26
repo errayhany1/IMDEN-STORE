@@ -216,8 +216,8 @@ app.post('/webhook', async (req, res) => {
 app.get('/', (req, res) => res.json({ status: 'IMDEN Bot is running ✅' }));
 
 // ─── START ─────────────────────────────────────────────────────────────────
-const PORT = process.env.BOT_PORT || 3001;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || process.env.BOT_PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🤖 IMDEN Bot server running on port ${PORT}`);
   console.log(`📌 Set Telegram webhook to: https://YOUR_DOMAIN.com/webhook`);
 });
