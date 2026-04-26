@@ -118,16 +118,34 @@ async function processProduct(chatId, files, caption) {
     uploadedFiles.push(...uploadRes.data);
   }
 
-  // Create NocoDB Record with all images in Image1
+  // Create NocoDB Record
   const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
   const recordData = {
     Title: name,
     SKU: sku,
     price: price,
     Category_ID: 12,
-    POSTEBL: 'POSTEBL',
-    Image1: uploadedFiles
+    POSTEBL: 'POSTEBL'
   };
+
+  // Map files to separate columns (supporting both ImageX and imageX casings)
+  if (uploadedFiles.length > 0) recordData.Image1 = [uploadedFiles[0]];
+  if (uploadedFiles.length > 1) {
+    recordData.Image2 = [uploadedFiles[1]];
+    recordData.image2 = [uploadedFiles[1]];
+  }
+  if (uploadedFiles.length > 2) {
+    recordData.Image3 = [uploadedFiles[2]];
+    recordData.image3 = [uploadedFiles[2]];
+  }
+  if (uploadedFiles.length > 3) {
+    recordData.Image4 = [uploadedFiles[3]];
+    recordData.image4 = [uploadedFiles[3]];
+  }
+  if (uploadedFiles.length > 4) {
+    recordData.Image5 = [uploadedFiles[4]];
+    recordData.image5 = [uploadedFiles[4]];
+  }
 
   const { data } = await axios.post(recordUrl, recordData, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }
