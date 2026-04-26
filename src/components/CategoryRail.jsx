@@ -46,11 +46,19 @@ const categoryIcons = {
 };
 
 const CategoryRail = () => {
-    const { darkMode, categories, selectedCategory, setCategory } = useStore();
+    const { darkMode, categories, selectedCategory, setCategory, user, setAuthModalOpen } = useStore();
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
+    const handleRequestProduct = () => {
+        if (user) {
+            setIsFeedbackOpen(true);
+        } else {
+            setAuthModalOpen(true);
+        }
+    };
+
     return (
-        <section className="mb-4 mt-2 px-2 flex flex-col gap-4">
+        <section className="mb-4 mt-2 px-2 flex flex-col gap-3">
             {/* Category Chips Horizontal Rail */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x rtl" style={{ direction: 'rtl' }}>
                 {categories.map((cat, idx) => {
@@ -73,22 +81,21 @@ const CategoryRail = () => {
                 })}
             </div>
 
-            {/* Request Product Banner */}
-            <div className={`p-4 rounded-xl border text-center shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors
-                ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-primary/5 border-primary/20 text-slate-800'}`}>
-                <div className="text-right flex-1">
-                    <h2 className="text-base sm:text-lg font-bold">هل تبحث عن منتج غير متوفر في السوق؟</h2>
-                    <p className={`text-xs sm:text-sm mt-1 ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
-                        اكتب لنا أسماء المنتجات أو الأجهزة التي تبحث عنها وسنقوم باستيرادها وتوفيرها لك بأفضل الأسعار.
-                    </p>
+            {/* Compact Request Product Banner */}
+            <div 
+                onClick={handleRequestProduct}
+                className={`px-3 py-2 rounded-lg border flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-md active:scale-[0.98]
+                ${darkMode ? 'bg-gray-800/60 border-gray-700 text-white hover:bg-gray-800' : 'bg-primary/5 border-primary/20 text-slate-700 hover:bg-primary/10'}`}
+                style={{ direction: 'rtl' }}
+            >
+                <div className="flex items-center gap-2 min-w-0">
+                    <MessageSquarePlus size={16} className="text-primary shrink-0" />
+                    <span className="text-xs sm:text-sm font-semibold truncate">تبحث عن منتج؟ اطلبه الآن</span>
                 </div>
-                <button 
-                    onClick={() => setIsFeedbackOpen(true)}
-                    className="w-full sm:w-auto shrink-0 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 text-sm rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-sm"
-                >
-                    <MessageSquarePlus size={16} />
-                    اطلب منتجك الآن
-                </button>
+                <span className={`text-[10px] sm:text-xs shrink-0 px-2 py-0.5 rounded-full font-medium
+                    ${darkMode ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'}`}>
+                    طلب →
+                </span>
             </div>
 
             <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />

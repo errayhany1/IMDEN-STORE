@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from './components/Header';
 import CategoryRail from './components/CategoryRail';
 import ProductGrid from './components/ProductGrid';
@@ -11,9 +11,11 @@ import AuthModal from './components/AuthModal';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { User, X } from 'lucide-react';
 
 function App() {
-  const { darkMode, setUser } = useStore();
+  const { darkMode, setUser, user, setAuthModalOpen } = useStore();
+  const [showLoginToast, setShowLoginToast] = useState(false);
 
   useEffect(() => {
     // Listen for Firebase Auth state changes
@@ -22,6 +24,24 @@ function App() {
     });
     return () => unsubscribe();
   }, [setUser]);
+
+  // Auto-prompt login after 60 seconds for non-logged-in visitors (once per session)
+  useEffect(() => {
+    const alreadyPrompted = sessionStorage.getItem('login_prompted');
+    if (alreadyPrompted) return;
+
+    const timer = setTimeout(() => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setShowLoginToast(true);
+        sessionStorage.setItem('login_prompted', 'true');
+        // Auto-hide after 10 seconds
+        setTimeout(() => setShowLoginToast(false), 10000);
+      }
+    }, 60000); // 60 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
@@ -55,6 +75,40 @@ function App() {
       <FloatingWhatsApp />
       <AIChatWidget />
       <AuthModal />
+
+      {/* Login Toast Notification */}
+      {showLoginToast && !user && (
+        <div 
+          className={`fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50 
+          rounded-2xl shadow-2xl border p-4 flex items-center gap-3 animate-slide-up cursor-pointer
+          ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
+          style={{ direction: 'rtl', animation: 'slideUp 0.4s ease-out' }}
+          onClick={() => { setShowLoginToast(false); setAuthModalOpen(true); }}
+        >
+          <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${darkMode ? 'bg-primary/20' : 'bg-primary/10'}`}>
+            <User size={20} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold">سجل دخولك الآن!</p>
+            <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+              لتتبع طلباتك وحفظ بياناتك تلقائياً
+            </p>
+          </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowLoginToast(false); }}
+            className={`shrink-0 p-1 rounded-full ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-slate-100'}`}
+          >
+            <X size={16} className={darkMode ? 'text-gray-500' : 'text-slate-400'} />
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

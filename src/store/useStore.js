@@ -24,7 +24,8 @@ const useStore = create(
                 'Network',
                 'Microphones',
                 'Batteries & Power Banks',
-                'General'
+                'General',
+                'Out of Stock'
             ],
             selectedCategory: 'All',
             isLoading: false,
