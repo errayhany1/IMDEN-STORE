@@ -1,14 +1,52 @@
 import React, { useState } from 'react';
 import useStore from '../store/useStore';
-import { MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus, Layers } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
 
+const categoryTranslation = {
+    'All': 'الكل',
+    'Chargers': 'شواحن',
+    'Audio': 'سماعات',
+    'Smart Watches': 'ساعات ذكية',
+    'Gaming': 'ألعاب',
+    'Mouse & Keyboard': 'ماوس وكيبورد',
+    'Storage': 'تخزين',
+    'Laptop Chargers': 'شواحن حواسيب',
+    'Stands': 'ستاندات',
+    'Lighting': 'إضاءة',
+    'Cameras': 'كاميرات',
+    'Network': 'شبكات',
+    'Microphones': 'ميكروفونات',
+    'Batteries & Power Banks': 'بطاريات وباوربانك',
+    'General': 'عام'
+};
+
 const CategoryRail = () => {
-    const { darkMode } = useStore();
+    const { darkMode, categories, selectedCategory, setCategory } = useStore();
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     return (
-        <section className="mb-4 mt-2 px-2">
+        <section className="mb-4 mt-2 px-2 flex flex-col gap-4">
+            {/* Category Chips Horizontal Rail */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x rtl" style={{ direction: 'rtl' }}>
+                {categories.map((cat, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => setCategory(cat)}
+                        className={`snap-center shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2 border whitespace-nowrap
+                            ${selectedCategory === cat 
+                                ? 'bg-primary text-white border-primary shadow-md transform scale-105' 
+                                : darkMode 
+                                    ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                    >
+                        {cat === 'All' && <Layers size={16} />}
+                        {categoryTranslation[cat] || cat}
+                    </button>
+                ))}
+            </div>
+
+            {/* Request Product Banner */}
             <div className={`p-4 rounded-xl border text-center shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors
                 ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-primary/5 border-primary/20 text-slate-800'}`}>
                 <div className="text-right flex-1">
