@@ -13,11 +13,21 @@ const ProductCard = ({ product }) => {
 
     const dm = darkMode;
     const singleCol = gridColumns === 1;
+    const isOutOfStock = product.category === 'Out of Stock';
 
     return (
         <>
-            <article className={`rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border flex flex-col overflow-hidden group h-full
+            <article className={`rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
                 ${dm ? 'bg-gray-800 border-gray-700' : 'bg-surface-light border-slate-100'}`}>
+
+                {/* Out of Stock Overlay */}
+                {isOutOfStock && (
+                    <div className="absolute inset-0 z-20 pointer-events-none bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
+                        <div className="bg-red-600/90 text-white font-bold px-6 py-2 rounded-lg transform -rotate-12 border-2 border-red-200 shadow-2xl text-lg backdrop-blur-sm">
+                            نفد من المخزون
+                        </div>
+                    </div>
+                )}
 
                 <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={() => setIsModalOpen(true)}>
 
@@ -25,7 +35,7 @@ const ProductCard = ({ product }) => {
                         <img
                             src={product.image}
                             alt={product.name}
-                            className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500`}
+                            className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'grayscale opacity-70' : ''}`}
                             loading="lazy"
                         />
                     ) : (
@@ -36,7 +46,7 @@ const ProductCard = ({ product }) => {
 
                 </div>
 
-                <div className="p-3 flex flex-col gap-3">
+                <div className={`p-3 flex flex-col gap-3 ${isOutOfStock ? 'opacity-80' : ''}`}>
                     {/* Price and Ref Row */}
                     <div className="flex items-center justify-between flex-row-reverse gap-1">
                         <div className="text-right flex-shrink-0">
@@ -62,8 +72,11 @@ const ProductCard = ({ product }) => {
 
                     <div className="flex gap-2 flex-row-reverse">
                         <button
-                            onClick={() => addToCart(product)}
-                            className="btn-add-cart flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white"
+                            onClick={() => {
+                                if (!isOutOfStock) addToCart(product);
+                            }}
+                            disabled={isOutOfStock}
+                            className={`btn-add-cart flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed border-gray-400 shadow-none' : ''}`}
                         >
                             <ShoppingCart size={18} />
                             إضافة

@@ -27,7 +27,8 @@ export const fetchProducts = async (onChunk) => {
             11: "Network",          // الانترنت والشبكة
             12: "General",         // الستابليزاتور → General
             13: "Microphones",      // الميكروفونات
-            14: "Batteries & Power Banks" // بطاريات وبنوك الطاقة
+            14: "Batteries & Power Banks", // بطاريات وبنوك الطاقة
+            15: "Out of Stock"      // نفد من المخزون
         };
 
         while (hasMore) {

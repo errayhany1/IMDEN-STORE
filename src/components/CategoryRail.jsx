@@ -18,7 +18,8 @@ const categoryTranslation = {
     'Network': 'شبكات',
     'Microphones': 'ميكروفونات',
     'Batteries & Power Banks': 'بطاريات وباوربانك',
-    'General': 'عام'
+    'General': 'عام',
+    'Out of Stock': '❌ نفد من المخزون'
 };
 
 const CategoryRail = () => {
