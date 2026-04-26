@@ -4,21 +4,21 @@ import { MessageSquarePlus, Layers } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
 
 const categoryTranslation = {
-    'All': 'الكل',
-    'Chargers': 'شواحن',
-    'Audio': 'سماعات',
-    'Smart Watches': 'ساعات ذكية',
-    'Gaming': 'ألعاب',
-    'Mouse & Keyboard': 'ماوس وكيبورد',
-    'Storage': 'تخزين',
-    'Laptop Chargers': 'شواحن حواسيب',
-    'Stands': 'ستاندات',
-    'Lighting': 'إضاءة',
-    'Cameras': 'كاميرات',
-    'Network': 'شبكات',
-    'Microphones': 'ميكروفونات',
-    'Batteries & Power Banks': 'بطاريات وباوربانك',
-    'General': 'عام',
+    'All': '🛒 الكل',
+    'Chargers': '🔌 شواحن',
+    'Audio': '🎧 سماعات',
+    'Smart Watches': '⌚ ساعات ذكية',
+    'Gaming': '🎮 ألعاب',
+    'Mouse & Keyboard': '🖱️ ماوس وكيبورد',
+    'Storage': '💾 تخزين',
+    'Laptop Chargers': '💻 شواحن حواسيب',
+    'Stands': '📐 ستاندات',
+    'Lighting': '💡 إضاءة',
+    'Cameras': '📷 كاميرات',
+    'Network': '📡 شبكات',
+    'Microphones': '🎙️ ميكروفونات',
+    'Batteries & Power Banks': '🔋 بطاريات وباوربانك',
+    'General': '📦 عام',
     'Out of Stock': '❌ نفد من المخزون'
 };
 
