@@ -11,11 +11,12 @@ import AuthModal from './components/AuthModal';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { User, X } from 'lucide-react';
+import { User, X, ChevronUp } from 'lucide-react';
 
 function App() {
   const { darkMode, setUser, user, setAuthModalOpen } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     // Listen for Firebase Auth state changes
@@ -24,6 +25,15 @@ function App() {
     });
     return () => unsubscribe();
   }, [setUser]);
+
+  // Track scroll position for scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Auto-prompt login after 60 seconds for non-logged-in visitors (once per session)
   useEffect(() => {
@@ -42,6 +52,10 @@ function App() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
@@ -76,11 +90,24 @@ function App() {
       <AIChatWidget />
       <AuthModal />
 
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className={`fixed bottom-6 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
+          ${darkMode ? 'bg-gray-800 text-white border border-gray-700 hover:bg-gray-700' : 'bg-white text-primary border border-slate-200 hover:bg-primary hover:text-white'}`}
+          style={{ animation: 'slideUp 0.3s ease-out' }}
+          aria-label="العودة للأعلى"
+        >
+          <ChevronUp size={20} />
+        </button>
+      )}
+
       {/* Login Toast Notification */}
       {showLoginToast && !user && (
         <div 
           className={`fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50 
-          rounded-2xl shadow-2xl border p-4 flex items-center gap-3 animate-slide-up cursor-pointer
+          rounded-2xl shadow-2xl border p-4 flex items-center gap-3 cursor-pointer
           ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
           style={{ direction: 'rtl', animation: 'slideUp 0.4s ease-out' }}
           onClick={() => { setShowLoginToast(false); setAuthModalOpen(true); }}

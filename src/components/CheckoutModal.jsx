@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Send } from 'lucide-react';
+import { X, Send, User } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
 import { sendToTelegram } from '../utils/telegramApi';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
-    const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user } = useStore();
+    const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user, setAuthModalOpen } = useStore();
     const dm = darkMode;
 
     // Pre-fill form with saved customer info or Firebase user data
@@ -105,9 +105,30 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     </button>
 
                     <h2 className={`text-2xl font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>إتمام الطلب</h2>
-                    <p className={`text-sm mb-6 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                    <p className={`text-sm mb-4 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
                         المرجو إدخال معلوماتك الشخصية لتأكيد إرسال الطلبية.
                     </p>
+
+                    {/* Login suggestion for non-logged users */}
+                    {!user && (
+                        <div 
+                            onClick={() => { onClose(); setAuthModalOpen(true); }}
+                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md mb-4
+                            ${dm ? 'bg-primary/10 border-primary/30 hover:bg-primary/20' : 'bg-primary/5 border-primary/20 hover:bg-primary/10'}`}
+                            dir="rtl"
+                        >
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                <User size={16} className="text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-primary">سجل دخولك لحفظ بياناتك!</p>
+                                <p className={`text-[10px] ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                    لن تحتاج لإعادة إدخال معلوماتك في كل طلب
+                                </p>
+                            </div>
+                            <span className="text-primary text-lg">←</span>
+                        </div>
+                    )}
 
                     {successMessage ? (
                         <div className="bg-green-100 text-green-800 p-4 rounded-xl text-center font-medium my-4 animate-pulse">
