@@ -252,7 +252,7 @@ const Header = () => {
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
                                     ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
                                 >
-                                    <MessageSquare size={18} className="text-green-500" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5" />
                                     تواصل معنا عبر واتساب
                                 </a>
 

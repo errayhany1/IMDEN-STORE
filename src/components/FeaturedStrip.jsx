@@ -43,17 +43,13 @@ const FeaturedStrip = () => {
     return (
         <div className="mb-6">
             {/* Header row */}
-            <div className="flex items-center justify-between mb-3 flex-row-reverse">
+            <div className="flex items-center justify-end mb-3">
                 <div className="flex items-center gap-2">
                     <RefreshCw size={16} className="text-primary animate-spin" style={{ animationDuration: '8s' }} />
                     <h2 className={`text-base font-bold ${dm ? 'text-white' : 'text-slate-800'}`}>
                         منتجات مميزة
                     </h2>
                 </div>
-                <span className={`text-xs font-mono px-2 py-0.5 rounded-full tabular-nums
-                    ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-500'}`}>
-                    تجدد بعد {mm}:{ss}
-                </span>
             </div>
 
             {/* Product cards */}

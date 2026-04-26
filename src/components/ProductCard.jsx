@@ -2,18 +2,25 @@ import React, { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import useStore from '../store/useStore';
 import ImageModal from './ImageModal';
-import SocialButton from './SocialButton';
 import './ProductCard.css';
+
+const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
 const ProductCard = ({ product }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
     const gridColumns = useStore((state) => state.gridColumns);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [hoveredThumb, setHoveredThumb] = useState(null);
 
     const dm = darkMode;
     const singleCol = gridColumns === 1;
     const isOutOfStock = product.category === 'Out of Stock';
+
+    // Multi-image support
+    const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
+    const displayImage = hoveredThumb !== null ? allImages[hoveredThumb] : (product.image || null);
+    const extraThumbs = allImages.length > 1 ? allImages.slice(1, 3) : []; // max 2 thumbnails
 
     return (
         <>
@@ -31,16 +38,34 @@ const ProductCard = ({ product }) => {
 
                 <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={() => setIsModalOpen(true)}>
 
-                    {product.image ? (
+                    {displayImage ? (
                         <img
-                            src={product.image}
-                            alt={product.name}
+                            src={displayImage}
+                            alt={product.name || product.ref}
                             className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'grayscale opacity-70' : ''}`}
                             loading="lazy"
                         />
                     ) : (
                         <div className={`w-full h-full flex items-center justify-center text-sm ${dm ? 'text-gray-500 bg-gray-900' : 'text-slate-400 bg-slate-200'}`}>
                             لا توجد صورة
+                        </div>
+                    )}
+
+                    {/* Thumbnails for extra images */}
+                    {extraThumbs.length > 0 && (
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                            {extraThumbs.map((thumb, idx) => (
+                                <div
+                                    key={idx}
+                                    onMouseEnter={() => setHoveredThumb(idx + 1)}
+                                    onMouseLeave={() => setHoveredThumb(null)}
+                                    onClick={(e) => { e.stopPropagation(); setHoveredThumb(idx + 1); }}
+                                    className={`w-8 h-8 rounded-md border-2 overflow-hidden cursor-pointer transition-all hover:scale-110
+                                    ${hoveredThumb === idx + 1 ? 'border-primary shadow-md' : (dm ? 'border-gray-600 bg-gray-800' : 'border-white bg-white')} shadow-sm`}
+                                >
+                                    <img src={thumb} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                </div>
+                            ))}
                         </div>
                     )}
 
@@ -61,7 +86,7 @@ const ProductCard = ({ product }) => {
                         </div>
                     </div>
 
-                    {product.name && product.name.trim() !== '' && (
+                    {product.name && product.name.trim() !== '' && product.name !== 'Unnamed Product' && (
                         <div 
                             className={`text-right text-xs font-medium line-clamp-2 leading-relaxed ${dm ? 'text-gray-300' : 'text-slate-600'}`} 
                             title={product.name}
@@ -81,13 +106,14 @@ const ProductCard = ({ product }) => {
                             <ShoppingCart size={18} />
                             إضافة
                         </button>
-                        <SocialButton
-                            type="whatsapp"
-                            onClick={() => window.open(`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`, '_blank')}
-                            iconOnly
-                            size="sm"
-                            className="rounded-lg"
-                        />
+                        <a
+                            href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-sm"
+                        >
+                            <img src={WA_ICON} alt="WhatsApp" className="w-5 h-5" />
+                        </a>
                     </div>
                 </div>
             </article>
@@ -96,8 +122,9 @@ const ProductCard = ({ product }) => {
             <ImageModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                image={product.image}
-                alt={product.name}
+                images={allImages}
+                alt={product.name || product.ref}
+                productRef={product.ref}
             />
         </>
     );

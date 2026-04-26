@@ -94,7 +94,7 @@ function App() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-6 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
+          className={`fixed bottom-24 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
           ${darkMode ? 'bg-gray-800 text-white border border-gray-700 hover:bg-gray-700' : 'bg-white text-primary border border-slate-200 hover:bg-primary hover:text-white'}`}
           style={{ animation: 'slideUp 0.3s ease-out' }}
           aria-label="العودة للأعلى"
