@@ -3,10 +3,13 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBMqwK7aUv1rBEzEvtfRk48g-ZQXyb4NHE",
+  apiKey: "AIzaSyBMqWK7aUv1rBeZEvtfrK48g-ZQXyb4NHE",
   authDomain: "imden-errayany.firebaseapp.com",
   projectId: "imden-errayany",
-  // storageBucket, messagingSenderId, appId are optional for basic Auth
+  storageBucket: "imden-errayany.firebasestorage.app",
+  messagingSenderId: "883521717891",
+  appId: "1:883521717891:web:d9443362f4febbc4e9fdb6",
+  measurementId: "G-82BHFMGSG1"
 };
 
 // Initialize Firebase
