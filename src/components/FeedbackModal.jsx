@@ -5,7 +5,7 @@ import { sendToTelegram } from '../utils/telegramApi';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const FeedbackModal = ({ isOpen, onClose }) => {
-    const { darkMode } = useStore();
+    const { darkMode, user, customerInfo } = useStore();
     const dm = darkMode;
 
     const [message, setMessage] = useState('');
@@ -26,12 +26,13 @@ const FeedbackModal = ({ isOpen, onClose }) => {
         setSuccessMessage('');
 
         try {
-            const caption = `🛒 **طلب توفير منتج جديد** 🛒\n\n` +
-                `📦 **المنتجات المطلوبة:**\n${message}`;
+            const userName = customerInfo?.name || user?.displayName || 'غير معروف';
+            const userPhone = customerInfo?.phone || user?.phoneNumber || 'غير معروف';
 
-            // Pass a simple text placeholder since sendToTelegram usually expects a file for the first arg. 
-            // Wait, sendToTelegram function signature is (file, caption). If we don't have a file, it might crash.
-            // Let's create a dummy text block or we can just call Telegram API directly for text message here.
+            const caption = `🛒 **طلب توفير منتج جديد** 🛒\n\n` +
+                `👤 **الاسم:** ${userName}\n` +
+                `📞 **الهاتف:** ${userPhone}\n\n` +
+                `📦 **المنتجات المطلوبة:**\n${message}`;
             
             const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '8652359538:AAGqVf2MpKHGEAhYuZ1rD5ekk-J3XqBXfqk';
             const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID || '-1003868832013';
