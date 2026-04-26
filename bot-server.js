@@ -167,22 +167,33 @@ app.post('/webhook', async (req, res) => {
   const update = req.body;
 
   try {
-    // ── 1. PHOTO MESSAGE ───────────────────────────────────────────────────
-    if (update.message && update.message.photo) {
-      const msg    = update.message;
+    // ── 1. PHOTO OR DOCUMENT MESSAGE ───────────────────────────────────────
+    const msg = update.message;
+    if (msg && (msg.photo || (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith('image/')))) {
       const chatId = msg.chat.id;
 
-      // Largest available resolution
-      const photo  = msg.photo[msg.photo.length - 1];
+      // Extract highest resolution photo OR the uncompressed document
+      let fileId;
+      let extName = 'jpg';
+      if (msg.photo) {
+        fileId = msg.photo[msg.photo.length - 1].file_id; // Largest photo
+      } else {
+        fileId = msg.document.file_id; // Uncompressed file
+        if (msg.document.file_name) extName = msg.document.file_name.split('.').pop();
+      }
+
       const { price, name, sku } = parseCaption(msg.caption);
 
       console.log(`📦 New product: "${name}" | ${price} DH | SKU: ${sku}`);
 
       // Download photo
-      const { buffer, fileName } = await downloadTelegramFile(photo.file_id);
+      const { buffer, fileName } = await downloadTelegramFile(fileId);
+      
+      // Force correct extension if missing
+      const finalFileName = fileName.includes('.') ? fileName : `image.${extName}`;
 
       // Create NocoDB row
-      const rowId = await createNocoDBRow(name, sku, price, buffer, fileName);
+      const rowId = await createNocoDBRow(name, sku, price, buffer, finalFileName);
       console.log(`✅ NocoDB row created: #${rowId}`);
 
       // Send keyboard
