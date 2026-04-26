@@ -15,7 +15,7 @@ const AuthModal = () => {
             setAuthModalOpen(false);
         } catch (error) {
             console.error("Error signing in with Google", error);
-            alert("حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+            alert(`حدث خطأ: ${error.message}`);
         }
     };
 
