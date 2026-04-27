@@ -1,5 +1,9 @@
 {
   "appId": "com.imden.store",
   "appName": "IMDEN",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "url": "https://imdenmanadger.online/",
+    "cleartext": true
+  }
 }
