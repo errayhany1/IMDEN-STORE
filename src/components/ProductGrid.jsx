@@ -43,24 +43,30 @@ const ProductGrid = () => {
     }, [selectedCategory, searchQuery]);
 
     const filteredProducts = products.filter(p => {
-        const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock') || p.category === selectedCategory;
         let matchesSearch = true;
 
         if (searchQuery) {
-            // Remove common wholesale words from the query so they don't block actual product findings
             const cleanQuery = searchQuery.toLowerCase()
                 .replace(/(جملة|بالجملة|للجملة|wholesale|gros|en gros)/g, '')
                 .trim();
 
             if (cleanQuery !== '') {
-                // Split remaining query into words and ensure ALL words match the product info
                 const terms = cleanQuery.split(/\s+/).filter(Boolean);
                 const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""}`.toLowerCase();
                 matchesSearch = terms.every(term => searchableText.includes(term));
             }
+            
+            // If the user is actively searching, show the product regardless of the selected category tab!
+            // However, we still hide Out of Stock items from the general search unless they specifically search for them.
+            if (p.category === 'Out of Stock' && !cleanQuery.includes('نفد') && !cleanQuery.includes('stock')) {
+                return false;
+            }
+            return matchesSearch;
         }
 
-        return matchesCategory && matchesSearch;
+        // If not searching, use category filtering
+        const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock') || p.category === selectedCategory;
+        return matchesCategory;
     });
 
     const displayedProducts = filteredProducts.slice(0, displayLimit);
