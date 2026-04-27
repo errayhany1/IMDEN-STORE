@@ -66,14 +66,16 @@ export const fetchProducts = async (onChunk) => {
                     imageUrl = imageObj.signedUrl || imageObj.url;
                 }
 
-                // Extract all images for multi-image support
+                // Extract all images from Image1, Image2, Image3 columns
                 const allImages = [];
-                if (record.Image1 && record.Image1.length > 0) {
-                    record.Image1.forEach(img => {
-                        const url = img.signedUrl || img.url;
-                        if (url) allImages.push(url);
-                    });
-                }
+                ['Image1', 'Image2', 'Image3'].forEach(col => {
+                    if (record[col] && record[col].length > 0) {
+                        record[col].forEach(img => {
+                            const url = img.signedUrl || img.url;
+                            if (url) allImages.push(url);
+                        });
+                    }
+                });
 
                 // Resolve Category Name from ID
                 let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
