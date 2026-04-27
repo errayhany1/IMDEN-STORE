@@ -27,17 +27,36 @@ const AIChatWidget = () => {
         e.preventDefault();
         if (!input.trim()) return;
 
-        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+        // Use OpenAI API Key
+        const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
         if (!apiKey) {
             setMessages(prev => [...prev, 
                 { role: 'user', content: input }, 
-                { role: 'assistant', content: 'المرجو التحقق من إعداد مفتاح API الخاص بـ OpenRouter (VITE_OPENROUTER_API_KEY).' }
+                { role: 'assistant', content: 'المرجو إضافة مفتاح VITE_OPENAI_API_KEY في إعدادات البيئة (Environment Variables) ليعمل المساعد الذكي.' }
             ]);
             setInput('');
             return;
         }
 
         const userMessage = { role: 'user', content: input };
+        
+        // If this is the first message from the user, send an alert to Telegram so the admin knows what people are asking!
+        if (messages.filter(m => m.role === 'user').length === 0) {
+            try {
+                const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+                const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+                if (botToken && chatId) {
+                    const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('text', `🤖 **محادثة جديدة مع البوت:**\n\nالزائر يسأل:\n"${input}"`);
+                    fetch(telegramUrl, { method: 'POST', body: formData }).catch(e => console.log('Telegram log error', e));
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
@@ -52,26 +71,24 @@ const AIChatWidget = () => {
 هذه قائمة بأهم المنتجات المتوفرة حالياً في قاعدة البيانات مع أسعارها ومراجعها:
 ${catalogStr}
 
-إذا سألك الزبون عن منتج غير موجود في القائمة، أخبره بلباقة أنه يمكننا التحقق من المخزن الداخلي وتوفير أي منتج يحتاجه عبر تقديم طلب من خلال نافذة الشكاوي والاقتراحات.
+إذا سألك الزبون عن منتج غير موجود في القائمة، أخبره بلباقة أنه يمكننا التحقق من المخزن الداخلي وتوفير أي منتج يحتاجه عبر تقديم طلب من خلال نافذة الشكاوي والاقتراحات أو التواصل معنا عبر واتساب.
 الرد يجب أن يكون مباشراً بدون أي أكواد أو تفاصيل تقنية معقدة.`;
 
-            // Prepare messages for API (excluding the local initial welcome object ideally, but keeping it is fine as context history)
+            // Prepare messages for API
             const apiMessages = [
                 { role: 'system', content: systemPrompt },
                 ...messages.map(m => ({ role: m.role, content: m.content })),
                 userMessage
             ];
 
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
-                    'HTTP-Referer': window.location.href, // Recommended for OpenRouter
-                    'X-Title': 'IMDEN Technology Bot',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free', // Using a free model layer to prevent credit errors!
+                    model: 'gpt-4o-mini', // The most cost-effective and smart model!
                     messages: apiMessages,
                     temperature: 0.7,
                 })
@@ -80,8 +97,8 @@ ${catalogStr}
             const data = await response.json();
 
             if (!response.ok) {
-                console.error("OpenRouter API Error:", data);
-                let errorMsg = 'حدث خطأ في الاتصال بالخادم. المرجو المحاول لاحقاً.';
+                console.error("OpenAI API Error:", data);
+                let errorMsg = 'حدث خطأ في الاتصال بالخادم. المرجو المحاولة لاحقاً.';
                 if (data.error && data.error.message) {
                     errorMsg = `الخادم رفض الطلب: ${data.error.message}`;
                 }
