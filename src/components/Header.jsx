@@ -256,6 +256,19 @@ const Header = () => {
                                     تواصل معنا عبر واتساب
                                 </a>
 
+                                {/* Download App Button */}
+                                <a
+                                    href="/ImdenStore.apk"
+                                    download="ImdenStore.apk"
+                                    className="w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-bold bg-green-500 text-white hover:bg-green-600 transition shadow-sm mt-1 mb-1"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                        تحميل تطبيق المتجر للأندرويد
+                                    </div>
+                                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">APK</span>
+                                </a>
+
                                 {/* About */}
                                 <button
                                     onClick={scrollToTop}

@@ -19,7 +19,7 @@ const PromotionalBanner = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
                     <SocialButton
                         type="whatsapp"
                         href={`https://wa.me/${WA_NUMBER}`}
@@ -32,6 +32,14 @@ const PromotionalBanner = () => {
                         label="تلغرام"
                         size="md"
                     />
+                    <a
+                        href="/ImdenStore.apk"
+                        download="ImdenStore.apk"
+                        className="flex items-center gap-2 px-4 py-2 bg-white text-primary font-bold rounded-xl shadow-md hover:bg-slate-50 transition hover:scale-105"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        حمل التطبيق (APK)
+                    </a>
                 </div>
             </div>
         </section>
