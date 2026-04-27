@@ -88,6 +88,17 @@ const Header = () => {
                             {gridColumns === 1 ? <LayoutGrid size={20} /> : <Columns2 size={20} />}
                         </button>
 
+                        {/* Download App (Desktop) */}
+                        <a
+                            href="/ImdenStore.apk"
+                            download="ImdenStore.apk"
+                            title="تحميل التطبيق"
+                            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 mx-1 rounded-lg font-bold text-xs transition-colors bg-green-500 text-white hover:bg-green-600`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            تطبيق الأندرويد
+                        </a>
+
                         {/* Account */}
                         {user ? (
                             <div className="cursor-pointer transition-transform hover:scale-105" 

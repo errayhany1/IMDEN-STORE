@@ -64,7 +64,6 @@ const AIChatWidget = () => {
         try {
             // Context Injection: Prepare product catalog string (concise to save context tokens)
             const catalogStr = products.slice(0, 50).map(p => `- منتج: ${p.name || 'بدون اسم'} | المرجع: ${p.ref} | السعر: ${p.price} DH`).join('\n');
-            
             const systemPrompt = `أنت مساعد مبيعات ذكي ومحترف لمتجر "IMDEN TECHNOLOGY" المتخصص في بيع التقنيات والإلكترونيات بالجملة في المغرب.
 مهمتك الرد على استفسارات الزوار باللغة العربية بأسلوب راقٍ وودي ومختصر.
 يجب أن تركز دائماً على إقناع الزبون والترحيب به. أسعارنا كلها بالدرهم المغربي (DH).
@@ -72,6 +71,7 @@ const AIChatWidget = () => {
 ${catalogStr}
 
 إذا سألك الزبون عن منتج غير موجود في القائمة، أخبره بلباقة أنه يمكننا التحقق من المخزن الداخلي وتوفير أي منتج يحتاجه عبر تقديم طلب من خلال نافذة الشكاوي والاقتراحات أو التواصل معنا عبر واتساب.
+مهم جداً: في محادثاتك، حاول بين الحين والآخر (بشكل ذكي وغير مزعج) أن تنصح الزبون بتسجيل الدخول في الموقع لحفظ معلوماته، وكذلك اقترح عليه تحميل تطبيق المتجر للأندرويد (APK) المتاح في الموقع لتجربة أسرع وأفضل.
 الرد يجب أن يكون مباشراً بدون أي أكواد أو تفاصيل تقنية معقدة.`;
 
             // Prepare messages for API
@@ -130,17 +130,20 @@ ${catalogStr}
                         dir="rtl"
                     >
                         {/* Header */}
-                        <div className={`p-4 flex items-center justify-between border-b ${dm ? 'bg-gray-800 border-gray-700' : 'bg-primary/5 border-slate-100'}`}>
+                        <div className={`p-4 flex items-center justify-between border-b ${dm ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-l from-primary to-primary-dark'}`}>
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
                                     <Bot size={20} />
                                 </div>
                                 <div>
-                                    <h3 className={`font-bold text-sm ${dm ? 'text-white' : 'text-slate-900'}`}>المساعد الذكي</h3>
-                                    <span className="text-[10px] text-green-500 font-medium">متصل الآن</span>
+                                    <h3 className="font-bold text-sm text-white">المساعد الذكي (AI)</h3>
+                                    <span className="text-[10px] text-blue-100 font-medium flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                        متصل الآن
+                                    </span>
                                 </div>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className={`p-1 rounded-full transition-colors ${dm ? 'text-gray-400 hover:bg-gray-700' : 'text-slate-400 hover:bg-slate-200'}`}>
+                            <button onClick={() => setIsOpen(false)} className="p-1 rounded-full text-white/80 hover:bg-white/10 transition-colors">
                                 <X size={18} />
                             </button>
                         </div>
@@ -151,8 +154,8 @@ ${catalogStr}
                                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                                         msg.role === 'user' 
-                                            ? 'bg-primary text-white rounded-tr-sm' 
-                                            : `${dm ? 'bg-gray-800 text-gray-200' : 'bg-slate-100 text-slate-800'} rounded-tl-sm`
+                                            ? 'bg-primary text-white rounded-tr-sm shadow-md' 
+                                            : `${dm ? 'bg-gray-800 text-gray-200 shadow-sm' : 'bg-slate-100 text-slate-800 shadow-sm border border-slate-200'} rounded-tl-sm`
                                     }`}>
                                         {msg.content}
                                     </div>
@@ -160,10 +163,10 @@ ${catalogStr}
                             ))}
                             {isTyping && (
                                 <div className="flex justify-start">
-                                    <div className={`p-3 rounded-2xl rounded-tl-sm flex items-center gap-1 ${dm ? 'bg-gray-800' : 'bg-slate-100'}`}>
-                                        <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></span>
-                                        <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                                        <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                                    <div className={`p-3 rounded-2xl rounded-tl-sm flex items-center gap-1.5 ${dm ? 'bg-gray-800' : 'bg-slate-100 border border-slate-200'}`}>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.4s' }}></span>
                                     </div>
                                 </div>
                             )}
@@ -178,13 +181,13 @@ ${catalogStr}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="اكتب رسالتك هنا..."
-                                    className={`w-full py-2.5 pr-4 pl-12 rounded-full text-sm border focus:outline-none focus:ring-1 focus:ring-primary ${dm ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'}`}
+                                    className={`w-full py-2.5 pr-4 pl-12 rounded-full text-sm border focus:outline-none focus:ring-2 focus:ring-primary/50 ${dm ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'}`}
                                     disabled={isTyping}
                                 />
                                 <button 
                                     type="submit" 
                                     disabled={isTyping || !input.trim()}
-                                    className="absolute left-1 w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white disabled:opacity-50 transition-opacity"
+                                    className="absolute left-1.5 w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white disabled:opacity-50 transition-all hover:scale-105"
                                 >
                                     {isTyping ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} className="-ml-1" />}
                                 </button>
@@ -198,12 +201,16 @@ ${catalogStr}
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="w-14 h-14 bg-slate-800 hover:bg-slate-900 text-white rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 group relative"
+                    className="w-14 h-14 bg-gradient-to-tr from-primary-dark to-primary hover:from-primary hover:to-blue-400 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 group relative border-2 border-white/20"
                 >
-                    <MessageCircle size={28} />
-                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full"></span>
-                    <div className={`absolute left-16 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-800'}`}>
-                        تحدث مع المساعد الذكي
+                    <Bot size={28} className="animate-pulse" />
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
+                    </span>
+                    <div className={`absolute left-16 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 ${dm ? 'bg-gray-800 text-white border border-gray-700' : 'bg-white text-slate-800 border border-slate-100'}`}>
+                        اسأل المساعد الذكي
+                        <div className={`absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45 border-l border-b ${dm ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-100'}`}></div>
                     </div>
                 </button>
             )}
