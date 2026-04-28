@@ -178,8 +178,11 @@ app.post('/webhook', async (req, res) => {
       const text = msg.text.trim();
 
       if (text === '/start') {
-        await sendMessage(chatId, "أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الزر بالأسفل لإيقاف منتج معين.", {
-          keyboard: [[{ text: "❌ إيقاف منتج (نفد المخزون)" }]],
+        await sendMessage(chatId, "أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:", {
+          keyboard: [
+            [{ text: "❌ إيقاف منتج (نفد المخزون)" }, { text: "✅ جعل المنتج متوفر" }],
+            [{ text: "📂 تغيير تصنيف منتج" }]
+          ],
           resize_keyboard: true,
           persistent: true
         });
@@ -187,12 +190,25 @@ app.post('/webhook', async (req, res) => {
       }
 
       if (text === "❌ إيقاف منتج (نفد المخزون)" || text.startsWith("/stop")) {
-        userState[chatId] = 'AWAITING_REF';
+        userState[chatId] = 'AWAITING_REF_STOP';
         await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد إيقافه:");
         return;
       }
 
-      if (userState[chatId] === 'AWAITING_REF') {
+      if (text === "✅ جعل المنتج متوفر" || text.startsWith("/start_product")) {
+        userState[chatId] = 'AWAITING_REF_RESTOCK';
+        await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد جعله متوفراً:");
+        return;
+      }
+
+      if (text === "📂 تغيير تصنيف منتج" || text.startsWith("/category")) {
+        userState[chatId] = 'AWAITING_REF_CATEGORY';
+        await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد تغيير تصنيفه:");
+        return;
+      }
+
+      if (userState[chatId]) {
+        const state = userState[chatId];
         delete userState[chatId];
         const sku = text;
         
@@ -203,11 +219,24 @@ app.post('/webhook', async (req, res) => {
         if (data.list && data.list.length > 0) {
           const recordId = data.list[0].Id || data.list[0].id;
           
-          await axios.patch(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, 
-            { Id: recordId, POSTEBL: 'NO POSTEBL' }, 
-            { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
-          );
-          await sendMessage(chatId, `✅ تم إيقاف المنتج (المرجع: ${sku}) بنجاح وتحويله إلى "نفد من المخزون".`);
+          if (state === 'AWAITING_REF_STOP') {
+            await axios.patch(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, 
+              { Id: recordId, POSTEBL: 'NO POSTEBL' }, 
+              { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
+            );
+            await sendMessage(chatId, `✅ تم إيقاف المنتج (المرجع: ${sku}) بنجاح وتحويله إلى "نفد من المخزون".`);
+          } 
+          else if (state === 'AWAITING_REF_RESTOCK') {
+            await axios.patch(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, 
+              { Id: recordId, POSTEBL: 'POSTEBL' }, 
+              { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
+            );
+            await sendMessage(chatId, `✅ تم جعل المنتج (المرجع: ${sku}) "متوفراً" بنجاح.`);
+          }
+          else if (state === 'AWAITING_REF_CATEGORY') {
+            const keyboard = buildCategoryKeyboard(recordId);
+            await sendMessage(chatId, `⬇️ المنتج (المرجع: ${sku}) موجود! اختر تصنيفه الجديد من القائمة:`, keyboard);
+          }
         } else {
           await sendMessage(chatId, `❌ لم أتمكن من العثور على منتج يحمل المرجع: ${sku}\nتأكد من كتابته بشكل صحيح.`);
         }
