@@ -177,11 +177,19 @@ app.post('/webhook', async (req, res) => {
       const chatId = msg.chat.id;
       const text = msg.text.trim();
 
-      if (text === '/start') {
-        await sendMessage(chatId, "أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:", {
+      // Mode labels for user feedback
+      const modeLabels = {
+        'AWAITING_REF_STOP': '❌ وضع إيقاف المنتجات',
+        'AWAITING_REF_RESTOCK': '✅ وضع إعادة التوفر',
+        'AWAITING_REF_CATEGORY': '📂 وضع تغيير التصنيف'
+      };
+
+      if (text === '/start' || text === '🔄 إعادة تشغيل البوت') {
+        delete userState[chatId];
+        await sendMessage(chatId, "أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n💡 عند الضغط على أي زر، سيبقى فعالاً حتى تضغط على \"إعادة تشغيل البوت\".", {
           keyboard: [
             [{ text: "❌ إيقاف منتج (نفد المخزون)" }, { text: "✅ جعل المنتج متوفر" }],
-            [{ text: "📂 تغيير تصنيف منتج" }]
+            [{ text: "📂 تغيير تصنيف منتج" }, { text: "🔄 إعادة تشغيل البوت" }]
           ],
           resize_keyboard: true,
           persistent: true
@@ -191,25 +199,25 @@ app.post('/webhook', async (req, res) => {
 
       if (text === "❌ إيقاف منتج (نفد المخزون)" || text.startsWith("/stop")) {
         userState[chatId] = 'AWAITING_REF_STOP';
-        await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد إيقافه:");
+        await sendMessage(chatId, "⚙️ تم تفعيل وضع إيقاف المنتجات.\n\nأرسل المرجع (REF) لكل منتج تريد إيقافه، واحداً تلو الآخر.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت");
         return;
       }
 
       if (text === "✅ جعل المنتج متوفر" || text.startsWith("/start_product")) {
         userState[chatId] = 'AWAITING_REF_RESTOCK';
-        await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد جعله متوفراً:");
+        await sendMessage(chatId, "⚙️ تم تفعيل وضع إعادة التوفر.\n\nأرسل المرجع (REF) لكل منتج تريد جعله متوفراً، واحداً تلو الآخر.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت");
         return;
       }
 
       if (text === "📂 تغيير تصنيف منتج" || text.startsWith("/category")) {
         userState[chatId] = 'AWAITING_REF_CATEGORY';
-        await sendMessage(chatId, "أرسل لي المرجع (REF) الخاص بالمنتج الذي تريد تغيير تصنيفه:");
+        await sendMessage(chatId, "⚙️ تم تفعيل وضع تغيير التصنيف.\n\nأرسل المرجع (REF) لكل منتج تريد تغيير تصنيفه، واحداً تلو الآخر.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت");
         return;
       }
 
       if (userState[chatId]) {
         const state = userState[chatId];
-        delete userState[chatId];
+        // ⚡ DON'T delete the state — keep the mode sticky!
         const sku = text;
         
         // Search NocoDB for SKU
@@ -224,21 +232,21 @@ app.post('/webhook', async (req, res) => {
               { Id: recordId, POSTEBL: 'NO POSTEBL' }, 
               { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
             );
-            await sendMessage(chatId, `✅ تم إيقاف المنتج (المرجع: ${sku}) بنجاح وتحويله إلى "نفد من المخزون".`);
+            await sendMessage(chatId, `✅ تم إيقاف المنتج (${sku}) ← "نفد من المخزون"\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`);
           } 
           else if (state === 'AWAITING_REF_RESTOCK') {
             await axios.patch(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, 
               { Id: recordId, POSTEBL: 'POSTEBL' }, 
               { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
             );
-            await sendMessage(chatId, `✅ تم جعل المنتج (المرجع: ${sku}) "متوفراً" بنجاح.`);
+            await sendMessage(chatId, `✅ تم جعل المنتج (${sku}) "متوفراً"\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`);
           }
           else if (state === 'AWAITING_REF_CATEGORY') {
             const keyboard = buildCategoryKeyboard(recordId);
-            await sendMessage(chatId, `⬇️ المنتج (المرجع: ${sku}) موجود! اختر تصنيفه الجديد من القائمة:`, keyboard);
+            await sendMessage(chatId, `⬇️ المنتج (${sku}) — اختر التصنيف:`, keyboard);
           }
         } else {
-          await sendMessage(chatId, `❌ لم أتمكن من العثور على منتج يحمل المرجع: ${sku}\nتأكد من كتابته بشكل صحيح.`);
+          await sendMessage(chatId, `❌ لم أجد منتج بمرجع: ${sku}\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`);
         }
         return;
       }

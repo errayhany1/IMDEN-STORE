@@ -77,7 +77,14 @@ const ProductCard = ({ product }) => {
                         <div className="text-right flex-shrink-0">
                             <span className={`text-lg font-bold text-primary`}>{product.price} DH</span>
                         </div>
-                        <div className="text-left min-w-0 flex-1">
+                        <div className="text-left min-w-0 flex-1 flex items-center gap-0.5">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(product.ref); }}
+                                className={`shrink-0 p-0.5 rounded opacity-30 hover:opacity-100 transition-opacity ${dm ? 'text-gray-400 hover:text-white' : 'text-slate-400 hover:text-slate-700'}`}
+                                title="نسخ المرجع"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            </button>
                             <span
                                 className={`font-mono px-1.5 py-0.5 rounded whitespace-nowrap overflow-hidden text-ellipsis block max-w-full
                                     ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-500'}`}
