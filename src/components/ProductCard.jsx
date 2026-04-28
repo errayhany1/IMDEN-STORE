@@ -29,8 +29,8 @@ const ProductCard = ({ product }) => {
 
                 {/* Out of Stock Overlay */}
                 {isOutOfStock && (
-                    <div className="absolute inset-0 z-20 pointer-events-none bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
-                        <div className="bg-red-600/90 text-white font-bold px-6 py-2 rounded-lg transform -rotate-12 border-2 border-red-200 shadow-2xl text-lg backdrop-blur-sm">
+                    <div className="absolute inset-0 z-20 pointer-events-none bg-black/5 flex items-center justify-center">
+                        <div className="bg-red-600/90 text-white font-bold px-4 py-1 rounded-md transform -rotate-12 border border-red-200 shadow-xl text-sm">
                             نفد من المخزون
                         </div>
                     </div>
@@ -42,7 +42,7 @@ const ProductCard = ({ product }) => {
                         <img
                             src={displayImage}
                             alt={product.name || product.ref}
-                            className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'grayscale opacity-70' : ''}`}
+                            className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
                             loading="lazy"
                         />
                     ) : (
