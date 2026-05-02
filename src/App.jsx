@@ -8,6 +8,7 @@ import FeaturedStrip from './components/FeaturedStrip';
 import NotificationPrompt from './components/NotificationPrompt';
 import AIChatWidget from './components/AIChatWidget';
 import AuthModal from './components/AuthModal';
+import AdminDashboard from './pages/AdminDashboard';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -56,6 +57,12 @@ function App() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // ── Simple Router ──
+  const path = window.location.pathname;
+  if (path === '/admin') {
+      return <AdminDashboard />;
+  }
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
