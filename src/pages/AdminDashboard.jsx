@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp, Users, Download } from 'lucide-react';
 import useStore from '../store/useStore';
+import AdminSidebar from './AdminSidebar';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
@@ -22,7 +23,8 @@ const AdminDashboard = () => {
     const [statusFilter, setStatusFilter] = useState('الكل');
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
-    const [activeTab, setActiveTab] = useState('orders');
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
@@ -229,37 +231,28 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className={`min-h-screen flex flex-col ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-900'}`} dir="rtl">
-            {/* ── Header ── */}
-            <header className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-xl ${dm ? 'bg-gray-900/90 border-gray-800' : 'bg-white/90 border-slate-200'}`}>
-                <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-2 rounded-xl shadow-md">
-                        <Package size={22} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-bold">IMDEN Admin</h1>
-                        <p className={`text-[11px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>لوحة إدارة الطلبات</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
+        <div className={`min-h-screen flex ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-900'}`} dir="rtl">
+            {/* ── Sidebar ── */}
+            <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} dm={dm} onLogout={handleLogout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+
+            {/* ── Main Content ── */}
+            <div className="flex-1 sm:mr-56 min-h-screen">
+                {/* Top Bar */}
+                <header className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-xl ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-slate-50/90 border-slate-200'}`}>
+                    <h2 className="text-lg font-bold mr-10 sm:mr-0">
+                        {activeTab === 'dashboard' ? 'لوحة التحكم' : activeTab === 'orders' ? 'إدارة الطلبات' : activeTab === 'customers' ? 'الزبائن' : activeTab === 'products' ? 'المنتجات' : 'الإعدادات'}
+                    </h2>
                     <button onClick={() => fetchOrders(true)}
-                        className={`p-2 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                        className={`p-2 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
                         title="تحديث">
                         <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
                     </button>
-                    <button onClick={() => window.location.href = '/'}
-                        className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
-                        المتجر <ArrowRight size={14} />
-                    </button>
-                    <button onClick={handleLogout}
-                        className={`p-2 rounded-lg transition-colors text-red-400 hover:text-red-500 ${dm ? 'hover:bg-gray-800' : 'hover:bg-red-50'}`}
-                        title="تسجيل الخروج">
-                        <LogOut size={18} />
-                    </button>
-                </div>
-            </header>
+                </header>
 
-            <main className="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-5">
+            <main className="p-4 sm:p-6 space-y-5">
+
+                {/* ══════ DASHBOARD TAB ══════ */}
+                {activeTab === 'dashboard' && (<>
                 {/* ── Stats Cards ── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
@@ -292,27 +285,35 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* ── Main Tabs (Orders / Customers) ── */}
-                <div className="flex items-center gap-2 border-b pb-0 mb-0" style={{borderColor: dm ? '#1f2937' : '#e2e8f0'}}>
-                    <button onClick={() => { setActiveTab('orders'); setSearchTerm(''); }}
-                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px ${activeTab === 'orders' ? 'border-blue-500 text-blue-600' : `border-transparent ${dm ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'}`}`}>
-                        <ShoppingBag size={16} /> الطلبات
-                    </button>
-                    <button onClick={() => { setActiveTab('customers'); setSearchTerm(''); }}
-                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px ${activeTab === 'customers' ? 'border-blue-500 text-blue-600' : `border-transparent ${dm ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'}`}`}>
-                        <Users size={16} /> الزبائن ({customers.length})
-                    </button>
-                    <div className="flex-1" />
-                    {activeTab === 'orders' && (
-                        <button onClick={exportCSV}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
-                            <Download size={14} /> تصدير CSV
-                        </button>
-                    )}
+                {/* Recent Orders in Dashboard */}
+                <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                    <div className={`px-4 py-3 border-b flex items-center justify-between ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                        <h3 className="text-sm font-bold">آخر الطلبات</h3>
+                        <button onClick={() => setActiveTab('orders')} className="text-xs text-blue-500 font-bold hover:underline">عرض الكل</button>
+                    </div>
+                    {orders.slice(0, 5).map(o => (
+                        <div key={o.Id} className={`px-4 py-3 flex items-center gap-3 border-b last:border-0 ${dm ? 'border-gray-800' : 'border-slate-50'}`}>
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${(o.Status === 'تم الشحن') ? 'bg-green-500' : o.Status === 'ملغي' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold truncate">{o['Customer Name'] || 'بدون اسم'}</p>
+                                <p className={`text-[11px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>{formatDate(o.CreatedAt)}</p>
+                            </div>
+                            <span className="text-sm font-bold text-green-500 shrink-0">{o['Sale Price'] || 0} DH</span>
+                        </div>
+                    ))}
+                    {orders.length === 0 && <div className="p-8 text-center text-sm text-gray-500">لا توجد طلبات بعد.</div>}
                 </div>
+                </>)}
 
-                {/* ── ORDERS TAB ── */}
+                {/* ══════ ORDERS TAB ══════ */}
                 {activeTab === 'orders' && (<>
+                {/* CSV Export */}
+                <div className="flex justify-end">
+                    <button onClick={exportCSV}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
+                        <Download size={14} /> تصدير CSV
+                    </button>
+                </div>
                 {/* ── Status Tabs + Search ── */}
                 <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
                     <div className="flex gap-2 overflow-x-auto pb-1 w-full sm:w-auto">
@@ -512,7 +513,34 @@ const AdminDashboard = () => {
                         )}
                     </div>
                 )}
+
+                {/* ══════ PRODUCTS TAB ══════ */}
+                {activeTab === 'products' && (
+                    <div className={`p-8 rounded-xl border text-center space-y-3 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                        <Package size={48} className={`mx-auto ${dm ? 'text-gray-700' : 'text-slate-300'}`} />
+                        <h3 className="text-lg font-bold">إدارة المنتجات</h3>
+                        <p className={`text-sm ${dm ? 'text-gray-500' : 'text-slate-400'}`}>يمكنك إدارة المنتجات من خلال بوت التليجرام أو من خلال NocoDB مباشرة.</p>
+                        <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-300'}`}>سيتم إضافة واجهة إدارة المنتجات هنا قريباً.</p>
+                    </div>
+                )}
+
+                {/* ══════ SETTINGS TAB ══════ */}
+                {activeTab === 'settings' && (
+                    <div className={`p-6 rounded-xl border space-y-4 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                        <h3 className="text-lg font-bold">الإعدادات</h3>
+                        <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
+                            <p className="text-sm font-bold mb-1">معلومات النظام</p>
+                            <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الإصدار: 1.0 | الطلبات: {orders.length} | الزبائن: {customers.length}</p>
+                        </div>
+                        <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
+                            <p className="text-sm font-bold mb-1">كلمة السر</p>
+                            <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>كلمة السر الحالية: imden2026</p>
+                        </div>
+                    </div>
+                )}
+
             </main>
+            </div>
 
             {/* ── Delete Confirmation Modal ── */}
             {deleteConfirm && (
