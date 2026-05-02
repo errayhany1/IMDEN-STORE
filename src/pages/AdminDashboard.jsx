@@ -7,6 +7,9 @@ import AdminSidebar from './AdminSidebar';
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
 const ORDERS_TABLE = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
+const PRODUCTS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
+const PRODUCTS_TABLE = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
+const CAT_MAP = {1:'Chargers',2:'Audio',3:'Smart Watches',4:'Gaming',5:'Mouse & Keyboard',6:'Storage',7:'Laptop Chargers',8:'Stands',9:'Lighting',10:'Cameras',11:'Network',12:'General',13:'Microphones',14:'Batteries',15:'Out of Stock'};
 
 const AdminDashboard = () => {
     const { darkMode } = useStore();
@@ -25,12 +28,16 @@ const AdminDashboard = () => {
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [activeTab, setActiveTab] = useState('dashboard');
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [productsLoading, setProductsLoading] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
         if (savedAuth === 'true') {
             setIsAuthenticated(true);
             fetchOrders();
+            fetchProducts();
         }
     }, []);
 
@@ -40,6 +47,7 @@ const AdminDashboard = () => {
             setIsAuthenticated(true);
             sessionStorage.setItem('admin_auth', 'true');
             fetchOrders();
+            fetchProducts();
         } else {
             setError('كلمة السر غير صحيحة');
         }
@@ -49,6 +57,53 @@ const AdminDashboard = () => {
         sessionStorage.removeItem('admin_auth');
         setIsAuthenticated(false);
         setOrders([]);
+        setProducts([]);
+    };
+
+    const fetchProducts = useCallback(async () => {
+        setProductsLoading(true);
+        try {
+            let allProducts = [];
+            let offset = 0;
+            let hasMore = true;
+
+            while (hasMore) {
+                const response = await axios.get(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, {
+                    headers: { 'xc-token': PRODUCTS_TOKEN },
+                    params: { limit: 100, offset }
+                });
+                const list = response.data.list || [];
+                allProducts = [...allProducts, ...list];
+                if (list.length < 100) hasMore = false;
+                else offset += 100;
+            }
+            setProducts(allProducts);
+        } catch (err) {
+            console.error("Error fetching products:", err);
+        } finally {
+            setProductsLoading(false);
+        }
+    }, []);
+
+    const toggleProductAvailability = async (id, currentCat) => {
+        const isOutOfStock = currentCat === 15;
+        // If out of stock, move back to general (12). If not, move to out of stock (15).
+        const newCatId = isOutOfStock ? 12 : 15; 
+        
+        // Optimistic update
+        setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: newCatId } : p));
+        
+        try {
+            await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, 
+                { Id: id, category_id: newCatId },
+                { headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' } }
+            );
+        } catch (err) {
+            console.error("Error toggling product:", err);
+            // Revert on error
+            setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: currentCat } : p));
+            alert("حدث خطأ أثناء تعديل حالة المنتج");
+        }
     };
 
     const fetchOrders = useCallback(async (silent = false) => {
@@ -435,19 +490,27 @@ const AdminDashboard = () => {
                                             )}
 
                                             {/* Quick Actions */}
-                                            <div className="flex items-center gap-2 pt-1">
-                                                {order['Customer Phone'] && (
-                                                    <>
-                                                        <a href={`https://wa.me/212${order['Customer Phone'].replace(/^0/, '')}`} target="_blank" rel="noreferrer"
+                                            <div className="flex items-center gap-2 flex-wrap pt-1">
+                                                {order['Customer Phone'] && (() => {
+                                                    const ph = order['Customer Phone'].replace(/^0/, '');
+                                                    const name = order['Customer Name'] || 'عميلنا الكريم';
+                                                    const confirmMsg = encodeURIComponent(`مرحباً ${name} 👋\n\nشكراً لتعاملكم مع *IMDEN*.\nلقد تلقينا طلبكم رقم *#${order.Id}* بقيمة *${order['Sale Price'] || 0} درهم*.\n\nنحن بصدد تجهيزه وسيتم التواصل معكم عند الشحن ✅\n\nشكراً لثقتكم 🙏`);
+                                                    const shippedMsg = encodeURIComponent(`مرحباً ${name} 👋\n\nنود إعلامكم أن طلبكم رقم *#${order.Id}* تم *شحنه بنجاح* 🚚📦\n\nسيصلكم في أقرب وقت إن شاء الله.\n\nشكراً لتعاملكم مع *IMDEN* 🙏`);
+                                                    return (<>
+                                                        <a href={`https://wa.me/212${ph}?text=${confirmMsg}`} target="_blank" rel="noreferrer"
                                                             className="flex items-center gap-1.5 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-bold transition-colors">
-                                                            <Phone size={12} /> واتساب
+                                                            <Phone size={12} /> تأكيد الطلب
+                                                        </a>
+                                                        <a href={`https://wa.me/212${ph}?text=${shippedMsg}`} target="_blank" rel="noreferrer"
+                                                            className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors">
+                                                            <Truck size={12} /> إشعار الشحن
                                                         </a>
                                                         <a href={`tel:${order['Customer Phone']}`}
                                                             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
                                                             <Phone size={12} /> اتصال
                                                         </a>
-                                                    </>
-                                                )}
+                                                    </>);
+                                                })()}
                                                 <div className="flex-1" />
                                                 <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(order.Id); }}
                                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-red-400 hover:text-red-500 hover:bg-red-50 transition-colors">
@@ -516,11 +579,93 @@ const AdminDashboard = () => {
 
                 {/* ══════ PRODUCTS TAB ══════ */}
                 {activeTab === 'products' && (
-                    <div className={`p-8 rounded-xl border text-center space-y-3 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
-                        <Package size={48} className={`mx-auto ${dm ? 'text-gray-700' : 'text-slate-300'}`} />
-                        <h3 className="text-lg font-bold">إدارة المنتجات</h3>
-                        <p className={`text-sm ${dm ? 'text-gray-500' : 'text-slate-400'}`}>يمكنك إدارة المنتجات من خلال بوت التليجرام أو من خلال NocoDB مباشرة.</p>
-                        <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-300'}`}>سيتم إضافة واجهة إدارة المنتجات هنا قريباً.</p>
+                    <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <h3 className="text-lg font-bold">المنتجات ({products.length})</h3>
+                            <div className={`relative w-full sm:w-64 ${dm ? 'text-gray-300' : 'text-slate-500'}`}>
+                                <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2" />
+                                <input type="text" placeholder="ابحث عن منتج..." value={productSearch}
+                                    onChange={e => setProductSearch(e.target.value)}
+                                    className={`w-full pr-9 pl-4 py-2.5 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-900 border-gray-800 focus:border-blue-500 text-white' : 'bg-white border-slate-200 focus:border-blue-500'}`}
+                                />
+                            </div>
+                        </div>
+
+                        <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                            {productsLoading ? (
+                                <div className="p-12 flex flex-col items-center justify-center text-blue-500">
+                                    <Loader2 size={40} className="animate-spin mb-4" />
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-right text-sm">
+                                        <thead className={`border-b ${dm ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                            <tr>
+                                                <th className="px-4 py-3 font-semibold w-16">صورة</th>
+                                                <th className="px-4 py-3 font-semibold">الاسم (المرجع)</th>
+                                                <th className="px-4 py-3 font-semibold">التصنيف</th>
+                                                <th className="px-4 py-3 font-semibold">السعر</th>
+                                                <th className="px-4 py-3 font-semibold">الحالة (نفد/متوفر)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200/20">
+                                            {products
+                                                .filter(p => (p.title || '').toLowerCase().includes(productSearch.toLowerCase()) || (p.Ref || '').toLowerCase().includes(productSearch.toLowerCase()))
+                                                .map(p => {
+                                                const isOutOfStock = p.category_id === 15;
+                                                const catName = CAT_MAP[p.category_id] || 'General';
+                                                
+                                                let imgSrc = '';
+                                                try {
+                                                    if (p.image) {
+                                                        const imgData = typeof p.image === 'string' ? JSON.parse(p.image) : p.image;
+                                                        imgSrc = Array.isArray(imgData) && imgData[0]?.url ? `${NOCODB_URL}/${imgData[0].url}` : '';
+                                                    }
+                                                } catch(e) {}
+
+                                                return (
+                                                <tr key={p.Id} className={`transition-colors ${dm ? 'hover:bg-gray-800/50' : 'hover:bg-slate-50'} ${isOutOfStock ? 'opacity-60' : ''}`}>
+                                                    <td className="px-4 py-3">
+                                                        {imgSrc ? (
+                                                            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200/20">
+                                                                <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dm ? 'bg-gray-800 text-gray-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                                <Package size={20} />
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <p className="font-bold line-clamp-1">{p.title || 'بدون اسم'}</p>
+                                                        <p className={`text-[10px] font-mono mt-0.5 ${dm ? 'text-gray-500' : 'text-slate-400'}`}>{p.Ref || 'NO-REF'}</p>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-xs">
+                                                        <span className={`px-2 py-1 rounded-md ${dm ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>
+                                                            {catName}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 font-bold text-green-500">
+                                                        {p.price || 0} DH
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <button 
+                                                            onClick={() => toggleProductAvailability(p.Id, p.category_id)}
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
+                                                                ${isOutOfStock 
+                                                                    ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' 
+                                                                    : 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'}`}
+                                                        >
+                                                            {isOutOfStock ? '🚫 نفد من المخزون' : '✅ متوفر'}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            )})}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
