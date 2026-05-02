@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp, Users, Download } from 'lucide-react';
 import useStore from '../store/useStore';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
@@ -22,6 +22,7 @@ const AdminDashboard = () => {
     const [statusFilter, setStatusFilter] = useState('الكل');
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [activeTab, setActiveTab] = useState('orders');
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
@@ -143,6 +144,44 @@ const AdminDashboard = () => {
         return matchSearch && matchStatus;
     });
 
+    // ── Customers extracted from orders ──
+    const customers = useMemo(() => {
+        const map = {};
+        orders.forEach(o => {
+            const phone = (o['Customer Phone'] || '').trim();
+            if (!phone) return;
+            if (!map[phone]) {
+                map[phone] = { name: o['Customer Name'] || 'بدون اسم', phone, totalSpent: 0, orderCount: 0 };
+            }
+            map[phone].totalSpent += Number(o['Sale Price']) || 0;
+            map[phone].orderCount += 1;
+        });
+        return Object.values(map).sort((a, b) => b.totalSpent - a.totalSpent);
+    }, [orders]);
+
+    const filteredCustomers = customers.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.phone.includes(searchTerm)
+    );
+
+    // ── CSV Export ──
+    const exportCSV = () => {
+        const headers = ['رقم الطلب', 'الاسم', 'الهاتف', 'المبلغ', 'الحالة', 'التاريخ', 'الملاحظات'];
+        const rows = orders.map(o => [
+            o.Id, o['Customer Name'] || '', o['Customer Phone'] || '',
+            o['Sale Price'] || 0, o.Status || 'قيد المراجعة',
+            o.CreatedAt ? new Date(o.CreatedAt).toLocaleDateString('ar-MA') : '',
+            (o.Notes || '').replace(/\n/g, ' | ')
+        ]);
+        const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `IMDEN_Orders_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     // ── LOGIN PAGE ──
     if (!isAuthenticated) {
         return (
@@ -253,6 +292,27 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
+                {/* ── Main Tabs (Orders / Customers) ── */}
+                <div className="flex items-center gap-2 border-b pb-0 mb-0" style={{borderColor: dm ? '#1f2937' : '#e2e8f0'}}>
+                    <button onClick={() => { setActiveTab('orders'); setSearchTerm(''); }}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px ${activeTab === 'orders' ? 'border-blue-500 text-blue-600' : `border-transparent ${dm ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'}`}`}>
+                        <ShoppingBag size={16} /> الطلبات
+                    </button>
+                    <button onClick={() => { setActiveTab('customers'); setSearchTerm(''); }}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold border-b-2 transition-all -mb-px ${activeTab === 'customers' ? 'border-blue-500 text-blue-600' : `border-transparent ${dm ? 'text-gray-500 hover:text-gray-300' : 'text-slate-400 hover:text-slate-600'}`}`}>
+                        <Users size={16} /> الزبائن ({customers.length})
+                    </button>
+                    <div className="flex-1" />
+                    {activeTab === 'orders' && (
+                        <button onClick={exportCSV}
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
+                            <Download size={14} /> تصدير CSV
+                        </button>
+                    )}
+                </div>
+
+                {/* ── ORDERS TAB ── */}
+                {activeTab === 'orders' && (<>
                 {/* ── Status Tabs + Search ── */}
                 <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
                     <div className="flex gap-2 overflow-x-auto pb-1 w-full sm:w-auto">
@@ -400,6 +460,58 @@ const AdminDashboard = () => {
                         })
                     )}
                 </div>
+                </>)}
+
+                {/* ── CUSTOMERS TAB ── */}
+                {activeTab === 'customers' && (
+                    <div className="space-y-3">
+                        {/* Search */}
+                        <div className={`relative w-full sm:w-72 ${dm ? 'text-gray-300' : 'text-slate-500'}`}>
+                            <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2" />
+                            <input type="text" placeholder="ابحث بالاسم أو الهاتف..." value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className={`w-full pr-9 pl-4 py-2.5 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-900 border-gray-800 focus:border-blue-500 text-white' : 'bg-white border-slate-200 focus:border-blue-500'}`}
+                            />
+                        </div>
+
+                        {/* Customer Cards */}
+                        {filteredCustomers.length === 0 ? (
+                            <div className={`p-12 text-center rounded-xl border ${dm ? 'bg-gray-900 border-gray-800 text-gray-500' : 'bg-white border-slate-200 text-slate-400'}`}>
+                                لا يوجد زبائن.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {filteredCustomers.map(c => (
+                                    <div key={c.phone} className={`p-4 rounded-xl border transition-all ${dm ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                                                {(c.name || '?')[0]}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm truncate">{c.name}</p>
+                                                <p className={`text-xs ${dm ? 'text-gray-500' : 'text-slate-400'}`} dir="ltr">{c.phone}</p>
+                                            </div>
+                                        </div>
+                                        <div className={`flex items-center justify-between mt-3 pt-3 border-t text-xs ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                                            <div>
+                                                <span className={dm ? 'text-gray-500' : 'text-slate-400'}>الطلبات: </span>
+                                                <span className="font-bold">{c.orderCount}</span>
+                                            </div>
+                                            <div>
+                                                <span className={dm ? 'text-gray-500' : 'text-slate-400'}>المجموع: </span>
+                                                <span className="font-bold text-green-500">{c.totalSpent.toFixed(0)} DH</span>
+                                            </div>
+                                            <a href={`https://wa.me/212${c.phone.replace(/^0/, '')}`} target="_blank" rel="noreferrer"
+                                                className="flex items-center gap-1 px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition-colors">
+                                                <Phone size={10} /> واتساب
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </main>
 
             {/* ── Delete Confirmation Modal ── */}
