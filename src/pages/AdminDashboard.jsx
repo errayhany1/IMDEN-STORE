@@ -31,6 +31,8 @@ const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(false);
     const [productSearch, setProductSearch] = useState('');
+    const [productCatFilter, setProductCatFilter] = useState('all');
+    const [editingProduct, setEditingProduct] = useState(null);
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
@@ -95,14 +97,38 @@ const AdminDashboard = () => {
         
         try {
             await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, 
-                { Id: id, category_id: newCatId },
+                { Id: id, category_id: newCatId, Category_ID: newCatId },
                 { headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' } }
             );
         } catch (err) {
             console.error("Error toggling product:", err);
             // Revert on error
-            setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: currentCat } : p));
+            setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: currentCat, Category_ID: currentCat } : p));
             alert("حدث خطأ أثناء تعديل حالة المنتج");
+        }
+    };
+
+    const saveProductDetails = async (updatedProduct) => {
+        // Optimistic update
+        setProducts(prev => prev.map(p => p.Id === updatedProduct.Id ? { ...p, ...updatedProduct } : p));
+        setEditingProduct(null);
+
+        try {
+            const payload = {
+                Id: updatedProduct.Id,
+                Title: updatedProduct.Title,
+                SKU: updatedProduct.SKU,
+                price: updatedProduct.price,
+                Category_ID: updatedProduct.Category_ID,
+                category_id: updatedProduct.Category_ID
+            };
+            await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, payload, {
+                headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' }
+            });
+        } catch (err) {
+            console.error("Error saving product:", err);
+            alert("حدث خطأ أثناء حفظ المنتج");
+            fetchProducts(); // Refresh to get original state
         }
     };
 
@@ -580,9 +606,28 @@ const AdminDashboard = () => {
                 {/* ══════ PRODUCTS TAB ══════ */}
                 {activeTab === 'products' && (
                     <div className="space-y-4">
-                        <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                            <h3 className="text-lg font-bold">المنتجات ({products.length})</h3>
-                            <div className={`relative w-full sm:w-64 ${dm ? 'text-gray-300' : 'text-slate-500'}`}>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 className="text-lg font-bold w-full sm:w-auto">المنتجات ({products.length})</h3>
+                            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1">
+                                <button onClick={() => setProductCatFilter('all')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${productCatFilter === 'all' ? 'bg-blue-100 text-blue-700 border-blue-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
+                                    الكل
+                                </button>
+                                <button onClick={() => setProductCatFilter('outofstock')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${productCatFilter === 'outofstock' ? 'bg-red-100 text-red-700 border-red-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
+                                    نفد من المخزون
+                                </button>
+                                <select 
+                                    value={productCatFilter !== 'all' && productCatFilter !== 'outofstock' ? productCatFilter : ''}
+                                    onChange={(e) => setProductCatFilter(e.target.value || 'all')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border outline-none ${productCatFilter !== 'all' && productCatFilter !== 'outofstock' ? 'bg-blue-100 text-blue-700 border-blue-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
+                                    <option value="" disabled={productCatFilter !== 'all' && productCatFilter !== 'outofstock'}>حسب التصنيف...</option>
+                                    {Object.entries(CAT_MAP).filter(([id]) => id !== '15').map(([id, name]) => (
+                                        <option key={id} value={id}>{name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className={`relative w-full sm:w-64 shrink-0 ${dm ? 'text-gray-300' : 'text-slate-500'}`}>
                                 <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2" />
                                 <input type="text" placeholder="ابحث عن منتج..." value={productSearch}
                                     onChange={e => setProductSearch(e.target.value)}
@@ -605,16 +650,27 @@ const AdminDashboard = () => {
                                                 <th className="px-4 py-3 font-semibold">الاسم (المرجع)</th>
                                                 <th className="px-4 py-3 font-semibold">التصنيف</th>
                                                 <th className="px-4 py-3 font-semibold">السعر</th>
-                                                <th className="px-4 py-3 font-semibold">الحالة (نفد/متوفر)</th>
+                                                <th className="px-4 py-3 font-semibold text-center">إجراءات</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200/20">
                                             {products
                                                 .filter(p => {
+                                                    // Search Filter
                                                     const t = (p.Title || p.title || '').toLowerCase();
                                                     const r = (p.SKU || p.Ref || '').toLowerCase();
                                                     const q = productSearch.toLowerCase();
-                                                    return t.includes(q) || r.includes(q);
+                                                    const matchesSearch = t.includes(q) || r.includes(q);
+                                                    
+                                                    // Category Filter
+                                                    const catId = p.Category_ID || p.category_id || p.CategoryId || p.categoryId;
+                                                    const isOutOfStock = catId == 15 || p.POSTEBL === 'NO POSTEBL';
+                                                    
+                                                    let matchesCat = true;
+                                                    if (productCatFilter === 'outofstock') matchesCat = isOutOfStock;
+                                                    else if (productCatFilter !== 'all') matchesCat = catId == productCatFilter;
+                                                    
+                                                    return matchesSearch && matchesCat;
                                                 })
                                                 .map(p => {
                                                 const categoryId = p.Category_ID || p.category_id || p.CategoryId || p.categoryId;
@@ -661,15 +717,24 @@ const AdminDashboard = () => {
                                                         {p.price || p.Price || 0} DH
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <button 
-                                                            onClick={() => toggleProductAvailability(p.Id, categoryId)}
-                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
-                                                                ${isOutOfStock 
-                                                                    ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' 
-                                                                    : 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'}`}
-                                                        >
-                                                            {isOutOfStock ? '🚫 نفد من المخزون' : '✅ متوفر'}
-                                                        </button>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button 
+                                                                onClick={() => toggleProductAvailability(p.Id, categoryId)}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex-1 text-center
+                                                                    ${isOutOfStock 
+                                                                        ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' 
+                                                                        : 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'}`}
+                                                            >
+                                                                {isOutOfStock ? '🚫 نفد' : '✅ متوفر'}
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId })}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
+                                                                    ${dm ? 'bg-gray-800 text-blue-400 border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 border-slate-200 hover:bg-slate-50'}`}
+                                                            >
+                                                                تعديل
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             )})}
@@ -715,6 +780,55 @@ const AdminDashboard = () => {
                             <button onClick={() => deleteOrder(deleteConfirm)}
                                 className="flex-1 py-2.5 rounded-xl font-medium bg-red-500 hover:bg-red-600 text-white">
                                 حذف
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ── Product Edit Modal ── */}
+            {editingProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingProduct(null)} />
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-md space-y-4 ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                        <h3 className="text-lg font-bold border-b pb-3 mb-4" style={{borderColor: dm ? '#374151' : '#e2e8f0'}}>تعديل المنتج</h3>
+                        
+                        <div className="space-y-3">
+                            <div>
+                                <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الاسم / العنوان</label>
+                                <input type="text" value={editingProduct.Title} onChange={e => setEditingProduct({...editingProduct, Title: e.target.value})}
+                                    className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>المرجع (SKU/Ref)</label>
+                                    <input type="text" value={editingProduct.SKU} onChange={e => setEditingProduct({...editingProduct, SKU: e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm outline-none font-mono transition-colors ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`} />
+                                </div>
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>السعر (DH)</label>
+                                    <input type="number" value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct, price: parseFloat(e.target.value) || 0})}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm outline-none font-bold text-green-500 transition-colors ${dm ? 'bg-gray-900 border-gray-700 focus:border-green-500' : 'bg-slate-50 border-slate-200 focus:border-green-500'}`} />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>التصنيف</label>
+                                <select value={editingProduct.Category_ID} onChange={e => setEditingProduct({...editingProduct, Category_ID: parseInt(e.target.value)})}
+                                    className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`}>
+                                    {Object.entries(CAT_MAP).map(([id, name]) => (
+                                        <option key={id} value={id}>{name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 mt-2">
+                            <button onClick={() => setEditingProduct(null)}
+                                className={`flex-1 py-2.5 rounded-xl font-medium ${dm ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+                                إلغاء
+                            </button>
+                            <button onClick={() => saveProductDetails(editingProduct)}
+                                className="flex-1 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
+                                حفظ التغييرات
                             </button>
                         </div>
                     </div>
