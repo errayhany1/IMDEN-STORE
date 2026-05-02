@@ -48,7 +48,41 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             // Save the customer info to the global store (localStorage)
             setCustomerInfo(formData);
 
-            // Generate PDF file but do not save to disk
+            // 1. Format the items and address for the Notes column
+            let notesContent = `📍 **العنوان:**\n${formData.address}\n\n📦 **المنتجات المطلوبة:**\n`;
+            cart.forEach(item => {
+                notesContent += `- ${item.name} (Ref: ${item.ref}) | الكمية: ${item.quantity} | السعر: ${item.price} DH\n`;
+            });
+
+            // 2. Save to NocoDB Orders Table (New Account)
+            const nocodbUrl = import.meta.env.VITE_NOCODB_URL;
+            const ordersToken = import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
+            const ordersTableId = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
+
+            try {
+                const nocoResponse = await fetch(`${nocodbUrl}/api/v2/tables/${ordersTableId}/records`, {
+                    method: 'POST',
+                    headers: {
+                        'xc-token': ordersToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify([{
+                        'Customer Name': formData.name,
+                        'Customer Phone': formData.phone,
+                        'Sale Price': subtotal,
+                        'Notes': notesContent,
+                        'Status': 'قيد المراجعة'
+                    }])
+                });
+                
+                if (!nocoResponse.ok) {
+                    console.error("Failed to save to NocoDB:", await nocoResponse.text());
+                }
+            } catch (dbError) {
+                console.error("Error saving to database:", dbError);
+            }
+
+            // 3. Generate PDF file and send via Telegram
             const pdfFile = await generatePDF(cart, false);
 
             const caption = `🚨 **طلبية جديدة (IMDEN TECHNOLOGY)** 🚨\n\n` +
@@ -57,7 +91,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 `📍 **العنوان:** ${formData.address}\n\n` +
                 `📦 **عدد المنتجات:** ${cart.length}\n` +
                 `💰 **المجموع الكلي:** ${subtotal.toFixed(2)} DH\n\n` +
-                `📄 _مرفق مع هذه الرسالة ملف PDF يحتوي على تفاصيل المنتجات._`;
+                `📄 _مرفق مع هذه الرسالة ملف PDF يحتوي على تفاصيل المنتجات._\n` +
+                `✅ _تم تسجيل الطلبية في قاعدة البيانات._`;
 
             await sendToTelegram(pdfFile, caption);
 
