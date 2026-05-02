@@ -63,7 +63,10 @@ export const fetchProducts = async (onChunk) => {
                 const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
                 let imageUrl = null;
                 if (imageObj) {
-                    imageUrl = imageObj.signedUrl || imageObj.url;
+                    const rawUrl = imageObj.signedUrl || imageObj.url;
+                    if (rawUrl) {
+                        imageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+                    }
                 }
 
                 // Extract all images from Image1, Image2, Image3 columns
@@ -72,7 +75,9 @@ export const fetchProducts = async (onChunk) => {
                     if (record[col] && record[col].length > 0) {
                         record[col].forEach(img => {
                             const url = img.signedUrl || img.url;
-                            if (url) allImages.push(url);
+                            if (url) {
+                                allImages.push(url.startsWith('http') ? url : `${API_URL}/${url}`);
+                            }
                         });
                     }
                 });

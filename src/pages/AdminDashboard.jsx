@@ -610,16 +610,28 @@ const AdminDashboard = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-200/20">
                                             {products
-                                                .filter(p => (p.title || '').toLowerCase().includes(productSearch.toLowerCase()) || (p.Ref || '').toLowerCase().includes(productSearch.toLowerCase()))
+                                                .filter(p => {
+                                                    const t = (p.Title || p.title || '').toLowerCase();
+                                                    const r = (p.SKU || p.Ref || '').toLowerCase();
+                                                    const q = productSearch.toLowerCase();
+                                                    return t.includes(q) || r.includes(q);
+                                                })
                                                 .map(p => {
-                                                const isOutOfStock = p.category_id === 15;
-                                                const catName = CAT_MAP[p.category_id] || 'General';
+                                                const categoryId = p.Category_ID || p.category_id || p.CategoryId || p.categoryId;
+                                                const isOutOfStock = categoryId === 15 || p.POSTEBL === 'NO POSTEBL';
+                                                const catName = CAT_MAP[categoryId] || 'General';
                                                 
                                                 let imgSrc = '';
                                                 try {
-                                                    if (p.image) {
-                                                        const imgData = typeof p.image === 'string' ? JSON.parse(p.image) : p.image;
-                                                        imgSrc = Array.isArray(imgData) && imgData[0]?.url ? `${NOCODB_URL}/${imgData[0].url}` : '';
+                                                    const imgCol = p.Image1 || p.image;
+                                                    if (imgCol) {
+                                                        const imgData = typeof imgCol === 'string' ? JSON.parse(imgCol) : imgCol;
+                                                        if (Array.isArray(imgData) && imgData.length > 0) {
+                                                            const rawUrl = imgData[0].signedUrl || imgData[0].url;
+                                                            if (rawUrl) {
+                                                                imgSrc = rawUrl.startsWith('http') ? rawUrl : `${NOCODB_URL}/${rawUrl.replace(/^\//, '')}`;
+                                                            }
+                                                        }
                                                     }
                                                 } catch(e) {}
 
@@ -637,8 +649,8 @@ const AdminDashboard = () => {
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <p className="font-bold line-clamp-1">{p.title || 'بدون اسم'}</p>
-                                                        <p className={`text-[10px] font-mono mt-0.5 ${dm ? 'text-gray-500' : 'text-slate-400'}`}>{p.Ref || 'NO-REF'}</p>
+                                                        <p className="font-bold line-clamp-1">{p.Title || p.title || 'بدون اسم'}</p>
+                                                        <p className={`text-[10px] font-mono mt-0.5 ${dm ? 'text-gray-500' : 'text-slate-400'}`}>{p.SKU || p.Ref || 'NO-REF'}</p>
                                                     </td>
                                                     <td className="px-4 py-3 text-xs">
                                                         <span className={`px-2 py-1 rounded-md ${dm ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>
@@ -646,11 +658,11 @@ const AdminDashboard = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 font-bold text-green-500">
-                                                        {p.price || 0} DH
+                                                        {p.price || p.Price || 0} DH
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <button 
-                                                            onClick={() => toggleProductAvailability(p.Id, p.category_id)}
+                                                            onClick={() => toggleProductAvailability(p.Id, categoryId)}
                                                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
                                                                 ${isOutOfStock 
                                                                     ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' 
