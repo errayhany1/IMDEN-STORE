@@ -33,6 +33,11 @@ const AdminDashboard = () => {
     const [productSearch, setProductSearch] = useState('');
     const [productCatFilter, setProductCatFilter] = useState('all');
     const [editingProduct, setEditingProduct] = useState(null);
+    const [createOrderModal, setCreateOrderModal] = useState(false);
+    const [newOrderData, setNewOrderData] = useState({
+        name: '', phone: '', address: '', notes: '', items: []
+    });
+    const [manualOrderSearch, setManualOrderSearch] = useState('');
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
@@ -186,6 +191,122 @@ const AdminDashboard = () => {
             console.error("Error deleting order:", err);
             alert("حدث خطأ أثناء حذف الطلب");
         }
+    };
+
+    const submitManualOrder = async () => {
+        if (!newOrderData.name || !newOrderData.phone) return alert("يرجى إدخال اسم ورقم هاتف الزبون");
+        if (newOrderData.items.length === 0) return alert("يرجى إضافة منتج واحد على الأقل");
+
+        setLoading(true);
+        try {
+            const salePrice = newOrderData.items.reduce((sum, item) => sum + ((item.price || item.Price || 0) * item.quantity), 0);
+            const orderMetaData = newOrderData.items.map(i => ({
+                id: i.Id,
+                name: i.Title || i.title,
+                ref: i.SKU || i.Ref,
+                price: i.price || i.Price,
+                qty: i.quantity
+            }));
+
+            const orderPayload = {
+                "Customer Name": newOrderData.name,
+                "Customer Phone": newOrderData.phone,
+                "Delivery Address": newOrderData.address,
+                "Sale Price": salePrice,
+                "Status": "قيد المراجعة",
+                "Notes": newOrderData.notes ? `طلب يدوي: ${newOrderData.notes}` : 'طلب يدوي',
+                "Order Metadata": JSON.stringify(orderMetaData)
+            };
+
+            const res = await axios.post(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, [orderPayload], {
+                headers: { 'xc-token': ORDERS_TOKEN, 'Content-Type': 'application/json' }
+            });
+            
+            if (res.data && res.data[0]) {
+                setOrders(prev => [res.data[0], ...prev]);
+            } else {
+                fetchOrders(true);
+            }
+            
+            setCreateOrderModal(false);
+            setNewOrderData({ name: '', phone: '', address: '', notes: '', items: [] });
+            setActiveTab('orders');
+        } catch (err) {
+            console.error("Error submitting manual order", err);
+            alert("حدث خطأ أثناء إنشاء الطلب");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const printInvoice = (order) => {
+        let itemsHtml = '';
+        let total = 0;
+        try {
+            const meta = JSON.parse(order['Order Metadata']);
+            itemsHtml = meta.map(i => {
+                total += (i.price * i.qty);
+                return `<tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${i.name || i.ref}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${i.price} DH</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${i.qty}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${i.price * i.qty} DH</td>
+                </tr>`;
+            }).join('');
+        } catch(e) {}
+
+        const invoiceContent = `
+            <html>
+            <head>
+                <title>فاتورة الطلب #${order.Id}</title>
+                <style>
+                    body { font-family: sans-serif; direction: rtl; padding: 40px; color: #333; }
+                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
+                    .title { font-size: 28px; font-weight: bold; }
+                    .info { margin-bottom: 30px; line-height: 1.6; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: right; }
+                    th { background: #f8f9fa; padding: 12px; border-bottom: 2px solid #ddd; }
+                    .total { text-align: left; font-size: 20px; font-weight: bold; margin-top: 20px; border-top: 2px solid #222; padding-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="title">IMDEN STORE</div>
+                    <div>
+                        <strong>فاتورة طلب #${order.Id}</strong><br/>
+                        التاريخ: ${new Date(order.CreatedAt).toLocaleDateString('ar-MA')}
+                    </div>
+                </div>
+                <div class="info">
+                    <strong>إلى:</strong> ${order['Customer Name'] || 'زبون'}<br/>
+                    <strong>الهاتف:</strong> <span dir="ltr">${order['Customer Phone'] || ''}</span><br/>
+                    <strong>العنوان:</strong> ${order['Delivery Address'] || ''}
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th>السعر</th>
+                            <th>الكمية</th>
+                            <th>المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemsHtml}</tbody>
+                </table>
+                <div class="total">
+                    المبلغ الإجمالي: ${order['Sale Price'] || total} درهم
+                </div>
+                <div style="text-align:center; margin-top: 50px; font-size: 14px; color: #666;">
+                    شكراً لثقتكم بنا!
+                </div>
+                <script>window.print(); setTimeout(() => window.close(), 500);</script>
+            </body>
+            </html>
+        `;
+
+        const win = window.open('', '_blank');
+        win.document.write(invoiceContent);
+        win.document.close();
     };
 
     // Format date
@@ -388,8 +509,12 @@ const AdminDashboard = () => {
 
                 {/* ══════ ORDERS TAB ══════ */}
                 {activeTab === 'orders' && (<>
-                {/* CSV Export */}
-                <div className="flex justify-end">
+                {/* CSV Export & Create Order */}
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => setCreateOrderModal(true)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors bg-blue-500 hover:bg-blue-600 text-white`}>
+                        <Plus size={14} /> طلب يدوي
+                    </button>
                     <button onClick={exportCSV}
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
                         <Download size={14} /> تصدير CSV
@@ -538,6 +663,10 @@ const AdminDashboard = () => {
                                                     </>);
                                                 })()}
                                                 <div className="flex-1" />
+                                                <button onClick={(e) => { e.stopPropagation(); printInvoice(order); }}
+                                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-blue-400' : 'bg-blue-50 hover:bg-blue-100 text-blue-600'}`}>
+                                                    <Package size={12} /> طباعة الفاتورة
+                                                </button>
                                                 <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(order.Id); }}
                                                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-red-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                                                     <Trash2 size={12} /> حذف
@@ -834,6 +963,128 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
+            {/* ── Create Manual Order Modal ── */}
+            {createOrderModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCreateOrderModal(false)} />
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col space-y-4 ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                        <h3 className="text-lg font-bold border-b pb-3" style={{borderColor: dm ? '#1f2937' : '#e2e8f0'}}>إنشاء طلب يدوي</h3>
+                        
+                        <div className="overflow-y-auto pr-2 space-y-4 flex-1">
+                            {/* Customer Info */}
+                            <div className={`p-4 rounded-xl border ${dm ? 'border-gray-800 bg-gray-800/50' : 'border-slate-200 bg-slate-50/50'}`}>
+                                <h4 className="text-sm font-bold mb-3">معلومات الزبون</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الاسم الكامل *</label>
+                                        <input type="text" value={newOrderData.name} onChange={e => setNewOrderData({...newOrderData, name: e.target.value})}
+                                            className={`w-full px-3 py-2 rounded-lg border text-sm outline-none ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-white border-slate-300 focus:border-blue-500'}`} />
+                                    </div>
+                                    <div>
+                                        <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>رقم الهاتف *</label>
+                                        <input type="tel" value={newOrderData.phone} onChange={e => setNewOrderData({...newOrderData, phone: e.target.value})}
+                                            className={`w-full px-3 py-2 rounded-lg border text-sm outline-none text-left font-mono ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-white border-slate-300 focus:border-blue-500'}`} />
+                                    </div>
+                                </div>
+                                <div className="mb-3">
+                                    <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>العنوان</label>
+                                    <input type="text" value={newOrderData.address} onChange={e => setNewOrderData({...newOrderData, address: e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm outline-none ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-white border-slate-300 focus:border-blue-500'}`} />
+                                </div>
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>ملاحظات</label>
+                                    <input type="text" value={newOrderData.notes} onChange={e => setNewOrderData({...newOrderData, notes: e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm outline-none ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-white border-slate-300 focus:border-blue-500'}`} />
+                                </div>
+                            </div>
+
+                            {/* Products Selection */}
+                            <div className={`p-4 rounded-xl border ${dm ? 'border-gray-800 bg-gray-800/50' : 'border-slate-200 bg-slate-50/50'}`}>
+                                <h4 className="text-sm font-bold mb-3">المنتجات *</h4>
+                                
+                                {/* Product Search */}
+                                <div className={`relative mb-3 ${dm ? 'text-gray-300' : 'text-slate-500'}`}>
+                                    <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2" />
+                                    <input type="text" placeholder="ابحث لإضافة منتج..." value={manualOrderSearch}
+                                        onChange={e => setManualOrderSearch(e.target.value)}
+                                        className={`w-full pr-9 pl-4 py-2.5 rounded-xl border outline-none text-sm ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-white border-slate-300 focus:border-blue-500'}`} />
+                                    
+                                    {manualOrderSearch && (
+                                        <div className={`absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-xl border shadow-xl z-20 ${dm ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
+                                            {products.filter(p => (p.Title || p.title || '').toLowerCase().includes(manualOrderSearch.toLowerCase()) || (p.SKU || p.Ref || '').toLowerCase().includes(manualOrderSearch.toLowerCase())).slice(0, 10).map(p => (
+                                                <div key={p.Id} 
+                                                    className={`p-2 border-b last:border-0 cursor-pointer flex justify-between items-center ${dm ? 'border-gray-700 hover:bg-gray-700' : 'border-slate-100 hover:bg-slate-50'}`}
+                                                    onClick={() => {
+                                                        const exists = newOrderData.items.find(i => i.Id === p.Id);
+                                                        if (exists) {
+                                                            setNewOrderData({...newOrderData, items: newOrderData.items.map(i => i.Id === p.Id ? {...i, quantity: i.quantity + 1} : i)});
+                                                        } else {
+                                                            setNewOrderData({...newOrderData, items: [...newOrderData.items, { ...p, quantity: 1 }]});
+                                                        }
+                                                        setManualOrderSearch('');
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <p className="font-bold text-sm">{p.Title || p.title}</p>
+                                                        <p className="text-[10px] text-gray-500 font-mono">{p.SKU || p.Ref}</p>
+                                                    </div>
+                                                    <span className="text-green-500 font-bold text-sm">{p.price || p.Price || 0} DH</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Selected Items */}
+                                <div className="space-y-2">
+                                    {newOrderData.items.map((item, idx) => (
+                                        <div key={item.Id} className={`flex items-center justify-between p-2 rounded-lg border ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}>
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <p className="font-bold text-sm truncate">{item.Title || item.title}</p>
+                                                <p className="text-green-500 font-bold text-xs">{item.price || item.Price || 0} DH</p>
+                                            </div>
+                                            <div className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mr-2">
+                                                <button onClick={() => {
+                                                    if (item.quantity > 1) {
+                                                        setNewOrderData({...newOrderData, items: newOrderData.items.map(i => i.Id === item.Id ? {...i, quantity: i.quantity - 1} : i)});
+                                                    } else {
+                                                        setNewOrderData({...newOrderData, items: newOrderData.items.filter(i => i.Id !== item.Id)});
+                                                    }
+                                                }} className="w-6 h-6 flex items-center justify-center bg-white dark:bg-gray-700 rounded shadow-sm font-bold">-</button>
+                                                <span className="font-bold text-sm w-4 text-center">{item.quantity}</span>
+                                                <button onClick={() => setNewOrderData({...newOrderData, items: newOrderData.items.map(i => i.Id === item.Id ? {...i, quantity: i.quantity + 1} : i)})}
+                                                    className="w-6 h-6 flex items-center justify-center bg-white dark:bg-gray-700 rounded shadow-sm font-bold">+</button>
+                                            </div>
+                                            <button onClick={() => setNewOrderData({...newOrderData, items: newOrderData.items.filter(i => i.Id !== item.Id)})}
+                                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg mr-2 transition-colors">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-4 pt-3 border-t font-bold flex justify-between" style={{borderColor: dm ? '#374151' : '#e2e8f0'}}>
+                                    <span>المجموع الإجمالي:</span>
+                                    <span className="text-green-500 text-lg">
+                                        {newOrderData.items.reduce((sum, item) => sum + ((item.price || item.Price || 0) * item.quantity), 0)} DH
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button onClick={() => setCreateOrderModal(false)}
+                                className={`flex-1 py-2.5 rounded-xl font-medium ${dm ? 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'}`}>
+                                إلغاء
+                            </button>
+                            <button onClick={submitManualOrder} disabled={loading}
+                                className="flex-1 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex justify-center items-center gap-2">
+                                {loading ? <Loader2 size={16} className="animate-spin" /> : 'إنشاء الطلب'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
