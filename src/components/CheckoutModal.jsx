@@ -56,7 +56,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
             // 2. Save to NocoDB Orders Table (New Account)
             const nocodbUrl = import.meta.env.VITE_NOCODB_URL;
-            const ordersToken = import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
+            const ordersToken = import.meta.env.VITE_NOCODB_API_TOKEN || import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
             const ordersTableId = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 
             try {

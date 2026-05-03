@@ -4,7 +4,7 @@ import { Search, Package, Clock, Truck, XCircle, ArrowRight, Loader2, Phone, Sho
 import useStore from '../store/useStore';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
-const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
+const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN || import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
 const ORDERS_TABLE = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 
 const statusConfig = {
@@ -44,7 +44,7 @@ const OrderTracking = () => {
 
             const response = await axios.get(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, {
                 headers: { 'xc-token': ORDERS_TOKEN },
-                params: { where, limit: 20, sort: '-Id' }
+                params: { where: where, limit: 20, sort: '-Id' }
             });
 
             const list = response.data.list || [];
