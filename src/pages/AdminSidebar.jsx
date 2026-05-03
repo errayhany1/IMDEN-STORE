@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, ArrowRight, X, Menu } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, ArrowRight, X, Menu, CreditCard } from 'lucide-react';
 
 const sidebarItems = [
     { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
     { id: 'orders', label: 'الطلبات', icon: ShoppingBag },
     { id: 'customers', label: 'الزبائن', icon: Users },
     { id: 'products', label: 'المنتجات', icon: Package },
+    { id: 'expenses', label: 'المصاريف', icon: CreditCard },
     { id: 'settings', label: 'الإعدادات', icon: Settings },
 ];
 

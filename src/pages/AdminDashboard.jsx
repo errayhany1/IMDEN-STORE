@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp, Users, Download, Plus } from 'lucide-react';
+import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp, Users, Download, Plus, Calendar } from 'lucide-react';
 import useStore from '../store/useStore';
 import AdminSidebar from './AdminSidebar';
 
@@ -9,6 +9,7 @@ const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
 const ORDERS_TABLE = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 const PRODUCTS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const PRODUCTS_TABLE = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
+const EXPENSES_TABLE = import.meta.env.VITE_NOCODB_TABLE_EXPENSES;
 const CAT_MAP = {1:'Chargers',2:'Audio',3:'Smart Watches',4:'Gaming',5:'Mouse & Keyboard',6:'Storage',7:'Laptop Chargers',8:'Stands',9:'Lighting',10:'Cameras',11:'Network',12:'General',13:'Microphones',14:'Batteries',15:'Out of Stock'};
 
 const AdminDashboard = () => {
@@ -38,6 +39,10 @@ const AdminDashboard = () => {
         name: '', phone: '', address: '', notes: '', items: []
     });
     const [manualOrderSearch, setManualOrderSearch] = useState('');
+    const [expenses, setExpenses] = useState([]);
+    const [expensesLoading, setExpensesLoading] = useState(false);
+    const [createExpenseModal, setCreateExpenseModal] = useState(false);
+    const [newExpenseData, setNewExpenseData] = useState({ Description: '', Amount: '', 'Paid By': '', Date: new Date().toISOString().split('T')[0] });
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
@@ -45,6 +50,7 @@ const AdminDashboard = () => {
             setIsAuthenticated(true);
             fetchOrders();
             fetchProducts();
+            fetchExpenses();
         }
     }, []);
 
@@ -55,6 +61,7 @@ const AdminDashboard = () => {
             sessionStorage.setItem('admin_auth', 'true');
             fetchOrders();
             fetchProducts();
+            fetchExpenses();
         } else {
             setError('كلمة السر غير صحيحة');
         }
@@ -134,6 +141,77 @@ const AdminDashboard = () => {
             console.error("Error saving product:", err);
             alert("حدث خطأ أثناء حفظ المنتج");
             fetchProducts(); // Refresh to get original state
+        }
+    };
+
+    const fetchExpenses = useCallback(async (silent = false) => {
+        if (!silent) setExpensesLoading(true);
+        try {
+            let allExpenses = [];
+            let offset = 0;
+            let hasMore = true;
+
+            while (hasMore) {
+                const response = await axios.get(`${NOCODB_URL}/api/v2/tables/${EXPENSES_TABLE}/records`, {
+                    headers: { 'xc-token': PRODUCTS_TOKEN }, // Using global API token
+                    params: { limit: 100, offset, sort: '-Id' }
+                });
+                const list = response.data.list || [];
+                allExpenses = [...allExpenses, ...list];
+                if (list.length < 100) hasMore = false;
+                else offset += 100;
+            }
+            setExpenses(allExpenses);
+        } catch (err) {
+            console.error("Error fetching expenses:", err);
+        } finally {
+            setExpensesLoading(false);
+        }
+    }, []);
+
+    const submitExpense = async () => {
+        if (!newExpenseData.Description || !newExpenseData.Amount) return alert("يرجى إدخال الوصف والمبلغ");
+        
+        setExpensesLoading(true);
+        try {
+            const payload = {
+                Description: newExpenseData.Description,
+                Amount: parseFloat(newExpenseData.Amount) || 0,
+                "Paid By": newExpenseData['Paid By'],
+                Date: newExpenseData.Date
+            };
+            
+            const res = await axios.post(`${NOCODB_URL}/api/v2/tables/${EXPENSES_TABLE}/records`, [payload], {
+                headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' }
+            });
+            
+            if (res.data && res.data[0]) {
+                setExpenses(prev => [res.data[0], ...prev]);
+            } else {
+                fetchExpenses(true);
+            }
+            
+            setCreateExpenseModal(false);
+            setNewExpenseData({ Description: '', Amount: '', 'Paid By': '', Date: new Date().toISOString().split('T')[0] });
+        } catch (err) {
+            console.error("Error adding expense:", err);
+            alert("حدث خطأ أثناء إضافة المصروف");
+        } finally {
+            setExpensesLoading(false);
+        }
+    };
+
+    const deleteExpense = async (id) => {
+        if(!confirm('هل أنت متأكد من حذف هذا المصروف؟')) return;
+        try {
+            await axios.delete(`${NOCODB_URL}/api/v2/tables/${EXPENSES_TABLE}/records`, {
+                headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' },
+                data: [{ Id: id }]
+            });
+            setExpenses(prev => prev.filter(e => e.Id !== id));
+        } catch (err) {
+            console.error("Error deleting expense:", err);
+            alert("حدث خطأ أثناء حذف المصروف");
         }
     };
 
@@ -331,6 +409,8 @@ const AdminDashboard = () => {
     const shippedCount = orders.filter(o => o.Status === 'تم الشحن').length;
     const cancelledCount = orders.filter(o => o.Status === 'ملغي').length;
     const totalRevenue = orders.filter(o => o.Status !== 'ملغي').reduce((sum, o) => sum + (Number(o['Sale Price']) || 0), 0);
+    const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.Amount) || 0), 0);
+    const netProfit = totalRevenue - totalExpenses;
 
     // Today's orders
     const today = new Date().toDateString();
@@ -442,7 +522,7 @@ const AdminDashboard = () => {
                 {/* Top Bar */}
                 <header className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-xl ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-slate-50/90 border-slate-200'}`}>
                     <h2 className="text-lg font-bold mr-10 sm:mr-0">
-                        {activeTab === 'dashboard' ? 'لوحة التحكم' : activeTab === 'orders' ? 'إدارة الطلبات' : activeTab === 'customers' ? 'الزبائن' : activeTab === 'products' ? 'المنتجات' : 'الإعدادات'}
+                        {activeTab === 'dashboard' ? 'لوحة التحكم' : activeTab === 'orders' ? 'إدارة الطلبات' : activeTab === 'customers' ? 'الزبائن' : activeTab === 'products' ? 'المنتجات' : activeTab === 'expenses' ? 'المصاريف' : 'الإعدادات'}
                     </h2>
                     <button onClick={() => fetchOrders(true)}
                         className={`p-2 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
@@ -473,17 +553,19 @@ const AdminDashboard = () => {
                     </div>
                     <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
                         <div className="flex items-center gap-2 mb-2">
-                            <Clock size={16} className="text-yellow-500" />
-                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>قيد المراجعة</span>
+                            <CreditCard size={16} className="text-red-500" />
+                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>إجمالي المصاريف</span>
                         </div>
-                        <p className="text-2xl font-bold text-yellow-500">{pendingCount}</p>
+                        <p className="text-2xl font-bold text-red-500">{totalExpenses.toFixed(0)} DH</p>
                     </div>
                     <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
                         <div className="flex items-center gap-2 mb-2">
-                            <Package size={16} className="text-purple-500" />
-                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>طلبات اليوم</span>
+                            <Package size={16} className="text-blue-400" />
+                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الربح الصافي</span>
                         </div>
-                        <p className="text-2xl font-bold text-purple-500">{todayOrders.length}</p>
+                        <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                            {netProfit > 0 ? '+' : ''}{netProfit.toFixed(0)} DH
+                        </p>
                     </div>
                 </div>
 
@@ -875,6 +957,78 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
+                {/* ══════ EXPENSES TAB ══════ */}
+                {activeTab === 'expenses' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-bold">المصاريف والأرباح</h3>
+                            <button onClick={() => setCreateExpenseModal(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20">
+                                <Plus size={14} /> إضافة مصروف
+                            </button>
+                        </div>
+
+                        {/* Profit Summary Mini Card */}
+                        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                            <div>
+                                <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>إجمالي المبيعات المكتملة</p>
+                                <p className="text-xl font-bold text-green-500">{totalRevenue.toFixed(0)} DH</p>
+                            </div>
+                            <div className="hidden sm:block text-2xl text-gray-300 dark:text-gray-700">-</div>
+                            <div>
+                                <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>إجمالي المصاريف</p>
+                                <p className="text-xl font-bold text-red-500">{totalExpenses.toFixed(0)} DH</p>
+                            </div>
+                            <div className="hidden sm:block text-2xl text-gray-300 dark:text-gray-700">=</div>
+                            <div className={`px-4 py-2 rounded-lg ${netProfit >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                                <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الربح الصافي</p>
+                                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>{netProfit > 0 ? '+' : ''}{netProfit.toFixed(0)} DH</p>
+                            </div>
+                        </div>
+
+                        <div className={`rounded-xl border overflow-hidden ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                            {expensesLoading ? (
+                                <div className="p-12 flex flex-col items-center justify-center text-blue-500">
+                                    <Loader2 size={40} className="animate-spin mb-4" />
+                                </div>
+                            ) : expenses.length === 0 ? (
+                                <div className={`p-12 text-center rounded-xl ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
+                                    لا توجد مصاريف مسجلة حتى الآن.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-right text-sm">
+                                        <thead className={`border-b ${dm ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                            <tr>
+                                                <th className="px-4 py-3 font-semibold">تاريخ</th>
+                                                <th className="px-4 py-3 font-semibold">الوصف</th>
+                                                <th className="px-4 py-3 font-semibold">المسؤول</th>
+                                                <th className="px-4 py-3 font-semibold">المبلغ</th>
+                                                <th className="px-4 py-3 font-semibold w-16">إجراء</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200/20">
+                                            {expenses.map(exp => (
+                                                <tr key={exp.Id} className={`transition-colors ${dm ? 'hover:bg-gray-800/50' : 'hover:bg-slate-50'}`}>
+                                                    <td className="px-4 py-3 text-xs font-mono">{formatDate(exp.Date || exp.CreatedAt)}</td>
+                                                    <td className="px-4 py-3 font-medium">{exp.Description}</td>
+                                                    <td className="px-4 py-3 text-xs">{exp['Paid By'] || '—'}</td>
+                                                    <td className="px-4 py-3 font-bold text-red-500">{exp.Amount} DH</td>
+                                                    <td className="px-4 py-3">
+                                                        <button onClick={() => deleteExpense(exp.Id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* ══════ SETTINGS TAB ══════ */}
                 {activeTab === 'settings' && (
                     <div className={`p-6 rounded-xl border space-y-4 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
@@ -963,6 +1117,51 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
+            {/* ── Add Expense Modal ── */}
+            {createExpenseModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCreateExpenseModal(false)} />
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4 ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                        <h3 className="text-lg font-bold border-b pb-3 mb-4" style={{borderColor: dm ? '#1f2937' : '#e2e8f0'}}>إضافة مصروف جديد</h3>
+                        <div className="space-y-3">
+                            <div>
+                                <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الوصف *</label>
+                                <input type="text" value={newExpenseData.Description} onChange={e => setNewExpenseData({...newExpenseData, Description: e.target.value})}
+                                    placeholder="مثال: فاتورة كهرباء، شراء أكياس..."
+                                    className={`w-full px-3 py-2 rounded-lg border text-sm outline-none ${dm ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-300 focus:border-blue-500'}`} />
+                            </div>
+                            <div>
+                                <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>المبلغ (DH) *</label>
+                                <input type="number" value={newExpenseData.Amount} onChange={e => setNewExpenseData({...newExpenseData, Amount: e.target.value})}
+                                    className={`w-full px-3 py-2 rounded-lg border text-sm font-bold text-red-500 outline-none ${dm ? 'bg-gray-800 border-gray-700 focus:border-red-500' : 'bg-slate-50 border-slate-300 focus:border-red-500'}`} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>المسؤول (اختياري)</label>
+                                    <input type="text" value={newExpenseData['Paid By']} onChange={e => setNewExpenseData({...newExpenseData, 'Paid By': e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm outline-none ${dm ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-300 focus:border-blue-500'}`} />
+                                </div>
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>التاريخ</label>
+                                    <input type="date" value={newExpenseData.Date} onChange={e => setNewExpenseData({...newExpenseData, Date: e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm outline-none ${dm ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-300 focus:border-blue-500'}`} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 pt-4 border-t mt-2" style={{borderColor: dm ? '#374151' : '#e2e8f0'}}>
+                            <button onClick={() => setCreateExpenseModal(false)}
+                                className={`flex-1 py-2 rounded-xl font-medium ${dm ? 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'}`}>
+                                إلغاء
+                            </button>
+                            <button onClick={submitExpense} disabled={expensesLoading}
+                                className="flex-1 py-2 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
+                                {expensesLoading ? 'جاري الحفظ...' : 'إضافة المصروف'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ── Create Manual Order Modal ── */}
             {createOrderModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
