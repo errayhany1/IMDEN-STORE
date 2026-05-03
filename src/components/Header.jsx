@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, MessageSquare } from 'lucide-react';
+import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, MessageSquare, Truck } from 'lucide-react';
 import useStore from '../store/useStore';
 import DarkModeToggle from './DarkModeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -254,6 +254,16 @@ const Header = () => {
                                     {dm ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-slate-500" />}
                                     {dm ? 'الوضع الفاتح' : 'الوضع الداكن'}
                                 </button>
+
+                                {/* Track Order */}
+                                <a
+                                    href="/tracking"
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
+                                    ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
+                                >
+                                    <Truck size={18} className="text-blue-500" />
+                                    تتبع طلبك
+                                </a>
 
                                 {/* WhatsApp Support */}
                                 <a
