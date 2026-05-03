@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import useStore from '../store/useStore';
-import ImageModal from './ImageModal';
+import QuickViewModal from './QuickViewModal';
 import './ProductCard.css';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
@@ -125,13 +125,11 @@ const ProductCard = ({ product }) => {
                 </div>
             </article>
 
-            {/* Lightbox Modal */}
-            <ImageModal
+            {/* Quick View Modal */}
+            <QuickViewModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                images={allImages}
-                alt={product.name || product.ref}
-                productRef={product.ref}
+                product={product}
             />
         </>
     );
