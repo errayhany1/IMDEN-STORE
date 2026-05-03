@@ -9,6 +9,7 @@ import NotificationPrompt from './components/NotificationPrompt';
 import AIChatWidget from './components/AIChatWidget';
 import AuthModal from './components/AuthModal';
 import AdminDashboard from './pages/AdminDashboard';
+import OrderTracking from './pages/OrderTracking';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -62,6 +63,9 @@ function App() {
   const path = window.location.pathname;
   if (path === '/admin') {
       return <AdminDashboard />;
+  }
+  if (path === '/tracking') {
+      return <OrderTracking />;
   }
 
   return (
