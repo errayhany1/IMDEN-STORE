@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
 import useStore from '../store/useStore';
 import { getRotatingFeatured } from '../utils/featuredProducts';
@@ -11,13 +11,22 @@ const FeaturedStrip = () => {
     const [featured, setFeatured] = useState([]);
     const [nextIn, setNextIn] = useState(0); // seconds until next rotation
 
+    const productsRef = useRef(products);
+
+    // Keep the ref up to date without triggering re-renders of the ticker
     useEffect(() => {
-        if (products.length === 0) return;
+        productsRef.current = products;
+    }, [products]);
 
-        // Set initial featured
-        setFeatured(getRotatingFeatured(products));
+    // Initialize featured ONCE when products first load
+    useEffect(() => {
+        if (products.length > 0 && featured.length === 0) {
+            setFeatured(getRotatingFeatured(products));
+        }
+    }, [products, featured.length]);
 
-        // Countdown ticker every second
+    // Independent ticker for the 10-minute rotation
+    useEffect(() => {
         const tick = setInterval(() => {
             const now = Date.now();
             const msInSlot = now % (10 * 60 * 1000); // ms elapsed in current 10-min window
@@ -25,14 +34,14 @@ const FeaturedStrip = () => {
 
             setNextIn(Math.ceil(msLeft / 1000));
 
-            // When a new slot starts, update featured
-            if (msLeft <= 1000) {
-                setTimeout(() => setFeatured(getRotatingFeatured(products)), 1100);
+            // When a new slot starts, update featured using the latest products from ref
+            if (msLeft <= 1000 && productsRef.current.length > 0) {
+                setTimeout(() => setFeatured(getRotatingFeatured(productsRef.current)), 1100);
             }
         }, 1000);
 
         return () => clearInterval(tick);
-    }, [products]);
+    }, []);
 
     if (featured.length === 0 || searchQuery || selectedCategory !== 'All') return null;
 
