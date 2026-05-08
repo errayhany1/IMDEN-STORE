@@ -181,7 +181,8 @@ app.post('/webhook', async (req, res) => {
       const modeLabels = {
         'AWAITING_REF_STOP': '❌ وضع إيقاف المنتجات',
         'AWAITING_REF_RESTOCK': '✅ وضع إعادة التوفر',
-        'AWAITING_REF_CATEGORY': '📂 وضع تغيير التصنيف'
+        'AWAITING_REF_CATEGORY': '📂 وضع تغيير التصنيف',
+        'AWAITING_REF_PRICE': '💰 وضع تغيير السعر'
       };
 
       if (text === '/start' || text === '🔄 إعادة تشغيل البوت') {
@@ -189,7 +190,8 @@ app.post('/webhook', async (req, res) => {
         await sendMessage(chatId, "أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n💡 عند الضغط على أي زر، سيبقى فعالاً حتى تضغط على \"إعادة تشغيل البوت\".", {
           keyboard: [
             [{ text: "❌ إيقاف منتج (نفد المخزون)" }, { text: "✅ جعل المنتج متوفر" }],
-            [{ text: "📂 تغيير تصنيف منتج" }, { text: "🔄 إعادة تشغيل البوت" }]
+            [{ text: "📂 تغيير تصنيف منتج" }, { text: "💰 تغيير سعر المنتج" }],
+            [{ text: "🔄 إعادة تشغيل البوت" }]
           ],
           resize_keyboard: true,
           persistent: true
@@ -212,6 +214,41 @@ app.post('/webhook', async (req, res) => {
       if (text === "📂 تغيير تصنيف منتج" || text.startsWith("/category")) {
         userState[chatId] = 'AWAITING_REF_CATEGORY';
         await sendMessage(chatId, "⚙️ تم تفعيل وضع تغيير التصنيف.\n\nأرسل المرجع (REF) لكل منتج تريد تغيير تصنيفه، واحداً تلو الآخر.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت");
+        return;
+      }
+
+      if (text === "💰 تغيير سعر المنتج" || text.startsWith("/price")) {
+        userState[chatId] = 'AWAITING_REF_PRICE';
+        await sendMessage(chatId, "⚙️ تم تفعيل وضع تغيير السعر.\n\nأرسل المرجع (REF) للمنتج الذي تريد تغيير سعره.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت");
+        return;
+      }
+
+      if (typeof userState[chatId] === 'string' && userState[chatId].startsWith('AWAITING_NEW_PRICE_')) {
+        const sku = userState[chatId].replace('AWAITING_NEW_PRICE_', '');
+        const newPrice = parseFloat(text);
+        if (isNaN(newPrice)) {
+           await sendMessage(chatId, "❌ السعر غير صالح. الرجاء إرسال رقم صحيح (مثال: 150):");
+           return;
+        }
+        
+        try {
+           const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records?where=(SKU,eq,${encodeURIComponent(sku)})`;
+           const { data } = await axios.get(url, { headers: { 'xc-token': NOCODB_TOKEN } });
+           if (data.list && data.list.length > 0) {
+              const recordId = data.list[0].Id || data.list[0].id;
+              await axios.patch(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, 
+                 { Id: recordId, price: newPrice }, 
+                 { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' } }
+              );
+              await sendMessage(chatId, `✅ تم تغيير سعر المنتج (${sku}) إلى ${newPrice} DH بنجاح!\n\n🔁 يمكنك إرسال مرجع منتج آخر لتغيير سعره أو اضغط 🔄 للخروج.`);
+           } else {
+              await sendMessage(chatId, `❌ لم أجد المنتج (${sku}) في قاعدة البيانات.\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`);
+           }
+        } catch (error) {
+           console.error("Error updating price:", error?.response?.data || error.message);
+           await sendMessage(chatId, "❌ حدث خطأ أثناء الاتصال بقاعدة البيانات.");
+        }
+        userState[chatId] = 'AWAITING_REF_PRICE';
         return;
       }
 
@@ -244,6 +281,11 @@ app.post('/webhook', async (req, res) => {
           else if (state === 'AWAITING_REF_CATEGORY') {
             const keyboard = buildCategoryKeyboard(recordId);
             await sendMessage(chatId, `⬇️ المنتج (${sku}) — اختر التصنيف:`, keyboard);
+          }
+          else if (state === 'AWAITING_REF_PRICE') {
+            userState[chatId] = `AWAITING_NEW_PRICE_${sku}`;
+            await sendMessage(chatId, `✅ تم العثور على المنتج (${sku}).\n💰 سعره الحالي: ${data.list[0].price || 0} DH\n\n⬇️ يرجى إرسال السعر الجديد الآن (أرقام فقط):`);
+            return;
           }
         } else {
           await sendMessage(chatId, `❌ لم أجد منتج بمرجع: ${sku}\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`);
