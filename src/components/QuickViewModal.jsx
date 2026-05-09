@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, ShoppingCart, Copy, Check } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ShoppingCart, Copy, Check, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 
@@ -13,6 +13,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [copied, setCopied] = useState(false);
     const [addedToCart, setAddedToCart] = useState(false);
+    const [quantity, setQuantity] = useState(1);
 
     if (!product) return null;
 
@@ -37,10 +38,16 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
 
     const handleAddToCart = () => {
         if (!isOutOfStock) {
-            addToCart(product);
+            addToCart(product, quantity);
             setAddedToCart(true);
-            setTimeout(() => setAddedToCart(false), 1500);
+            setTimeout(() => {
+                setAddedToCart(false);
+            }, 1500);
         }
+    };
+
+    const updateQty = (delta) => {
+        setQuantity(prev => Math.max(1, prev + delta));
     };
 
     // Reset state when modal opens
@@ -49,6 +56,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
             setCurrentIndex(0);
             setCopied(false);
             setAddedToCart(false);
+            setQuantity(1);
         }
     }, [isOpen]);
 
@@ -185,29 +193,61 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className={`p-4 border-t flex gap-2 ${dm ? 'border-gray-800 bg-gray-900' : 'border-slate-100 bg-white'}`}>
-                            <button
-                                onClick={handleAddToCart}
-                                disabled={isOutOfStock}
-                                className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-white transition-all active:scale-[0.97] shadow-lg
-                                    ${addedToCart ? 'bg-green-500 shadow-green-500/20' 
-                                        : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none' 
-                                        : 'bg-primary hover:bg-primary/90 shadow-primary/20'}`}
-                            >
-                                {addedToCart ? (
-                                    <><Check size={18} /> تمت الإضافة!</>
-                                ) : (
-                                    <><ShoppingCart size={18} /> إضافة للسلة</>
-                                )}
-                            </button>
-                            <a
-                                href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-lg shadow-green-500/20"
-                            >
-                                <img src={WA_ICON} alt="WhatsApp" className="w-6 h-6" />
-                            </a>
+                        <div className={`p-4 border-t space-y-3 ${dm ? 'border-gray-800 bg-gray-900' : 'border-slate-100 bg-white'}`}>
+                            {/* Quantity Controls */}
+                            {!isOutOfStock && (
+                                <div className="flex items-center justify-center gap-1" dir="ltr">
+                                    <button onClick={() => updateQty(-5)}
+                                        className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-90
+                                            ${dm ? 'bg-gray-800 text-red-400 hover:bg-gray-700 border border-gray-700' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-200'}`}>
+                                        -5
+                                    </button>
+                                    <button onClick={() => updateQty(-1)}
+                                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90
+                                            ${dm ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}>
+                                        <Minus size={16} />
+                                    </button>
+                                    <div className={`w-14 h-10 flex items-center justify-center rounded-xl text-lg font-extrabold
+                                        ${dm ? 'bg-gray-800 text-white border border-gray-700' : 'bg-slate-50 text-slate-900 border border-slate-200'}`}>
+                                        {quantity}
+                                    </div>
+                                    <button onClick={() => updateQty(1)}
+                                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90
+                                            ${dm ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}>
+                                        <Plus size={16} />
+                                    </button>
+                                    <button onClick={() => updateQty(5)}
+                                        className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-90
+                                            ${dm ? 'bg-gray-800 text-green-400 hover:bg-gray-700 border border-gray-700' : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'}`}>
+                                        +5
+                                    </button>
+                                </div>
+                            )}
+                            {/* Add to Cart + WhatsApp */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleAddToCart}
+                                    disabled={isOutOfStock}
+                                    className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-white transition-all active:scale-[0.97] shadow-lg
+                                        ${addedToCart ? 'bg-green-500 shadow-green-500/20' 
+                                            : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none' 
+                                            : 'bg-primary hover:bg-primary/90 shadow-primary/20'}`}
+                                >
+                                    {addedToCart ? (
+                                        <><Check size={18} /> تمت الإضافة!</>
+                                    ) : (
+                                        <><ShoppingCart size={18} /> إضافة {quantity > 1 ? `(${quantity})` : ''} للسلة</>
+                                    )}
+                                </button>
+                                <a
+                                    href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-lg shadow-green-500/20"
+                                >
+                                    <img src={WA_ICON} alt="WhatsApp" className="w-6 h-6" />
+                                </a>
+                            </div>
                         </div>
                     </motion.div>
                 </div>

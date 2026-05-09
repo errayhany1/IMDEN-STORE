@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Check } from 'lucide-react';
 import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
 import './ProductCard.css';
@@ -12,6 +12,7 @@ const ProductCard = ({ product }) => {
     const gridColumns = useStore((state) => state.gridColumns);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hoveredThumb, setHoveredThumb] = useState(null);
+    const [addedToCart, setAddedToCart] = useState(false);
 
     const dm = darkMode;
     const singleCol = gridColumns === 1;
@@ -105,13 +106,23 @@ const ProductCard = ({ product }) => {
                     <div className="flex gap-2 flex-row-reverse">
                         <button
                             onClick={() => {
-                                if (!isOutOfStock) addToCart(product);
+                                if (!isOutOfStock && !addedToCart) {
+                                    addToCart(product);
+                                    setAddedToCart(true);
+                                    setTimeout(() => setAddedToCart(false), 1500);
+                                }
                             }}
                             disabled={isOutOfStock}
-                            className={`btn-add-cart flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed border-gray-400 shadow-none' : ''}`}
+                            className={`flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white transition-all duration-300 active:scale-[0.96]
+                                ${addedToCart ? 'bg-green-500 shadow-lg shadow-green-500/30' 
+                                    : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none' 
+                                    : 'btn-add-cart'}`}
                         >
-                            <ShoppingCart size={18} />
-                            إضافة
+                            {addedToCart ? (
+                                <><Check size={18} /> تمت الإضافة</>  
+                            ) : (
+                                <><ShoppingCart size={18} /> إضافة</>
+                            )}
                         </button>
                         <a
                             href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}

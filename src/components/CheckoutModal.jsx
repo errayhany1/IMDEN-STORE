@@ -54,29 +54,62 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 notesContent += `- ${item.name} (Ref: ${item.ref}) | الكمية: ${item.quantity} | السعر: ${item.price} DH\n`;
             });
 
+            // Prepare Order Metadata for Admin Dashboard
+            const orderMetaData = cart.map(item => ({
+                id: item.id || item.Id,
+                name: item.name || item.Title,
+                ref: item.ref || item.SKU,
+                price: item.price || item.Price,
+                qty: item.quantity
+            }));
+
             // 2. Save to NocoDB Orders Table (New Account)
             const nocodbUrl = import.meta.env.VITE_NOCODB_URL;
             const ordersToken = import.meta.env.VITE_NOCODB_API_TOKEN || import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
             const ordersTableId = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 
             try {
+                console.log('[CheckoutModal] Saving order to NocoDB...', { nocodbUrl, ordersTableId });
+                const orderBody = {
+                    'Customer Name': formData.name,
+                    'Customer Phone': formData.phone,
+                    'Delivery Address': formData.address,
+                    'Sale Price': subtotal,
+                    'Notes': notesContent,
+                    'Order Metadata': JSON.stringify(orderMetaData),
+                    'Status': 'قيد المراجعة'
+                };
+                console.log('[CheckoutModal] Order payload:', orderBody);
+
                 const nocoResponse = await fetch(`${nocodbUrl}/api/v2/tables/${ordersTableId}/records`, {
                     method: 'POST',
                     headers: {
                         'xc-token': ordersToken,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify([{
-                        'Customer Name': formData.name,
-                        'Customer Phone': formData.phone,
-                        'Sale Price': subtotal,
-                        'Notes': notesContent,
-                        'Status': 'قيد المراجعة'
-                    }])
+                    body: JSON.stringify(orderBody)
                 });
                 
+                const responseText = await nocoResponse.text();
+                console.log('[CheckoutModal] NocoDB response status:', nocoResponse.status, 'body:', responseText);
+
                 if (!nocoResponse.ok) {
-                    console.error("Failed to save to NocoDB:", await nocoResponse.text());
+                    console.error("Failed to save to NocoDB:", nocoResponse.status, responseText);
+                    // Try again with array format (NocoDB v2 sometimes expects array)
+                    console.log('[CheckoutModal] Retrying with array format...');
+                    const retryResponse = await fetch(`${nocodbUrl}/api/v2/tables/${ordersTableId}/records`, {
+                        method: 'POST',
+                        headers: {
+                            'xc-token': ordersToken,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify([orderBody])
+                    });
+                    const retryText = await retryResponse.text();
+                    console.log('[CheckoutModal] Retry response status:', retryResponse.status, 'body:', retryText);
+                    if (!retryResponse.ok) {
+                        console.error("Retry also failed:", retryResponse.status, retryText);
+                    }
                 }
             } catch (dbError) {
                 console.error("Error saving to database:", dbError);

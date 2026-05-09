@@ -35,6 +35,8 @@ const AdminDashboard = () => {
     const [productSearch, setProductSearch] = useState('');
     const [productCatFilter, setProductCatFilter] = useState('all');
     const [editingProduct, setEditingProduct] = useState(null);
+    const [editFiles, setEditFiles] = useState([]);
+    const [editProductLoading, setEditProductLoading] = useState(false);
     const [createOrderModal, setCreateOrderModal] = useState(false);
     const [newOrderData, setNewOrderData] = useState({
         name: '', phone: '', address: '', notes: '', items: []
@@ -44,6 +46,13 @@ const AdminDashboard = () => {
     const [expensesLoading, setExpensesLoading] = useState(false);
     const [createExpenseModal, setCreateExpenseModal] = useState(false);
     const [newExpenseData, setNewExpenseData] = useState({ Description: '', Amount: '', 'Paid By': '', Date: new Date().toISOString().split('T')[0] });
+
+    // Ozon Express State
+    const [ozonModalOpen, setOzonModalOpen] = useState(false);
+    const [ozonOrder, setOzonOrder] = useState(null);
+    const [ozonCities, setOzonCities] = useState([]);
+    const [ozonFormData, setOzonFormData] = useState({ city: '', address: '', name: '', phone: '', price: '', note: '' });
+    const [ozonLoading, setOzonLoading] = useState(false);
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
@@ -121,12 +130,24 @@ const AdminDashboard = () => {
         }
     };
 
-    const saveProductDetails = async (updatedProduct) => {
-        // Optimistic update
-        setProducts(prev => prev.map(p => p.Id === updatedProduct.Id ? { ...p, ...updatedProduct } : p));
-        setEditingProduct(null);
-
+    const saveProductDetails = async (updatedProduct, filesToUpload) => {
+        setEditProductLoading(true);
         try {
+            let uploadedFiles = [];
+            if (filesToUpload && filesToUpload.length > 0) {
+                // Upload files to NocoDB first
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    const formData = new FormData();
+                    formData.append('file', filesToUpload[i]);
+                    const uploadRes = await axios.post(`${NOCODB_URL}/api/v2/storage/upload`, formData, {
+                        headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'multipart/form-data' }
+                    });
+                    if (uploadRes.data && uploadRes.data.length > 0) {
+                        uploadedFiles.push(uploadRes.data[0]);
+                    }
+                }
+            }
+
             const payload = {
                 Id: updatedProduct.Id,
                 Title: updatedProduct.Title,
@@ -135,13 +156,35 @@ const AdminDashboard = () => {
                 Category_ID: updatedProduct.Category_ID,
                 category_id: updatedProduct.Category_ID
             };
+
+            // Map uploaded files to Image columns
+            if (uploadedFiles.length > 0) {
+                payload.Image1 = [uploadedFiles[0]];
+                payload.image1 = [uploadedFiles[0]];
+            }
+            if (uploadedFiles.length > 1) {
+                payload.Image2 = [uploadedFiles[1]];
+                payload.image2 = [uploadedFiles[1]];
+            }
+            if (uploadedFiles.length > 2) {
+                payload.Image3 = [uploadedFiles[2]];
+                payload.image3 = [uploadedFiles[2]];
+            }
+
             await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, payload, {
                 headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' }
             });
+
+            // Optimistic update
+            setProducts(prev => prev.map(p => p.Id === updatedProduct.Id ? { ...p, ...updatedProduct, ...payload } : p));
+            setEditingProduct(null);
+            setEditFiles([]);
         } catch (err) {
             console.error("Error saving product:", err);
             alert("حدث خطأ أثناء حفظ المنتج");
             fetchProducts(); // Refresh to get original state
+        } finally {
+            setEditProductLoading(false);
         }
     };
 
@@ -315,6 +358,63 @@ const AdminDashboard = () => {
             alert("حدث خطأ أثناء إنشاء الطلب");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openOzonModal = async (order) => {
+        setOzonOrder(order);
+        setOzonFormData({
+            name: order['Customer Name'] || '',
+            phone: order['Customer Phone'] || '',
+            address: order['Delivery Address'] || '',
+            price: order['Sale Price'] || '',
+            note: order.Notes || '',
+            city: ''
+        });
+        setOzonModalOpen(true);
+        if (ozonCities.length === 0) {
+            try {
+                const res = await axios.get('https://api.ozonexpress.ma/cities');
+                if (res.data && res.data.CITIES) {
+                    const citiesArray = Object.values(res.data.CITIES).sort((a, b) => a.NAME.localeCompare(b.NAME));
+                    setOzonCities(citiesArray);
+                }
+            } catch (err) {
+                console.error("Error fetching Ozon cities:", err);
+            }
+        }
+    };
+
+    const submitToOzon = async () => {
+        if (!ozonFormData.city) return alert("يرجى اختيار المدينة");
+        setOzonLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('parcel-receiver', ozonFormData.name);
+            formData.append('parcel-phone', ozonFormData.phone);
+            formData.append('parcel-city', ozonFormData.city);
+            formData.append('parcel-address', ozonFormData.address);
+            formData.append('parcel-price', ozonFormData.price);
+            formData.append('parcel-note', ozonFormData.note);
+            formData.append('parcel-replace', '0');
+            formData.append('is_stock', '0');
+
+            const API_URL = 'https://api.ozonexpress.ma/customers/57958/109726-7860c1-78d151-580acb-4a5c74/add-parcel';
+            
+            const response = await axios.post(API_URL, formData);
+            if (response.data && response.data.status !== 'error') {
+                alert("تم الإرسال إلى شركة التوصيل بنجاح!");
+                setOzonModalOpen(false);
+                // Optionally update status in NocoDB to 'Shipped'
+                updateOrderStatus(ozonOrder.Id, 'تم الشحن');
+            } else {
+                alert("حدث خطأ من شركة التوصيل: " + (response.data?.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error("Ozon API Error:", err);
+            alert("حدث خطأ أثناء التواصل مع شركة التوصيل. تحقق من اتصالك أو من إعدادات CORS.");
+        } finally {
+            setOzonLoading(false);
         }
     };
 
@@ -746,6 +846,10 @@ const AdminDashboard = () => {
                                                     </>);
                                                 })()}
                                                 <div className="flex-1" />
+                                                <button onClick={(e) => { e.stopPropagation(); openOzonModal(order); }}
+                                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors bg-purple-50 hover:bg-purple-100 text-purple-600">
+                                                    <Truck size={12} /> Ozon Express
+                                                </button>
                                                 <button onClick={(e) => { e.stopPropagation(); printInvoice(order); }}
                                                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${dm ? 'bg-gray-800 hover:bg-gray-700 text-blue-400' : 'bg-blue-50 hover:bg-blue-100 text-blue-600'}`}>
                                                     <Package size={12} /> طباعة الفاتورة
@@ -940,7 +1044,10 @@ const AdminDashboard = () => {
                                                                 {isOutOfStock ? '🚫 نفد' : '✅ متوفر'}
                                                             </button>
                                                             <button 
-                                                                onClick={() => setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId })}
+                                                                onClick={() => {
+                                                                    setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId });
+                                                                    setEditFiles([]);
+                                                                }}
                                                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
                                                                     ${dm ? 'bg-gray-800 text-blue-400 border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 border-slate-200 hover:bg-slate-50'}`}
                                                             >
@@ -1103,16 +1210,23 @@ const AdminDashboard = () => {
                                     ))}
                                 </select>
                             </div>
+                            <div>
+                                <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>صور جديدة (يستبدل الصور الحالية إن وجدت)</label>
+                                <input type="file" multiple accept="image/*" onChange={e => setEditFiles(e.target.files)}
+                                    className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${dm ? 'bg-gray-900 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`} />
+                                {editFiles.length > 0 && <p className="text-xs text-blue-500 mt-1">تم اختيار {editFiles.length} صورة.</p>}
+                            </div>
                         </div>
 
                         <div className="flex gap-3 pt-4 mt-2">
-                            <button onClick={() => setEditingProduct(null)}
+                            <button onClick={() => setEditingProduct(null)} disabled={editProductLoading}
                                 className={`flex-1 py-2.5 rounded-xl font-medium ${dm ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
                                 إلغاء
                             </button>
-                            <button onClick={() => saveProductDetails(editingProduct)}
-                                className="flex-1 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
-                                حفظ التغييرات
+                            <button onClick={() => saveProductDetails(editingProduct, editFiles)} disabled={editProductLoading}
+                                className="flex-1 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+                                {editProductLoading ? <Loader2 size={18} className="animate-spin" /> : null}
+                                {editProductLoading ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                             </button>
                         </div>
                     </div>
@@ -1285,6 +1399,67 @@ const AdminDashboard = () => {
                 </div>
             )}
 
+            {/* ── Ozon Express Modal ── */}
+            {ozonModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" dir="rtl">
+                    <div className={`w-full max-w-md rounded-2xl shadow-xl overflow-hidden ${dm ? 'bg-gray-900 border border-gray-800' : 'bg-white'}`}>
+                        <div className={`px-5 py-4 border-b flex justify-between items-center ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Truck className="text-purple-500" />
+                                إرسال إلى Ozon Express
+                            </h3>
+                            <button onClick={() => setOzonModalOpen(false)} className={`p-1.5 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800' : 'hover:bg-slate-100'}`}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold mb-1.5 opacity-70">اسم المستلم</label>
+                                <input type="text" value={ozonFormData.name} onChange={e => setOzonFormData({...ozonFormData, name: e.target.value})}
+                                    className={`w-full px-3 py-2 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-800 border-gray-700 focus:border-purple-500' : 'bg-slate-50 border-slate-200 focus:border-purple-500'}`} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold mb-1.5 opacity-70">الهاتف</label>
+                                    <input type="text" value={ozonFormData.phone} onChange={e => setOzonFormData({...ozonFormData, phone: e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-800 border-gray-700 focus:border-purple-500' : 'bg-slate-50 border-slate-200 focus:border-purple-500'}`} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold mb-1.5 opacity-70">المبلغ (درهم)</label>
+                                    <input type="number" value={ozonFormData.price} onChange={e => setOzonFormData({...ozonFormData, price: e.target.value})}
+                                        className={`w-full px-3 py-2 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-800 border-gray-700 focus:border-purple-500' : 'bg-slate-50 border-slate-200 focus:border-purple-500'}`} />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold mb-1.5 opacity-70">المدينة</label>
+                                <select value={ozonFormData.city} onChange={e => setOzonFormData({...ozonFormData, city: e.target.value})}
+                                    className={`w-full px-3 py-2 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-800 border-gray-700 focus:border-purple-500' : 'bg-slate-50 border-slate-200 focus:border-purple-500'}`}>
+                                    <option value="">اختر المدينة...</option>
+                                    {ozonCities.map(c => (
+                                        <option key={c.ID} value={c.ID}>{c.NAME}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold mb-1.5 opacity-70">العنوان الكامل</label>
+                                <textarea value={ozonFormData.address} onChange={e => setOzonFormData({...ozonFormData, address: e.target.value})} rows={2}
+                                    className={`w-full px-3 py-2 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-800 border-gray-700 focus:border-purple-500' : 'bg-slate-50 border-slate-200 focus:border-purple-500'}`} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold mb-1.5 opacity-70">ملاحظات لشركة التوصيل</label>
+                                <textarea value={ozonFormData.note} onChange={e => setOzonFormData({...ozonFormData, note: e.target.value})} rows={2}
+                                    className={`w-full px-3 py-2 rounded-xl border outline-none text-sm transition-colors ${dm ? 'bg-gray-800 border-gray-700 focus:border-purple-500' : 'bg-slate-50 border-slate-200 focus:border-purple-500'}`} />
+                            </div>
+                            
+                            <button onClick={submitToOzon} disabled={ozonLoading}
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-4">
+                                {ozonLoading ? <Loader2 size={18} className="animate-spin" /> : <Truck size={18} />}
+                                {ozonLoading ? 'جاري الإرسال...' : 'تأكيد الإرسال'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
