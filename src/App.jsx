@@ -10,6 +10,8 @@ import AIChatWidget from './components/AIChatWidget';
 import AuthModal from './components/AuthModal';
 import AdminDashboard from './pages/AdminDashboard';
 import OrderTracking from './pages/OrderTracking';
+import AccountPage from './pages/AccountPage';
+import IOSInstallPrompt from './components/IOSInstallPrompt';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -67,6 +69,9 @@ function App() {
   if (path === '/tracking') {
       return <OrderTracking />;
   }
+  if (path === '/account') {
+      return <AccountPage />;
+  }
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
@@ -100,6 +105,7 @@ function App() {
       <FloatingWhatsApp />
       <AIChatWidget />
       <AuthModal />
+      <IOSInstallPrompt />
 
       {/* Scroll to Top Button */}
       {showScrollTop && (

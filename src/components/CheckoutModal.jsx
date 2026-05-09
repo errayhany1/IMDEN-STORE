@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, User } from 'lucide-react';
+import { X, Send, User, ShoppingBag, Shield } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
 import { sendToTelegram } from '../utils/telegramApi';
@@ -18,6 +18,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [showGate, setShowGate] = useState(!user); // Show login gate for non-logged users
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -177,26 +178,58 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                         المرجو إدخال معلوماتك الشخصية لتأكيد إرسال الطلبية.
                     </p>
 
-                    {/* Login suggestion for non-logged users */}
-                    {!user && (
-                        <div 
-                            onClick={() => { onClose(); setAuthModalOpen(true); }}
-                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md mb-4
-                            ${dm ? 'bg-primary/10 border-primary/30 hover:bg-primary/20' : 'bg-primary/5 border-primary/20 hover:bg-primary/10'}`}
-                            dir="rtl"
-                        >
-                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                <User size={16} className="text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-primary">سجل دخولك لحفظ بياناتك!</p>
-                                <p className={`text-[10px] ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
-                                    لن تحتاج لإعادة إدخال معلوماتك في كل طلب
+                    {/* Login Gate for non-logged users */}
+                    {!user && showGate ? (
+                        <div className="space-y-5 py-2">
+                            {/* Icon */}
+                            <div className="text-center">
+                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-3 ${dm ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+                                    <ShoppingBag size={32} className="text-blue-500" />
+                                </div>
+                                <h3 className={`text-lg font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>سجل دخولك لتجربة أفضل</h3>
+                                <p className={`text-xs mt-1.5 max-w-xs mx-auto ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                    سجل دخولك لحفظ طلباتك ومتابعتها من صفحة "حسابي" في أي وقت
                                 </p>
                             </div>
-                            <span className="text-primary text-lg">←</span>
+
+                            {/* Benefits */}
+                            <div className={`rounded-xl p-3.5 space-y-2.5 ${dm ? 'bg-gray-900/50' : 'bg-slate-50'}`}>
+                                {[
+                                    { icon: '📦', text: 'تتبع جميع طلباتك من مكان واحد' },
+                                    { icon: '⚡', text: 'إتمام الطلبات بشكل أسرع بدون إعادة إدخال بياناتك' },
+                                    { icon: '🔔', text: 'إشعارات فورية عند تحديث حالة طلبك' },
+                                ].map((b, i) => (
+                                    <div key={i} className="flex items-center gap-2.5">
+                                        <span className="text-base">{b.icon}</span>
+                                        <span className={`text-xs font-medium ${dm ? 'text-gray-300' : 'text-slate-600'}`}>{b.text}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Login Button */}
+                            <button
+                                onClick={() => { onClose(); setAuthModalOpen(true); }}
+                                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
+                            >
+                                <User size={18} />
+                                تسجيل الدخول
+                            </button>
+
+                            {/* Continue as Guest */}
+                            <button
+                                onClick={() => setShowGate(false)}
+                                className={`w-full text-center text-xs font-medium py-2.5 rounded-xl transition-colors ${dm ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-700' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            >
+                                المتابعة كزائر بدون حساب ←
+                            </button>
+
+                            <div className="flex items-center justify-center gap-1.5">
+                                <Shield size={10} className={dm ? 'text-gray-600' : 'text-slate-300'} />
+                                <span className={`text-[9px] ${dm ? 'text-gray-600' : 'text-slate-300'}`}>معلوماتك محمية ومؤمنة بالكامل</span>
+                            </div>
                         </div>
-                    )}
+                    ) : (
+                    <>
 
                     {successMessage ? (
                         <div className="bg-green-100 text-green-800 p-4 rounded-xl text-center font-medium my-4 animate-pulse">
@@ -269,6 +302,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                                 )}
                             </button>
                         </form>
+                    )}
+                    </>
                     )}
                 </motion.div>
             </div>

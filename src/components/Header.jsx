@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, MessageSquare, Truck } from 'lucide-react';
+import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, MessageSquare, Truck, ShoppingBag } from 'lucide-react';
 import useStore from '../store/useStore';
 import DarkModeToggle from './DarkModeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -202,6 +202,30 @@ const Header = () => {
                                         <User size={18} />
                                         تسجيل الدخول
                                     </button>
+                                )}
+
+                                {/* My Account & Orders (logged in) */}
+                                {user && (
+                                    <a
+                                        href="/account"
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition
+                                        ${dm ? 'hover:bg-gray-800 text-blue-400' : 'hover:bg-blue-50 text-blue-600'}`}
+                                    >
+                                        <ShoppingBag size={18} className="text-blue-500" />
+                                        حسابي وطلباتي
+                                    </a>
+                                )}
+
+                                {/* My Orders (for non-logged users with saved phone) */}
+                                {!user && (
+                                    <a
+                                        href="/account"
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
+                                        ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
+                                    >
+                                        <ShoppingBag size={18} className="text-blue-500" />
+                                        طلباتي
+                                    </a>
                                 )}
 
                                 {/* Delivery Info */}
