@@ -54,6 +54,10 @@ const AdminDashboard = () => {
     const [ozonFormData, setOzonFormData] = useState({ city: '', address: '', name: '', phone: '', price: '', note: '' });
     const [ozonLoading, setOzonLoading] = useState(false);
 
+    // New orders notification
+    const [newOrdersCount, setNewOrdersCount] = useState(0);
+    const lastKnownOrderIdRef = React.useRef(null);
+
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
         if (savedAuth === 'true') {
@@ -63,6 +67,35 @@ const AdminDashboard = () => {
             fetchExpenses();
         }
     }, []);
+
+    // ── Auto-poll for new orders every 30 seconds ──
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const interval = setInterval(async () => {
+            try {
+                const response = await axios.get(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, {
+                    headers: { 'xc-token': ORDERS_TOKEN },
+                    params: { limit: 1, sort: '-Id' }
+                });
+                const list = response.data.list || [];
+                if (list.length > 0) {
+                    const latestId = list[0].Id;
+                    if (lastKnownOrderIdRef.current === null) {
+                        lastKnownOrderIdRef.current = latestId;
+                    } else if (latestId > lastKnownOrderIdRef.current) {
+                        const diff = latestId - lastKnownOrderIdRef.current;
+                        setNewOrdersCount(prev => prev + diff);
+                        lastKnownOrderIdRef.current = latestId;
+                        // Silently refresh orders in background
+                        fetchOrders(true);
+                    }
+                }
+            } catch (err) {
+                // Silent fail - polling should not block UI
+            }
+        }, 30000); // every 30 seconds
+        return () => clearInterval(interval);
+    }, [isAuthenticated]);
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -280,6 +313,10 @@ const AdminDashboard = () => {
             }
 
             setOrders(allOrders);
+            // Set the polling baseline to the most recent order
+            if (allOrders.length > 0 && lastKnownOrderIdRef.current === null) {
+                lastKnownOrderIdRef.current = allOrders[0].Id;
+            }
         } catch (err) {
             console.error("Error fetching orders:", err);
         } finally {
@@ -622,10 +659,27 @@ const AdminDashboard = () => {
             <div className="flex-1 sm:mr-56 min-h-screen">
                 {/* Top Bar */}
                 <header className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-xl ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-slate-50/90 border-slate-200'}`}>
-                    <h2 className="text-lg font-bold mr-10 sm:mr-0">
-                        {activeTab === 'dashboard' ? 'لوحة التحكم' : activeTab === 'orders' ? 'إدارة الطلبات' : activeTab === 'customers' ? 'الزبائن' : activeTab === 'products' ? 'المنتجات' : activeTab === 'expenses' ? 'المصاريف' : 'الإعدادات'}
-                    </h2>
-                    <button onClick={() => fetchOrders(true)}
+                    <div className="flex items-center gap-3 mr-10 sm:mr-0">
+                        <h2 className="text-lg font-bold">
+                            {activeTab === 'dashboard' ? 'لوحة التحكم' : activeTab === 'orders' ? 'إدارة الطلبات' : activeTab === 'customers' ? 'الزبائن' : activeTab === 'products' ? 'المنتجات' : activeTab === 'expenses' ? 'المصاريف' : 'الإعدادات'}
+                        </h2>
+                        {/* New orders notification badge */}
+                        {newOrdersCount > 0 && (
+                            <button
+                                onClick={() => { setNewOrdersCount(0); setActiveTab('orders'); setStatusFilter('الكل'); }}
+                                className="flex items-center gap-1.5 px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-bold animate-pulse shadow-lg shadow-red-500/40 transition-colors"
+                            >
+                                🔔 {newOrdersCount} طلب جديد!
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => {
+                            setNewOrdersCount(0);
+                            if (activeTab === 'products') fetchProducts();
+                            else if (activeTab === 'expenses') fetchExpenses();
+                            else fetchOrders(true);
+                        }}
                         className={`p-2 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
                         title="تحديث">
                         <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
