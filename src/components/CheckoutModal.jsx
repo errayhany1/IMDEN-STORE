@@ -131,6 +131,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             await sendToTelegram(pdfFile, caption);
 
             setSuccessMessage('تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.');
+            setCustomerInfo(formData); // Save phone number for Account Page
             // Clear cart and clear form after a delay
             setTimeout(() => {
                 clearCart();

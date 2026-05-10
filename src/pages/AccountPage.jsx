@@ -28,6 +28,7 @@ const AccountPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedOrder, setExpandedOrder] = useState(null);
+    const [manualPhone, setManualPhone] = useState('');
 
     // Determine the phone number for lookup
     const userPhone = user?.phoneNumber || customerInfo?.phone || '';
@@ -76,6 +77,14 @@ const AccountPage = () => {
     const handleLogout = () => {
         auth.signOut();
         window.location.href = '/';
+    };
+
+    const handlePhoneSubmit = (e) => {
+        e.preventDefault();
+        if (manualPhone.trim().length >= 9) {
+            // Save it globally so it fetches next time too
+            setCustomerInfo({ ...customerInfo, phone: manualPhone });
+        }
     };
 
     // If not logged in and no saved phone, show login prompt
@@ -211,15 +220,42 @@ const AccountPage = () => {
                     </div>
                 )}
 
-                {/* Empty */}
+                {/* Empty or Needs Phone */}
                 {!loading && orders.length === 0 && (
                     <div className={`py-16 text-center rounded-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
-                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-gray-800' : 'bg-slate-100'}`}>
-                            <ShoppingBag size={32} className={dm ? 'text-gray-600' : 'text-slate-300'} />
-                        </div>
-                        <p className={`text-sm font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لا توجد طلبات بعد</p>
-                        <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-400'}`}>عندما تقوم بعملية شراء، ستظهر طلباتك هنا.</p>
-                        <a href="/" className="inline-block mt-4 text-xs font-bold text-blue-500 hover:underline">تصفح المنتجات ←</a>
+                        {user && !userPhone ? (
+                            <div className="max-w-xs mx-auto px-4">
+                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+                                    <Package size={32} className="text-blue-500" />
+                                </div>
+                                <h3 className={`text-base font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>أدخل رقم هاتفك لعرض طلباتك</h3>
+                                <p className={`text-xs mb-4 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                    بما أنك قمت بتسجيل الدخول بحساب جوجل، نحتاج لرقم الهاتف الذي استخدمته عند الشراء للبحث عن طلباتك.
+                                </p>
+                                <form onSubmit={handlePhoneSubmit} className="space-y-3" dir="ltr">
+                                    <input 
+                                        type="tel" 
+                                        value={manualPhone}
+                                        onChange={(e) => setManualPhone(e.target.value)}
+                                        placeholder="06 XX XX XX XX"
+                                        className={`w-full px-4 py-2.5 text-center rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 ${dm ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                                        required
+                                    />
+                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
+                                        بحث عن طلباتي
+                                    </button>
+                                </form>
+                            </div>
+                        ) : (
+                            <>
+                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-gray-800' : 'bg-slate-100'}`}>
+                                    <ShoppingBag size={32} className={dm ? 'text-gray-600' : 'text-slate-300'} />
+                                </div>
+                                <p className={`text-sm font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لا توجد طلبات بعد</p>
+                                <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-400'}`}>عندما تقوم بعملية شراء، ستظهر طلباتك هنا.</p>
+                                <a href="/" className="inline-block mt-4 text-xs font-bold text-blue-500 hover:underline">تصفح المنتجات ←</a>
+                            </>
+                        )}
                     </div>
                 )}
 
