@@ -28,7 +28,7 @@ const NotificationPrompt = () => {
     return (
         <div className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm
             ${dm ? 'bg-gray-800 text-gray-200' : 'bg-primary/10 text-primary'}`}
-            dir="rtl"
+           
         >
             <div className="flex items-center gap-2">
                 <Bell size={16} />

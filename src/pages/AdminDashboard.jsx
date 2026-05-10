@@ -578,7 +578,7 @@ const AdminDashboard = () => {
     // ── LOGIN PAGE ──
     if (!isAuthenticated) {
         return (
-            <div className={`min-h-screen flex items-center justify-center p-4 ${dm ? 'bg-gray-950' : 'bg-gradient-to-br from-blue-50 to-slate-100'}`} dir="rtl">
+            <div className={`min-h-screen flex items-center justify-center p-4 ${dm ? 'bg-gray-950' : 'bg-gradient-to-br from-blue-50 to-slate-100'}`}>
                 <div className={`max-w-md w-full p-8 rounded-2xl shadow-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex flex-col items-center mb-8">
                         <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
@@ -622,7 +622,7 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className={`min-h-screen flex ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-900'}`} dir="rtl">
+        <div className={`min-h-screen flex ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
             {/* ── Sidebar ── */}
             <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} dm={dm} onLogout={handleLogout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
@@ -1167,7 +1167,7 @@ const AdminDashboard = () => {
             {deleteConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
-                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`}>
                         <div className="text-4xl">🗑️</div>
                         <h3 className="text-lg font-bold">حذف الطلب #{deleteConfirm}؟</h3>
                         <p className={`text-sm ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لا يمكن التراجع عن هذا الإجراء.</p>
@@ -1188,7 +1188,7 @@ const AdminDashboard = () => {
             {editingProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingProduct(null)} />
-                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-md space-y-4 ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-md space-y-4 ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`}>
                         <h3 className="text-lg font-bold border-b pb-3 mb-4" style={{borderColor: dm ? '#374151' : '#e2e8f0'}}>تعديل المنتج</h3>
                         
                         <div className="space-y-3">
@@ -1244,7 +1244,7 @@ const AdminDashboard = () => {
             {createExpenseModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCreateExpenseModal(false)} />
-                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4 ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4 ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900'}`}>
                         <h3 className="text-lg font-bold border-b pb-3 mb-4" style={{borderColor: dm ? '#1f2937' : '#e2e8f0'}}>إضافة مصروف جديد</h3>
                         <div className="space-y-3">
                             <div>
@@ -1289,7 +1289,7 @@ const AdminDashboard = () => {
             {createOrderModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCreateOrderModal(false)} />
-                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col space-y-4 ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900'}`} dir="rtl">
+                    <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col space-y-4 ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900'}`}>
                         <h3 className="text-lg font-bold border-b pb-3" style={{borderColor: dm ? '#1f2937' : '#e2e8f0'}}>إنشاء طلب يدوي</h3>
                         
                         <div className="overflow-y-auto pr-2 space-y-4 flex-1">
@@ -1409,7 +1409,7 @@ const AdminDashboard = () => {
 
             {/* ── Ozon Express Modal ── */}
             {ozonModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" dir="rtl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className={`w-full max-w-md rounded-2xl shadow-xl overflow-hidden ${dm ? 'bg-gray-900 border border-gray-800' : 'bg-white'}`}>
                         <div className={`px-5 py-4 border-b flex justify-between items-center ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
                             <h3 className="font-bold text-lg flex items-center gap-2">

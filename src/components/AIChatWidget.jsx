@@ -127,7 +127,7 @@ ${catalogStr}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
                         className={`w-80 h-[450px] shadow-2xl rounded-2xl flex flex-col overflow-hidden border ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
-                        dir="rtl"
+                       
                     >
                         {/* Header */}
                         <div className={`p-4 flex items-center justify-between border-b ${dm ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-l from-primary to-primary-dark'}`}>

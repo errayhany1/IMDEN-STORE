@@ -29,7 +29,7 @@ const IOSInstallPrompt = () => {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[200] p-4" style={{ animation: 'slideUp 0.4s ease-out' }}>
-            <div className={`rounded-2xl shadow-2xl border overflow-hidden max-w-md mx-auto ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`} dir="rtl">
+            <div className={`rounded-2xl shadow-2xl border overflow-hidden max-w-md mx-auto ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}>
                 {/* Header */}
                 <div className={`px-4 py-3 border-b flex items-center justify-between ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
                     <div className="flex items-center gap-2">

@@ -66,7 +66,7 @@ const RegisterModal = ({ isOpen, onClose }) => {
             <div
                 className={`relative rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden
                     ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`}
-                dir="rtl"
+               
             >
                 {/* Close */}
                 <button

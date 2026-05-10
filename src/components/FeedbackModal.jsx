@@ -83,7 +83,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.95, opacity: 0, y: 20 }}
                     className={`relative w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 z-10 overflow-hidden flex flex-col ${dm ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}
-                    dir="rtl"
+                   
                 >
                     <button
                         onClick={onClose}

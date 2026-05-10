@@ -169,7 +169,7 @@ const Header = () => {
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                             className={`fixed top-0 right-0 h-full w-72 z-[101] shadow-2xl flex flex-col
                             ${dm ? 'bg-gray-900 border-l border-gray-700' : 'bg-white border-l border-slate-200'}`}
-                            dir="rtl"
+                           
                         >
                             {/* Drawer Header */}
                             <div className={`px-4 py-4 border-b flex items-center justify-between ${dm ? 'border-gray-700' : 'border-slate-100'}`}>

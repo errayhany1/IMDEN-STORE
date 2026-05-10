@@ -82,7 +82,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                         className={`relative w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col
                             rounded-t-3xl sm:rounded-2xl shadow-2xl border
                             ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}
-                        dir="rtl"
+                       
                     >
                         {/* Close Button */}
                         <button

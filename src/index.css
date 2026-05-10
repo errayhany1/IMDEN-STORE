@@ -48,3 +48,7 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+/* GTranslate Fixes */
+html.translated-ltr { direction: ltr !important; }
+html.translated-ltr * { direction: ltr !important; }
+

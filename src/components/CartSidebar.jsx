@@ -108,7 +108,7 @@ const CartSidebar = () => {
                                 ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
                         >
                             {/* Header */}
-                            <div className={`flex items-center justify-between px-4 sm:px-6 py-3 border-b z-10 ${dm ? 'border-gray-700' : 'border-slate-100'}`} dir="rtl">
+                            <div className={`flex items-center justify-between px-4 sm:px-6 py-3 border-b z-10 ${dm ? 'border-gray-700' : 'border-slate-100'}`}>
                                 <div className="flex items-baseline gap-2">
                                     <h2 className={`text-xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>عربة التسوق</h2>
                                     <span className="text-sm font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
@@ -281,7 +281,7 @@ const CartSidebar = () => {
                     {/* Dialog */}
                     <div className={`relative rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 z-10
                         ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-900'}`}
-                        dir="rtl"
+                       
                     >
                         <div className="text-4xl">🗑️</div>
                         <h3 className="text-lg font-bold">حذف جميع المنتجات؟</h3>

@@ -78,7 +78,7 @@ const OrderTracking = () => {
     ];
 
     return (
-        <div className={`min-h-screen ${dm ? 'bg-gray-950 text-white' : 'bg-gradient-to-br from-slate-50 to-blue-50 text-slate-900'}`} dir="rtl">
+        <div className={`min-h-screen ${dm ? 'bg-gray-950 text-white' : 'bg-gradient-to-br from-slate-50 to-blue-50 text-slate-900'}`}>
             {/* Header */}
             <header className={`border-b backdrop-blur-xl sticky top-0 z-10 ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-white/80 border-slate-200'}`}>
                 <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
