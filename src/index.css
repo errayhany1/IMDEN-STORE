@@ -52,3 +52,7 @@ body {
 html.translated-ltr { direction: ltr !important; }
 html.translated-ltr * { direction: ltr !important; }
 
+
+/* GTranslate Widget Position Fix */
+.gtranslate_wrapper { position: fixed !important; bottom: 90px !important; left: 24px !important; z-index: 99999 !important; }
+
