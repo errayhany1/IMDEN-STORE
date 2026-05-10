@@ -191,6 +191,16 @@ const AuthModal = () => {
             </div>
 
             <button 
+                onClick={() => setView('phone')}
+                disabled={loading}
+                className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
+                ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
+            >
+                <Phone size={18} />
+                المتابعة برقم الهاتف (SMS)
+            </button>
+
+            <button 
                 onClick={() => setView('email')}
                 disabled={loading}
                 className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
