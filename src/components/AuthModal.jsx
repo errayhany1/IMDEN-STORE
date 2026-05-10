@@ -37,13 +37,9 @@ const AuthModal = () => {
             setPhoneNumber('');
             setOtpCode('');
             setConfirmationResult(null);
-            
-            // Cleanup recaptcha if exists
-            if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.clear();
-                window.recaptchaVerifier = null;
-            }
+            cleanupRecaptcha();
         }
+        return () => cleanupRecaptcha();
     }, [isAuthModalOpen]);
 
     if (!isAuthModalOpen) return null;
@@ -87,12 +83,31 @@ const AuthModal = () => {
         }
     };
 
-    const setupRecaptcha = () => {
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                size: 'invisible'
-            });
+    const cleanupRecaptcha = () => {
+        try {
+            if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.clear();
+                window.recaptchaVerifier = null;
+            }
+        } catch (e) {
+            // Ignore cleanup errors
+            window.recaptchaVerifier = null;
         }
+        // Also clear the DOM container
+        const container = document.getElementById('recaptcha-container');
+        if (container) container.innerHTML = '';
+    };
+
+    const setupRecaptcha = () => {
+        // Always destroy old one first
+        cleanupRecaptcha();
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: () => {},
+            'expired-callback': () => {
+                cleanupRecaptcha();
+            }
+        });
     };
 
     const handleSendOTP = async () => {
@@ -119,6 +134,9 @@ const AuthModal = () => {
         } catch (err) {
             console.error("Phone Auth Error:", err);
             
+            // Clean up recaptcha so next attempt creates a fresh one
+            cleanupRecaptcha();
+
             if (err.code === 'auth/unauthorized-domain') {
                 setError('يجب إضافة رابط الموقع إلى Authorized Domains في Firebase');
             } else if (err.code === 'auth/invalid-phone-number') {
@@ -130,9 +148,6 @@ const AuthModal = () => {
             } else {
                 setError(`حدث خطأ: ${err.message}`);
             }
-
-            // DO NOT clear recaptcha here! If we clear it, the next attempt throws "reCAPTCHA has already been rendered".
-            // We just keep the existing instance for the next attempt.
         } finally {
             setLoading(false);
         }
