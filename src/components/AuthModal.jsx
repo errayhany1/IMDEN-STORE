@@ -120,7 +120,7 @@ const AuthModal = () => {
             console.error("Phone Auth Error:", err);
             
             if (err.code === 'auth/unauthorized-domain') {
-                setError('يجب إضافة رابط الموقع (imden-store.easypanel.host) إلى Authorized Domains في Firebase');
+                setError('يجب إضافة رابط الموقع إلى Authorized Domains في Firebase');
             } else if (err.code === 'auth/invalid-phone-number') {
                 setError('رقم الهاتف غير صالح. تأكد من إدخاله بشكل صحيح.');
             } else if (err.code === 'auth/too-many-requests') {
@@ -131,10 +131,8 @@ const AuthModal = () => {
                 setError(`حدث خطأ: ${err.message}`);
             }
 
-            if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.clear();
-                window.recaptchaVerifier = null;
-            }
+            // DO NOT clear recaptcha here! If we clear it, the next attempt throws "reCAPTCHA has already been rendered".
+            // We just keep the existing instance for the next attempt.
         } finally {
             setLoading(false);
         }
