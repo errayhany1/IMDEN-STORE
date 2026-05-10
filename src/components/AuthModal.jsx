@@ -117,8 +117,20 @@ const AuthModal = () => {
             const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
             setConfirmationResult(confirmation);
         } catch (err) {
-            console.error(err);
-            setError(`حدث خطأ: ${err.message}`);
+            console.error("Phone Auth Error:", err);
+            
+            if (err.code === 'auth/unauthorized-domain') {
+                setError('يجب إضافة رابط الموقع (imden-store.easypanel.host) إلى Authorized Domains في Firebase');
+            } else if (err.code === 'auth/invalid-phone-number') {
+                setError('رقم الهاتف غير صالح. تأكد من إدخاله بشكل صحيح.');
+            } else if (err.code === 'auth/too-many-requests') {
+                setError('كثرة المحاولات. يرجى المحاولة بعد قليل.');
+            } else if (err.code === 'auth/internal-error') {
+                setError('حدث خطأ داخلي. المرجو التأكد من تفعيل Phone Auth في Firebase.');
+            } else {
+                setError(`حدث خطأ: ${err.message}`);
+            }
+
             if (window.recaptchaVerifier) {
                 window.recaptchaVerifier.clear();
                 window.recaptchaVerifier = null;
