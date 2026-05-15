@@ -76,7 +76,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     'Customer Phone': formData.phone,
                     'Sale Price': subtotal,
                     'Notes': notesContent,
-                    'Status': 'قيد المراجعة'
+                    'Status': 'Pending'
                 };
                 console.log('[CheckoutModal] Order payload:', orderBody);
 

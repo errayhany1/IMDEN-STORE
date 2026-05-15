@@ -117,24 +117,40 @@ const AdminDashboard = () => {
         }
     }, []);
 
-    const toggleProductAvailability = async (id, currentCat) => {
-        const isOutOfStock = currentCat === 15;
-        // If out of stock, move back to general (12). If not, move to out of stock (15).
+    const toggleProductStock = async (id, currentCat, currentPostebl) => {
+        const isOutOfStock = currentCat === 15 || currentPostebl === 'NO POSTEBL';
         const newCatId = isOutOfStock ? 12 : 15; 
+        const newPostebl = isOutOfStock ? 'POSTEBL' : 'NO POSTEBL';
         
-        // Optimistic update
-        setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: newCatId, Category_ID: newCatId } : p));
+        setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: newCatId, Category_ID: newCatId, POSTEBL: newPostebl } : p));
         
         try {
             await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, 
-                { Id: id, category_id: newCatId, Category_ID: newCatId },
+                { Id: id, category_id: newCatId, Category_ID: newCatId, POSTEBL: newPostebl },
                 { headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' } }
             );
         } catch (err) {
-            console.error("Error toggling product:", err);
-            // Revert on error
-            setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: currentCat, Category_ID: currentCat } : p));
-            alert("حدث خطأ أثناء تعديل حالة المنتج");
+            console.error("Error toggling stock:", err);
+            setProducts(prev => prev.map(p => p.Id === id ? { ...p, category_id: currentCat, Category_ID: currentCat, POSTEBL: currentPostebl } : p));
+            alert("حدث خطأ أثناء تعديل حالة المخزون");
+        }
+    };
+
+    const toggleProductPublish = async (id, currentPostebl) => {
+        const isPaused = currentPostebl === 'PAUSED';
+        const newPostebl = isPaused ? 'POSTEBL' : 'PAUSED';
+        
+        setProducts(prev => prev.map(p => p.Id === id ? { ...p, POSTEBL: newPostebl } : p));
+        
+        try {
+            await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, 
+                { Id: id, POSTEBL: newPostebl },
+                { headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' } }
+            );
+        } catch (err) {
+            console.error("Error toggling publish:", err);
+            setProducts(prev => prev.map(p => p.Id === id ? { ...p, POSTEBL: currentPostebl } : p));
+            alert("حدث خطأ أثناء تعديل حالة النشر");
         }
     };
 
@@ -298,11 +314,18 @@ const AdminDashboard = () => {
 
     const updateOrderStatus = async (id, newStatus) => {
         try {
+            // Map Arabic UI status to NocoDB Enum values
+            let dbStatus = newStatus;
+            if (newStatus === 'قيد المراجعة') dbStatus = 'Pending';
+            else if (newStatus === 'تم الشحن') dbStatus = 'Shipped';
+            else if (newStatus === 'ملغي') dbStatus = 'Cancelled';
+
             await axios.patch(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, 
-                { Id: id, Status: newStatus },
+                { Id: id, Status: dbStatus },
                 { headers: { 'xc-token': ORDERS_TOKEN, 'Content-Type': 'application/json' } }
             );
-            setOrders(prev => prev.map(o => o.Id === id ? { ...o, Status: newStatus } : o));
+            // We update the local state with the DB status so that getNormalizedStatus can handle it
+            setOrders(prev => prev.map(o => o.Id === id ? { ...o, Status: dbStatus } : o));
         } catch (err) {
             console.error("Error updating status:", err);
             alert("حدث خطأ أثناء تحديث الحالة");
@@ -343,7 +366,7 @@ const AdminDashboard = () => {
                 "Customer Phone": newOrderData.phone,
                 "Delivery Address": newOrderData.address,
                 "Sale Price": salePrice,
-                "Status": "قيد المراجعة",
+                "Status": "Pending",
                 "Notes": newOrderData.notes ? `طلب يدوي: ${newOrderData.notes}` : 'طلب يدوي',
                 "Order Metadata": JSON.stringify(orderMetaData)
             };
@@ -513,10 +536,18 @@ const AdminDashboard = () => {
         return d.toLocaleDateString('ar-MA', { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    // Normalize status helper
+    const getNormalizedStatus = (statusStr) => {
+        if (!statusStr || statusStr === 'Pending') return 'قيد المراجعة';
+        if (statusStr === 'Shipped' || statusStr === 'Delivered') return 'تم الشحن';
+        if (statusStr === 'Returned' || statusStr === 'Cancelled') return 'ملغي';
+        return statusStr;
+    };
+
     // Stats
-    const pendingCount = orders.filter(o => !o.Status || o.Status === 'قيد المراجعة').length;
-    const shippedCount = orders.filter(o => o.Status === 'تم الشحن').length;
-    const cancelledCount = orders.filter(o => o.Status === 'ملغي').length;
+    const pendingCount = orders.filter(o => getNormalizedStatus(o.Status) === 'قيد المراجعة').length;
+    const shippedCount = orders.filter(o => getNormalizedStatus(o.Status) === 'تم الشحن').length;
+    const cancelledCount = orders.filter(o => getNormalizedStatus(o.Status) === 'ملغي').length;
     const totalRevenue = orders.filter(o => o.Status !== 'ملغي').reduce((sum, o) => sum + (Number(o['Sale Price']) || 0), 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.Amount) || 0), 0);
     const netProfit = totalRevenue - totalExpenses;
@@ -531,7 +562,7 @@ const AdminDashboard = () => {
             (o['Customer Phone'] || '').includes(searchTerm) ||
             String(o.Id).includes(searchTerm);
         
-        const status = o.Status || 'قيد المراجعة';
+        const status = getNormalizedStatus(o.Status);
         const matchStatus = statusFilter === 'الكل' || status === statusFilter;
 
         return matchSearch && matchStatus;
@@ -561,7 +592,7 @@ const AdminDashboard = () => {
         const headers = ['رقم الطلب', 'الاسم', 'الهاتف', 'المبلغ', 'الحالة', 'التاريخ', 'الملاحظات'];
         const rows = orders.map(o => [
             o.Id, o['Customer Name'] || '', o['Customer Phone'] || '',
-            o['Sale Price'] || 0, o.Status || 'قيد المراجعة',
+            o['Sale Price'] || 0, getNormalizedStatus(o.Status),
             o.CreatedAt ? new Date(o.CreatedAt).toLocaleDateString('ar-MA') : '',
             (o.Notes || '').replace(/\n/g, ' | ')
         ]);
@@ -937,15 +968,23 @@ const AdminDashboard = () => {
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${productCatFilter === 'all' ? 'bg-blue-100 text-blue-700 border-blue-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
                                     الكل
                                 </button>
+                                <button onClick={() => setProductCatFilter('instock')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${productCatFilter === 'instock' ? 'bg-green-100 text-green-700 border-green-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
+                                    متوفرة
+                                </button>
                                 <button onClick={() => setProductCatFilter('outofstock')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${productCatFilter === 'outofstock' ? 'bg-red-100 text-red-700 border-red-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
-                                    نفد من المخزون
+                                    نفدت
+                                </button>
+                                <button onClick={() => setProductCatFilter('paused')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${productCatFilter === 'paused' ? 'bg-orange-100 text-orange-700 border-orange-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
+                                    موقوفة
                                 </button>
                                 <select 
-                                    value={productCatFilter !== 'all' && productCatFilter !== 'outofstock' ? productCatFilter : ''}
+                                    value={!['all', 'instock', 'outofstock', 'paused'].includes(productCatFilter) ? productCatFilter : ''}
                                     onChange={(e) => setProductCatFilter(e.target.value || 'all')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border outline-none ${productCatFilter !== 'all' && productCatFilter !== 'outofstock' ? 'bg-blue-100 text-blue-700 border-blue-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
-                                    <option value="" disabled={productCatFilter !== 'all' && productCatFilter !== 'outofstock'}>حسب التصنيف...</option>
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border outline-none ${!['all', 'instock', 'outofstock', 'paused'].includes(productCatFilter) ? 'bg-blue-100 text-blue-700 border-blue-200' : (dm ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-slate-50 border-slate-200 text-slate-500')}`}>
+                                    <option value="" disabled={!['all', 'instock', 'outofstock', 'paused'].includes(productCatFilter)}>حسب التصنيف...</option>
                                     {Object.entries(CAT_MAP).filter(([id]) => id !== '15').map(([id, name]) => (
                                         <option key={id} value={id}>{name}</option>
                                     ))}
@@ -988,18 +1027,23 @@ const AdminDashboard = () => {
                                                     
                                                     // Category Filter
                                                     const catId = p.Category_ID || p.category_id || p.CategoryId || p.categoryId;
-                                                    const isOutOfStock = catId == 15 || p.POSTEBL === 'NO POSTEBL';
+                                                    const isPaused = p.POSTEBL === 'PAUSED';
+                                                    const isOutOfStock = !isPaused && (catId == 15 || p.POSTEBL === 'NO POSTEBL');
+                                                    const isInstock = !isPaused && !isOutOfStock;
                                                     
                                                     let matchesCat = true;
                                                     if (productCatFilter === 'outofstock') matchesCat = isOutOfStock;
+                                                    else if (productCatFilter === 'instock') matchesCat = isInstock;
+                                                    else if (productCatFilter === 'paused') matchesCat = isPaused;
                                                     else if (productCatFilter !== 'all') matchesCat = catId == productCatFilter;
                                                     
                                                     return matchesSearch && matchesCat;
                                                 })
                                                 .map(p => {
                                                 const categoryId = p.Category_ID || p.category_id || p.CategoryId || p.categoryId;
+                                                const isPaused = p.POSTEBL === 'PAUSED';
                                                 const isOutOfStock = categoryId === 15 || p.POSTEBL === 'NO POSTEBL';
-                                                const catName = CAT_MAP[categoryId] || 'General';
+                                                const catName = CAT_MAP[categoryId] || 'عام';
                                                 
                                                 let imgSrc = '';
                                                 try {
@@ -1013,23 +1057,28 @@ const AdminDashboard = () => {
                                                             }
                                                         }
                                                     }
-                                                } catch(e) {}
+                                                } catch {
+                                                    // Ignore parsing error
+                                                }
 
                                                 return (
-                                                <tr key={p.Id} className={`transition-colors ${dm ? 'hover:bg-gray-800/50' : 'hover:bg-slate-50'} ${isOutOfStock ? 'opacity-60' : ''}`}>
+                                                <tr key={p.Id} className={`transition-colors ${dm ? 'hover:bg-gray-800/50' : 'hover:bg-slate-50'} ${isPaused ? 'opacity-40 grayscale' : (isOutOfStock ? 'opacity-60' : '')}`}>
                                                     <td className="px-4 py-3">
                                                         {imgSrc ? (
-                                                            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200/20">
+                                                            <div className={`w-12 h-12 rounded-lg border overflow-hidden flex items-center justify-center ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-100 border-slate-200'}`}>
                                                                 <img src={imgSrc} alt="" className="w-full h-full object-cover" />
                                                             </div>
                                                         ) : (
-                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dm ? 'bg-gray-800 text-gray-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${dm ? 'bg-gray-800 text-gray-600' : 'bg-slate-100 text-slate-400'}`}>
                                                                 <Package size={20} />
                                                             </div>
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <p className="font-bold line-clamp-1">{p.Title || p.title || 'بدون اسم'}</p>
+                                                        <p className="font-bold line-clamp-1 flex items-center gap-2">
+                                                            {p.Title || p.title || 'بدون اسم'}
+                                                            {isPaused && <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">موقوف</span>}
+                                                        </p>
                                                         <p className={`text-[10px] font-mono mt-0.5 ${dm ? 'text-gray-500' : 'text-slate-400'}`}>{p.SKU || p.Ref || 'NO-REF'}</p>
                                                     </td>
                                                     <td className="px-4 py-3 text-xs">
@@ -1041,10 +1090,10 @@ const AdminDashboard = () => {
                                                         {p.price || p.Price || 0} DH
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <div className="flex items-center justify-center gap-2">
+                                                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
                                                             <button 
-                                                                onClick={() => toggleProductAvailability(p.Id, categoryId)}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex-1 text-center
+                                                                onClick={() => toggleProductStock(p.Id, categoryId, p.POSTEBL)}
+                                                                className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all border flex-1 text-center whitespace-nowrap
                                                                     ${isOutOfStock 
                                                                         ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' 
                                                                         : 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'}`}
@@ -1052,11 +1101,21 @@ const AdminDashboard = () => {
                                                                 {isOutOfStock ? '🚫 نفد' : '✅ متوفر'}
                                                             </button>
                                                             <button 
+                                                                onClick={() => toggleProductPublish(p.Id, p.POSTEBL)}
+                                                                className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all border flex-1 text-center whitespace-nowrap
+                                                                    ${isPaused 
+                                                                        ? 'bg-slate-200 text-slate-700 border-slate-300 hover:bg-slate-300' 
+                                                                        : 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200'}`}
+                                                                title={isPaused ? "نشر المنتج ليظهر في الموقع" : "إيقاف المنتج لإخفائه من الموقع"}
+                                                            >
+                                                                {isPaused ? '👁️ نشر' : '⏸️ إيقاف'}
+                                                            </button>
+                                                            <button 
                                                                 onClick={() => {
                                                                     setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId });
                                                                     setEditFiles([]);
                                                                 }}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border
+                                                                className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all border
                                                                     ${dm ? 'bg-gray-800 text-blue-400 border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 border-slate-200 hover:bg-slate-50'}`}
                                                             >
                                                                 تعديل
