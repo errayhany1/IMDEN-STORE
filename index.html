@@ -73,18 +73,15 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
-  <!-- GTranslate Plugin -->
-  <div class="gtranslate_wrapper"></div>
+  <div class="gtranslate_wrapper" style="display: none;"></div>
   <script>
     window.gtranslateSettings = {
       "default_language":"ar",
       "languages":["ar","fr"],
-      "wrapper_selector":".gtranslate_wrapper",
-      "switcher_horizontal_position":"left",
-      "switcher_vertical_position":"bottom"
+      "wrapper_selector":".gtranslate_wrapper"
     };
   </script>
-  <script src="https://cdn.gtranslate.net/widgets/latest/float.js" defer></script>
+  <script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" defer></script>
 </body>
 
 </html>

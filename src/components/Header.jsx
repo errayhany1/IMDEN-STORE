@@ -269,6 +269,27 @@ const Header = () => {
                                     </div>
                                 )}
 
+                                {/* Language Switcher */}
+                                <div className={`px-3 py-3 mt-1 mb-1 rounded-xl border ${dm ? 'border-gray-700 bg-gray-800/50' : 'border-slate-200 bg-slate-50'}`}>
+                                    <p className="text-xs font-bold mb-2 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                        لغة الموقع / Langue
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => {
+                                            document.cookie = `googtrans=/ar/ar; path=/; domain=${window.location.hostname}`;
+                                            document.cookie = "googtrans=/ar/ar; path=/;";
+                                            window.location.reload();
+                                        }} className={`flex-1 text-xs py-2 rounded-lg font-bold shadow-sm transition ${dm ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'}`}>العربية</button>
+                                        
+                                        <button onClick={() => {
+                                            document.cookie = `googtrans=/ar/fr; path=/; domain=${window.location.hostname}`;
+                                            document.cookie = "googtrans=/ar/fr; path=/;";
+                                            window.location.reload();
+                                        }} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-lg font-bold shadow-sm hover:bg-blue-700 transition">Français</button>
+                                    </div>
+                                </div>
+
                                 {/* Dark Mode */}
                                 <button
                                     onClick={toggleDarkMode}
