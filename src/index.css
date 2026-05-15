@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -19,6 +19,10 @@ body {
     background-color: var(--color-background-light);
     color: #1e293b;
     -webkit-font-smoothing: antialiased;
+}
+
+html[lang="ar"] body, html[dir="rtl"] body {
+    font-family: 'Tajawal', sans-serif;
 }
 
 /* Custom Scrollbar */
@@ -51,4 +55,5 @@ body {
 /* GTranslate Fixes */
 html.translated-ltr { direction: ltr !important; }
 html.translated-ltr * { direction: ltr !important; }
+html.translated-ltr body { font-family: 'Inter', sans-serif !important; }
 

@@ -10,7 +10,17 @@ const Header = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [editingInfo, setEditingInfo] = useState(false);
     const [tempInfo, setTempInfo] = useState({ name: '', phone: '', address: '' });
+    const [currentLang, setCurrentLang] = useState('ar');
+    const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
+    React.useEffect(() => {
+        const match = document.cookie.match(/googtrans=\/ar\/([a-z]{2})/);
+        if (match && match[1]) {
+            setCurrentLang(match[1]);
+        }
+    }, []);
+
+    const isRtl = currentLang === 'ar';
     const dm = darkMode;
 
     const scrollToTop = () => {
@@ -163,12 +173,12 @@ const Header = () => {
                         />
                         {/* Drawer */}
                         <motion.div
-                            initial={{ x: '100%' }}
+                            initial={{ x: isRtl ? '100%' : '-100%' }}
                             animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
+                            exit={{ x: isRtl ? '100%' : '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className={`fixed top-0 right-0 h-full w-72 z-[101] shadow-2xl flex flex-col
-                            ${dm ? 'bg-gray-900 border-l border-gray-700' : 'bg-white border-l border-slate-200'}`}
+                            className={`fixed top-0 ${isRtl ? 'right-0 border-l' : 'left-0 border-r'} h-full w-72 z-[101] shadow-2xl flex flex-col
+                            ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
                            
                         >
                             {/* Drawer Header */}
@@ -273,26 +283,48 @@ const Header = () => {
                                 <div className={`px-3 py-3 mt-1 mb-1 rounded-xl border ${dm ? 'border-gray-700 bg-gray-800/50' : 'border-slate-200 bg-slate-50'}`}>
                                     <p className="text-xs font-bold mb-2 flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                                        لغة الموقع / Langue
+                                        لغة الموقع / Language
                                     </p>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <button onClick={() => {
-                                            document.cookie = `googtrans=/ar/ar; path=/; domain=${window.location.hostname}`;
-                                            document.cookie = "googtrans=/ar/ar; path=/;";
-                                            window.location.reload();
-                                        }} className={`text-xs py-2 rounded-lg font-bold shadow-sm transition ${dm ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'}`}>العربية</button>
+                                    <div className="relative">
+                                        <button 
+                                            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                                            className={`w-full flex items-center justify-between text-xs px-3 py-2.5 rounded-lg font-bold shadow-sm transition border ${dm ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}`}
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                {currentLang === 'ar' ? 'العربية' : currentLang === 'fr' ? 'Français' : currentLang === 'en' ? 'English' : 'Español'}
+                                            </span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transform transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                        </button>
                                         
-                                        <button onClick={() => {
-                                            document.cookie = `googtrans=/ar/fr; path=/; domain=${window.location.hostname}`;
-                                            document.cookie = "googtrans=/ar/fr; path=/;";
-                                            window.location.reload();
-                                        }} className="bg-blue-600 text-white text-xs py-2 rounded-lg font-bold shadow-sm hover:bg-blue-700 transition">Français</button>
-
-                                        <button onClick={() => {
-                                            document.cookie = `googtrans=/ar/en; path=/; domain=${window.location.hostname}`;
-                                            document.cookie = "googtrans=/ar/en; path=/;";
-                                            window.location.reload();
-                                        }} className="bg-indigo-600 text-white text-xs py-2 rounded-lg font-bold shadow-sm hover:bg-indigo-700 transition">English</button>
+                                        <AnimatePresence>
+                                            {langDropdownOpen && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    className={`absolute top-full left-0 right-0 mt-1 z-10 rounded-lg shadow-xl border overflow-hidden ${dm ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}
+                                                >
+                                                    {[
+                                                        { code: 'ar', label: 'العربية' },
+                                                        { code: 'fr', label: 'Français' },
+                                                        { code: 'en', label: 'English' },
+                                                        { code: 'es', label: 'Español' }
+                                                    ].map((lang) => (
+                                                        <button
+                                                            key={lang.code}
+                                                            onClick={() => {
+                                                                document.cookie = `googtrans=/ar/${lang.code}; path=/; domain=${window.location.hostname}`;
+                                                                document.cookie = `googtrans=/ar/${lang.code}; path=/;`;
+                                                                window.location.reload();
+                                                            }}
+                                                            className={`w-full text-start px-3 py-2.5 text-xs font-bold transition-colors border-b last:border-b-0 ${currentLang === lang.code ? (dm ? 'bg-primary/20 text-primary' : 'bg-blue-50 text-blue-600') : (dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-700 hover:bg-slate-50')} ${dm ? 'border-gray-700' : 'border-slate-100'}`}
+                                                        >
+                                                            {lang.label}
+                                                        </button>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </div>
 

@@ -39,8 +39,16 @@ const CartSidebar = () => {
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const [currentLang, setCurrentLang] = useState('ar');
 
+    React.useEffect(() => {
+        const match = document.cookie.match(/googtrans=\/ar\/([a-z]{2})/);
+        if (match && match[1]) {
+            setCurrentLang(match[1]);
+        }
+    }, []);
 
+    const isRtl = currentLang === 'ar';
 
     const handleShare = async () => {
         if (cart.length === 0) return;
@@ -100,11 +108,11 @@ const CartSidebar = () => {
 
                         {/* Sidebar */}
                         <motion.aside
-                            initial={{ x: '100%' }}
+                            initial={{ x: isRtl ? '100%' : '-100%' }}
                             animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
+                            exit={{ x: isRtl ? '100%' : '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className={`fixed top-0 right-0 h-full w-full sm:w-[440px] shadow-2xl z-[100] flex flex-col border-l transition-colors duration-300
+                            className={`fixed top-0 ${isRtl ? 'right-0 border-l' : 'left-0 border-r'} h-full w-full sm:w-[440px] shadow-2xl z-[100] flex flex-col transition-colors duration-300
                                 ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
                         >
                             {/* Header */}
