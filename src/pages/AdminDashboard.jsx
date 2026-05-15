@@ -5,7 +5,7 @@ import useStore from '../store/useStore';
 import AdminSidebar from './AdminSidebar';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
-const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN || import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
+const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
 const ORDERS_TABLE = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 const PRODUCTS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const PRODUCTS_TABLE = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;

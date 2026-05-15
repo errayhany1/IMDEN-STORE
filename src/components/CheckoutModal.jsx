@@ -66,7 +66,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
             // 2. Save to NocoDB Orders Table (New Account)
             const nocodbUrl = import.meta.env.VITE_NOCODB_URL;
-            const ordersToken = import.meta.env.VITE_NOCODB_API_TOKEN || import.meta.env.VITE_NOCODB_ORDERS_TOKEN;
+            const ordersToken = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
             const ordersTableId = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 
             try {
@@ -74,10 +74,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 const orderBody = {
                     'Customer Name': formData.name,
                     'Customer Phone': formData.phone,
-                    'Delivery Address': formData.address,
                     'Sale Price': subtotal,
                     'Notes': notesContent,
-                    'Order Metadata': JSON.stringify(orderMetaData),
                     'Status': 'قيد المراجعة'
                 };
                 console.log('[CheckoutModal] Order payload:', orderBody);
