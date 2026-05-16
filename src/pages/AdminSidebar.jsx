@@ -1,54 +1,195 @@
-import React from 'react';
-import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, ArrowRight, X, Menu, CreditCard } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+    LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut,
+    ArrowRight, X, Menu, CreditCard, ChevronDown, ChevronUp,
+    ClipboardList, Clock, UserCheck, Building2, Truck as TruckIcon,
+    BarChart3, TrendingUp, FileText, Wallet, RefreshCcw, ShieldCheck,
+    AlertTriangle, DollarSign, Globe, Receipt
+} from 'lucide-react';
 
-const sidebarItems = [
-    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-    { id: 'orders', label: 'الطلبات', icon: ShoppingBag },
-    { id: 'customers', label: 'الزبائن', icon: Users },
-    { id: 'products', label: 'المنتجات', icon: Package },
-    { id: 'expenses', label: 'المصاريف', icon: CreditCard },
-    { id: 'settings', label: 'الإعدادات', icon: Settings },
+const sidebarGroups = [
+    {
+        id: 'dashboard',
+        label: 'لوحة التحكم',
+        icon: LayoutDashboard,
+        children: null, // No children = direct link
+    },
+    {
+        id: 'operations',
+        label: 'العمليات',
+        icon: ClipboardList,
+        children: [
+            { id: 'orders', label: 'الطلبات', icon: ShoppingBag },
+            { id: 'direct-sales', label: 'المبيعات المباشرة', icon: DollarSign },
+            { id: 'returns', label: 'المرتجعات', icon: RefreshCcw },
+        ],
+    },
+    {
+        id: 'organization',
+        label: 'التنظيم',
+        icon: Building2,
+        children: [
+            { id: 'customers', label: 'الزبائن', icon: Users },
+            { id: 'suppliers', label: 'الموردين', icon: UserCheck },
+        ],
+    },
+    {
+        id: 'inventory',
+        label: 'المخزون',
+        icon: Package,
+        children: [
+            { id: 'products', label: 'المنتجات', icon: Package },
+        ],
+    },
+    {
+        id: 'finance',
+        label: 'المالية',
+        icon: Wallet,
+        children: [
+            { id: 'expenses', label: 'المصاريف', icon: CreditCard },
+            { id: 'wallets', label: 'المحافظ', icon: Wallet },
+        ],
+    },
+    {
+        id: 'analytics',
+        label: 'التحليلات',
+        icon: BarChart3,
+        children: [
+            { id: 'profit-dashboard', label: 'لوحة الأرباح', icon: TrendingUp },
+            { id: 'reports', label: 'التقارير', icon: FileText },
+        ],
+    },
+    {
+        id: 'settings',
+        label: 'الإعدادات',
+        icon: Settings,
+        children: null,
+    },
 ];
 
 const AdminSidebar = ({ activeTab, setActiveTab, dm, onLogout, mobileOpen, setMobileOpen }) => {
+    const [expanded, setExpanded] = useState(() => {
+        // Auto-expand the group that contains the active tab
+        for (const group of sidebarGroups) {
+            if (group.children) {
+                if (group.children.some(c => c.id === activeTab)) {
+                    return group.id;
+                }
+            }
+        }
+        return null;
+    });
+
     const handleNav = (id) => {
         setActiveTab(id);
         setMobileOpen(false);
     };
 
-    const sidebarContent = (
-        <div className={`flex flex-col h-full ${dm ? 'bg-gray-900' : 'bg-white'}`}>
-            {/* Logo */}
+    const toggleGroup = (groupId) => {
+        setExpanded(prev => prev === groupId ? null : groupId);
+    };
+
+    // Check if a group or any of its children is currently active
+    const isGroupActive = (group) => {
+        if (group.id === activeTab) return true;
+        if (group.children) {
+            return group.children.some(c => c.id === activeTab);
+        }
+        return false;
+    };
+
+    const sidebarContent = (isMobile = false) => (
+        <div className={`flex flex-col h-full ${
+            isMobile 
+                ? (dm ? 'bg-gray-900/85 backdrop-blur-xl' : 'bg-white/85 backdrop-blur-xl')
+                : (dm ? 'bg-gray-900' : 'bg-white')
+        }`}>
+            {/* Logo / Brand */}
             <div className={`flex items-center gap-3 px-5 py-5 border-b ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
                     <Package size={20} className="text-white" />
                 </div>
                 <div>
-                    <h1 className="text-sm font-extrabold tracking-tight">IMDEN Admin</h1>
-                    <p className={`text-[10px] ${dm ? 'text-gray-600' : 'text-slate-400'}`}>لوحة الإدارة</p>
+                    <h1 className="text-sm font-extrabold tracking-tight">IMDEN</h1>
+                    <p className={`text-[10px] ${dm ? 'text-gray-600' : 'text-slate-400'}`}>Admin Panel</p>
                 </div>
-                <button onClick={() => setMobileOpen(false)} className="sm:hidden mr-auto p-1">
-                    <X size={18} className={dm ? 'text-gray-500' : 'text-slate-400'} />
-                </button>
+                {isMobile && (
+                    <button onClick={() => setMobileOpen(false)} className="mr-auto p-1">
+                        <X size={18} className={dm ? 'text-gray-500' : 'text-slate-400'} />
+                    </button>
+                )}
             </div>
 
             {/* Nav Items */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
-                {sidebarItems.map(item => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+                {sidebarGroups.map(group => {
+                    const Icon = group.icon;
+                    const isActive = isGroupActive(group);
+                    const isExpanded = expanded === group.id;
+                    const hasChildren = group.children && group.children.length > 0;
+
                     return (
-                        <button key={item.id} onClick={() => handleNav(item.id)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
-                                ${isActive 
-                                    ? `${dm ? 'bg-blue-500/15 text-blue-400' : 'bg-blue-50 text-blue-600'} font-bold` 
-                                    : `${dm ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`
-                                }`}
-                        >
-                            <Icon size={18} />
-                            {item.label}
-                            {isActive && <div className={`w-1.5 h-1.5 rounded-full mr-auto ${dm ? 'bg-blue-400' : 'bg-blue-500'}`} />}
-                        </button>
+                        <div key={group.id}>
+                            {/* Group Header / Direct Link */}
+                            <button
+                                onClick={() => {
+                                    if (hasChildren) {
+                                        toggleGroup(group.id);
+                                    } else {
+                                        handleNav(group.id);
+                                    }
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                                    ${isActive
+                                        ? `${dm ? 'bg-purple-500/15 text-purple-400' : 'bg-purple-50 text-purple-700'} font-bold`
+                                        : `${dm ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`
+                                    }`}
+                            >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                    isActive
+                                        ? (dm ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600')
+                                        : (dm ? 'bg-gray-800 text-gray-500' : 'bg-slate-100 text-slate-400')
+                                }`}>
+                                    <Icon size={16} />
+                                </div>
+                                <span className="flex-1 text-right">{group.label}</span>
+                                {hasChildren && (
+                                    isExpanded
+                                        ? <ChevronUp size={14} className={dm ? 'text-gray-600' : 'text-slate-400'} />
+                                        : <ChevronDown size={14} className={dm ? 'text-gray-600' : 'text-slate-400'} />
+                                )}
+                                {!hasChildren && isActive && (
+                                    <div className={`w-1.5 h-1.5 rounded-full ${dm ? 'bg-purple-400' : 'bg-purple-500'}`} />
+                                )}
+                            </button>
+
+                            {/* Children */}
+                            {hasChildren && isExpanded && (
+                                <div className="mr-5 mt-0.5 mb-1 space-y-0.5 border-r-2 pr-3" style={{ borderColor: dm ? '#374151' : '#e2e8f0' }}>
+                                    {group.children.map(child => {
+                                        const ChildIcon = child.icon;
+                                        const childActive = activeTab === child.id;
+                                        return (
+                                            <button
+                                                key={child.id}
+                                                onClick={() => handleNav(child.id)}
+                                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
+                                                    ${childActive
+                                                        ? `${dm ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'} font-bold`
+                                                        : `${dm ? 'text-gray-500 hover:bg-gray-800 hover:text-gray-300' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`
+                                                    }`}
+                                            >
+                                                <ChildIcon size={14} />
+                                                <span>{child.label}</span>
+                                                {childActive && (
+                                                    <div className={`w-1 h-1 rounded-full mr-auto ${dm ? 'bg-purple-400' : 'bg-purple-500'}`} />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     );
                 })}
             </nav>
@@ -80,16 +221,16 @@ const AdminSidebar = ({ activeTab, setActiveTab, dm, onLogout, mobileOpen, setMo
             </button>
 
             {/* Desktop Sidebar */}
-            <aside className={`hidden sm:flex flex-col w-56 shrink-0 fixed top-0 right-0 h-full z-30 border-l ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
-                {sidebarContent}
+            <aside className={`hidden sm:flex flex-col w-60 shrink-0 fixed top-0 right-0 h-full z-30 border-l ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
+                {sidebarContent(false)}
             </aside>
 
             {/* Mobile Sidebar Overlay */}
             {mobileOpen && (
                 <>
-                    <div className="sm:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setMobileOpen(false)} />
-                    <aside className="sm:hidden fixed top-0 right-0 h-full w-64 z-50 shadow-2xl">
-                        {sidebarContent}
+                    <div className="sm:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setMobileOpen(false)} />
+                    <aside className="sm:hidden fixed top-0 right-0 h-full w-[270px] z-50 shadow-2xl rounded-l-2xl overflow-hidden">
+                        {sidebarContent(true)}
                     </aside>
                 </>
             )}

@@ -658,11 +658,11 @@ const AdminDashboard = () => {
             <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} dm={dm} onLogout={handleLogout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
             {/* ── Main Content ── */}
-            <div className="flex-1 sm:mr-56 min-h-screen">
+            <div className="flex-1 sm:mr-60 min-h-screen">
                 {/* Top Bar */}
                 <header className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-xl ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-slate-50/90 border-slate-200'}`}>
                     <h2 className="text-lg font-bold mr-10 sm:mr-0">
-                        {activeTab === 'dashboard' ? 'لوحة التحكم' : activeTab === 'orders' ? 'إدارة الطلبات' : activeTab === 'customers' ? 'الزبائن' : activeTab === 'products' ? 'المنتجات' : activeTab === 'expenses' ? 'المصاريف' : 'الإعدادات'}
+                        {{ dashboard: 'لوحة التحكم', orders: 'إدارة الطلبات', customers: 'الزبائن', products: 'المنتجات', expenses: 'المصاريف', settings: 'الإعدادات', 'direct-sales': 'المبيعات المباشرة', returns: 'المرتجعات', suppliers: 'الموردين', wallets: 'المحافظ', 'profit-dashboard': 'لوحة الأرباح', reports: 'التقارير' }[activeTab] || 'لوحة التحكم'}
                     </h2>
                     <button onClick={() => { fetchOrders(true); fetchProducts(true); fetchExpenses(true); }}
                         className={`p-2 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
@@ -1215,6 +1215,24 @@ const AdminDashboard = () => {
                         <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
                             <p className="text-sm font-bold mb-1">كلمة السر</p>
                             <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>كلمة السر الحالية: imden2026</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ══════ PLACEHOLDER PAGES ══════ */}
+                {['direct-sales', 'returns', 'suppliers', 'wallets', 'profit-dashboard', 'reports'].includes(activeTab) && (
+                    <div className={`p-8 sm:p-12 rounded-2xl border text-center space-y-4 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
+                            <Package size={36} className="text-purple-500" />
+                        </div>
+                        <h3 className="text-xl font-bold">
+                            {{ 'direct-sales': 'المبيعات المباشرة', returns: 'المرتجعات', suppliers: 'الموردين', wallets: 'المحافظ', 'profit-dashboard': 'لوحة الأرباح', reports: 'التقارير' }[activeTab]}
+                        </h3>
+                        <p className={`text-sm max-w-md mx-auto ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                            هذه الصفحة قيد التطوير وستكون متاحة قريباً. سنعمل على إضافة هذه الميزة في أقرب وقت.
+                        </p>
+                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold ${dm ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
+                            🚀 قريباً
                         </div>
                     </div>
                 )}
