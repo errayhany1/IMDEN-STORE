@@ -128,8 +128,8 @@ const useStore = create(
                 cart: state.cart,
                 customerInfo: state.customerInfo,
                 categoryImages: state.categoryImages,
-                products: state.products
-            }), // Only persist cart, customer info, category images, and products
+                products: state.products.map(({ originalData, ...rest }) => rest)
+            }), // Only persist cart, customer info, category images, and products (without originalData)
         }
     )
 );
