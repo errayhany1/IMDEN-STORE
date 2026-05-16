@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 // Register Service Worker for PWA
 const updateSW = registerSW({
@@ -17,7 +18,7 @@ const updateSW = registerSW({
 })
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  <ErrorBoundary>
     <App />
-  </StrictMode>,
+  </ErrorBoundary>,
 )
