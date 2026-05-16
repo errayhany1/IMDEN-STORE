@@ -123,7 +123,7 @@ const useStore = create(
             clearCart: () => set({ cart: [] }),
         }),
         {
-            name: 'wholesale-store-storage', // unique name
+            name: 'wholesale-store-storage-v2', // unique name, bumped version to clear old corrupted state
             partialize: (state) => ({
                 cart: state.cart,
                 customerInfo: state.customerInfo,
