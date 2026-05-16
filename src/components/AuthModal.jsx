@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import useStore from '../store/useStore';
 import { X, Mail, Phone, ArrowRight, Loader2 } from 'lucide-react';
-import { auth, googleProvider } from '../services/firebase';
-import { 
-    signInWithPopup, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword,
-    RecaptchaVerifier,
-    signInWithPhoneNumber
-} from 'firebase/auth';
+
+// Lazy load firebase to avoid TDZ issues in production builds
+let authInstance = null;
+let googleProviderInstance = null;
+let firebaseAuthModule = null;
+
+const getFirebase = async () => {
+    if (!authInstance) {
+        const fb = await import('../services/firebase');
+        authInstance = fb.auth;
+        googleProviderInstance = fb.googleProvider;
+    }
+    if (!firebaseAuthModule) {
+        firebaseAuthModule = await import('firebase/auth');
+    }
+    return { auth: authInstance, googleProvider: googleProviderInstance, authModule: firebaseAuthModule };
+};
 
 const AuthModal = () => {
     const { isAuthModalOpen, setAuthModalOpen, darkMode } = useStore();
@@ -16,6 +25,7 @@ const AuthModal = () => {
     const [view, setView] = useState('main'); // 'main', 'email', 'phone'
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [firebaseReady, setFirebaseReady] = useState(false);
 
     // Email state
     const [email, setEmail] = useState('');
@@ -25,6 +35,16 @@ const AuthModal = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [otpCode, setOtpCode] = useState('');
     const [confirmationResult, setConfirmationResult] = useState(null);
+
+    // Load firebase when modal opens
+    useEffect(() => {
+        if (isAuthModalOpen) {
+            getFirebase().then(() => setFirebaseReady(true)).catch(err => {
+                console.error("Failed to load Firebase:", err);
+                setError('فشل في تحميل خدمة تسجيل الدخول. حاول تحديث الصفحة.');
+            });
+        }
+    }, [isAuthModalOpen]);
 
     // Reset state when modal opens/closes
     useEffect(() => {
@@ -48,7 +68,8 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
-            await signInWithPopup(auth, googleProvider);
+            const { auth, googleProvider, authModule } = await getFirebase();
+            await authModule.signInWithPopup(auth, googleProvider);
             setAuthModalOpen(false);
         } catch (err) {
             console.error(err);
@@ -66,10 +87,11 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
+            const { auth, authModule } = await getFirebase();
             if (isRegister) {
-                await createUserWithEmailAndPassword(auth, email, password);
+                await authModule.createUserWithEmailAndPassword(auth, email, password);
             } else {
-                await signInWithEmailAndPassword(auth, email, password);
+                await authModule.signInWithEmailAndPassword(auth, email, password);
             }
             setAuthModalOpen(false);
         } catch (err) {
@@ -98,10 +120,11 @@ const AuthModal = () => {
         if (container) container.innerHTML = '';
     };
 
-    const setupRecaptcha = () => {
+    const setupRecaptcha = async () => {
+        const { auth, authModule } = await getFirebase();
         // Always destroy old one first
         cleanupRecaptcha();
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        window.recaptchaVerifier = new authModule.RecaptchaVerifier(auth, 'recaptcha-container', {
             size: 'invisible',
             callback: () => {},
             'expired-callback': () => {
@@ -127,9 +150,10 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
-            setupRecaptcha();
+            const { auth, authModule } = await getFirebase();
+            await setupRecaptcha();
             const appVerifier = window.recaptchaVerifier;
-            const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+            const confirmation = await authModule.signInWithPhoneNumber(auth, formattedPhone, appVerifier);
             setConfirmationResult(confirmation);
         } catch (err) {
             console.error("Phone Auth Error:", err);
