@@ -18,7 +18,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [showGate, setShowGate] = useState(!user); // Show login gate for non-logged users
+    const [showGate, setShowGate] = useState(false); // Changed: do not show gate initially
+    const [orderCompleted, setOrderCompleted] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -130,12 +131,23 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
             setSuccessMessage('تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.');
             setCustomerInfo(formData); // Save phone number for Account Page
-            // Clear cart and clear form after a delay
-            setTimeout(() => {
-                clearCart();
-                onClose();
-                setSuccessMessage('');
-            }, 3000);
+            clearCart();
+            setOrderCompleted(true);
+
+            if (!user) {
+                // Show login gate after short delay
+                setTimeout(() => {
+                    setShowGate(true);
+                    setSuccessMessage('');
+                }, 1500);
+            } else {
+                // Close modal after delay if already logged in
+                setTimeout(() => {
+                    onClose();
+                    setSuccessMessage('');
+                    setOrderCompleted(false);
+                }, 3000);
+            }
 
         } catch (error) {
             console.error('Checkout error:', error);
@@ -166,19 +178,21 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                    
                 >
                     <button
-                        onClick={onClose}
+                        onClick={() => { onClose(); setOrderCompleted(false); setShowGate(false); }}
                         className={`absolute top-4 left-4 p-2 rounded-full transition-colors ${dm ? 'text-gray-400 hover:bg-gray-700 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
                     >
                         <X size={20} />
                     </button>
 
-                    <h2 className={`text-2xl font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>إتمام الطلب</h2>
+                    <h2 className={`text-2xl font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>
+                        {orderCompleted && showGate ? 'اكتمل الطلب بنجاح! 🎉' : 'إتمام الطلب'}
+                    </h2>
                     <p className={`text-sm mb-4 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
-                        المرجو إدخال معلوماتك الشخصية لتأكيد إرسال الطلبية.
+                        {orderCompleted && showGate ? 'بقي خطوة واحدة لحفظ طلبك ومتابعته لاحقاً.' : 'المرجو إدخال معلوماتك الشخصية لتأكيد إرسال الطلبية.'}
                     </p>
 
                     {/* Login Gate for non-logged users */}
-                    {!user && showGate ? (
+                    {!user && showGate && orderCompleted ? (
                         <div className="space-y-5 py-2">
                             {/* Icon */}
                             <div className="text-center">
@@ -214,12 +228,12 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                                 تسجيل الدخول
                             </button>
 
-                            {/* Continue as Guest */}
+                            {/* Continue as Guest / Close */}
                             <button
-                                onClick={() => setShowGate(false)}
+                                onClick={() => { onClose(); setOrderCompleted(false); setShowGate(false); }}
                                 className={`w-full text-center text-xs font-medium py-2.5 rounded-xl transition-colors ${dm ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-700' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
                             >
-                                المتابعة كزائر بدون حساب ←
+                                إغلاق والعودة للمتجر ←
                             </button>
 
                             <div className="flex items-center justify-center gap-1.5">
