@@ -15,24 +15,30 @@ const ProductGrid = () => {
             if (hasFetched.current) return;
             hasFetched.current = true;
             
-            setLoading(true);
-            setProducts([]); // Clear existing
+            const isSilent = products.length > 0;
+            
+            if (!isSilent) {
+                setLoading(true);
+                setProducts([]); // Clear existing
+            }
 
-            await fetchProducts((chunk, newCategoryImages) => {
-                appendProducts(chunk);
-                updateCategoryImages(newCategoryImages);
-                setLoading(false); // Disable loading as soon as first chunk arrives
+            const allProducts = await fetchProducts((chunk, newCategoryImages) => {
+                if (!isSilent) {
+                    appendProducts(chunk);
+                    updateCategoryImages(newCategoryImages);
+                    setLoading(false); // Disable loading as soon as first chunk arrives
+                }
             });
 
-            setLoading(false);
+            if (isSilent && allProducts && allProducts.length > 0) {
+                // Background update complete, replace cached products with fresh data
+                setProducts(allProducts);
+            } else if (!isSilent) {
+                setLoading(false);
+            }
         };
 
-        // Only load if empty, to prevent reloading when navigating back to this component
-        if (products.length === 0) {
-            loadProducts();
-        } else {
-            hasFetched.current = true;
-        }
+        loadProducts();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
 

@@ -127,8 +127,9 @@ const useStore = create(
             partialize: (state) => ({
                 cart: state.cart,
                 customerInfo: state.customerInfo,
-                categoryImages: state.categoryImages
-            }), // Only persist cart, customer info, and category images
+                categoryImages: state.categoryImages,
+                products: state.products
+            }), // Only persist cart, customer info, category images, and products
         }
     )
 );
