@@ -1,52 +1,42 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
 import { X, Mail, Phone, ArrowRight, Loader2 } from 'lucide-react';
 
-// Lazy load firebase to avoid TDZ issues in production builds
-let authInstance = null;
-let googleProviderInstance = null;
-let firebaseAuthModule = null;
-
-const getFirebase = async () => {
-    if (!authInstance) {
-        const fb = await import('../services/firebase');
-        authInstance = fb.auth;
-        googleProviderInstance = fb.googleProvider;
-    }
-    if (!firebaseAuthModule) {
-        firebaseAuthModule = await import('firebase/auth');
-    }
-    return { auth: authInstance, googleProvider: googleProviderInstance, authModule: firebaseAuthModule };
-};
+// NO static firebase imports here - everything uses window globals from CDN (index.html)
+// This is the ONLY way to guarantee no TDZ errors in Vite production builds
 
 const AuthModal = () => {
     const { isAuthModalOpen, setAuthModalOpen, darkMode } = useStore();
-    
-    const [view, setView] = useState('main'); // 'main', 'email', 'phone'
+
+    const [view, setView] = useState('main');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [firebaseReady, setFirebaseReady] = useState(false);
 
-    // Email state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // Phone state
     const [phoneNumber, setPhoneNumber] = useState('');
     const [otpCode, setOtpCode] = useState('');
     const [confirmationResult, setConfirmationResult] = useState(null);
 
-    // Load firebase when modal opens
-    useEffect(() => {
-        if (isAuthModalOpen) {
-            getFirebase().then(() => setFirebaseReady(true)).catch(err => {
-                console.error("Failed to load Firebase:", err);
-                setError('فشل في تحميل خدمة تسجيل الدخول. حاول تحديث الصفحة.');
-            });
+    // ROOT CAUSE FIX: Moved cleanupRecaptcha ABOVE the early return!
+    // In React, if a component returns early (e.g. if (!isAuthModalOpen) return null), 
+    // variables declared below the return are NEVER initialized on that render.
+    // When the useEffect tries to return the cleanupRecaptcha function on unmount (or re-run), 
+    // it encounters a Temporal Dead Zone (TDZ) ReferenceError because it was never initialized!
+    const cleanupRecaptcha = () => {
+        try {
+            if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.clear();
+                window.recaptchaVerifier = null;
+            }
+        } catch (e) {
+            window.recaptchaVerifier = null;
         }
-    }, [isAuthModalOpen]);
+        const container = document.getElementById('recaptcha-container');
+        if (container) container.innerHTML = '';
+    };
 
-    // Reset state when modal opens/closes
     useEffect(() => {
         if (isAuthModalOpen) {
             setView('main');
@@ -64,16 +54,28 @@ const AuthModal = () => {
 
     if (!isAuthModalOpen) return null;
 
+    const getAuth = () => {
+        if (!window.__firebaseAuth) throw new Error('Firebase Auth not ready');
+        return window.__firebaseAuth;
+    };
+
+    const getGoogleProvider = () => {
+        if (!window.__firebaseGoogleProvider) throw new Error('Firebase GoogleProvider not ready');
+        return window.__firebaseGoogleProvider;
+    };
+
     const handleGoogleSignIn = async () => {
         setLoading(true);
         setError('');
         try {
-            const { auth, googleProvider, authModule } = await getFirebase();
-            await authModule.signInWithPopup(auth, googleProvider);
+            const { signInWithPopup } = await import('https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js');
+            await signInWithPopup(getAuth(), getGoogleProvider());
             setAuthModalOpen(false);
         } catch (err) {
             console.error(err);
-            setError(`حدث خطأ: ${err.message}`);
+            if (err.code !== 'auth/popup-closed-by-user') {
+                setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
+            }
         } finally {
             setLoading(false);
         }
@@ -87,11 +89,13 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
-            const { auth, authModule } = await getFirebase();
+            const { createUserWithEmailAndPassword, signInWithEmailAndPassword } =
+                await import('https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js');
+
             if (isRegister) {
-                await authModule.createUserWithEmailAndPassword(auth, email, password);
+                await createUserWithEmailAndPassword(getAuth(), email, password);
             } else {
-                await authModule.signInWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(getAuth(), email, password);
             }
             setAuthModalOpen(false);
         } catch (err) {
@@ -99,47 +103,15 @@ const AuthModal = () => {
             if (err.code === 'auth/email-already-in-use') setError('هذا البريد مسجل مسبقاً، قم بتسجيل الدخول.');
             else if (err.code === 'auth/invalid-credential') setError('البريد أو كلمة المرور غير صحيحة.');
             else if (err.code === 'auth/weak-password') setError('كلمة المرور ضعيفة (6 أحرف على الأقل).');
-            else setError(`حدث خطأ: ${err.message}`);
+            else setError('حدث خطأ، يرجى المحاولة مجدداً.');
         } finally {
             setLoading(false);
         }
     };
 
-    const cleanupRecaptcha = () => {
-        try {
-            if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.clear();
-                window.recaptchaVerifier = null;
-            }
-        } catch (e) {
-            // Ignore cleanup errors
-            window.recaptchaVerifier = null;
-        }
-        // Also clear the DOM container
-        const container = document.getElementById('recaptcha-container');
-        if (container) container.innerHTML = '';
-    };
-
-    const setupRecaptcha = async () => {
-        const { auth, authModule } = await getFirebase();
-        // Always destroy old one first
-        cleanupRecaptcha();
-        window.recaptchaVerifier = new authModule.RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {},
-            'expired-callback': () => {
-                cleanupRecaptcha();
-            }
-        });
-    };
-
     const handleSendOTP = async () => {
-        if (!phoneNumber) {
-            setError('المرجو إدخال رقم الهاتف');
-            return;
-        }
+        if (!phoneNumber) { setError('المرجو إدخال رقم الهاتف'); return; }
 
-        // Format to +212 if local Moroccan number is entered (06... or 07...)
         let formattedPhone = phoneNumber.replace(/\s/g, '');
         if (formattedPhone.startsWith('06') || formattedPhone.startsWith('07')) {
             formattedPhone = '+212' + formattedPhone.substring(1);
@@ -150,28 +122,24 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
-            const { auth, authModule } = await getFirebase();
-            await setupRecaptcha();
-            const appVerifier = window.recaptchaVerifier;
-            const confirmation = await authModule.signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+            const { RecaptchaVerifier, signInWithPhoneNumber } =
+                await import('https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js');
+
+            cleanupRecaptcha();
+            window.recaptchaVerifier = new RecaptchaVerifier(getAuth(), 'recaptcha-container', {
+                size: 'invisible',
+                callback: () => {},
+                'expired-callback': () => cleanupRecaptcha()
+            });
+            const confirmation = await signInWithPhoneNumber(getAuth(), formattedPhone, window.recaptchaVerifier);
             setConfirmationResult(confirmation);
         } catch (err) {
-            console.error("Phone Auth Error:", err);
-            
-            // Clean up recaptcha so next attempt creates a fresh one
+            console.error('Phone Auth Error:', err);
             cleanupRecaptcha();
-
-            if (err.code === 'auth/unauthorized-domain') {
-                setError('يجب إضافة رابط الموقع إلى Authorized Domains في Firebase');
-            } else if (err.code === 'auth/invalid-phone-number') {
-                setError('رقم الهاتف غير صالح. تأكد من إدخاله بشكل صحيح.');
-            } else if (err.code === 'auth/too-many-requests') {
-                setError('كثرة المحاولات. يرجى المحاولة بعد قليل.');
-            } else if (err.code === 'auth/internal-error') {
-                setError('حدث خطأ داخلي. المرجو التأكد من تفعيل Phone Auth في Firebase.');
-            } else {
-                setError(`حدث خطأ: ${err.message}`);
-            }
+            if (err.code === 'auth/unauthorized-domain') setError('يجب إضافة رابط الموقع إلى Authorized Domains في Firebase');
+            else if (err.code === 'auth/invalid-phone-number') setError('رقم الهاتف غير صالح.');
+            else if (err.code === 'auth/too-many-requests') setError('كثرة المحاولات. يرجى المحاولة بعد قليل.');
+            else setError('حدث خطأ، يرجى المحاولة مجدداً.');
         } finally {
             setLoading(false);
         }
@@ -184,161 +152,21 @@ const AuthModal = () => {
         try {
             await confirmationResult.confirm(otpCode);
             setAuthModalOpen(false);
-        } catch (err) {
-            console.error(err);
+        } catch {
             setError('الكود غير صحيح، يرجى المحاولة مرة أخرى.');
         } finally {
             setLoading(false);
         }
     };
 
-    // --- UI Renderers ---
-
-    const renderMainView = () => (
-        <div className="flex flex-col gap-4">
-            <button 
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors bg-white text-slate-700 font-semibold shadow-sm"
-            >
-                {loading ? <Loader2 className="animate-spin" /> : <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />}
-                المتابعة باستخدام Google
-            </button>
-
-            <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                    <div className={`w-full border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                    <span className={`px-2 ${darkMode ? 'bg-gray-900 text-gray-500' : 'bg-white text-gray-500'}`}>أو استخدام طرق أخرى</span>
-                </div>
-            </div>
-
-            <button 
-                onClick={() => setView('phone')}
-                disabled={loading}
-                className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
-                ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-            >
-                <Phone size={18} />
-                المتابعة برقم الهاتف (SMS)
-            </button>
-
-            <button 
-                onClick={() => setView('email')}
-                disabled={loading}
-                className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
-                ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-            >
-                <Mail size={18} />
-                المتابعة بالبريد الإلكتروني
-            </button>
-        </div>
-    );
-
-    const renderEmailView = () => (
-        <div className="flex flex-col gap-4">
-            <input 
-                type="email" 
-                placeholder="البريد الإلكتروني" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className={`w-full p-3 rounded-xl border text-right focus:ring-2 focus:ring-primary focus:border-primary outline-none
-                ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
-            />
-            <input 
-                type="password" 
-                placeholder="كلمة المرور" 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className={`w-full p-3 rounded-xl border text-right focus:ring-2 focus:ring-primary focus:border-primary outline-none
-                ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
-            />
-            
-            <div className="flex gap-2 mt-2">
-                <button 
-                    onClick={() => handleEmailAuth(false)}
-                    disabled={loading}
-                    className="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition flex justify-center"
-                >
-                    {loading ? <Loader2 className="animate-spin" /> : "تسجيل الدخول"}
-                </button>
-                <button 
-                    onClick={() => handleEmailAuth(true)}
-                    disabled={loading}
-                    className={`flex-1 py-3 rounded-xl font-bold transition flex justify-center border
-                    ${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}
-                >
-                    {loading ? <Loader2 className="animate-spin" /> : "إنشاء حساب"}
-                </button>
-            </div>
-        </div>
-    );
-
-    const renderPhoneView = () => (
-        <div className="flex flex-col gap-4">
-            {!confirmationResult ? (
-                <>
-                    <input 
-                        type="tel" 
-                        placeholder="رقم الهاتف (مثال: 0612345678)" 
-                        value={phoneNumber}
-                        onChange={e => setPhoneNumber(e.target.value)}
-                        className={`w-full p-3 rounded-xl border text-right focus:ring-2 focus:ring-primary focus:border-primary outline-none text-left
-                        ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
-                        dir="ltr"
-                    />
-                    <div id="recaptcha-container"></div>
-                    <button 
-                        onClick={handleSendOTP}
-                        disabled={loading}
-                        className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition flex justify-center mt-2"
-                    >
-                        {loading ? <Loader2 className="animate-spin" /> : "إرسال رمز التحقق (SMS)"}
-                    </button>
-                </>
-            ) : (
-                <>
-                    <p className={`text-sm text-center ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
-                        أدخل الرمز المكون من 6 أرقام المرسل إلى {phoneNumber}
-                    </p>
-                    <input 
-                        type="text" 
-                        placeholder="رمز التحقق (123456)" 
-                        value={otpCode}
-                        onChange={e => setOtpCode(e.target.value)}
-                        className={`w-full p-3 rounded-xl border text-center text-xl tracking-widest focus:ring-2 focus:ring-primary focus:border-primary outline-none
-                        ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
-                        dir="ltr"
-                        maxLength={6}
-                    />
-                    <button 
-                        onClick={handleVerifyOTP}
-                        disabled={loading}
-                        className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition flex justify-center mt-2"
-                    >
-                        {loading ? <Loader2 className="animate-spin" /> : "تأكيد وتسجيل الدخول"}
-                    </button>
-                    <button 
-                        onClick={() => setConfirmationResult(null)}
-                        className={`w-full py-2 text-sm underline ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}
-                    >
-                        تعديل رقم الهاتف
-                    </button>
-                </>
-            )}
-        </div>
-    );
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
-            <div 
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div
                 className={`relative w-full max-w-md p-8 rounded-3xl shadow-2xl overflow-hidden
                 ${darkMode ? 'bg-gray-900 border border-gray-700 text-white' : 'bg-white text-slate-800'}`}
                 style={{ direction: 'rtl' }}
             >
-                {/* Back / Close button */}
-                <button 
+                <button
                     onClick={() => view === 'main' ? setAuthModalOpen(false) : setView('main')}
                     className={`absolute top-4 left-4 p-2 rounded-full transition-colors flex items-center justify-center
                     ${darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}
@@ -363,10 +191,115 @@ const AuthModal = () => {
                     </div>
                 )}
 
-                {view === 'main' && renderMainView()}
-                {view === 'email' && renderEmailView()}
-                {view === 'phone' && renderPhoneView()}
+                {view === 'main' && (
+                    <div className="flex flex-col gap-4">
+                        <button
+                            onClick={handleGoogleSignIn}
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors bg-white text-slate-700 font-semibold shadow-sm"
+                        >
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : (
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
+                            )}
+                            المتابعة باستخدام Google
+                        </button>
 
+                        <div className="relative my-2">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className={`w-full border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className={`px-2 ${darkMode ? 'bg-gray-900 text-gray-500' : 'bg-white text-gray-500'}`}>أو</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setView('phone')}
+                            className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
+                            ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
+                        >
+                            <Phone size={18} /> المتابعة برقم الهاتف (SMS)
+                        </button>
+
+                        <button
+                            onClick={() => setView('email')}
+                            className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border transition-colors font-medium
+                            ${darkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
+                        >
+                            <Mail size={18} /> المتابعة بالبريد الإلكتروني
+                        </button>
+                    </div>
+                )}
+
+                {view === 'email' && (
+                    <div className="flex flex-col gap-4">
+                        <input
+                            type="email" placeholder="البريد الإلكتروني" value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            className={`w-full p-3 rounded-xl border text-right focus:ring-2 focus:ring-primary outline-none
+                            ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
+                        />
+                        <input
+                            type="password" placeholder="كلمة المرور" value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            className={`w-full p-3 rounded-xl border text-right focus:ring-2 focus:ring-primary outline-none
+                            ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
+                        />
+                        <div className="flex gap-2 mt-2">
+                            <button onClick={() => handleEmailAuth(false)} disabled={loading}
+                                className="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition flex justify-center items-center">
+                                {loading ? <Loader2 className="animate-spin" size={20} /> : 'تسجيل الدخول'}
+                            </button>
+                            <button onClick={() => handleEmailAuth(true)} disabled={loading}
+                                className={`flex-1 py-3 rounded-xl font-bold transition flex justify-center items-center border
+                                ${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+                                {loading ? <Loader2 className="animate-spin" size={20} /> : 'إنشاء حساب'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {view === 'phone' && (
+                    <div className="flex flex-col gap-4">
+                        {!confirmationResult ? (
+                            <>
+                                <input
+                                    type="tel" placeholder="رقم الهاتف (مثال: 0612345678)"
+                                    value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
+                                    dir="ltr"
+                                    className={`w-full p-3 rounded-xl border text-left focus:ring-2 focus:ring-primary outline-none
+                                    ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
+                                />
+                                <div id="recaptcha-container" />
+                                <button onClick={handleSendOTP} disabled={loading}
+                                    className="w-full bg-primary text-white py-3 rounded-xl font-bold flex justify-center items-center">
+                                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'إرسال رمز التحقق (SMS)'}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <p className={`text-sm text-center ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                                    أدخل الرمز المرسل إلى {phoneNumber}
+                                </p>
+                                <input
+                                    type="text" placeholder="123456" value={otpCode}
+                                    onChange={e => setOtpCode(e.target.value)}
+                                    dir="ltr" maxLength={6}
+                                    className={`w-full p-3 rounded-xl border text-center text-xl tracking-widest focus:ring-2 focus:ring-primary outline-none
+                                    ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200'}`}
+                                />
+                                <button onClick={handleVerifyOTP} disabled={loading}
+                                    className="w-full bg-primary text-white py-3 rounded-xl font-bold flex justify-center items-center">
+                                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'تأكيد وتسجيل الدخول'}
+                                </button>
+                                <button onClick={() => setConfirmationResult(null)}
+                                    className={`w-full py-2 text-sm underline ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                                    تعديل رقم الهاتف
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
