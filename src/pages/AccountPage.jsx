@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Package, Clock, Truck, CheckCircle, XCircle, ArrowRight, Loader2, ShoppingBag, User, LogOut, ChevronDown, ChevronUp } from 'lucide-react';
 import useStore from '../store/useStore';
+import { auth } from '../services/firebase';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
@@ -74,7 +75,7 @@ const AccountPage = () => {
     };
 
     const handleLogout = () => {
-        import('../services/firebase').then(m => m.auth.signOut());
+        auth.signOut();
         window.location.href = '/';
     };
 

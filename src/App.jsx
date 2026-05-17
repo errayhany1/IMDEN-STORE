@@ -13,6 +13,8 @@ import OrderTracking from './pages/OrderTracking';
 import AccountPage from './pages/AccountPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import useStore from './store/useStore';
+import { auth } from './services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { User, X, ChevronUp } from 'lucide-react';
 
 function App() {
@@ -21,16 +23,11 @@ function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    // Dynamically load Firebase to avoid TDZ issues in production builds
-    let unsubscribe = null;
-    import('./services/firebase').then(({ auth }) => {
-      import('firebase/auth').then(({ onAuthStateChanged }) => {
-        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-        });
-      });
-    }).catch(err => console.error("Firebase init error:", err));
-    return () => { if (unsubscribe) unsubscribe(); };
+    // Listen for Firebase Auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
   }, [setUser]);
 
   // Track scroll position for scroll-to-top button
