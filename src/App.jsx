@@ -8,6 +8,7 @@ import FeaturedStrip from './components/FeaturedStrip';
 import NotificationPrompt from './components/NotificationPrompt';
 import AIChatWidget from './components/AIChatWidget';
 import AuthModal from './components/AuthModal';
+import AboutModal from './components/AboutModal';
 import AdminDashboard from './pages/AdminDashboard';
 import OrderTracking from './pages/OrderTracking';
 import AccountPage from './pages/AccountPage';
@@ -104,6 +105,7 @@ function App() {
       <FloatingWhatsApp />
       <AIChatWidget />
       <AuthModal />
+      <AboutModal />
       <IOSInstallPrompt />
 
       {/* Scroll to Top Button */}

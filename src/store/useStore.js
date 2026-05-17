@@ -9,6 +9,7 @@ const useStore = create(
             customerInfo: { name: '', phone: '', address: '' },
             user: null, // Firebase user object
             isAuthModalOpen: false,
+            isAboutModalOpen: false,
             categories: [
                 'All',
                 'Chargers',
@@ -38,6 +39,7 @@ const useStore = create(
 
             setUser: (user) => set({ user }),
             setAuthModalOpen: (isOpen) => set({ isAuthModalOpen: isOpen }),
+            setAboutModalOpen: (isOpen) => set({ isAboutModalOpen: isOpen }),
 
             setProducts: (data) => {
                 set({ products: data });

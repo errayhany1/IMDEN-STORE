@@ -5,7 +5,7 @@ import DarkModeToggle from './DarkModeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
-    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, customerInfo, setCustomerInfo } = useStore();
+    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [editingInfo, setEditingInfo] = useState(false);
@@ -375,7 +375,7 @@ const Header = () => {
 
                                 {/* About */}
                                 <button
-                                    onClick={scrollToTop}
+                                    onClick={() => { setSidebarOpen(false); setAboutModalOpen(true); }}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
                                     ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
                                 >
