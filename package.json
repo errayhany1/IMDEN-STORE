@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node generate-seo.mjs && vite build",
+    "seo": "node generate-seo.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "bot": "node bot-server.js"

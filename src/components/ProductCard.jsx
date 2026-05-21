@@ -42,9 +42,12 @@ const ProductCard = ({ product }) => {
                     {displayImage ? (
                         <img
                             src={displayImage}
-                            alt={product.name || product.ref}
+                            alt={`${product.name || product.ref} - ${product.price} DH - إلكترونيات بالجملة IMDEN`}
+                            title={product.name || product.ref}
                             className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
                             loading="lazy"
+                            width="300"
+                            height="400"
                             onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.style.display = 'none';

@@ -1,4 +1,14 @@
+# IMDEN TECHNOLOGY - Wholesale Electronics Store
 User-agent: *
 Allow: /
+Allow: /products.html
 
-Sitemap: https://imden-technology.com/sitemap.xml
+# Allow image crawlers full access
+User-agent: Googlebot-Image
+Allow: /
+
+# Sitemap with product images
+Sitemap: https://imdenmanadger.online/sitemap.xml
+
+# Host
+Host: https://imdenmanadger.online
