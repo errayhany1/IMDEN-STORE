@@ -28,13 +28,13 @@ async function fetchAllProducts() {
         try {
             const res = await axios.get(`${API_URL}/api/v2/tables/${TABLE_ID}/records`, {
                 headers: { 'xc-token': API_TOKEN },
-                params: { limit: 200, offset, sort: '-Id' }
+                params: { limit: 100, offset, sort: '-Id' }
             });
             const list = res.data.list || [];
             const visible = list.filter(r => r.POSTEBL === 'POSTEBL');
             all = [...all, ...visible];
-            if (list.length < 200) hasMore = false;
-            else offset += 200;
+            if (list.length < 100) hasMore = false;
+            else offset += 100;
         } catch (e) {
             console.error('Error fetching products:', e.message);
             hasMore = false;

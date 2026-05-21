@@ -28,7 +28,7 @@ export const fetchProducts = async (onChunk) => {
     try {
         let allRecords = [];
         let offset = 0;
-        let limit = 200; // Larger chunk size = fewer requests = less chance of 429
+        let limit = 100; // NocoDB cloud enforces max 100 records per request
         let hasMore = true;
         let collectedCategoryImages = {};
 
