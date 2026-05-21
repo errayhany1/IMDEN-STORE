@@ -125,13 +125,14 @@ const useStore = create(
             clearCart: () => set({ cart: [] }),
         }),
         {
-            name: 'wholesale-store-storage-v2', // unique name, bumped version to clear old corrupted state
+            name: 'wholesale-store-storage-v3', // v3: no longer persisting products/categoryImages (S3 signed URLs expire)
             partialize: (state) => ({
                 cart: state.cart,
                 customerInfo: state.customerInfo,
-                categoryImages: state.categoryImages,
-                products: state.products.map(({ originalData, ...rest }) => rest)
-            }), // Only persist cart, customer info, category images, and products (without originalData)
+                // NOTE: products and categoryImages are NOT persisted because NocoDB
+                // uses temporary S3 signed URLs that expire after ~2 hours.
+                // Persisting them causes all images to break on subsequent visits.
+            }),
         }
     )
 );

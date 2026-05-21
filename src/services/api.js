@@ -4,11 +4,31 @@ const API_URL = import.meta.env.VITE_NOCODB_URL;
 const API_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const TABLE_ID = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
 
+// Helper: delay between requests to avoid 429 rate limiting
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper: retry a request with exponential backoff on 429 errors
+const fetchWithRetry = async (url, options, maxRetries = 3) => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await axios.get(url, options);
+        } catch (err) {
+            if (err.response && err.response.status === 429 && attempt < maxRetries) {
+                const waitTime = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+                console.warn(`NocoDB rate limited (429). Retrying in ${waitTime / 1000}s...`);
+                await delay(waitTime);
+            } else {
+                throw err;
+            }
+        }
+    }
+};
+
 export const fetchProducts = async (onChunk) => {
     try {
         let allRecords = [];
         let offset = 0;
-        let limit = 50; // Smaller chunk size for faster initial render
+        let limit = 200; // Larger chunk size = fewer requests = less chance of 429
         let hasMore = true;
         let collectedCategoryImages = {};
 
@@ -33,7 +53,7 @@ export const fetchProducts = async (onChunk) => {
 
         while (hasMore) {
             const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
-            const response = await axios.get(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     "xc-token": API_TOKEN,
                     "accept": "application/json"
@@ -131,6 +151,8 @@ export const fetchProducts = async (onChunk) => {
                 hasMore = false;
             } else {
                 offset += limit;
+                // Small delay between pages to avoid rate limiting
+                await delay(300);
             }
         }
 

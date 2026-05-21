@@ -3,7 +3,7 @@ import useStore from '../store/useStore';
 import { X, Mail, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import { auth, googleProvider } from '../services/firebase';
 import { 
-    signInWithPopup, 
+    signInWithRedirect, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     RecaptchaVerifier, 
@@ -59,14 +59,15 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
-            await signInWithPopup(auth, googleProvider);
-            setAuthModalOpen(false);
+            // Use signInWithRedirect instead of signInWithPopup to avoid
+            // COOP (Cross-Origin-Opener-Policy) issues in production.
+            // The result is captured in App.jsx via getRedirectResult.
+            await signInWithRedirect(auth, googleProvider);
+            // Note: This line won't execute because the page redirects to Google.
+            // Auth state is handled by onAuthStateChanged in App.jsx after redirect.
         } catch (err) {
             console.error(err);
-            if (err.code !== 'auth/popup-closed-by-user') {
-                setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
-            }
-        } finally {
+            setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
             setLoading(false);
         }
     };

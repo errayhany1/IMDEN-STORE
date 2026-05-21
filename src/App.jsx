@@ -15,7 +15,7 @@ import AccountPage from './pages/AccountPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp } from 'lucide-react';
 
 function App() {
@@ -28,6 +28,15 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
+
+    // Handle redirect result from Google Sign-In
+    getRedirectResult(auth).catch((err) => {
+      // Silently ignore errors (e.g. no redirect happened)
+      if (err.code && err.code !== 'auth/popup-closed-by-user') {
+        console.error('Redirect auth error:', err);
+      }
+    });
+
     return () => unsubscribe();
   }, [setUser]);
 

@@ -15,27 +15,18 @@ const ProductGrid = () => {
             if (hasFetched.current) return;
             hasFetched.current = true;
             
-            const isSilent = products.length > 0;
-            
-            if (!isSilent) {
-                setLoading(true);
-                setProducts([]); // Clear existing
-            }
+            // Always fetch fresh data — products are NOT persisted in localStorage
+            // because NocoDB uses temporary S3 signed URLs that expire after ~2 hours.
+            setLoading(true);
+            setProducts([]);
 
-            const allProducts = await fetchProducts((chunk, newCategoryImages) => {
-                if (!isSilent) {
-                    appendProducts(chunk);
-                    updateCategoryImages(newCategoryImages);
-                    setLoading(false); // Disable loading as soon as first chunk arrives
-                }
+            await fetchProducts((chunk, newCategoryImages) => {
+                appendProducts(chunk);
+                updateCategoryImages(newCategoryImages);
+                setLoading(false); // Disable loading as soon as first chunk arrives
             });
 
-            if (isSilent && allProducts && allProducts.length > 0) {
-                // Background update complete, replace cached products with fresh data
-                setProducts(allProducts);
-            } else if (!isSilent) {
-                setLoading(false);
-            }
+            setLoading(false);
         };
 
         loadProducts();
