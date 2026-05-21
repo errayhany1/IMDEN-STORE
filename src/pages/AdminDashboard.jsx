@@ -3,6 +3,12 @@ import axios from 'axios';
 import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp, Users, Download, Plus, CreditCard } from 'lucide-react';
 import useStore from '../store/useStore';
 import AdminSidebar from './AdminSidebar';
+import DirectSalesTab from './admin/DirectSalesTab';
+import ReturnsTab from './admin/ReturnsTab';
+import SuppliersTab from './admin/SuppliersTab';
+import WalletsTab from './admin/WalletsTab';
+import ProfitDashboardTab from './admin/ProfitDashboardTab';
+import ReportsTab from './admin/ReportsTab';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
@@ -390,6 +396,47 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Create direct sale (used by DirectSalesTab)
+    const createDirectSale = async (saleData) => {
+        const salePrice = saleData.total || saleData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const orderMetaData = saleData.items.map(i => ({
+            id: i.id, name: i.name, ref: i.ref, price: i.price, qty: i.qty
+        }));
+        const orderPayload = {
+            "Customer Name": saleData.name || 'بيع مباشر',
+            "Customer Phone": saleData.phone || '—',
+            "Delivery Address": saleData.address || 'المحل',
+            "Sale Price": salePrice,
+            "Status": "Shipped",
+            "Notes": saleData.notes || 'بيع مباشر',
+            "Order Metadata": JSON.stringify(orderMetaData)
+        };
+        const res = await axios.post(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, [orderPayload], {
+            headers: { 'xc-token': ORDERS_TOKEN, 'Content-Type': 'application/json' }
+        });
+        if (res.data && res.data[0]) {
+            setOrders(prev => [res.data[0], ...prev]);
+        } else {
+            fetchOrders(true);
+        }
+    };
+
+    // Update order status with optional notes (used by ReturnsTab)
+    const updateOrderStatusWithNotes = async (id, newStatus, notes) => {
+        let dbStatus = newStatus;
+        if (newStatus === 'مرتجع') dbStatus = 'Returned';
+        else if (newStatus === 'قيد المراجعة') dbStatus = 'Pending';
+        else if (newStatus === 'تم الشحن') dbStatus = 'Shipped';
+        else if (newStatus === 'ملغي') dbStatus = 'Cancelled';
+        const payload = { Id: id, Status: dbStatus };
+        if (notes) payload.Notes = notes;
+        await axios.patch(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`,
+            payload,
+            { headers: { 'xc-token': ORDERS_TOKEN, 'Content-Type': 'application/json' } }
+        );
+        setOrders(prev => prev.map(o => o.Id === id ? { ...o, Status: dbStatus, Notes: notes || o.Notes } : o));
     };
 
     const openOzonModal = async (order) => {
@@ -1219,22 +1266,34 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
-                {/* ══════ PLACEHOLDER PAGES ══════ */}
-                {['direct-sales', 'returns', 'suppliers', 'wallets', 'profit-dashboard', 'reports'].includes(activeTab) && (
-                    <div className={`p-8 sm:p-12 rounded-2xl border text-center space-y-4 ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
-                        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
-                            <Package size={36} className="text-purple-500" />
-                        </div>
-                        <h3 className="text-xl font-bold">
-                            {{ 'direct-sales': 'المبيعات المباشرة', returns: 'المرتجعات', suppliers: 'الموردين', wallets: 'المحافظ', 'profit-dashboard': 'لوحة الأرباح', reports: 'التقارير' }[activeTab]}
-                        </h3>
-                        <p className={`text-sm max-w-md mx-auto ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
-                            هذه الصفحة قيد التطوير وستكون متاحة قريباً. سنعمل على إضافة هذه الميزة في أقرب وقت.
-                        </p>
-                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold ${dm ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
-                            🚀 قريباً
-                        </div>
-                    </div>
+                {/* ══════ DIRECT SALES ══════ */}
+                {activeTab === 'direct-sales' && (
+                    <DirectSalesTab dm={dm} products={products} orders={orders} onCreateOrder={createDirectSale} />
+                )}
+
+                {/* ══════ RETURNS ══════ */}
+                {activeTab === 'returns' && (
+                    <ReturnsTab dm={dm} orders={orders} onUpdateStatus={updateOrderStatusWithNotes} />
+                )}
+
+                {/* ══════ SUPPLIERS ══════ */}
+                {activeTab === 'suppliers' && (
+                    <SuppliersTab dm={dm} />
+                )}
+
+                {/* ══════ WALLETS ══════ */}
+                {activeTab === 'wallets' && (
+                    <WalletsTab dm={dm} orders={orders} expenses={expenses} />
+                )}
+
+                {/* ══════ PROFIT DASHBOARD ══════ */}
+                {activeTab === 'profit-dashboard' && (
+                    <ProfitDashboardTab dm={dm} orders={orders} expenses={expenses} products={products} />
+                )}
+
+                {/* ══════ REPORTS ══════ */}
+                {activeTab === 'reports' && (
+                    <ReportsTab dm={dm} orders={orders} expenses={expenses} products={products} />
                 )}
 
             </main>
