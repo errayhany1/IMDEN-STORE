@@ -4,6 +4,8 @@ import { fetchProducts } from '../services/api';
 import ProductCard from './ProductCard';
 import PromotionalBanner from './PromotionalBanner';
 
+import { categoryTranslation } from './CategoryRail';
+
 const ProductGrid = () => {
     const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory, searchQuery, gridColumns } = useStore();
 
@@ -15,10 +17,12 @@ const ProductGrid = () => {
             if (hasFetched.current) return;
             hasFetched.current = true;
             
-            // Always fetch fresh data — products are NOT persisted in localStorage
-            // because NocoDB uses temporary S3 signed URLs that expire after ~2 hours.
-            setLoading(true);
-            setProducts([]);
+            // Only show loading spinner and clear state on initial load
+            const isInitialLoad = products.length === 0;
+            if (isInitialLoad) {
+                setLoading(true);
+                setProducts([]);
+            }
 
             await fetchProducts((chunk, newCategoryImages) => {
                 appendProducts(chunk);
@@ -49,7 +53,10 @@ const ProductGrid = () => {
 
             if (cleanQuery !== '') {
                 const terms = cleanQuery.split(/\s+/).filter(Boolean);
-                const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""}`.toLowerCase();
+                const arabicCategory = categoryTranslation[p.category] || "";
+                const arabicTitle = p.originalData?.Arabic_Title || "";
+                const arabicDesc = p.originalData?.description_arabic || "";
+                const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${arabicTitle} ${arabicDesc}`.toLowerCase();
                 matchesSearch = terms.every(term => searchableText.includes(term));
             }
             

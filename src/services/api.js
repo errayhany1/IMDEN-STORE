@@ -24,142 +24,189 @@ const fetchWithRetry = async (url, options, maxRetries = 3) => {
     }
 };
 
-export const fetchProducts = async (onChunk) => {
-    try {
-        let allRecords = [];
-        let offset = 0;
-        let limit = 100; // NocoDB cloud enforces max 100 records per request
-        let hasMore = true;
-        let collectedCategoryImages = {};
+// In-memory cache to prevent duplicate concurrent requests and NocoDB rate-limiting
+const cache = {
+    products: [],
+    categoryImages: {},
+    isFetched: false,
+    fetchPromise: null
+};
 
-        // Category Mapping
-        const categoryMapping = {
-            1: "Chargers",          // الشواحن
-            2: "Audio",             // السماعات
-            3: "Smart Watches",     // ساعة الذكيه والاساور
-            4: "Gaming",            // العاب
-            5: "Mouse & Keyboard",  // الماوس والكيبورد
-            6: "Storage",           // الفلاشه والميموار
-            7: "Laptop Chargers",   // شواحن الحواسيب
-            8: "Stands",            // السبورات
-            9: "Lighting",          // الإضائة
-            10: "Cameras",          // الكمرات
-            11: "Network",          // الانترنت والشبكة
-            12: "General",         // الستابليزاتور → General
-            13: "Microphones",      // الميكروفونات
-            14: "Batteries & Power Banks", // بطاريات وبنوك الطاقة
-            15: "Out of Stock"      // نفد من المخزون
-        };
+export const fetchProducts = async (onChunk, forceRefresh = false) => {
+    if (forceRefresh) {
+        cache.isFetched = false;
+        cache.products = [];
+        cache.categoryImages = {};
+        cache.fetchPromise = null;
+    }
 
-        while (hasMore) {
-            const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
-            const response = await fetchWithRetry(url, {
-                headers: {
-                    "xc-token": API_TOKEN,
-                    "accept": "application/json"
-                },
-                params: {
-                    limit: limit,
-                    offset: offset,
-                    sort: '-Id'  // أحدث المنتجات أولاً (نفس ترتيب النشر في تلغرام)
-                }
-            });
+    // 1. If already fully fetched, return instantly from cache
+    if (cache.isFetched) {
+        if (onChunk) {
+            onChunk(cache.products, cache.categoryImages);
+        }
+        return cache.products;
+    }
 
-            const data = response.data;
-            const records = data.list || [];
+    // 2. If a fetch is currently in progress, wait for it and trigger callback
+    if (cache.fetchPromise) {
+        const result = await cache.fetchPromise;
+        if (onChunk) {
+            // Only send the entire set as one chunk to avoid rendering empty states
+            onChunk(cache.products, cache.categoryImages);
+        }
+        return result;
+    }
 
-            if (records.length === 0) {
-                hasMore = false;
-                break;
-            }
+    // 3. Otherwise, start a new fetch operation
+    const performFetch = async () => {
+        try {
+            let allRecords = [];
+            let offset = 0;
+            let limit = 100;
+            let hasMore = true;
+            let collectedCategoryImages = {};
 
-            // Filter: Show POSTEBL and NO POSTEBL
-            const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL' || record.POSTEBL === 'NO POSTEBL');
+            // Category Mapping
+            const categoryMapping = {
+                1: "Chargers",          // الشواحن
+                2: "Audio",             // السماعات
+                3: "Smart Watches",     // ساعة الذكيه والاساور
+                4: "Gaming",            // العاب
+                5: "Mouse & Keyboard",  // الماوس والكيبورد
+                6: "Storage",           // الفلاشه والميموار
+                7: "Laptop Chargers",   // شواحن الحواسيب
+                8: "Stands",            // السبورات
+                9: "Lighting",          // الإضائة
+                10: "Cameras",          // الكمرات
+                11: "Network",          // الانترنت والشبكة
+                12: "General",         // الستابليزاتور → General
+                13: "Microphones",      // الميكروفونات
+                14: "Batteries & Power Banks", // بطاريات وبنوك الطاقة
+                15: "Out of Stock"      // نفد من المخزون
+            };
 
-            // Map fields and extract category images
-            const mappedChunk = visibleRecords.map(record => {
-                const isOutOfStock = record.POSTEBL === 'NO POSTEBL';
-                
-                const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
-                let imageUrl = null;
-                if (imageObj) {
-                    const rawUrl = imageObj.signedUrl || imageObj.url;
-                    if (rawUrl) {
-                        imageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
-                    }
-                }
-
-                // Extract all images from Image1, Image2, Image3 columns
-                const allImages = [];
-                ['Image1', 'Image2', 'Image3'].forEach(col => {
-                    if (record[col] && record[col].length > 0) {
-                        record[col].forEach(img => {
-                            const url = img.signedUrl || img.url;
-                            if (url) {
-                                allImages.push(url.startsWith('http') ? url : `${API_URL}/${url}`);
-                            }
-                        });
+            while (hasMore) {
+                const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
+                const response = await fetchWithRetry(url, {
+                    headers: {
+                        "xc-token": API_TOKEN,
+                        "accept": "application/json"
+                    },
+                    params: {
+                        limit: limit,
+                        offset: offset,
+                        sort: '-Id'  // أحدث المنتجات أولاً
                     }
                 });
 
-                // Resolve Category Name from ID
-                let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
-                if (isOutOfStock) {
-                    categoryId = 15; // Force to Out of Stock category
-                }
-                const categoryName = categoryMapping[categoryId] || "General";
+                const data = response.data;
+                const records = data.list || [];
 
-                // Extract Category Image if available and not yet found for this category
-                const catImgObj = (record.Category_Image || record.category_image) && (record.Category_Image || record.category_image).length > 0
-                    ? (record.Category_Image || record.category_image)[0]
-                    : null;
-
-                if (catImgObj && !collectedCategoryImages[categoryName]) {
-                    collectedCategoryImages[categoryName] = catImgObj.signedUrl || catImgObj.url;
+                if (records.length === 0) {
+                    hasMore = false;
+                    break;
                 }
 
-                // Extract "All" category image from the new Category_ID1 column
-                const allImgObj = record.Category_ID1 && record.Category_ID1.length > 0
-                    ? record.Category_ID1[0]
-                    : null;
+                // Filter: Show POSTEBL and NO POSTEBL
+                const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL' || record.POSTEBL === 'NO POSTEBL');
 
-                if (allImgObj && !collectedCategoryImages['All']) {
-                    collectedCategoryImages['All'] = allImgObj.signedUrl || allImgObj.url;
+                // Map fields and extract category images
+                const mappedChunk = visibleRecords.map(record => {
+                    const isOutOfStock = record.POSTEBL === 'NO POSTEBL';
+                    
+                    const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
+                    let imageUrl = null;
+                    if (imageObj) {
+                        const rawUrl = imageObj.signedUrl || imageObj.url;
+                        if (rawUrl) {
+                            imageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+                        }
+                    }
+
+                    // Extract all images from Image1, Image2, Image3 columns
+                    const allImages = [];
+                    ['Image1', 'Image2', 'Image3'].forEach(col => {
+                        if (record[col] && record[col].length > 0) {
+                            record[col].forEach(img => {
+                                const url = img.signedUrl || img.url;
+                                if (url) {
+                                    allImages.push(url.startsWith('http') ? url : `${API_URL}/${url}`);
+                                }
+                            });
+                        }
+                    });
+
+                    // Resolve Category Name from ID
+                    let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+                    if (isOutOfStock) {
+                        categoryId = 15; // Force to Out of Stock category
+                    }
+                    const categoryName = categoryMapping[categoryId] || "General";
+
+                    // Extract Category Image if available and not yet found for this category
+                    const catImgObj = (record.Category_Image || record.category_image) && (record.Category_Image || record.category_image).length > 0
+                        ? (record.Category_Image || record.category_image)[0]
+                        : null;
+
+                    if (catImgObj && !collectedCategoryImages[categoryName]) {
+                        collectedCategoryImages[categoryName] = catImgObj.signedUrl || catImgObj.url;
+                    }
+
+                    // Extract "All" category image from the new Category_ID1 column
+                    const allImgObj = record.Category_ID1 && record.Category_ID1.length > 0
+                        ? record.Category_ID1[0]
+                        : null;
+
+                    if (allImgObj && !collectedCategoryImages['All']) {
+                        collectedCategoryImages['All'] = allImgObj.signedUrl || allImgObj.url;
+                    }
+
+                    const fallbackName = record.Title || record.Arabic_Title || record.Woo_Title || record.French_Title || record.SKU || "";
+
+                    return {
+                        id: record.Id || record.id || Math.random().toString(36).substr(2, 9),
+                        ref: record.SKU || "",
+                        name: fallbackName,
+                        price: record.price || 0,
+                        image: imageUrl,
+                        images: allImages,
+                        category: categoryName,
+                        isAvailable: true,
+                        originalData: record
+                    };
+                });
+
+                allRecords = [...allRecords, ...mappedChunk];
+                cache.products = [...cache.products, ...mappedChunk];
+                Object.assign(cache.categoryImages, collectedCategoryImages);
+
+                // Send chunk to UI immediately
+                if (onChunk) {
+                    onChunk(mappedChunk, collectedCategoryImages);
                 }
 
-                return {
-                    id: record.Id || record.id || Math.random().toString(36).substr(2, 9),
-                    ref: record.SKU || "",
-                    name: record.Title || "",
-                    price: record.price || 0,
-                    image: imageUrl,
-                    images: allImages,
-                    category: categoryName,
-                    isAvailable: true,
-                    originalData: record
-                };
-            });
-
-            allRecords = [...allRecords, ...mappedChunk];
-
-            // Send chunk to UI immediately
-            if (onChunk) {
-                onChunk(mappedChunk, collectedCategoryImages);
+                if (records.length < limit) {
+                    hasMore = false;
+                } else {
+                    offset += limit;
+                    // Small delay between pages to avoid rate limiting
+                    await delay(300);
+                }
             }
 
-            if (records.length < limit) {
-                hasMore = false;
-            } else {
-                offset += limit;
-                // Small delay between pages to avoid rate limiting
-                await delay(300);
-            }
+            cache.isFetched = true;
+            cache.fetchPromise = null;
+            return allRecords;
+
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            cache.fetchPromise = null;
+            return [];
         }
+    };
 
-        return allRecords;
-
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        return [];
-    }
+    cache.fetchPromise = performFetch();
+    return cache.fetchPromise;
 };
+

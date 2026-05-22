@@ -19,6 +19,25 @@ const categoryMapping = {
     13: 'ميكروفونات', 14: 'بطاريات', 15: 'نفد من المخزون'
 };
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function getWithRetry(url, config, maxRetries = 3) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await axios.get(url, config);
+        } catch (err) {
+            const isRateLimit = err.response && err.response.status === 429;
+            if (isRateLimit && attempt < maxRetries) {
+                const waitTime = Math.pow(2, attempt + 1) * 1000;
+                console.warn(`[SEO Gen] Rate limited (429). Retrying in ${waitTime/1000}s...`);
+                await delay(waitTime);
+            } else {
+                throw err;
+            }
+        }
+    }
+}
+
 async function fetchAllProducts() {
     let all = [];
     let offset = 0;
@@ -26,15 +45,19 @@ async function fetchAllProducts() {
 
     while (hasMore) {
         try {
-            const res = await axios.get(`${API_URL}/api/v2/tables/${TABLE_ID}/records`, {
+            const res = await getWithRetry(`${API_URL}/api/v2/tables/${TABLE_ID}/records`, {
                 headers: { 'xc-token': API_TOKEN },
                 params: { limit: 100, offset, sort: '-Id' }
             });
             const list = res.data.list || [];
             const visible = list.filter(r => r.POSTEBL === 'POSTEBL');
             all = [...all, ...visible];
-            if (list.length < 100) hasMore = false;
-            else offset += 100;
+            if (list.length < 100) {
+                hasMore = false;
+            } else {
+                offset += 100;
+                await delay(300); // delay to prevent rate limit
+            }
         } catch (e) {
             console.error('Error fetching products:', e.message);
             hasMore = false;

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
 
-const categoryTranslation = {
+export const categoryTranslation = {
     'All': 'الكل',
     'Chargers': 'شواحن',
     'Audio': 'سماعات',
