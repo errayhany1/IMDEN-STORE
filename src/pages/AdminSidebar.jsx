@@ -105,16 +105,14 @@ const AdminSidebar = ({ activeTab, setActiveTab, dm, onLogout, mobileOpen, setMo
                 : (dm ? 'bg-gray-900' : 'bg-white')
         }`}>
             {/* Logo / Brand */}
-            <div className={`flex items-center gap-3 px-5 py-5 border-b ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                    <Package size={20} className="text-white" />
-                </div>
-                <div>
-                    <h1 className="text-sm font-extrabold tracking-tight">IMDEN</h1>
-                    <p className={`text-[10px] ${dm ? 'text-gray-600' : 'text-slate-400'}`}>Admin Panel</p>
-                </div>
+            <div className={`flex items-center justify-center px-5 py-5 border-b h-20 ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                <img 
+                    src="/logo.png" 
+                    alt="IMDEN STORE" 
+                    className="max-w-[150px] max-h-[50px] object-contain"
+                />
                 {isMobile && (
-                    <button onClick={() => setMobileOpen(false)} className="mr-auto p-1">
+                    <button onClick={() => setMobileOpen(false)} className="absolute left-3 p-1">
                         <X size={18} className={dm ? 'text-gray-500' : 'text-slate-400'} />
                     </button>
                 )}

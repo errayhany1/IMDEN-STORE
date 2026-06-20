@@ -324,7 +324,7 @@ const AdminDashboard = () => {
             let dbStatus = newStatus;
             if (newStatus === 'قيد المراجعة') dbStatus = 'Pending';
             else if (newStatus === 'تم الشحن') dbStatus = 'Shipped';
-            else if (newStatus === 'ملغي') dbStatus = 'Cancelled';
+            else if (newStatus === 'ملغي') dbStatus = 'Returned';
 
             await axios.patch(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, 
                 { Id: id, Status: dbStatus },
