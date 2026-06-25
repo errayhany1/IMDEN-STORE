@@ -353,6 +353,63 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// ─── NOCODB -> TIFAWT ERP WEBHOOK ──────────────────────────────────────────
+const TIFAWT_LEAD_URL = "https://errayhany.tifawt.ma/api/v1/lead-sources/api/d391c7ce-7c39-4ae0-8ce4-9d45057b36ac";
+
+app.post('/webhook/order', async (req, res) => {
+  res.sendStatus(200); // Respond OK to NocoDB immediately
+  
+  try {
+    const payload = req.body;
+    let orderRow = null;
+    
+    // NocoDB webhook structure
+    if (payload?.data?.rows && payload.data.rows.length > 0) {
+      orderRow = payload.data.rows[0];
+    } else {
+      orderRow = payload;
+    }
+
+    if (!orderRow || (!orderRow['Customer Name'] && !orderRow.Id)) return;
+
+    // Parse Order Metadata
+    let items = [];
+    try {
+      if (typeof orderRow['Order Metadata'] === 'string') {
+        items = JSON.parse(orderRow['Order Metadata']);
+      } else if (Array.isArray(orderRow['Order Metadata'])) {
+        items = orderRow['Order Metadata'];
+      }
+    } catch (e) {
+      console.log("No valid Order Metadata found");
+    }
+
+    const tifawtProducts = items.map(i => ({
+      sku: i.ref || i.sku || i.id || "UNKNOWN",
+      quantity: i.qty || i.quantity || 1,
+      unitPrice: i.price || 0
+    }));
+
+    const tifawtPayload = {
+      customerName: orderRow['Customer Name'] || "بدون اسم",
+      customerPhone: orderRow['Customer Phone'] || "",
+      customerAddress: orderRow['Delivery Address'] || "",
+      city: orderRow['City'] || "المغرب",
+      products: tifawtProducts
+    };
+
+    console.log(`🚀 Sending Order to Tifawt ERP: ${tifawtPayload.customerName}`);
+    
+    await axios.post(TIFAWT_LEAD_URL, tifawtPayload, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    console.log("✅ Order successfully synced to Tifawt ERP");
+  } catch (err) {
+    console.error("❌ Error syncing to Tifawt ERP:", err?.response?.data || err.message);
+  }
+});
+
 app.get('/', (req, res) => res.json({ status: 'IMDEN Bot is running ✅' }));
 
 const PORT = process.env.PORT || process.env.BOT_PORT || 3000;
