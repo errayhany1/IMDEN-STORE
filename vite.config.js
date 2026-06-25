@@ -14,7 +14,7 @@ export default defineConfig({
       includeAssets: ['logo-192.png', 'logo-512.png'],
       manifest: {
         id: '/',
-        name: 'IMDEN TECHNOLOGY',
+        name: 'IMDEN STORE',
         short_name: 'IMDEN',
         description: 'متجر بيع الإلكترونيات بالجملة',
         theme_color: '#ffffff',
