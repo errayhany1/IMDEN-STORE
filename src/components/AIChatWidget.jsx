@@ -9,7 +9,7 @@ const AIChatWidget = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'مرحباً! أنا المساعد الذكي لمتجر IMDEN TECHNOLOGY. كيف يمكنني مساعدتك اليوم؟' }
+        { role: 'assistant', content: 'مرحباً! أنا المساعد الذكي لمتجر IMDEN STORE. كيف يمكنني مساعدتك اليوم؟' }
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -64,7 +64,7 @@ const AIChatWidget = () => {
         try {
             // Context Injection: Prepare product catalog string (concise to save context tokens)
             const catalogStr = products.slice(0, 50).map(p => `- منتج: ${p.name || 'بدون اسم'} | المرجع: ${p.ref} | السعر: ${p.price} DH`).join('\n');
-            const systemPrompt = `أنت مساعد مبيعات ذكي ومحترف لمتجر "IMDEN TECHNOLOGY" المتخصص في بيع التقنيات والإلكترونيات بالجملة في المغرب.
+            const systemPrompt = `أنت مساعد مبيعات ذكي ومحترف لمتجر "IMDEN STORE" المتخصص في بيع التقنيات والإلكترونيات بالجملة في المغرب.
 مهمتك الرد على استفسارات الزوار باللغة العربية بأسلوب راقٍ وودي ومختصر.
 يجب أن تركز دائماً على إقناع الزبون والترحيب به. أسعارنا كلها بالدرهم المغربي (DH).
 هذه قائمة بأهم المنتجات المتوفرة حالياً في قاعدة البيانات مع أسعارها ومراجعها:

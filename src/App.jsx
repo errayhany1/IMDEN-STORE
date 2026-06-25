@@ -90,7 +90,7 @@ function App() {
       <Header />
 
       {/* SEO H1 Tag (Visually Hidden) */}
-      <h1 className="sr-only">IMDEN TECHNOLOGY - استيراد وبيع الإلكترونيات وإكسسوارات الهواتف بالجملة في المغرب والدار البيضاء</h1>
+      <h1 className="sr-only">IMDEN STORE - استيراد وبيع الإلكترونيات وإكسسوارات الهواتف بالجملة في المغرب والدار البيضاء</h1>
 
       {/* Notification prompt */}
       <NotificationPrompt />

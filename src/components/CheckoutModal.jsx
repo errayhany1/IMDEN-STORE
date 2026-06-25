@@ -118,7 +118,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             // 3. Generate PDF file and send via Telegram
             const pdfFile = await generatePDF(cart, false);
 
-            const caption = `🚨 **طلبية جديدة (IMDEN TECHNOLOGY)** 🚨\n\n` +
+            const caption = `🚨 **طلبية جديدة (IMDEN STORE)** 🚨\n\n` +
                 `👤 **الاسم:** ${formData.name}\n` +
                 `📞 **رقم الهاتف:** ${formData.phone}\n` +
                 `📍 **العنوان:** ${formData.address}\n\n` +

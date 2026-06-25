@@ -32,7 +32,7 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
     // Header
     doc.setFontSize(22);
     doc.setTextColor(25, 127, 230); // Primary Blue
-    doc.text("IMDEN TECHNOLOGY", 14, 18);
+    doc.text("IMDEN STORE", 14, 18);
 
     doc.setFontSize(9);
     doc.setTextColor(100);

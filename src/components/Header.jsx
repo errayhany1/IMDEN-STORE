@@ -65,9 +65,9 @@ const Header = () => {
 
                     {/* Logo */}
                     <div className="flex items-center gap-2 flex-shrink-0 cursor-pointer" onClick={scrollToTop}>
-                        <img src="/logo.jpg" alt="IMDEN TECHNOLOGY" className="h-7 w-7 sm:h-9 sm:w-9 rounded shadow-sm object-cover" />
+                        <img src="/logo.png" alt="IMDEN STORE" className="h-7 w-7 sm:h-9 sm:w-9 rounded shadow-sm object-cover" />
                         <span className={`hidden sm:block text-lg font-bold tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}>
-                            IMDEN <span className="text-primary">TECHNOLOGY</span>
+                            IMDEN <span className="text-primary">STORE</span>
                         </span>
                     </div>
 
@@ -380,7 +380,7 @@ const Header = () => {
                                     ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
                                 >
                                     <Info size={18} className="text-blue-500" />
-                                    حول IMDEN TECHNOLOGY
+                                    حول IMDEN STORE
                                 </button>
                             </div>
 
