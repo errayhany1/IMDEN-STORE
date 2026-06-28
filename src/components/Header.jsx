@@ -64,11 +64,8 @@ const Header = () => {
                     </button>
 
                     {/* Logo */}
-                    <div className="flex items-center gap-2 flex-shrink-0 cursor-pointer" onClick={scrollToTop}>
-                        <img src="/logo.png" alt="IMDEN STORE" className="h-7 w-7 sm:h-9 sm:w-9 rounded shadow-sm object-cover" />
-                        <span className={`hidden sm:block text-lg font-bold tracking-tight ${dm ? 'text-white' : 'text-slate-900'}`}>
-                            IMDEN <span className="text-primary">STORE</span>
-                        </span>
+                    <div className="flex items-center flex-shrink-0 cursor-pointer" onClick={scrollToTop}>
+                        <img src="/logo.png" alt="Errayhany Grossiste" className="h-8 sm:h-10 w-auto object-contain" style={{maxWidth: '160px'}} />
                     </div>
 
                     {/* Desktop Search Bar */}
