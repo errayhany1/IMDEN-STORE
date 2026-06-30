@@ -6,7 +6,6 @@ import CartSidebar from './components/CartSidebar';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import FeaturedStrip from './components/FeaturedStrip';
 import NotificationPrompt from './components/NotificationPrompt';
-import AIChatWidget from './components/AIChatWidget';
 import AuthModal from './components/AuthModal';
 import AboutModal from './components/AboutModal';
 import AdminDashboard from './pages/AdminDashboard';
@@ -112,7 +111,6 @@ function App() {
       {/* Overlays */}
       <CartSidebar />
       <FloatingWhatsApp />
-      <AIChatWidget />
       <AuthModal />
       <AboutModal />
       <IOSInstallPrompt />
