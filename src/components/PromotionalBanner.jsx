@@ -1,49 +1,95 @@
-import React from 'react';
-import SocialButton from './SocialButton';
+import React, { useState, useEffect } from 'react';
 
 const TELEGRAM_URL = 'https://t.me/Imden_technology';
 const WA_NUMBER = '212664630566';
 
 const PromotionalBanner = () => {
-    return (
-        <section className="mb-12 rounded-2xl overflow-hidden shadow-lg relative bg-primary">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-dark to-primary opacity-90"></div>
-            <div className="relative z-10 px-6 py-6 md:py-8 flex flex-col md:flex-row-reverse items-center justify-between text-center md:text-right gap-4">
-                <div className="max-w-3xl">
-                    <h2 className="text-xl md:text-2xl font-bold text-white mb-2">التوصيل متوفر لجميع المدن</h2>
-                    <ul className="text-blue-50 text-sm md:text-base space-y-1">
-                        <li>📦 أقل مبلغ للطلب: 800 درهم (لإجمالي السلة وليس لمنتج واحد).</li>
-                        <li>للكميات الكبيرة يمكن ان ينقص الثمن.</li>
-                    </ul>
-                    <p className="mt-2 text-blue-100 text-sm font-medium">📞 للمزيد من التفاصيل، تواصل معنا:</p>
-                </div>
+    const [visible, setVisible] = useState(true);
+    const [animateOut, setAnimateOut] = useState(false);
 
-                {/* Action buttons */}
-                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
-                    <SocialButton
-                        type="whatsapp"
-                        href={`https://wa.me/${WA_NUMBER}`}
-                        label="واتساب"
-                        size="md"
-                    />
-                    <SocialButton
-                        type="telegram"
-                        href={TELEGRAM_URL}
-                        label="تلغرام"
-                        size="md"
-                    />
-                    <a
-                        href="/ImdenStore.apk"
-                        download="ImdenStore.apk"
-                        className="flex items-center gap-2 px-4 py-2 bg-white text-primary font-bold rounded-xl shadow-md hover:bg-slate-50 transition hover:scale-105"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                        حمل التطبيق (APK)
-                    </a>
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setAnimateOut(true);
+            setTimeout(() => setVisible(false), 600);
+        }, 8000); // auto-hide after 8 seconds
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!visible) return null;
+
+    return (
+        <div
+            style={{
+                transition: 'all 0.6s ease',
+                opacity: animateOut ? 0 : 1,
+                transform: animateOut ? 'translateY(-20px)' : 'translateY(0)',
+                maxHeight: animateOut ? '0' : '80px',
+                overflow: 'hidden',
+            }}
+            className="mb-6 relative"
+        >
+            <div className="rounded-2xl overflow-hidden shadow-lg bg-primary relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-dark to-primary opacity-90"></div>
+                <div className="relative z-10 flex items-center justify-between px-4 py-3 gap-4">
+
+                    {/* Scrolling Ticker Text */}
+                    <div className="overflow-hidden flex-1 relative">
+                        <div className="flex items-center gap-2 whitespace-nowrap animate-marquee text-white text-sm font-medium">
+                            <span>🛍️ تسوق الآن من متجر Errayhany Grossiste</span>
+                            <span className="mx-6">•</span>
+                            <span>📦 توصيل لجميع المدن المغربية</span>
+                            <span className="mx-6">•</span>
+                            <span>💬 تواصل معنا عبر واتساب أو تلغرام</span>
+                            <span className="mx-6">•</span>
+                            <span>📲 حمل التطبيق الآن</span>
+                            <span className="mx-6">•</span>
+                            <span>🛍️ تسوق الآن من متجر Errayhany Grossiste</span>
+                            <span className="mx-6">•</span>
+                            <span>📦 توصيل لجميع المدن المغربية</span>
+                        </div>
+                    </div>
+
+                    {/* Quick Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <a
+                            href={`https://wa.me/${WA_NUMBER}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition"
+                        >
+                            واتساب
+                        </a>
+                        <a
+                            href={TELEGRAM_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition"
+                        >
+                            تلغرام
+                        </a>
+                        <button
+                            onClick={() => { setAnimateOut(true); setTimeout(() => setVisible(false), 600); }}
+                            className="text-white/70 hover:text-white text-lg leading-none px-1"
+                            aria-label="إغلاق"
+                        >
+                            ×
+                        </button>
+                    </div>
                 </div>
             </div>
-        </section>
+
+            <style>{`
+                @keyframes marquee {
+                    0%   { transform: translateX(0%); }
+                    100% { transform: translateX(-50%); }
+                }
+                .animate-marquee {
+                    animation: marquee 18s linear infinite;
+                }
+            `}</style>
+        </div>
     );
 };
 
 export default PromotionalBanner;
+
