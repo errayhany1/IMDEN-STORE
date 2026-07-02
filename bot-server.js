@@ -69,18 +69,31 @@ async function answerCallback(callbackQueryId, text) {
   });
 }
 
-async function downloadTelegramFile(fileId) {
-  const { data } = await axios.get(`${TG_API}/getFile`, { params: { file_id: fileId } });
+// ─── AXIOS INSTANCE WITH TIMEOUT ──────────────────────────────────────────
+const http = axios.create({ timeout: 15000 }); // 15s timeout on all requests
+
+async function downloadTelegramFileData(fileId, extName) {
+  const { data } = await http.get(`${TG_API}/getFile`, { params: { file_id: fileId } });
   const filePath = data.result.file_path;
-  const response = await axios.get(`${TG_FILE_API}/${filePath}`, { responseType: 'arraybuffer' });
+  const response = await http.get(`${TG_FILE_API}/${filePath}`, { responseType: 'arraybuffer' });
   const buffer = Buffer.from(response.data);
-  const fileName = filePath.split('/').pop();
+  const fileName = filePath.split('/').pop().includes('.') ? filePath.split('/').pop() : `image.${extName}`;
   return { buffer, fileName };
+}
+
+async function uploadToNocoDB(buffer, fileName) {
+  const uploadUrl = `${NOCODB_URL}/api/v2/storage/upload`;
+  const form = new FormData();
+  form.append('file', buffer, { filename: fileName, contentType: 'image/jpeg' });
+  const uploadRes = await http.post(uploadUrl, form, {
+    headers: { 'xc-token': NOCODB_TOKEN, ...form.getHeaders() }
+  });
+  return uploadRes.data[0];
 }
 
 async function updateNocoDBCategory(rowId, categoryId) {
   const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
-  await axios.patch(url, { Id: rowId, Category_ID: categoryId }, {
+  await http.patch(url, { Id: rowId, Category_ID: categoryId }, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }
   });
 }
@@ -94,29 +107,29 @@ function parseCaption(caption) {
   return { price, name, sku };
 }
 
-// ─── ALBUM PROCESSOR ───────────────────────────────────────────────────────
+// ─── ALBUM BUFFER ──────────────────────────────────────────────────────────
 const albumBuffer = {};
 
 async function processProduct(chatId, files, caption) {
   const { price, name, sku } = parseCaption(caption);
   console.log(`📦 Processing product: "${name}" | ${price} DH | ${files.length} images`);
 
-  const uploadedFiles = [];
-  
-  // Upload all files to NocoDB Storage
-  for (let f of files) {
-    const { buffer, fileName } = await downloadTelegramFile(f.fileId);
-    const finalFileName = fileName.includes('.') ? fileName : `image.${f.extName}`;
-    
-    const uploadUrl = `${NOCODB_URL}/api/v2/storage/upload`;
-    const form = new FormData();
-    form.append('file', buffer, { filename: finalFileName, contentType: 'image/jpeg' });
-    
-    const uploadRes = await axios.post(uploadUrl, form, {
-      headers: { 'xc-token': NOCODB_TOKEN, ...form.getHeaders() }
-    });
-    uploadedFiles.push(...uploadRes.data);
-  }
+  // ✅ Send instant feedback so user knows it's working
+  await sendMessage(chatId, `⏳ جاري رفع المنتج...\n📦 ${name} | 💰 ${price} DH`);
+
+  // ✅ Download & upload ALL images in parallel (much faster!)
+  const uploadedFiles = await Promise.all(
+    files.map(async (f) => {
+      try {
+        const { buffer, fileName } = await downloadTelegramFileData(f.fileId, f.extName);
+        return await uploadToNocoDB(buffer, fileName);
+      } catch (e) {
+        console.error('Image upload error:', e.message);
+        return null;
+      }
+    })
+  );
+  const validFiles = uploadedFiles.filter(Boolean);
 
   // Create NocoDB Record
   const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
@@ -128,26 +141,13 @@ async function processProduct(chatId, files, caption) {
     POSTEBL: 'POSTEBL'
   };
 
-  // Map files to separate columns (supporting both ImageX and imageX casings)
-  if (uploadedFiles.length > 0) recordData.Image1 = [uploadedFiles[0]];
-  if (uploadedFiles.length > 1) {
-    recordData.Image2 = [uploadedFiles[1]];
-    recordData.image2 = [uploadedFiles[1]];
-  }
-  if (uploadedFiles.length > 2) {
-    recordData.Image3 = [uploadedFiles[2]];
-    recordData.image3 = [uploadedFiles[2]];
-  }
-  if (uploadedFiles.length > 3) {
-    recordData.Image4 = [uploadedFiles[3]];
-    recordData.image4 = [uploadedFiles[3]];
-  }
-  if (uploadedFiles.length > 4) {
-    recordData.Image5 = [uploadedFiles[4]];
-    recordData.image5 = [uploadedFiles[4]];
-  }
+  if (validFiles.length > 0) recordData.Image1 = [validFiles[0]];
+  if (validFiles.length > 1) { recordData.Image2 = [validFiles[1]]; recordData.image2 = [validFiles[1]]; }
+  if (validFiles.length > 2) { recordData.Image3 = [validFiles[2]]; recordData.image3 = [validFiles[2]]; }
+  if (validFiles.length > 3) { recordData.Image4 = [validFiles[3]]; recordData.image4 = [validFiles[3]]; }
+  if (validFiles.length > 4) { recordData.Image5 = [validFiles[4]]; recordData.image5 = [validFiles[4]]; }
 
-  const { data } = await axios.post(recordUrl, recordData, {
+  const { data } = await http.post(recordUrl, recordData, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }
   });
 
@@ -157,7 +157,7 @@ async function processProduct(chatId, files, caption) {
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${files.length}) صور!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sku}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${validFiles.length}) صور!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sku}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }
