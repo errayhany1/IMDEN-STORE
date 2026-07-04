@@ -93,8 +93,22 @@ const AboutModal = () => {
                     </p>
                 </div>
 
+                {/* App Download & Play Store Badge */}
+                <div className={`mt-6 p-4 rounded-2xl text-center border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-blue-100'}`}>
+                    <p className={`text-sm font-bold mb-3 ${darkMode ? 'text-white' : 'text-slate-700'}`}>📱 التطبيق متاح الآن</p>
+                    <img src="/playstore.jpg" alt="Errayhany Grossiste على Google Play" className="w-full max-w-xs mx-auto rounded-xl shadow-md mb-3" />
+                    <a
+                        href="/ImdenStore.apk"
+                        download="ImdenStore.apk"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-xl shadow hover:opacity-90 transition text-sm"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        تحميل التطبيق (APK)
+                    </a>
+                </div>
+
                 {/* Footer Contact */}
-                <div className={`mt-8 pt-6 border-t flex flex-wrap gap-4 justify-center ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className={`mt-6 pt-6 border-t flex flex-wrap gap-4 justify-center ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <a href="https://wa.me/212664630566" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
                         <Phone size={16} className="text-green-500" />
                         تواصل معنا
@@ -103,9 +117,9 @@ const AboutModal = () => {
                         <Mail size={16} className="text-blue-500" />
                         راسلنا
                     </a>
-                    <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
-                        <MapPin size={16} className="text-red-500" />
-                        موقعنا
+                    <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+                        <CheckCircle size={16} className="text-primary" />
+                        سياسة الخصوصية
                     </a>
                 </div>
             </div>
