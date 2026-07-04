@@ -95,7 +95,7 @@ const AboutModal = () => {
 
                 {/* Footer Contact */}
                 <div className={`mt-8 pt-6 border-t flex flex-wrap gap-4 justify-center ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <a href="https://wa.me/212620202020" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+                    <a href="https://wa.me/212664630566" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
                         <Phone size={16} className="text-green-500" />
                         تواصل معنا
                     </a>

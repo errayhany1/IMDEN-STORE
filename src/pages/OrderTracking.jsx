@@ -233,7 +233,7 @@ const OrderTracking = () => {
                 {/* Footer Info */}
                 <div className={`text-center text-xs py-6 ${dm ? 'text-gray-600' : 'text-slate-400'}`}>
                     <p>هل لديك سؤال حول طلبك؟</p>
-                    <a href="https://wa.me/212600000000" target="_blank" rel="noopener noreferrer"
+                    <a href="https://wa.me/212664630566" target="_blank" rel="noopener noreferrer"
                         className="text-green-500 font-bold hover:underline mt-1 inline-block">
                         تواصل معنا عبر واتساب
                     </a>
