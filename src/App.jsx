@@ -18,7 +18,7 @@ import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp } from 'lucide-react';
 
 function App() {
-  const { darkMode, iosTheme, setUser, user, setAuthModalOpen } = useStore();
+  const { darkMode, setUser, user, setAuthModalOpen } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -83,8 +83,7 @@ function App() {
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
-      ${iosTheme ? 'bg-transparent text-slate-800' : (darkMode ? 'bg-gray-950 text-gray-100' : 'bg-background-light text-slate-800')}
-      ${iosTheme && darkMode ? 'text-gray-100' : ''}`}>
+      ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-background-light text-slate-800'}`}>
 
       {/* Header */}
       <Header />

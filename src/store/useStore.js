@@ -32,7 +32,6 @@ const useStore = create(
             isLoading: false,
             isCartOpen: false,
             darkMode: false,
-            iosTheme: false,
             gridColumns: 2, // 1 or 2 columns on mobile
 
             categoryImages: {}, // Stores category images: { "Chargers": "url", ... }
@@ -58,16 +57,6 @@ const useStore = create(
                     document.documentElement.classList.remove('dark');
                 }
                 return { darkMode: next };
-            }),
-
-            toggleIosTheme: () => set((state) => {
-                const next = !state.iosTheme;
-                if (next) {
-                    document.documentElement.classList.add('ios-theme');
-                } else {
-                    document.documentElement.classList.remove('ios-theme');
-                }
-                return { iosTheme: next };
             }),
 
             toggleGridColumns: () => set((state) => ({
@@ -141,7 +130,6 @@ const useStore = create(
                 cart: state.cart,
                 customerInfo: state.customerInfo,
                 darkMode: state.darkMode,
-                iosTheme: state.iosTheme,
                 // NOTE: products and categoryImages are NOT persisted because NocoDB
                 // uses temporary S3 signed URLs that expire after ~2 hours.
                 // Persisting them causes all images to break on subsequent visits.

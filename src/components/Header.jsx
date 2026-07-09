@@ -3,10 +3,9 @@ import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapP
 import useStore from '../store/useStore';
 import DarkModeToggle from './DarkModeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
-import BottomNav from './BottomNav';
 
 const Header = () => {
-    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, iosTheme, toggleIosTheme, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo } = useStore();
+    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [editingInfo, setEditingInfo] = useState(false);
@@ -50,7 +49,7 @@ const Header = () => {
     return (
         <>
             <header id="page-top" className={`sticky top-0 z-40 w-full border-b shadow-sm transition-colors duration-300
-                ${iosTheme ? 'glass-header border-transparent' : (dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200')}`}>
+                ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
 
                 {/* ─── Main Bar ─── */}
                 <div className="max-w-7xl mx-auto px-3 h-12 flex items-center justify-between gap-2">
@@ -336,16 +335,6 @@ const Header = () => {
                                     {dm ? 'الوضع الفاتح' : 'الوضع الداكن'}
                                 </button>
 
-                                {/* iOS Theme Toggle */}
-                                <button
-                                    onClick={toggleIosTheme}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
-                                    ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-                                    {iosTheme ? 'إلغاء ثيم iOS' : 'تفعيل ثيم iOS'}
-                                </button>
-
                                 {/* Track Order */}
                                 <a
                                     href="/tracking"
@@ -408,8 +397,6 @@ const Header = () => {
                     </>
                 )}
             </AnimatePresence>
-            
-            {iosTheme && <BottomNav setSidebarOpen={setSidebarOpen} />}
         </>
     );
 };
