@@ -410,9 +410,9 @@ app.post('/webhook/order', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => res.json({ status: 'IMDEN Bot is running ✅' }));
+app.get('/', (req, res) => res.json({ status: 'Errayhany Bot is running ✅' }));
 
 const PORT = process.env.PORT || process.env.BOT_PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🤖 IMDEN Bot server running on port ${PORT}`);
+  console.log(`🤖 Errayhany Bot server running on port ${PORT}`);
 });

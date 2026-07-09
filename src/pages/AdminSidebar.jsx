@@ -108,7 +108,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, dm, onLogout, mobileOpen, setMo
             <div className={`flex items-center justify-center px-5 py-5 border-b h-20 ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
                 <img 
                     src="/logo.png" 
-                    alt="IMDEN STORE" 
+                    alt="Errayhany Store" 
                     className="max-w-[150px] max-h-[50px] object-contain"
                 />
                 {isMobile && (

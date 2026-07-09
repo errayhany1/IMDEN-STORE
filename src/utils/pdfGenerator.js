@@ -32,12 +32,12 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
     // Header
     doc.setFontSize(22);
     doc.setTextColor(25, 127, 230); // Primary Blue
-    doc.text("IMDEN STORE", 14, 18);
+    doc.text("Errayhany Store", 14, 18);
 
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text("Premier Magasin de Vente en Gros d'Electronique au Maroc", 14, 24);
-    doc.text("Website: https://imden-technology.com | WhatsApp: +212 664 630 566", 14, 29);
+    doc.text("Website: https://imdenmanadger.online | WhatsApp: +212 664 630 566", 14, 29);
     doc.text(`Date de commande: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 34);
     doc.text(`Total des articles: ${cartItems.length}`, 14, 39);
 
@@ -102,7 +102,7 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
         }
     });
 
-    const fileName = `IMDEN_TECHNOLOGY_0664630566_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const fileName = `ERRAYHANY_STORE_0664630566_${new Date().toISOString().slice(0, 10)}.pdf`;
     
     if (saveToDisk) {
         doc.save(fileName);

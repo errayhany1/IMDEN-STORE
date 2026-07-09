@@ -87,7 +87,7 @@ const OrderTracking = () => {
                             <Package size={18} className="text-white" />
                         </div>
                         <div>
-                            <h1 className="text-sm font-extrabold tracking-tight">IMDEN STORE</h1>
+                            <h1 className="text-sm font-extrabold tracking-tight">Errayhany Store</h1>
                             <p className={`text-[10px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>تتبع طلبك</p>
                         </div>
                     </div>

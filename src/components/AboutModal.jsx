@@ -26,9 +26,9 @@ const AboutModal = () => {
                 {/* Header */}
                 <div className="text-center mb-8 mt-2">
                     <div className="inline-block p-3 rounded-2xl bg-primary/10 mb-4">
-                        <img src="/logo.png" alt="IMDEN STORE" className="h-12 w-auto object-contain mx-auto mix-blend-multiply dark:mix-blend-normal" onError={(e) => e.target.style.display = 'none'} />
+                        <img src="/logo.png" alt="Errayhany Grossiste" className="h-12 w-auto object-contain mx-auto mix-blend-multiply dark:mix-blend-normal" onError={(e) => e.target.style.display = 'none'} />
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold mb-3 text-primary">IMDEN STORE</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3 text-primary">Errayhany Store</h2>
                     <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
                         شريكك الموثوق لتجارة الإلكترونيات بالجملة
                     </p>
@@ -37,7 +37,7 @@ const AboutModal = () => {
                 {/* Content */}
                 <div className={`space-y-6 text-base leading-relaxed ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
                     <p>
-                        تأسست <strong>IMDEN STORE</strong> لتكون الوجهة الأولى والمورد الأقوى لأصحاب المحلات التجارية والموزعين في مجال الإلكترونيات وإكسسوارات الهواتف المحمولة في المغرب.
+                        تأسست <strong>Errayhany Store</strong> لتكون الوجهة الأولى والمورد الأقوى لأصحاب المحلات التجارية والموزعين في مجال الإلكترونيات وإكسسوارات الهواتف المحمولة في المغرب.
                     </p>
                     <p>
                         نحن لا نبيع المنتجات فقط، بل نبني شراكات نجاح حقيقية مع عملائنا. من خلال تواجدنا في قلب الدار البيضاء، نضمن لك الوصول إلى أحدث التقنيات في عالم الإلكترونيات، وكل ذلك بـ <strong className="text-primary">أسعار جملة تنافسية لا تقبل المنافسة</strong>.
@@ -89,7 +89,7 @@ const AboutModal = () => {
                     </div>
 
                     <p className="text-center font-medium">
-                        في <strong>IMDEN STORE</strong>، التزامنا هو تزويدك بأفضل السلع التقنية لتنمية تجارتك ومضاعفة أرباحك. نحن نعمل بشغف لكي تكون أنت دائماً في الصدارة.
+                        في <strong>Errayhany Store</strong>، التزامنا هو تزويدك بأفضل السلع التقنية لتنمية تجارتك ومضاعفة أرباحك. نحن نعمل بشغف لكي تكون أنت دائماً في الصدارة.
                     </p>
                 </div>
 

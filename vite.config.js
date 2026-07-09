@@ -14,8 +14,8 @@ export default defineConfig({
       includeAssets: ['logo-192.png', 'logo-512.png'],
       manifest: {
         id: '/',
-        name: 'IMDEN STORE',
-        short_name: 'IMDEN',
+        name: 'Errayhany Store',
+        short_name: 'Errayhany',
         description: 'متجر بيع الإلكترونيات بالجملة',
         theme_color: '#ffffff',
         background_color: '#ffffff',

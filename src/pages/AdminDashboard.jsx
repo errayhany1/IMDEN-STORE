@@ -528,7 +528,7 @@ const AdminDashboard = () => {
             </head>
             <body>
                 <div class="header">
-                    <div class="title">IMDEN STORE</div>
+                    <div class="title">Errayhany Store</div>
                     <div>
                         <strong>فاتورة طلب #${order.Id}</strong><br/>
                         التاريخ: ${new Date(order.CreatedAt).toLocaleDateString('ar-MA')}
@@ -648,7 +648,7 @@ const AdminDashboard = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `IMDEN_Orders_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `ERRAYHANY_Orders_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -662,7 +662,7 @@ const AdminDashboard = () => {
                         <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
                             <Lock size={36} className="text-white" />
                         </div>
-                        <h2 className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>IMDEN Admin</h2>
+                        <h2 className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>Errayhany Admin</h2>
                         <p className={`text-sm mt-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لوحة إدارة الطلبات والمخازن</p>
                     </div>
 
@@ -914,8 +914,8 @@ const AdminDashboard = () => {
                                                 {order['Customer Phone'] && (() => {
                                                     const ph = order['Customer Phone'].replace(/^0/, '');
                                                     const name = order['Customer Name'] || 'عميلنا الكريم';
-                                                    const confirmMsg = encodeURIComponent(`مرحباً ${name} 👋\n\nشكراً لتعاملكم مع *IMDEN*.\nلقد تلقينا طلبكم رقم *#${order.Id}* بقيمة *${order['Sale Price'] || 0} درهم*.\n\nنحن بصدد تجهيزه وسيتم التواصل معكم عند الشحن ✅\n\nشكراً لثقتكم 🙏`);
-                                                    const shippedMsg = encodeURIComponent(`مرحباً ${name} 👋\n\nنود إعلامكم أن طلبكم رقم *#${order.Id}* تم *شحنه بنجاح* 🚚📦\n\nسيصلكم في أقرب وقت إن شاء الله.\n\nشكراً لتعاملكم مع *IMDEN* 🙏`);
+                                                    const confirmMsg = encodeURIComponent(`مرحباً ${name} 👋\n\nشكراً لتعاملكم مع *Errayhany Store*.\nلقد تلقينا طلبكم رقم *#${order.Id}* بقيمة *${order['Sale Price'] || 0} درهم*.\n\nنحن بصدد تجهيزه وسيتم التواصل معكم عند الشحن ✅\n\nشكراً لثقتكم 🙏`);
+                                                    const shippedMsg = encodeURIComponent(`مرحباً ${name} 👋\n\nنود إعلامكم أن طلبكم رقم *#${order.Id}* تم *شحنه بنجاح* 🚚📦\n\nسيصلكم في أقرب وقت إن شاء الله.\n\nشكراً لتعاملكم مع *Errayhany Store* 🙏`);
                                                     return (<>
                                                         <a href={`https://wa.me/212${ph}?text=${confirmMsg}`} target="_blank" rel="noreferrer"
                                                             className="flex items-center gap-1.5 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-bold transition-colors">
