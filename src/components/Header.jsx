@@ -377,7 +377,7 @@ const Header = () => {
                                     ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
                                 >
                                     <Info size={18} className="text-blue-500" />
-                                    حول IMDEN STORE
+                                    حول Errayhany Store
                                 </button>
                             </div>
 

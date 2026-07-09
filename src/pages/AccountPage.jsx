@@ -99,7 +99,7 @@ const AccountPage = () => {
                             </div>
                             <div>
                                 <h1 className="text-sm font-extrabold tracking-tight">حسابي</h1>
-                                <p className={`text-[10px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>IMDEN STORE</p>
+                                <p className={`text-[10px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>Errayhany Store</p>
                             </div>
                         </div>
                         <button onClick={() => window.location.href = '/'}

@@ -306,7 +306,7 @@ const AuthModal = () => {
 
                 <div className="text-center mb-6 mt-2">
                     <h2 className="text-2xl font-bold mb-2">
-                        {view === 'main' ? 'مرحباً بك في IMDEN' : view === 'email' ? 'البريد الإلكتروني' : 'رقم الهاتف'}
+                        {view === 'main' ? 'مرحباً بك في Errayhany Store' : view === 'email' ? 'البريد الإلكتروني' : 'رقم الهاتف'}
                     </h2>
                     {view === 'main' && (
                         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>

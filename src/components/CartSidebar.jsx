@@ -75,7 +75,7 @@ const CartSidebar = () => {
 
             if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
                 await navigator.share({
-                    title: `طلبية من IMDEN STORE #${orderId}`,
+                    title: `طلبية من Errayhany Store #${orderId}`,
                     text: `مرفق تفاصيل الطلبية. رمز الطلب: #${orderId}`,
                     files: [pdfFile]
                 });
