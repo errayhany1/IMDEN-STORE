@@ -9,6 +9,7 @@ const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.sv
 const ProductCard = ({ product }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
+    const iosTheme = useStore((state) => state.iosTheme);
     const gridColumns = useStore((state) => state.gridColumns);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hoveredThumb, setHoveredThumb] = useState(null);
@@ -25,8 +26,8 @@ const ProductCard = ({ product }) => {
 
     return (
         <>
-            <article className={`rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
-                ${dm ? 'bg-gray-800 border-gray-700' : 'bg-surface-light border-slate-100'}`}>
+        <article className={`rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
+                ${iosTheme ? 'glass-panel border-transparent' : (dm ? 'bg-gray-800 border-gray-700' : 'bg-surface-light border-slate-100')}`}>
 
                 {/* Out of Stock Overlay */}
                 {isOutOfStock && (
@@ -37,7 +38,7 @@ const ProductCard = ({ product }) => {
                     </div>
                 )}
 
-                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={() => setIsModalOpen(true)}>
+                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${iosTheme ? 'bg-transparent' : (dm ? 'bg-gray-900' : 'bg-white')}`} onClick={() => setIsModalOpen(true)}>
 
                     {displayImage ? (
                         <img

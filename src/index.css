@@ -57,3 +57,44 @@ html.translated-ltr { direction: ltr !important; }
 html.translated-ltr * { direction: ltr !important; }
 html.translated-ltr body { font-family: 'Inter', sans-serif !important; }
 
+/* iOS Glassmorphism Theme Base Styles */
+html.ios-theme body {
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    background-attachment: fixed;
+}
+html.dark.ios-theme body {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    background-attachment: fixed;
+}
+
+/* Glassmorphism Utilities */
+.ios-theme .glass-panel {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+html.dark.ios-theme .glass-panel {
+    background: rgba(17, 25, 40, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.ios-theme .glass-header {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+html.dark.ios-theme .glass-header {
+    background: rgba(17, 25, 40, 0.75);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Extra smooth rounding for iOS look */
+.ios-theme .rounded-xl, .ios-theme .rounded-2xl {
+    border-radius: 20px;
+}
