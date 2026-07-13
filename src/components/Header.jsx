@@ -65,7 +65,12 @@ const Header = () => {
 
                     {/* Logo */}
                     <div className="flex items-center flex-shrink-0 cursor-pointer" onClick={scrollToTop}>
-                        <img src="/logo.png" alt="Errayhany Grossiste" className="h-8 sm:h-10 w-auto object-contain" style={{maxWidth: '160px'}} />
+                        <img
+                            src={dm ? '/logo-dark.png' : '/logo.png'}
+                            alt="Errayhany Grossiste"
+                            className="h-8 sm:h-10 w-auto object-contain"
+                            style={{ maxWidth: '160px' }}
+                        />
                     </div>
 
                     {/* Desktop Search Bar */}

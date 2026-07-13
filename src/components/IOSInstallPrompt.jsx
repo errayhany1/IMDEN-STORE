@@ -33,7 +33,11 @@ const IOSInstallPrompt = () => {
                 {/* Header */}
                 <div className={`px-4 py-3 border-b flex items-center justify-between ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
                     <div className="flex items-center gap-2">
-                        <img src="/logo.png" alt="Errayhany Store" className="w-8 h-8 rounded-lg shadow-sm" />
+                        <img
+                            src={dm ? '/logo-dark.png' : '/logo.png'}
+                            alt="Errayhany Store"
+                            className="w-8 h-8 rounded-lg object-cover shadow-sm"
+                        />
                         <div>
                             <p className="text-sm font-bold">تثبيت تطبيق Errayhany Store</p>
                             <p className={`text-[10px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>أضف التطبيق لشاشتك الرئيسية</p>

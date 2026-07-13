@@ -26,7 +26,12 @@ const AboutModal = () => {
                 {/* Header */}
                 <div className="text-center mb-8 mt-2">
                     <div className="inline-block p-3 rounded-2xl bg-primary/10 mb-4">
-                        <img src="/logo.png" alt="Errayhany Grossiste" className="h-12 w-auto object-contain mx-auto mix-blend-multiply dark:mix-blend-normal" onError={(e) => e.target.style.display = 'none'} />
+                        <img
+                            src={darkMode ? '/logo-dark.png' : '/logo.png'}
+                            alt="Errayhany Grossiste"
+                            className="h-12 w-auto object-contain mx-auto"
+                            onError={(e) => e.target.style.display = 'none'}
+                        />
                     </div>
                     <h2 className="text-2xl md:text-3xl font-bold mb-3 text-primary">Errayhany Store</h2>
                     <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
