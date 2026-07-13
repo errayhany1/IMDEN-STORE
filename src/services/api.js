@@ -118,7 +118,8 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
                     let imageUrl = null;
                     if (imageObj) {
-                        const rawUrl = imageObj.signedUrl || imageObj.url;
+                        // Prefer permanent url when present; signedUrl expires (hurts image SEO/cache)
+                        const rawUrl = imageObj.url || imageObj.signedUrl;
                         if (rawUrl) {
                             imageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
                         }
@@ -129,7 +130,7 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     ['Image1', 'Image2', 'Image3'].forEach(col => {
                         if (record[col] && record[col].length > 0) {
                             record[col].forEach(img => {
-                                const url = img.signedUrl || img.url;
+                                const url = img.url || img.signedUrl;
                                 if (url) {
                                     allImages.push(url.startsWith('http') ? url : `${API_URL}/${url}`);
                                 }

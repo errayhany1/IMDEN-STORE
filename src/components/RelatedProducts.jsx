@@ -71,7 +71,7 @@ const RelatedProducts = ({ product, onSelect }) => {
                             {item.image ? (
                                 <img
                                     src={item.image}
-                                    alt={item.name || item.ref}
+                                    alt={`${item.name || item.ref} - إلكترونيات بالجملة Errayhany Store`}
                                     className="w-full h-full object-contain p-1.5"
                                     loading="lazy"
                                 />

@@ -138,7 +138,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                             {allImages.length > 0 ? (
                                 <img
                                     src={allImages[currentIndex]}
-                                    alt={viewedProduct.name || viewedProduct.ref}
+                                    alt={`${viewedProduct.name || viewedProduct.ref} - إلكترونيات بالجملة Errayhany Store`}
                                     className="w-full h-full object-contain p-4"
                                 />
                             ) : (

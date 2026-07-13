@@ -1,2101 +1,2501 @@
 [
   {
     "@type": "Product",
-    "name": "SPEAKER KISONLI",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_171_urEsR.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=4f857432317d7468e637c77d7c187e818aea44993d9ef8760c37182b18d9ec8b&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_171.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SPEAKER KISONLI - ميكروفونات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "SPEAKER KISONLI  X9",
+    "name": "CLÉ USB 32GB KINGSTON MZYANA",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_191_h_eWj.jpg",
+    "description": "CLÉ USB 32GB KINGSTON MZYANA - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "CLÉ USB 32GB KINGSTON MZYANA",
+    "category": "سماعات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=CL%C3%89%20USB%2032GB%20KINGSTON%20MZYANA",
+      "price": 50,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "RJ45 TO USB 3.0",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_190_lDi8L.jpg",
+    "description": "RJ45 TO USB 3.0 - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "RJ45 TO USB",
+    "category": "شواحن",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=RJ45%20TO%20USB",
+      "price": 30,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Type-C RJ45 TO USB 3.1/3.0",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_189_BpWgz.jpg",
+    "description": "Type-C RJ45 TO USB 3.1/3.0 - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Type-C RJ45 TO USB",
+    "category": "شواحن",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Type-C%20RJ45%20TO%20USB",
+      "price": 30,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Chargeur iphone 14pro max 25w",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_188_a9CH4.jpg",
+    "description": "Chargeur iphone 14pro max 25w - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Chargeur iphone 14pro max 25w",
+    "category": "شواحن",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Chargeur%20iphone%2014pro%20max%2025w",
+      "price": 40,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HUB TC 3.0 4PORT",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_187_3ovbT.jpg",
+    "description": "HUB TC 3.0 4PORT - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "HUB TC 3.0 4PORT",
+    "category": "شواحن",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=HUB%20TC%203.0%204PORT",
+      "price": 23,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Black box HD 1296P",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_186_LtNuQ.jpg",
+    "description": "Black box HD 1296P - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Black box HD 1296P",
+    "category": "كاميرات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Black%20box%20HD%201296P",
+      "price": 220,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Vehicle blackbox DVR 1080HD",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/13/86d1afed2a1371c0c5df679e55a31338231696af/file_185_uEUWV.jpg",
+    "description": "Vehicle blackbox DVR 1080HD - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Vehicle blackbox DVR 1080HD",
+    "category": "كاميرات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Vehicle%20blackbox%20DVR%201080HD",
+      "price": 250,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "ALLUME CIGARE AFFICHEUR V/W",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/12/86d1afed2a1371c0c5df679e55a31338231696af/file_184_cI4js.jpg",
+    "description": "ALLUME CIGARE AFFICHEUR V/W - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ALLUME CIGARE AFFICHEUR",
+    "category": "شواحن",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=ALLUME%20CIGARE%20AFFICHEUR",
+      "price": 110,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT MICROPHONE HANDHELD STICK",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/12/86d1afed2a1371c0c5df679e55a31338231696af/file_183_D9Ozh.jpg",
+    "description": "SUPPORT MICROPHONE HANDHELD STICK - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "SUPPORT MICROPHONE HANDHELD STICK",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=SUPPORT%20MICROPHONE%20HANDHELD%20STICK",
+      "price": 60,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "FAST WIRELESS CHARGER FOR WATCH SAMSUNG",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/12/86d1afed2a1371c0c5df679e55a31338231696af/file_182_PNxI3.jpg",
+    "description": "FAST WIRELESS CHARGER FOR WATCH SAMSUNG - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "CABLE WATCH SAMSUNG",
+    "category": "شواحن",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=CABLE%20WATCH%20SAMSUNG",
+      "price": 40,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT MICROPHONE CAND",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/12/86d1afed2a1371c0c5df679e55a31338231696af/file_181_8MsFL.jpg",
+    "description": "SUPPORT MICROPHONE CAND - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "SUPPORT MICROPHONE CAND",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=SUPPORT%20MICROPHONE%20CAND",
+      "price": 100,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Kit casque k06A",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_180_9DTN4.jpg",
+    "description": "Kit casque k06A - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Kit casque k06A",
+    "category": "سماعات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Kit%20casque%20k06A",
+      "price": 130,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Kit casque k12",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_179_DW0nu.jpg",
+    "description": "Kit casque k12 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Kit casque k12",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Kit%20casque%20k12",
+      "price": 170,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Tapis chauffant 80*33cm",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_178__OmKH.jpg",
+    "description": "Tapis chauffant 80*33cm - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Tapis chauffant 80*33cm",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tapis%20chauffant%2080*33cm",
+      "price": 85,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Tapis chauffant 60*36cm",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_178_ydtML.jpg",
+    "description": "Tapis chauffant 60*36cm - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "Tapis chauffant 60*36cm",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tapis%20chauffant%2060*36cm",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HK9 ULTRA2",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_177_JHHsI.jpg",
+    "description": "HK9 ULTRA2 - ساعات ذكية بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "HK9-ULTRA2",
+    "category": "ساعات ذكية",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=HK9-ULTRA2",
+      "price": 200,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "USB OPTICAL MOUSE",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_176_uvZlC.jpg",
+    "description": "USB OPTICAL MOUSE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "M66",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=M66",
+      "price": 20,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "TAPI XC-X3",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_174_uoEUd.jpg",
+    "description": "TAPI XC-X3 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "TAPI XC-X3",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=TAPI%20XC-X3",
+      "price": 8,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "TAPI BEST1 3ADIYA",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/11/86d1afed2a1371c0c5df679e55a31338231696af/file_173_dE3U2.jpg",
+    "description": "TAPI BEST1 3ADIYA - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "TAPI BEST1 3ADIYA",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=TAPI%20BEST1%203ADIYA",
+      "price": 6,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SPEAKER KISONLI",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_171_urEsR.jpg",
+    "description": "SPEAKER KISONLI - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "SPEAKER KISONLI  X9",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=SPEAKER%20KISONLI%20%20X9",
       "price": 95,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "SPEAKER KISONLI X36BT",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_170_FlAtj.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=9ccc471e532a2e4a7f5197b6b2efeb5f75575829e787b711980db75d5afb58a3&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_170.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SPEAKER KISONLI X36BT - ميكروفونات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_170_FlAtj.jpg",
+    "description": "SPEAKER KISONLI X36BT - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "SPEAKER KISONLI X36BT  X36B5",
+    "category": "ميكروفونات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=SPEAKER%20KISONLI%20X36BT%20%20X36B5",
       "price": 85,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "SMART NET Camera ample V380 Q165-1/1 lens",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_169_KPDPU.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f0f98803bf1211343af6adb2a4f240493acd1928b8c6dd09c632fc40d234cd9a&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_169.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SMART NET Camera ample V380 Q165-1/1 lens - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_169_KPDPU.jpg",
+    "description": "SMART NET Camera ample V380 Q165-1/1 lens - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "SMART NET Camera ample V380 Q165-1/1 lens PRD-MQTOQYH9-9LJS",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=SMART%20NET%20Camera%20ample%20V380%20Q165-1%2F1%20lens%20PRD-MQTOQYH9-9LJS",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Wifi panorama camera ample X-IOT CAM 2 LENS",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_168_1Nvou.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=b7c0123416ba616fc7395d9ba45f3f876e68332c6d2bf04f80c0861eb0596122&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_168.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Wifi panorama camera ample X-IOT CAM 2 LENS - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/08/86d1afed2a1371c0c5df679e55a31338231696af/file_168_1Nvou.jpg",
+    "description": "Wifi panorama camera ample X-IOT CAM 2 LENS - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Wifi panorama camera ample X-IOT CAM 2 LENS SQ002WL",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Wifi%20panorama%20camera%20ample%20X-IOT%20CAM%202%20LENS%20SQ002WL",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Car charger",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/06/86d1afed2a1371c0c5df679e55a31338231696af/file_167_gMwZJ.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=176946a735ccdc4f7354a9b1360ecd59d4cfdc7e1c58b4523688da276c12b9ca&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_167.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Car charger - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/06/86d1afed2a1371c0c5df679e55a31338231696af/file_167_gMwZJ.jpg",
+    "description": "Car charger - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "C31",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=C31",
       "price": 30,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Led PL16",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/06/86d1afed2a1371c0c5df679e55a31338231696af/file_166_-S845.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=49d863f1f1fa56b1d85c511933c9c92871d68ad0eb3b81f3ec14dd2215288a09&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_166.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Led PL16 - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/06/86d1afed2a1371c0c5df679e55a31338231696af/file_166_-S845.jpg",
+    "description": "Led PL16 - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "PL16",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=PL16",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Led PL19",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/06/86d1afed2a1371c0c5df679e55a31338231696af/file_165_L64Bx.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=54a9f5118e5516dba12028030d81494ce9677898e2d7323bc66b0af63d45dbc2&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_165.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Led PL19 - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/06/86d1afed2a1371c0c5df679e55a31338231696af/file_165_L64Bx.jpg",
+    "description": "Led PL19 - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "PL19",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=PL19",
       "price": 125,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "LED CORNER RGB",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_164_VEZx-.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=196396c5884ff32d3762801b25c0d30db6e4a57a188c992779c1ce580910bcbb&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_164.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "LED CORNER RGB - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_164_VEZx-.jpg",
+    "description": "LED CORNER RGB - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "LED-CORNER",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=LED-CORNER",
       "price": 350,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "CLAVIER GKM901",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_163_Adut4.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f6fa3996542e654f3f3cbac075ebc55365e9c747800bb9204dc1341e48da85cd&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_163.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "CLAVIER GKM901 - ماوس وكيبورد بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_163_Adut4.jpg",
+    "description": "CLAVIER GKM901 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "GKM901",
+    "category": "ماوس وكيبورد",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=GKM901",
       "price": 80,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "TRIPOD S58",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_162_9QeWE.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=5b3c20b555f4d97b981096977f48f2459290bee1a472ad0bec2f37863c8bef22&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_162.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "TRIPOD S58 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_162_9QeWE.jpg",
+    "description": "TRIPOD S58 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "S58",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=S58",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cooling pod X6B",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_161_FdDQL.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=ec1ec20dd0b57f549d9f50246dc1b660e58cd4a86cf177200f3ad13a43bdbcb2&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_161.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cooling pod X6B - شواحن حواسيب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/05/86d1afed2a1371c0c5df679e55a31338231696af/file_161_FdDQL.jpg",
+    "description": "Cooling pod X6B - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "X6B",
+    "category": "شواحن حواسيب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=X6B",
       "price": 170,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "WIRELESS HEADSET Y1",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/04/86d1afed2a1371c0c5df679e55a31338231696af/file_160_9tI8N.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f0a86bfd10463855db3fc9f898a432b991cf52e2ef6b8f0c5c13e0e3483e7d2d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_160.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "WIRELESS HEADSET Y1 - سماعات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/04/86d1afed2a1371c0c5df679e55a31338231696af/file_160_9tI8N.jpg",
+    "description": "WIRELESS HEADSET Y1 - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "WIRELESS-Y1",
+    "category": "سماعات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=WIRELESS-Y1",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable flair 65w",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_159_-DlYx.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=68aec9288c851a98859155fc35d0c23a3a460f9f439e7457d10475155ad282a8&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_159.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable flair 65w - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_159_-DlYx.jpg",
+    "description": "Cable flair 65w - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable-flair",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable-flair",
       "price": 9,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Nokia 101",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_157_xhGdz.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=686d272e3cc018e009aca3fb2b932e2c989b9595cc327444cda4aed4f9bcb55e&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_157.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Nokia 101 - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_157_xhGdz.jpg",
+    "description": "Nokia 101 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "PRD-MR2C82XV-S1RW",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=PRD-MR2C82XV-S1RW",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Sport camera 4K WIFI H265",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_154_TAb_u.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=96431d28540d861af5023b3a7c88275942a755e7db9ec176f96dd985d6b2c994&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_154.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Sport camera 4K WIFI H265 - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_154_TAb_u.jpg",
+    "description": "Sport camera 4K WIFI H265 - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "H265",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=H265",
       "price": 530,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "HD Camera ronde L30-Wifi",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_156_QbgVV.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=0a080f451fcea756eeeb5f786f76e2adcfe11729e3949a9c7f86ced2c5d2a4f2&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_156.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "HD Camera ronde L30-Wifi - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_156_QbgVV.jpg",
+    "description": "HD Camera ronde L30-Wifi - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "L30",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=L30",
       "price": 180,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "HD Camera carre L29-wifi",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_153_xOZCD.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=78f53a6a963316e568a3abf0dac6facb4311c96d08491f69cffdcf4bc6a386fb&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_153.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "HD Camera carre L29-wifi - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_153_xOZCD.jpg",
+    "description": "HD Camera carre L29-wifi - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "HD L29-wifi",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=HD%20L29-wifi",
       "price": 180,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "SUPPORT MOTO",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_151_lKPCz.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=d79f187e932b4d47ae2ffa22b2174755d96c64ce0df3f7c3a24b82b341a7bd7f&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_151.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SUPPORT MOTO - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/03/86d1afed2a1371c0c5df679e55a31338231696af/file_151_lKPCz.jpg",
+    "description": "SUPPORT MOTO - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "19-05 / 1905",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=19-05%20%2F%201905",
       "price": 35,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "M160 RGB Panel light",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_150_aWlJP.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=2f24bed7eba403e0ebd288021ae2658712450ef1896d98f83d52956e054892b6&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_150.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "M160 RGB Panel light - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_150_aWlJP.jpg",
+    "description": "M160 RGB Panel light - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "M160",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=M160",
       "price": 65,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "SPLIT SOLAR WALL",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_148_slQ_-.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=8a25580a78aef8d050af62364dc67e5a8f49382d08ff11705b4f9428145eccf4&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_148.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SPLIT SOLAR WALL - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_148_slQ_-.jpg",
+    "description": "SPLIT SOLAR WALL - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "FL1725A",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=FL1725A",
       "price": 90,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "PINCE HT315",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_147_8gEMG.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=74969aedecbee87a23b20fa52d27bd3550f4d9a880077b15f94913251ff6ab7d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_147.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "PINCE HT315 - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_147_8gEMG.jpg",
+    "description": "PINCE HT315 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "HT315",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=HT315",
       "price": 30,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Pince réseau Tools à sertir multifonction",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_145_hjzwh.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=bcde056bac675e05d170cb7ec801f047f35d3576734400ea9fbb9af1ce5a0dc2&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_145.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Pince réseau Tools à sertir multifonction - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_145_hjzwh.jpg",
+    "description": "Pince réseau Tools à sertir multifonction - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Pince réseau Tools à sertir multifonction",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Pince%20r%C3%A9seau%20Tools%20%C3%A0%20sertir%20multifonction",
       "price": 70,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Rechargeable and waterproof chien",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_143_WJI5b.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=ed523b527aefcf929a35b7b55a30fc33bb5a209c1c3763d30dc59789dfb4d595&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_143.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Rechargeable and waterproof chien - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/02/86d1afed2a1371c0c5df679e55a31338231696af/file_143_WJI5b.jpg",
+    "description": "Rechargeable and waterproof chien - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Rechargeable and waterproof chien",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Rechargeable%20and%20waterproof%20chien",
       "price": 250,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Clavier souris",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/01/86d1afed2a1371c0c5df679e55a31338231696af/file_133_bRDJE.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=6b6fdbc1c9654772fb6b7addaf0f1b273108ecefa9dcc73b1e592ec4ddf50b03&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_133.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clavier souris - ماوس وكيبورد بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/01/86d1afed2a1371c0c5df679e55a31338231696af/file_133_bRDJE.jpg",
+    "description": "Clavier souris - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "BT185",
+    "category": "ماوس وكيبورد",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=BT185",
       "price": 140,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Clavier numérique",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/01/86d1afed2a1371c0c5df679e55a31338231696af/file_131_R6y9o.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=fd0e5ac8f236fb4fa206f3e62d531fbeaad60ad8bd42d8eefee19b282009f648&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_131.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clavier numérique - ماوس وكيبورد بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/01/86d1afed2a1371c0c5df679e55a31338231696af/file_131_R6y9o.jpg",
+    "description": "Clavier numérique - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "K35",
+    "category": "ماوس وكيبورد",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=K35",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Support de Téléphone Réglable 360°",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/01/86d1afed2a1371c0c5df679e55a31338231696af/file_129_2gXMd.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=91dfddaed2b021edc16d7dabe32c13d9f03d6395614ab6df8146ad730d61edb0&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_129.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Support de Téléphone Réglable 360° - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/07/01/86d1afed2a1371c0c5df679e55a31338231696af/file_129_2gXMd.jpg",
+    "description": "Support de Téléphone Réglable 360° - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Z10",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Z10",
       "price": 140,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Projecteur",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/30/86d1afed2a1371c0c5df679e55a31338231696af/file_124_DdCHh.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=b296942b02ae5d2ec9a076c5fdc28d748567a4b2c137066dce28cba35428ca44&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_124.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Projecteur - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/30/86d1afed2a1371c0c5df679e55a31338231696af/file_124_DdCHh.jpg",
+    "description": "Projecteur - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "SY1280",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=SY1280",
       "price": 500,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Table pc gamer",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/30/86d1afed2a1371c0c5df679e55a31338231696af/file_122_keZQr.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=c455e6114fdafe11876b6df20d9a8cc5250541545799e371bc296eb2abc1ca27&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_122.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Table pc gamer - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/30/86d1afed2a1371c0c5df679e55a31338231696af/file_122_keZQr.jpg",
+    "description": "Table pc gamer - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Table pc gamer",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Table%20pc%20gamer",
       "price": 700,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Nokia 1616",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/29/86d1afed2a1371c0c5df679e55a31338231696af/file_117_T2r4_.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=62de6c67734fcd82edd024d0de5bd39e85f1e3f16acc699e51f99649b0756b9b&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_117.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Nokia 1616 - شبكات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/29/86d1afed2a1371c0c5df679e55a31338231696af/file_117_T2r4_.jpg",
+    "description": "Nokia 1616 - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Nokia 1616",
+    "category": "شبكات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Nokia%201616",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "RING M160 RGB",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/26/86d1afed2a1371c0c5df679e55a31338231696af/file_116_tDOc2.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=2e54ea5ba64ceaac8fe17f0e5b2d6614cb08f440e09bcc75951c0ebafc931a23&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_116.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "RING M160 RGB - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/26/86d1afed2a1371c0c5df679e55a31338231696af/file_116_tDOc2.jpg",
+    "description": "RING M160 RGB - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "M160",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=M160",
       "price": 65,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Kisonli Webcam FHD",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_114_Lmo6w.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=880d661f20537fd3a271c3b552cec58513ec38a4e03580344f5405593549bdbf&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_114.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Kisonli Webcam FHD - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_114_Lmo6w.jpg",
+    "description": "Kisonli Webcam FHD - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Kisonli Webcam FHD",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Kisonli%20Webcam%20FHD",
       "price": 140,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Kisonli Webcam HD PC USB",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_113_D1Oy8.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=ae31d8e738999d37616a3915599f8d4b3910c9ad0e82e00a87fd7574711bb706&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_113.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Kisonli Webcam HD PC USB - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_113_D1Oy8.jpg",
+    "description": "Kisonli Webcam HD PC USB - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "D2",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=D2",
       "price": 140,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Webcam Kisonli HD 1080",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_112_RwDTe.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=cc40f9808473e5cacc6538a82cf76b7d8f9676efb68d46a0668331a06fc9bcc8&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_112.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Webcam Kisonli HD 1080 - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_112_RwDTe.jpg",
+    "description": "Webcam Kisonli HD 1080 - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "PC-2",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=PC-2",
       "price": 120,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Webcam Kisonli",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_111_MRvWe.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=24826cb11944a242b3c34e5af47d10130873d8fccee108a516d75ace47b2b8b4&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_111.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Webcam Kisonli - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_111_MRvWe.jpg",
+    "description": "Webcam Kisonli - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "PC-6",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=PC-6",
       "price": 100,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Vehicle BlackBOX DVR",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_110_Tv9oK.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f18db1f6d43260d3bfb3df1b2cbc6bd236f231a9c5f852b8afcfde98e4ae85ba&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_110.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Vehicle BlackBOX DVR - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/24/86d1afed2a1371c0c5df679e55a31338231696af/file_110_Tv9oK.jpg",
+    "description": "Vehicle BlackBOX DVR - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Vehicle BlackBOX DVR",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Vehicle%20BlackBOX%20DVR",
       "price": 250,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Baf Pc Kisonli X8",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/23/86d1afed2a1371c0c5df679e55a31338231696af/file_109_EIE4U.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=46df265c30360bf145bb3bf06aff22c8f41331f0016ebf53c57f1bf9a9240b06&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_109.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Baf Pc Kisonli X8 - شواحن حواسيب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/23/86d1afed2a1371c0c5df679e55a31338231696af/file_109_EIE4U.jpg",
+    "description": "Baf Pc Kisonli X8 - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Baf Pc Kisonli X8",
+    "category": "شواحن حواسيب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Baf%20Pc%20Kisonli%20X8",
       "price": 95,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Baf Pc kisonli X10",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/23/86d1afed2a1371c0c5df679e55a31338231696af/file_108_c-KPD.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f5ac40c16194a948333898d5e1823613cf3c53572cfeacc357986e49ffe7beab&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_108.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Baf Pc kisonli X10 - شواحن حواسيب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/23/86d1afed2a1371c0c5df679e55a31338231696af/file_108_c-KPD.jpg",
+    "description": "Baf Pc kisonli X10 - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Baf Pc kisonli X10",
+    "category": "شواحن حواسيب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Baf%20Pc%20kisonli%20X10",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "SUPPORT",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_106_ZwDKm.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=cc7be1680c642390452d4ceef1103ec0baba45866328a41d6b61aca390c88c0b&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_106.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SUPPORT - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_106_ZwDKm.jpg",
+    "description": "SUPPORT - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "252D",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=252D",
       "price": 400,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "SUPPORA",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_105_Xwlj4.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=0b4ef87db45639c389cbb678859b1ea78a7e95954f974cd82303951e22e3bdc9&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_105.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "SUPPORA - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_105_Xwlj4.jpg",
+    "description": "SUPPORA - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "252",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=252",
       "price": 250,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Caméra pc kisonli D1 4K",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_104_MX168.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=4c9214d422aa38f1bab7792df111998d1651e0475d181eebf65256babc6844e7&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_104.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Caméra pc kisonli D1 4K - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_104_MX168.jpg",
+    "description": "Caméra pc kisonli D1 4K - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Caméra pc kisonli D1 4K",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cam%C3%A9ra%20pc%20kisonli%20D1%204K",
       "price": 210,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Caméra pc kisonli D1 2K",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_103_l9eUP.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=a4f3b95836c817725aeeaede8327c03e6ee51bc13ab3d795bb9b40067eefd02b&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_103.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Caméra pc kisonli D1 2K - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/22/86d1afed2a1371c0c5df679e55a31338231696af/file_103_l9eUP.jpg",
+    "description": "Caméra pc kisonli D1 2K - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Caméra pc kisonli D1 2K",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cam%C3%A9ra%20pc%20kisonli%20D1%202K",
       "price": 155,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Selfie TT01",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_102_Uhpe4.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=631c3a8103828889acbf56ed9f95529a4b4b1cfab870599cb3e276d592a345ba&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_102.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Selfie TT01 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_102_Uhpe4.jpg",
+    "description": "Selfie TT01 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Selfie TT01",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Selfie%20TT01",
       "price": 160,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Selfie TT03",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_101_akYWu.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=b84771a1f1a947fd152bb80494cc0bf9626ee539382b365ca5b006aca6ee7c3d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_101.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Selfie TT03 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_101_akYWu.jpg",
+    "description": "Selfie TT03 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Selfie TT03",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Selfie%20TT03",
       "price": 160,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Selfie TT02",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_100_yvJwp.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=622865fb267567d394e3bbb06e3e7025b1c086bd19968fa3f62864ab5b840a44&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_100.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Selfie TT02 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_100_yvJwp.jpg",
+    "description": "Selfie TT02 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Selfie TT02",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Selfie%20TT02",
       "price": 140,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Selfie F15",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_99_XMtpb.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f7cb719b99b8937a65cc57a08611d6b3627c18eb3dacc5edb2594b687cfc17f1&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_99.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Selfie F15 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_99_XMtpb.jpg",
+    "description": "Selfie F15 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Selfie F15",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Selfie%20F15",
       "price": 65,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Selfie R1-L",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_98_3mOXJ.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=00d26622e746d951a42d0252e9c8f26e107a5d26a04ef27e50c22c7df8a12cc0&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_98.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Selfie R1-L - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_98_3mOXJ.jpg",
+    "description": "Selfie R1-L - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Selfie R1-L",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Selfie%20R1-L",
       "price": 65,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Selfie L02",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_97_8fU--.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=ac6ac4b90ca06638d1f923c3f34e1a02eb8083000d76fbe3bde518239902fafb&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_97.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Selfie L02 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_97_8fU--.jpg",
+    "description": "Selfie L02 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Selfie L02",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Selfie%20L02",
       "price": 75,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Led neon Rgb 10M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_96_BWrOm.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=fbc7e3de4374302cba1ea80e1fb7ebaed829d06ce7225ad4e54725eaf8404185&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_96.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Led neon Rgb 10M - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_96_BWrOm.jpg",
+    "description": "Led neon Rgb 10M - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Led neon Rgb 10M",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Led%20neon%20Rgb%2010M",
       "price": 260,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Led neon Rgb 5M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_95_NG3rJ.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=1424876f498d23bda5300e6bd4a90dcc2eb5a4281fe8604ec3d2c0c51eeabbdc&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_95.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Led neon Rgb 5M - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_95_NG3rJ.jpg",
+    "description": "Led neon Rgb 5M - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Led neon Rgb 5M",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Led%20neon%20Rgb%205M",
       "price": 160,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Led neon Rgb 3M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_94_tx_88.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=138f54f9e9c09b7f5b6e355e834a863a2b11667abe9403c2531231af56a8aef2&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_94.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Led neon Rgb 3M - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_94_tx_88.jpg",
+    "description": "Led neon Rgb 3M - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Led neon Rgb 3M",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Led%20neon%20Rgb%203M",
       "price": 125,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Led neon Rgb 2M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_93_gVFsh.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=2dc913f386310589cd123b1fa2fe5fc107f97dd81436c9012eda50f97b6fdf07&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_93.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Led neon Rgb 2M - إضاءة بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_93_gVFsh.jpg",
+    "description": "Led neon Rgb 2M - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Led neon Rgb 2M",
+    "category": "إضاءة",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Led%20neon%20Rgb%202M",
       "price": 95,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Manette PS4 Sony",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_92_46QBh.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=f9480e0383721bc308e660727c685792a94cf20fbc4a3e623a2d797591b6c60d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_92.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Manette PS4 Sony - ألعاب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/06/21/86d1afed2a1371c0c5df679e55a31338231696af/file_92_46QBh.jpg",
+    "description": "Manette PS4 Sony - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Manette PS4 Sony",
+    "category": "ألعاب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Manette%20PS4%20Sony",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Batterie Samsung",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/18/86d1afed2a1371c0c5df679e55a31338231696af/file_89_sr01Z.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=fa99534966f1865741d078c479ca4f4e8c8e4a34844bf02e625c6e0fee967475&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_89.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Batterie Samsung - بطاريات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/18/86d1afed2a1371c0c5df679e55a31338231696af/file_89_sr01Z.jpg",
+    "description": "Batterie Samsung - بطاريات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Batterie Samsung",
+    "category": "بطاريات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Batterie%20Samsung",
       "price": 0,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable watch",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_80_VlJQS.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=48793fcf55825bacd5f6cbece80fd3797e3d7d33ede6c7818d9f9d4231485708&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_80.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable watch - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_80_VlJQS.jpg",
+    "description": "Cable watch - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable Watch",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable%20Watch",
       "price": 17,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod X96",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_79_0aAzK.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=96d974e062f0d38d854daf13b1e4d2e69ec320bdadafb9581173207162a60d43&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_79.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod X96 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_79_0aAzK.jpg",
+    "description": "Tripod X96 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod X96",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20X96",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod 3110",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_78_L6HJp.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=e1be796be50763b816df36c0e7909e3e3ea6e9e2532adf9157c5fe2d6e7630b7&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_78.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod 3110 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_78_L6HJp.jpg",
+    "description": "Tripod 3110 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod 3110",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%203110",
       "price": 35,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod A108",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_77_LaAaE.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=d7de8f849085c7932da08cedb2576970141eec209b5d4e3184a9b0b585293c0f&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_77.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod A108 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_77_LaAaE.jpg",
+    "description": "Tripod A108 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod A108",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20A108",
       "price": 250,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod A6000",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_76_vNaon.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=7def8c430633c42e3797a53b4af4ecf0c6ce3b70e61bc16e42fbe1cc5124a522&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_76.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod A6000 - عام بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_76_vNaon.jpg",
+    "description": "Tripod A6000 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod A6000",
+    "category": "عام",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20A6000",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod P10",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_75_HXpi4.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=49604ff03ad0cd70a2d77f99d04b3f56cc13c9f83801c16be2c8b9863d931832&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_75.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod P10 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_75_HXpi4.jpg",
+    "description": "Tripod P10 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod P10",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20P10",
       "price": 130,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod A1588",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_74_xX2rA.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=aba8b36e0450831f2650a61dd8573b6618306fedc8f3c5cc47fff5d37dfe64b6&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_74.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod A1588 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_74_xX2rA.jpg",
+    "description": "Tripod A1588 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod A1588",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20A1588",
       "price": 130,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod Mixio S88",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_73_uWdiV.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=c9b19f6b3aac5587bff2c5d32204176982224e12259e9b560e9e97774861f159&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_73.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod Mixio S88 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_73_uWdiV.jpg",
+    "description": "Tripod Mixio S88 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod Mixio S88",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20Mixio%20S88",
       "price": 80,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Support micro ring magic arm+super clamp",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_72_2S2F8.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=66dab90588f5e36da1909b2a94367db0ef941d8a7abe46885d9e3c6bae9b59a4&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_72.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Support micro ring magic arm+super clamp - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_72_2S2F8.jpg",
+    "description": "Support micro ring magic arm+super clamp - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Support micro ring magic arm+super clamp",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Support%20micro%20ring%20magic%20arm%2Bsuper%20clamp",
       "price": 220,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Tripod dp10",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_71_MNZPv.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=dd38ce03778ac72e0d0546521a2989833aaec4ab0f76b896a948aa9e267af33d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_71.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Tripod dp10 - ستاندات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/16/86d1afed2a1371c0c5df679e55a31338231696af/file_71_MNZPv.jpg",
+    "description": "Tripod dp10 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Tripod dp10",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Tripod%20dp10",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Batterie Apple iPhone",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_70_TReFw.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=06fc439966ff28a97340fbbb3745976a551bff2999a1851991976ed2b73eb292&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_70.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Batterie Apple iPhone - بطاريات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_70_TReFw.jpg",
+    "description": "Batterie Apple iPhone - بطاريات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Batterie Apple iPhone",
+    "category": "بطاريات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Batterie%20Apple%20iPhone",
       "price": 160,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable imprimante 5M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_69_4oiAn.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=414fac0be2d1c501a23b31c5f60cd78a9856ed43e847cb689b9f157e3c7eb171&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_69.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable imprimante 5M - شبكات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_69_4oiAn.jpg",
+    "description": "Cable imprimante 5M - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable imprimante 5M",
+    "category": "شبكات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable%20imprimante%205M",
       "price": 25,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable imprimante 3M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_68_S2emi.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=3ffeabf6e34592f0027cb7cc203c98bd5ba7b64445cb7ce32735581b3c04c4cc&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_68.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable imprimante 3M - شبكات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_68_S2emi.jpg",
+    "description": "Cable imprimante 3M - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable imprimante 3M",
+    "category": "شبكات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable%20imprimante%203M",
       "price": 15,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable imprimante 1,5M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_67_slg4h.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=cc105b25da18b647056981818a621192e5c4b5c450cda79dd5c2611f1bb766ad&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_67.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable imprimante 1,5M - شبكات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_67_slg4h.jpg",
+    "description": "Cable imprimante 1,5M - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable imprimante 1,5M",
+    "category": "شبكات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable%20imprimante%201%2C5M",
       "price": 9,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable radio original",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_66_mpzgj.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=08ebbb519309230fd7b7220d3e427d9c5665473c0608728d4391522ed75f858e&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_66.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable radio original - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_66_mpzgj.jpg",
+    "description": "Cable radio original - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable radio original",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable%20radio%20original",
       "price": 13,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Cable Pc Portable / Bureau High Copy",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_65_ehVvX.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=34c0c38df9d0c34c56031a60b869e3e61d42828f2d771c74840ae455c2c3f03d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_65.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Cable Pc Portable / Bureau High Copy - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/14/86d1afed2a1371c0c5df679e55a31338231696af/file_65_ehVvX.jpg",
+    "description": "Cable Pc Portable / Bureau High Copy - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Cable Pc Portable / Bureau High Copy",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cable%20Pc%20Portable%20%2F%20Bureau%20High%20Copy",
       "price": 13,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Câble de charge Watch garmin",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_64_kW38j.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=4ff804d394be0f10bf1fbc037de75ef414974b23bd1c8a39f0c84aeb8dec90b7&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_64.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Câble de charge Watch garmin - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_64_kW38j.jpg",
+    "description": "Câble de charge Watch garmin - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Câble de charge Watch garmin",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=C%C3%A2ble%20de%20charge%20Watch%20garmin",
       "price": 20,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Memo phone cooler DLA8",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_62_07PTJ.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=9bdb3f3a20a7033228548a55b73363ca85bb9217ca29821d125139057c750144&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_62.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Memo phone cooler DLA8 - ألعاب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_62_07PTJ.jpg",
+    "description": "Memo phone cooler DLA8 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Memo phone cooler DLA8",
+    "category": "ألعاب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Memo%20phone%20cooler%20DLA8",
       "price": 90,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Memo phone cooler DL05",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_61_OCfjy.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=0a6dbcd6e1a39666127b22bf2c3da8883644ce43db85a854bd7a9f6905b35df8&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_61.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Memo phone cooler DL05 - ألعاب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_61_OCfjy.jpg",
+    "description": "Memo phone cooler DL05 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Memo phone cooler DL05",
+    "category": "ألعاب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Memo%20phone%20cooler%20DL05",
       "price": 100,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Memo tablet cooler DL05",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_59_Bqym5.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=2cfd6fd19e64224a07fc2df8a3a4701e5cd76a8d87fc04fe3077fda9f3c4c5b9&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_59.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Memo tablet cooler DL05 - ألعاب بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_59_Bqym5.jpg",
+    "description": "Memo tablet cooler DL05 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Memo tablet cooler DL05",
+    "category": "ألعاب",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Memo%20tablet%20cooler%20DL05",
       "price": 120,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Caméra solar TL3",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_43_d1jPx.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=16c2a7c4266b60a601e56c5972f8c103ab3d2edcfd9f58110ae6786a7b95687c&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_43.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Caméra solar TL3 - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_43_d1jPx.jpg",
+    "description": "Caméra solar TL3 - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Caméra solar TL3",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cam%C3%A9ra%20solar%20TL3",
       "price": 850,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Caméra solar DS2",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_42_20JZE.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=6902966ca9513d68e3697505d2bb84d50ca159469890480a119c424ebfe50501&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_42.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Caméra solar DS2 - كاميرات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_42_20JZE.jpg",
+    "description": "Caméra solar DS2 - كاميرات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Caméra solar DS2",
+    "category": "كاميرات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Cam%C3%A9ra%20solar%20DS2",
       "price": 800,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Charger surface 44W",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_41_DkjwQ.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=6e83493bcd6607d73e306992edf177a0258ed936451c09fec62f576efd08c450&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_41.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Charger surface 44W - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/13/86d1afed2a1371c0c5df679e55a31338231696af/file_41_DkjwQ.jpg",
+    "description": "Charger surface 44W - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Charger surface 44W",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Charger%20surface%2044W",
       "price": 155,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Adapter normale vidvie",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_40_z8A8j.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=e5a78fb1b7528ac38db01798acc3c1badb6954f32b22421bfdcf22194119d2b5&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_40.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Adapter normale vidvie - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_40_z8A8j.jpg",
+    "description": "Adapter normale vidvie - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Adapter normale vidvie",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Adapter%20normale%20vidvie",
       "price": 8,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Câble pc portable/bureau normale",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_39_2bBqG.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=cd138536732ea529a0c3df1628e43ebad562434b1e7c9040782215f293f17a0f&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_39.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Câble pc portable/bureau normale - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_39_2bBqG.jpg",
+    "description": "Câble pc portable/bureau normale - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Câble pc portable/bureau normale",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=C%C3%A2ble%20pc%20portable%2Fbureau%20normale",
       "price": 10,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Charger 12V 1,5A Originale",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_38_U2u5W.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=7e147cfc11269704d16f9f6071191b004d864e3ab2f781b782d305299b905022&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_38.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Charger 12V 1,5A Originale - شواحن بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_38_U2u5W.jpg",
+    "description": "Charger 12V 1,5A Originale - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Charger 12V 1,5A Originale",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Charger%2012V%201%2C5A%20Originale",
       "price": 25,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "Clavier flexible selecone K87 Clavier flexible selecone K87",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_37_7IGxD.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=8d37f3059e42a5e7cb4befaa5db3e1165aaacd90b0dfc0edcd921269c52c3b44&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_37.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clavier flexible selecone K87 Clavier flexible selecone K87 - ماوس وكيبورد بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/09/86d1afed2a1371c0c5df679e55a31338231696af/file_37_7IGxD.jpg",
+    "description": "Clavier flexible selecone K87 Clavier flexible selecone K87 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "Clavier flexible selecone K87 Clavier flexible selecone K87",
+    "category": "ماوس وكيبورد",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=Clavier%20flexible%20selecone%20K87%20Clavier%20flexible%20selecone%20K87",
       "price": 55,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   },
   {
     "@type": "Product",
     "name": "USB T50 wireless audio adapter",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_36_VXlM1.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=4b1d55d950f637e287233b3fa1344da2d77c9888ac3159ee0e5605205ce7e027&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_36.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "USB T50 wireless audio adapter - شبكات بالجملة من IMDEN TECHNOLOGY",
+    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_36_VXlM1.jpg",
+    "description": "USB T50 wireless audio adapter - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "USB T50 wireless audio adapter",
+    "category": "شبكات",
     "brand": {
       "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
+      "name": "Errayhany Store"
     },
     "offers": {
       "@type": "Offer",
+      "url": "https://imdenmanadger.online/?search=USB%20T50%20wireless%20audio%20adapter",
       "price": 40,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
       "seller": {
         "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Remote Bluetooth controller",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_35_vfYWg.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193820Z&X-Amz-Expires=7300&X-Amz-Signature=85df85d5abde8e819dd2ed34f3eb33499b6a19b489c8f3e995df80aa0ba4b232&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_35.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Remote Bluetooth controller - ماوس وكيبورد بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Remote Bluetooth controller",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 65,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé Bluetooth 5.3",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_34_hIQjN.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=640f454b4f94cf2bbc3fd43c1cfcd3843d2b3cad638a93dfbc2d63d6ce5cf39b&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_34.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé Bluetooth 5.3 - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé Bluetooth 5.3",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 22,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé wifi + BT 4.2 Lb link wn600bt",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_33_HMFwp.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=53eb5a47994e8b793184169d49aee177e94c74741f051df8c7c0d8d47b6246d3&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_33.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé wifi + BT 4.2 Lb link wn600bt - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé wifi + BT 4.2 Lb link wn600bt",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 65,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé wifi Lb link wn155A",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_32_N2hCu.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=116626ddb014ac10af3b3e1d307ecb2fc70ab7f2f488e322dd36422ded166259&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_32.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé wifi Lb link wn155A - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé wifi Lb link wn155A",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé wifi Lb link wn151",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_31_KlM8T.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=3d9676f2c1c7107c845042aaffc7dd2c78f8018f609485d597ddd8d7b0af1c87&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_31.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé wifi Lb link wn151 - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé wifi Lb link wn151",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé Bluetooth 6.0 dongle 09U Clé Bluetooth 6.0 dongle 09U",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_30_xmjde.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=ab1a6395f8024e2bd76eca112da8c956fafe3232026d2777f9415482548a3d6a&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_30.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé Bluetooth 6.0 dongle 09U Clé Bluetooth 6.0 dongle 09U - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé Bluetooth 6.0 dongle 09U Clé Bluetooth 6.0 dongle 09U",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 65,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé wifi Lb link wn351",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_29_Uvie2.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=3d312663c5b3178f6f498e978879c089314ee6c4675fb93410efe71b233fa3f6&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_29.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé wifi Lb link wn351 - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé wifi Lb link wn351",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 45,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé wifi ac 600m mbps normal Clé wifi ac 600m mbps normal",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_28_n6jmG.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=6a8859253e9c7039598fc2d40725b88ec6b68ac7d5df93efbec052eab5a477e7&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_28.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé wifi ac 600m mbps normal Clé wifi ac 600m mbps normal - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé wifi ac 600m mbps normal Clé wifi ac 600m mbps normal",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 60,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clé wifi ac 600m mbps antenne",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_27_MgRVH.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=0cb970e67621d3fdee3cbd10fe51b0844cc815365c00e631f520a314f970116d&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_27.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Clé wifi ac 600m mbps antenne - شبكات بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Clé wifi ac 600m mbps antenne",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 65,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Soft box puluz sobba 1lampe Soft box puluz sobba 1lampe",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_26_S-TOl.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=6bfa929ed6fd4cde7ac2f5b4ec8bb8007642de0e1198f2608ed938bacc195845&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_26.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Soft box puluz sobba 1lampe Soft box puluz sobba 1lampe - إضاءة بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Soft box puluz sobba 1lampe Soft box puluz sobba 1lampe",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 175,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Pack soft box pkt3133",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_25_EFFKL.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=6d465e80e335e78a46a179222a200fb85c9b1af7a52451a09d35a73b8b33ed16&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_25.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Pack soft box pkt3133 - إضاءة بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Pack soft box pkt3133",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 500,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Pack soft box puluz pkt3134",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_24_BYN6X.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=3cf03bee9200df00b677cd5030cc4b73697668bbf5c8c70014a5993f9409cf29&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_24.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Pack soft box puluz pkt3134 - إضاءة بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Pack soft box puluz pkt3134",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 900,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Studio puluz 30cm",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_23_gexeL.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=16629ea232e8128bd849bd21fa91fcf5aed482c186685c2caeec7ecbbe00ef9b&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_23.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Studio puluz 30cm - إضاءة بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Studio puluz 30cm",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 180,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Studio puluz 40cm",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_22_wipA8.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=1e0d29951b13198236e36b009d62d61ba6baf9f6b7c34bc983c69096984230c5&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_22.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Studio puluz 40cm - إضاءة بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Studio puluz 40cm",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 400,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Studio puluz 25cm",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_21_F9yVk.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=61eb99586d13df03a58559db802886733562f32f54158392397257f8cdd4c44f&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_21.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Studio puluz 25cm - إضاءة بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Studio puluz 25cm",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 140,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Charger asus type-C 45W kari Charger asus type-C 45W kari",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_20_iD3Pr.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=0a5b5ef7580a7464b30b1faf3ecc11a755aa84c53fa26024741f28818a2603a8&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_20.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Charger asus type-C 45W kari Charger asus type-C 45W kari - شواحن بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Charger asus type-C 45W kari Charger asus type-C 45W kari",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Charger hp tête bleu originale",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/08/86d1afed2a1371c0c5df679e55a31338231696af/file_19_8sDJW.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=73b90d0d814213039b2b75d977ff06abbd32aaebd55ea1932751639e1399dae1&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_19.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Charger hp tête bleu originale - شواحن بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Charger hp tête bleu originale",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 95,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Câble iPhone C-C 240W 2M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/07/86d1afed2a1371c0c5df679e55a31338231696af/file_18_N6IL6.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=7ff92a1ade854cfa4ca3df464e4f2cb148e819bd65438598b31bb31ec9a8db06&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_18.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Câble iPhone C-C 240W 2M - شواحن بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Câble iPhone C-C 240W 2M",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Câble iPhone C-C 100W 2M",
-    "image": "https://nocohub-001-prod-app-attachments.s3.us-east-2.amazonaws.com/nc/uploads/2026/05/07/86d1afed2a1371c0c5df679e55a31338231696af/file_17_gFblX.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIATUJCOBWTFSXT22F2%2F20260709%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260709T193822Z&X-Amz-Expires=7298&X-Amz-Signature=4157c36c3694ee090f1688a84b795159dddf928a45a682e8b9a81ed467a87b0f&X-Amz-SignedHeaders=host&response-content-disposition=inline%3B%20filename%3D%22file_17.jpg%22&response-content-type=image%2Fjpeg&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "description": "Câble iPhone C-C 100W 2M - شواحن بالجملة من IMDEN TECHNOLOGY",
-    "sku": "Câble iPhone C-C 100W 2M",
-    "brand": {
-      "@type": "Brand",
-      "name": "IMDEN TECHNOLOGY"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "seller": {
-        "@type": "Organization",
-        "name": "IMDEN TECHNOLOGY"
+        "name": "Errayhany Grossiste",
+        "url": "https://imdenmanadger.online"
       }
     }
   }

@@ -1,13 +1,53 @@
-# IMDEN TECHNOLOGY - Wholesale Electronics Store
+# Errayhany Store - Wholesale Electronics Catalog
 User-agent: *
 Allow: /
 Allow: /products.html
+Allow: /privacy-policy.html
+Allow: /llms.txt
+Allow: /sitemap.xml
+Allow: /products-jsonld.json
+Disallow: /admin
+Disallow: /account
 
-# Allow image crawlers full access
+# Search engines
+User-agent: Googlebot
+Allow: /
+
 User-agent: Googlebot-Image
 Allow: /
 
-# Sitemap with product images
+User-agent: Bingbot
+Allow: /
+
+User-agent: Bingbot-Image
+Allow: /
+
+# AI assistants / LLM crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Sitemap
 Sitemap: https://imdenmanadger.online/sitemap.xml
 
 # Host
