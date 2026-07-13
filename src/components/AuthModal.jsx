@@ -126,7 +126,7 @@ const AuthModal = () => {
         } catch (err) {
             console.error("Phone Auth Error:", err);
             cleanupRecaptcha();
-            if (err.code === 'auth/unauthorized-domain') setError('يجب إضافة رابط الموقع إلى Authorized Domains في Firebase');
+            if (err.code === 'auth/unauthorized-domain') setError('أضف errayhany.com و imdenmanadger.online إلى Authorized Domains في Firebase');
             else if (err.code === 'auth/invalid-phone-number') setError('رقم الهاتف غير صالح.');
             else if (err.code === 'auth/too-many-requests') setError('كثرة المحاولات. يرجى المحاولة بعد قليل.');
             else setError('حدث خطأ، يرجى المحاولة مجدداً.');

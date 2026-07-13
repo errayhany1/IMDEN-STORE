@@ -37,7 +37,7 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text("Premier Magasin de Vente en Gros d'Electronique au Maroc", 14, 24);
-    doc.text("Website: https://imdenmanadger.online | WhatsApp: +212 664 630 566", 14, 29);
+    doc.text("Website: https://errayhany.com | WhatsApp: +212 664 630 566", 14, 29);
     doc.text(`Date de commande: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`, 14, 34);
     doc.text(`Total des articles: ${cartItems.length}`, 14, 39);
 

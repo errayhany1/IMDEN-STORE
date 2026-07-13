@@ -47,8 +47,8 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
-# Sitemap
-Sitemap: https://imdenmanadger.online/sitemap.xml
+# Sitemap (primary domain)
+Sitemap: https://errayhany.com/sitemap.xml
 
-# Host
-Host: https://imdenmanadger.online
+# Host (preferred domain for search engines)
+Host: https://errayhany.com

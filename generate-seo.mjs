@@ -10,7 +10,8 @@ const __dirname = path.dirname(__filename);
 const API_URL = 'https://app.nocodb.com';
 const API_TOKEN = 'cS08dEn6AOnGAyJKONkV_iX58WCeNN8YFDgAzVg1';
 const TABLE_ID = 'mpdn1jwettle7mj';
-const SITE_URL = 'https://imdenmanadger.online';
+const SITE_URL = 'https://errayhany.com';
+const LEGACY_SITE_URL = 'https://imdenmanadger.online';
 const BRAND = 'Errayhany Grossiste';
 const BRAND_SHORT = 'Errayhany Store';
 
@@ -253,7 +254,8 @@ async function generate() {
     شواحن، سماعات، ساعات ذكية، باوربانك، كاميرات، إضاءة، شبكات والمزيد.
     واتساب: <a href="https://wa.me/212664630566">+212 664-630-566</a> ·
     <a href="${SITE_URL}/">المتجر الرئيسي</a> ·
-    <a href="${SITE_URL}/llms.txt">llms.txt</a>
+    <a href="${SITE_URL}/llms.txt">llms.txt</a> ·
+    الموقع القديم ما زال يعمل: <a href="${LEGACY_SITE_URL}/">${LEGACY_SITE_URL.replace('https://', '')}</a>
   </p>
   <p><strong>${products.length}</strong> منتج متوفر حالياً.</p>
   <div class="grid">

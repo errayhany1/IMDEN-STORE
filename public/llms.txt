@@ -6,10 +6,11 @@
 Errayhany Store (also known as Errayhany Grossiste) is a B2B wholesale catalog for electronics and mobile accessories in Morocco. Retailers and shop owners buy chargers, earphones, smart watches, cameras, power banks, lighting, networking products, and more at wholesale prices.
 
 ## Website
-- Homepage: https://imdenmanadger.online/
-- Product catalog (crawler-friendly): https://imdenmanadger.online/products.html
-- Privacy policy: https://imdenmanadger.online/privacy-policy.html
-- Order tracking: https://imdenmanadger.online/tracking
+- Primary domain: https://errayhany.com/
+- Legacy domain (still active): https://imdenmanadger.online/
+- Product catalog (crawler-friendly): https://errayhany.com/products.html
+- Privacy policy: https://errayhany.com/privacy-policy.html
+- Order tracking: https://errayhany.com/tracking
 - WhatsApp: https://wa.me/212664630566
 - Phone: +212 664-630-566
 - City: Casablanca, Morocco
@@ -29,4 +30,5 @@ Customers browse the catalog, add products to cart, and place orders with cash o
 
 ## Brand names
 Primary: Errayhany Store / Errayhany Grossiste
-Domain: imdenmanadger.online
+Primary domain: errayhany.com
+Legacy domain: imdenmanadger.online (same store, still works)
