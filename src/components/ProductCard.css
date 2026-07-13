@@ -40,3 +40,14 @@
         transition: linear;
     }
 }
+
+/* Wishlist heart pop animation */
+@keyframes heart-pop {
+    0% { transform: scale(0.6); }
+    45% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+.animate-heart-pop {
+    animation: heart-pop 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+}

@@ -143,6 +143,8 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         categoryId = 15; // Force to Out of Stock category
                     }
                     const categoryName = categoryMapping[categoryId] || "General";
+                    const originalCategoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+                    const baseCategory = categoryMapping[originalCategoryId] || "General";
 
                     // Extract Category Image if available and not yet found for this category
                     const catImgObj = (record.Category_Image || record.category_image) && (record.Category_Image || record.category_image).length > 0
@@ -172,7 +174,8 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         image: imageUrl,
                         images: allImages,
                         category: categoryName,
-                        isAvailable: true,
+                        baseCategory,
+                        isAvailable: !isOutOfStock,
                         originalData: record
                     };
                 });

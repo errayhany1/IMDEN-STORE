@@ -3,6 +3,7 @@ import Header from './components/Header';
 import CategoryRail from './components/CategoryRail';
 import ProductGrid from './components/ProductGrid';
 import CartSidebar from './components/CartSidebar';
+import WishlistSidebar from './components/WishlistSidebar';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import FeaturedStrip from './components/FeaturedStrip';
 import NotificationPrompt from './components/NotificationPrompt';
@@ -18,7 +19,16 @@ import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp } from 'lucide-react';
 
 function App() {
-  const { darkMode, setUser, user, setAuthModalOpen } = useStore();
+  const {
+    darkMode,
+    setUser,
+    user,
+    setAuthModalOpen,
+    products,
+    restockSubscriptions,
+    removeRestockSubscription,
+    setSearchQuery,
+  } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -38,6 +48,46 @@ function App() {
 
     return () => unsubscribe();
   }, [setUser]);
+
+  // Open a product directly from a back-in-stock notification.
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const search = query.get('search');
+    if (search) setSearchQuery(search);
+  }, [setSearchQuery]);
+
+  // Reconcile saved restock alerts whenever fresh catalog data arrives.
+  useEffect(() => {
+    if (products.length === 0 || restockSubscriptions.length === 0) return;
+
+    restockSubscriptions.forEach((subscription) => {
+      const key = String(subscription.id || subscription.ref);
+      const liveProduct = products.find(
+        (item) => String(item.id || item.ref) === key
+      );
+      if (!liveProduct || liveProduct.category === 'Out of Stock' || liveProduct.isAvailable === false) return;
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('عاد المنتج للمخزون 🔔', {
+          body: `${liveProduct.name || subscription.name || 'المنتج'} متوفر الآن.`,
+          icon: '/icon-192.png',
+          tag: `restock-${key}`,
+        });
+      }
+      removeRestockSubscription(key);
+    });
+  }, [products, restockSubscriptions, removeRestockSubscription]);
+
+  // Keep the local state in sync when the service worker detects a restock.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return undefined;
+    const handleMessage = (event) => {
+      if (event.data?.type !== 'RESTOCK_AVAILABLE') return;
+      event.data.productKeys?.forEach(removeRestockSubscription);
+    };
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
+  }, [removeRestockSubscription]);
 
   // Track scroll position for scroll-to-top button
   useEffect(() => {
@@ -63,7 +113,7 @@ function App() {
     }, 60000); // 60 seconds
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -110,6 +160,7 @@ function App() {
 
       {/* Overlays */}
       <CartSidebar />
+      <WishlistSidebar />
       <FloatingWhatsApp />
       <AuthModal />
       <AboutModal />

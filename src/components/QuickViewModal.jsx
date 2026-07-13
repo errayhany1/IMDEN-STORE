@@ -1,24 +1,48 @@
 import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, ShoppingCart, Copy, Check, Minus, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, ChevronLeft, ChevronRight, ShoppingCart, Copy, Check, Minus, Plus, Heart, Bell, BellRing } from 'lucide-react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
+import RelatedProducts from './RelatedProducts';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
 const QuickViewModal = ({ isOpen, onClose, product }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
+    const wishlist = useStore((state) => state.wishlist);
+    const toggleWishlistItem = useStore((state) => state.toggleWishlistItem);
+    const restockSubscriptions = useStore((state) => state.restockSubscriptions);
+    const toggleRestockSubscription = useStore((state) => state.toggleRestockSubscription);
     const dm = darkMode;
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [copied, setCopied] = useState(false);
     const [addedToCart, setAddedToCart] = useState(false);
     const [quantity, setQuantity] = useState(1);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
-    if (!product) return null;
+    const viewedProduct = selectedProduct || product;
+    const allImages = viewedProduct?.images && viewedProduct.images.length > 0
+        ? viewedProduct.images
+        : (viewedProduct?.image ? [viewedProduct.image] : []);
+    const isOutOfStock = viewedProduct?.category === 'Out of Stock' || viewedProduct?.isAvailable === false;
+    const isWishlisted = wishlist.some((item) => item.id === viewedProduct?.id);
+    const isWatchingRestock = restockSubscriptions.some(
+        (item) => String(item.id || item.ref) === String(viewedProduct?.id || viewedProduct?.ref)
+    );
 
-    const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
-    const isOutOfStock = product.category === 'Out of Stock';
+    const handleToggleWishlist = (e) => {
+        e.stopPropagation();
+        toggleWishlistItem(viewedProduct);
+    };
+
+    const handleRestockAlert = async () => {
+        if (!isWatchingRestock && 'Notification' in window && Notification.permission === 'default') {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+        }
+        toggleRestockSubscription(viewedProduct);
+    };
 
     const handlePrev = (e) => {
         e.stopPropagation();
@@ -31,14 +55,14 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     };
 
     const handleCopyRef = () => {
-        navigator.clipboard.writeText(product.ref);
+        navigator.clipboard.writeText(viewedProduct.ref);
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
     };
 
     const handleAddToCart = () => {
         if (!isOutOfStock) {
-            addToCart(product, quantity);
+            addToCart(viewedProduct, quantity);
             setAddedToCart(true);
             setTimeout(() => {
                 setAddedToCart(false);
@@ -57,15 +81,24 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
             setCopied(false);
             setAddedToCart(false);
             setQuantity(1);
+            setSelectedProduct(null);
         }
     }, [isOpen]);
+
+    React.useEffect(() => {
+        setCurrentIndex(0);
+        setQuantity(1);
+        setAddedToCart(false);
+    }, [selectedProduct]);
+
+    if (!viewedProduct) return null;
 
     return (
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
                     {/* Backdrop */}
-                    <motion.div
+                    <Motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -74,7 +107,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                     />
 
                     {/* Modal Content */}
-                    <motion.div
+                    <Motion.div
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 100, opacity: 0 }}
@@ -105,7 +138,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                             {allImages.length > 0 ? (
                                 <img
                                     src={allImages[currentIndex]}
-                                    alt={product.name || product.ref}
+                                    alt={viewedProduct.name || viewedProduct.ref}
                                     className="w-full h-full object-contain p-4"
                                 />
                             ) : (
@@ -147,29 +180,41 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                             {/* Price and Ref */}
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <span className="text-2xl font-extrabold text-primary">{product.price} DH</span>
+                                    <span className="text-2xl font-extrabold text-primary">{viewedProduct.price} DH</span>
                                 </div>
-                                <button
-                                    onClick={handleCopyRef}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all
-                                        ${copied ? 'bg-green-500/15 text-green-500' : dm ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                                >
-                                    {copied ? <Check size={12} /> : <Copy size={12} />}
-                                    REF: {product.ref}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleToggleWishlist}
+                                        className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all active:scale-90
+                                            ${isWishlisted
+                                                ? 'bg-red-500 text-white'
+                                                : dm ? 'bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-slate-200'}`}
+                                        title={isWishlisted ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+                                    >
+                                        <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
+                                    </button>
+                                    <button
+                                        onClick={handleCopyRef}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all
+                                            ${copied ? 'bg-green-500/15 text-green-500' : dm ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                    >
+                                        {copied ? <Check size={12} /> : <Copy size={12} />}
+                                        REF: {viewedProduct.ref}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Product Name */}
-                            {product.name && product.name.trim() !== '' && product.name !== 'Unnamed Product' && (
+                            {viewedProduct.name && viewedProduct.name.trim() !== '' && viewedProduct.name !== 'Unnamed Product' && (
                                 <h3 className={`text-base font-bold leading-relaxed ${dm ? 'text-white' : 'text-slate-800'}`}>
-                                    {product.name}
+                                    {viewedProduct.name}
                                 </h3>
                             )}
 
                             {/* Category */}
-                            {product.category && product.category !== 'Out of Stock' && (
+                            {viewedProduct.category && viewedProduct.category !== 'Out of Stock' && (
                                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${dm ? 'bg-gray-800 text-gray-400' : 'bg-slate-100 text-slate-500'}`}>
-                                    {product.category}
+                                    {viewedProduct.category}
                                 </span>
                             )}
 
@@ -190,6 +235,11 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                     ))}
                                 </div>
                             )}
+
+                            <RelatedProducts
+                                product={viewedProduct}
+                                onSelect={setSelectedProduct}
+                            />
                         </div>
 
                         {/* Action Buttons */}
@@ -223,24 +273,35 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                     </button>
                                 </div>
                             )}
-                            {/* Add to Cart + WhatsApp */}
+                            {/* Add to Cart / Restock alert + WhatsApp */}
                             <div className="flex gap-2">
-                                <button
-                                    onClick={handleAddToCart}
-                                    disabled={isOutOfStock}
-                                    className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-white transition-all active:scale-[0.97] shadow-lg
-                                        ${addedToCart ? 'bg-green-500 shadow-green-500/20' 
-                                            : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none' 
-                                            : 'bg-primary hover:bg-primary/90 shadow-primary/20'}`}
-                                >
-                                    {addedToCart ? (
-                                        <><Check size={18} /> تمت الإضافة!</>
-                                    ) : (
-                                        <><ShoppingCart size={18} /> إضافة {quantity > 1 ? `(${quantity})` : ''} للسلة</>
-                                    )}
-                                </button>
+                                {isOutOfStock ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleRestockAlert}
+                                        className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.97] shadow-lg
+                                            ${isWatchingRestock
+                                                ? 'bg-amber-500 text-white shadow-amber-500/20'
+                                                : dm ? 'bg-gray-800 text-amber-400 border border-amber-500/30' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}
+                                    >
+                                        {isWatchingRestock ? <BellRing size={18} /> : <Bell size={18} />}
+                                        {isWatchingRestock ? 'سنخبرك عند توفره' : 'أعلمني عند التوفر'}
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleAddToCart}
+                                        className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-white transition-all active:scale-[0.97] shadow-lg
+                                            ${addedToCart ? 'bg-green-500 shadow-green-500/20' : 'bg-primary hover:bg-primary/90 shadow-primary/20'}`}
+                                    >
+                                        {addedToCart ? (
+                                            <><Check size={18} /> تمت الإضافة!</>
+                                        ) : (
+                                            <><ShoppingCart size={18} /> إضافة {quantity > 1 ? `(${quantity})` : ''} للسلة</>
+                                        )}
+                                    </button>
+                                )}
                                 <a
-                                    href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}
+                                    href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${viewedProduct.name || 'بدون اسم'}%0A*المرجع:* ${viewedProduct.ref}%0A*الثمن:* ${viewedProduct.price} DH`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-lg shadow-green-500/20"
@@ -249,7 +310,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                 </a>
                             </div>
                         </div>
-                    </motion.div>
+                    </Motion.div>
                 </div>
             )}
         </AnimatePresence>

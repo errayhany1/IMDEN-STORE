@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Check } from 'lucide-react';
+import { ShoppingCart, Check, Heart, Bell, BellRing } from 'lucide-react';
 import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
 import './ProductCard.css';
@@ -10,13 +10,31 @@ const ProductCard = ({ product }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
     const gridColumns = useStore((state) => state.gridColumns);
+    const wishlist = useStore((state) => state.wishlist);
+    const toggleWishlistItem = useStore((state) => state.toggleWishlistItem);
+    const restockSubscriptions = useStore((state) => state.restockSubscriptions);
+    const toggleRestockSubscription = useStore((state) => state.toggleRestockSubscription);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hoveredThumb, setHoveredThumb] = useState(null);
     const [addedToCart, setAddedToCart] = useState(false);
 
+    const isWishlisted = wishlist.some((item) => item.id === product.id);
+
     const dm = darkMode;
     const singleCol = gridColumns === 1;
-    const isOutOfStock = product.category === 'Out of Stock';
+    const isOutOfStock = product.category === 'Out of Stock' || product.isAvailable === false;
+    const isWatchingRestock = restockSubscriptions.some(
+        (item) => String(item.id || item.ref) === String(product.id || product.ref)
+    );
+
+    const handleRestockAlert = async (event) => {
+        event.stopPropagation();
+        if (!isWatchingRestock && 'Notification' in window && Notification.permission === 'default') {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+        }
+        toggleRestockSubscription(product);
+    };
 
     // Multi-image support
     const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
@@ -38,6 +56,34 @@ const ProductCard = ({ product }) => {
                 )}
 
                 <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={() => setIsModalOpen(true)}>
+
+                    {/* Wishlist Toggle */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); toggleWishlistItem(product); }}
+                        className={`absolute top-2 right-2 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm transition-all duration-300 active:scale-90
+                            ${isWishlisted
+                                ? 'bg-red-500 text-white'
+                                : dm ? 'bg-gray-900/60 text-gray-300 hover:text-red-400' : 'bg-white/85 text-slate-400 hover:text-red-500'}`}
+                        title={isWishlisted ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+                        aria-label="المفضلة"
+                    >
+                        <Heart size={15} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
+                    </button>
+
+                    {isOutOfStock && (
+                        <button
+                            type="button"
+                            onClick={handleRestockAlert}
+                            className={`absolute top-2 left-2 z-30 h-8 px-2 rounded-full flex items-center gap-1 backdrop-blur-sm shadow-sm transition-all active:scale-95 text-[10px] font-bold
+                                ${isWatchingRestock
+                                    ? 'bg-amber-500 text-white'
+                                    : dm ? 'bg-gray-900/75 text-amber-400' : 'bg-white/90 text-amber-600'}`}
+                            title={isWatchingRestock ? 'إلغاء تنبيه التوفر' : 'أعلمني عند عودة المنتج'}
+                        >
+                            {isWatchingRestock ? <BellRing size={13} /> : <Bell size={13} />}
+                            <span className="hidden sm:inline">{isWatchingRestock ? 'مفعّل' : 'أعلمني'}</span>
+                        </button>
+                    )}
 
                     {displayImage ? (
                         <img

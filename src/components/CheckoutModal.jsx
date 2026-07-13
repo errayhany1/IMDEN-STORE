@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { X, Send, User, ShoppingBag, Shield } from 'lucide-react';
+import { X, Send, User, ShoppingBag, Shield, Banknote, Landmark, UploadCloud, FileCheck2, Copy, Check } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
-import { sendToTelegram } from '../utils/telegramApi';
-import { AnimatePresence, motion } from 'framer-motion';
+import { sendToTelegram, sendTransferProofToTelegram } from '../utils/telegramApi';
+import { AnimatePresence, motion as Motion } from 'framer-motion';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user, setAuthModalOpen } = useStore();
@@ -20,11 +20,55 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [showGate, setShowGate] = useState(false); // Changed: do not show gate initially
     const [orderCompleted, setOrderCompleted] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
+    const [transferReference, setTransferReference] = useState('');
+    const [transferProof, setTransferProof] = useState(null);
+    const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
+
+    const bankDetails = {
+        bankName: import.meta.env.VITE_BANK_NAME || '',
+        accountHolder: import.meta.env.VITE_BANK_ACCOUNT_HOLDER || '',
+        rib: import.meta.env.VITE_BANK_RIB || '',
+        iban: import.meta.env.VITE_BANK_IBAN || '',
+    };
+    const bankTransferConfigured = Boolean(bankDetails.bankName && bankDetails.accountHolder && bankDetails.rib);
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleProofChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            setErrorMessage('صيغة الإثبات غير مدعومة. استخدم JPG أو PNG أو WEBP أو PDF.');
+            event.target.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            setErrorMessage('حجم ملف الإثبات يجب ألا يتجاوز 10 MB.');
+            event.target.value = '';
+            return;
+        }
+
+        setTransferProof(file);
+        setErrorMessage('');
+    };
+
+    const copyBankDetails = async () => {
+        const details = [
+            bankDetails.bankName,
+            bankDetails.accountHolder,
+            `RIB: ${bankDetails.rib}`,
+            bankDetails.iban ? `IBAN: ${bankDetails.iban}` : '',
+        ].filter(Boolean).join('\n');
+        await navigator.clipboard.writeText(details);
+        setBankDetailsCopied(true);
+        setTimeout(() => setBankDetailsCopied(false), 1500);
     };
 
     const handleSubmit = async (e) => {
@@ -42,6 +86,21 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             return;
         }
 
+        if (paymentMethod === 'bank_transfer') {
+            if (!bankTransferConfigured) {
+                setErrorMessage('بيانات الحساب البنكي غير مكتملة حالياً. اختر الدفع عند الاستلام أو تواصل معنا.');
+                return;
+            }
+            if (transferReference.trim().length < 4) {
+                setErrorMessage('المرجو إدخال مرجع التحويل البنكي.');
+                return;
+            }
+            if (!transferProof) {
+                setErrorMessage('المرجو إرفاق صورة أو ملف إثبات التحويل.');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         setErrorMessage('');
         setSuccessMessage('');
@@ -51,13 +110,17 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             setCustomerInfo(formData);
 
             // 1. Format the items and address for the Notes column
-            let notesContent = `📍 **العنوان:**\n${formData.address}\n\n📦 **المنتجات المطلوبة:**\n`;
+            const paymentLabel = paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'الدفع عند الاستلام';
+            let notesContent = `📍 **العنوان:**\n${formData.address}\n\n💳 **طريقة الدفع:** ${paymentLabel}\n`;
+            if (paymentMethod === 'bank_transfer') {
+                notesContent += `🔖 **مرجع التحويل:** ${transferReference.trim()}\n`;
+            }
+            notesContent += `\n📦 **المنتجات المطلوبة:**\n`;
             cart.forEach(item => {
                 notesContent += `- ${item.name} (Ref: ${item.ref}) | الكمية: ${item.quantity} | السعر: ${item.price} DH\n`;
             });
 
-            // Prepare Order Metadata for Admin Dashboard
-            const orderMetaData = cart.map(item => ({
+            const orderMetadata = cart.map(item => ({
                 id: item.id || item.Id,
                 name: item.name || item.Title,
                 ref: item.ref || item.SKU,
@@ -76,7 +139,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     'Customer Name': formData.name,
                     'Customer Phone': formData.phone,
                     'Sale Price': subtotal,
+                    'Delivery Address': formData.address,
+                    'Order Metadata': JSON.stringify(orderMetadata),
                     'Notes': notesContent,
+                    // Keep the existing NocoDB status vocabulary; payment verification is recorded in Notes.
                     'Status': 'Pending'
                 };
                 console.log('[CheckoutModal] Order payload:', orderBody);
@@ -109,10 +175,12 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     console.log('[CheckoutModal] Retry response status:', retryResponse.status, 'body:', retryText);
                     if (!retryResponse.ok) {
                         console.error("Retry also failed:", retryResponse.status, retryText);
+                        throw new Error('تعذر حفظ الطلب في قاعدة البيانات.');
                     }
                 }
             } catch (dbError) {
                 console.error("Error saving to database:", dbError);
+                throw new Error('تعذر تسجيل الطلب. يرجى المحاولة مرة أخرى.');
             }
 
             // 3. Generate PDF file and send via Telegram
@@ -122,6 +190,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 `👤 **الاسم:** ${formData.name}\n` +
                 `📞 **رقم الهاتف:** ${formData.phone}\n` +
                 `📍 **العنوان:** ${formData.address}\n\n` +
+                `💳 **طريقة الدفع:** ${paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'الدفع عند الاستلام'}\n` +
+                (paymentMethod === 'bank_transfer' ? `🔖 **مرجع التحويل:** ${transferReference.trim()}\n` : '') +
                 `📦 **عدد المنتجات:** ${cart.length}\n` +
                 `💰 **المجموع الكلي:** ${subtotal.toFixed(2)} DH\n\n` +
                 `📄 _مرفق مع هذه الرسالة ملف PDF يحتوي على تفاصيل المنتجات._\n` +
@@ -129,7 +199,18 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
             await sendToTelegram(pdfFile, caption);
 
-            setSuccessMessage('تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.');
+            if (paymentMethod === 'bank_transfer' && transferProof) {
+                await sendTransferProofToTelegram(
+                    transferProof,
+                    `🏦 إثبات تحويل بنكي\n👤 ${formData.name}\n📞 ${formData.phone}\n🔖 المرجع: ${transferReference.trim()}\n💰 المبلغ: ${subtotal.toFixed(2)} DH`
+                );
+            }
+
+            setSuccessMessage(
+                paymentMethod === 'bank_transfer'
+                    ? 'تم استلام طلبك وإثبات التحويل. سنراجعه ونؤكد الدفع قريباً.'
+                    : 'تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.'
+            );
             setCustomerInfo(formData); // Save phone number for Account Page
             clearCart();
             setOrderCompleted(true);
@@ -162,7 +243,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     return (
         <AnimatePresence>
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -170,11 +251,11 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     onClick={onClose}
                 />
 
-                <motion.div
+                <Motion.div
                     initial={{ scale: 0.95, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                    className={`relative w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 z-10 overflow-hidden flex flex-col ${dm ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}
+                    className={`relative w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl p-6 sm:p-8 z-10 flex flex-col ${dm ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}
                    
                 >
                     <button
@@ -293,6 +374,108 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                                 ></textarea>
                             </div>
 
+                            {/* Payment method */}
+                            <fieldset className="space-y-2.5">
+                                <legend className={`block text-sm font-semibold mb-1.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    طريقة الدفع <span className="text-red-500">*</span>
+                                </legend>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPaymentMethod('cash_on_delivery'); setErrorMessage(''); }}
+                                        className={`p-3 rounded-xl border text-right transition-all
+                                            ${paymentMethod === 'cash_on_delivery'
+                                                ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                                                : dm ? 'border-gray-700 bg-gray-900 hover:border-gray-600' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
+                                    >
+                                        <Banknote size={20} className={paymentMethod === 'cash_on_delivery' ? 'text-primary' : 'text-slate-400'} />
+                                        <p className={`text-xs font-bold mt-2 ${dm ? 'text-white' : 'text-slate-800'}`}>عند الاستلام</p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5">ادفع عند وصول الطلب</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        disabled={!bankTransferConfigured}
+                                        onClick={() => { setPaymentMethod('bank_transfer'); setErrorMessage(''); }}
+                                        className={`p-3 rounded-xl border text-right transition-all
+                                            ${paymentMethod === 'bank_transfer'
+                                                ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20'
+                                                : dm ? 'border-gray-700 bg-gray-900 hover:border-gray-600' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}
+                                            ${!bankTransferConfigured ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        <Landmark size={20} className={paymentMethod === 'bank_transfer' ? 'text-emerald-500' : 'text-slate-400'} />
+                                        <p className={`text-xs font-bold mt-2 ${dm ? 'text-white' : 'text-slate-800'}`}>تحويل بنكي</p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5">
+                                            {bankTransferConfigured ? 'أرفق إثبات التحويل' : 'يحتاج إعداد بيانات البنك'}
+                                        </p>
+                                    </button>
+                                </div>
+                            </fieldset>
+
+                            {paymentMethod === 'bank_transfer' && bankTransferConfigured && (
+                                <div className={`rounded-xl border p-3.5 space-y-3 ${dm ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-emerald-200 bg-emerald-50/70'}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className={`text-xs font-bold ${dm ? 'text-emerald-300' : 'text-emerald-800'}`}>{bankDetails.bankName}</p>
+                                            <p className={`text-[11px] mt-1 ${dm ? 'text-gray-300' : 'text-slate-600'}`}>{bankDetails.accountHolder}</p>
+                                            <p dir="ltr" className={`font-mono text-[11px] mt-1 text-left ${dm ? 'text-gray-300' : 'text-slate-700'}`}>RIB: {bankDetails.rib}</p>
+                                            {bankDetails.iban && (
+                                                <p dir="ltr" className={`font-mono text-[10px] mt-0.5 text-left break-all ${dm ? 'text-gray-400' : 'text-slate-500'}`}>IBAN: {bankDetails.iban}</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={copyBankDetails}
+                                            className={`shrink-0 p-2 rounded-lg transition-colors ${dm ? 'bg-gray-800 text-gray-300' : 'bg-white text-slate-500 shadow-sm'}`}
+                                            title="نسخ بيانات الحساب"
+                                        >
+                                            {bankDetailsCopied ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <label className={`block text-xs font-semibold mb-1.5 ${dm ? 'text-gray-300' : 'text-slate-700'}`}>
+                                            مرجع التحويل <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={transferReference}
+                                            onChange={(event) => setTransferReference(event.target.value)}
+                                            placeholder="مثال: TRX-123456"
+                                            dir="ltr"
+                                            className={`w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 ${dm ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-emerald-200 text-slate-900'}`}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+
+                                    <label className={`block rounded-xl border-2 border-dashed p-3 cursor-pointer transition-colors text-center
+                                        ${transferProof
+                                            ? 'border-emerald-500 bg-emerald-500/10'
+                                            : dm ? 'border-gray-600 hover:border-emerald-500' : 'border-emerald-200 hover:border-emerald-400 bg-white'}`}
+                                    >
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                                            onChange={handleProofChange}
+                                            className="hidden"
+                                            disabled={isSubmitting}
+                                        />
+                                        {transferProof ? (
+                                            <span className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600">
+                                                <FileCheck2 size={18} />
+                                                <span className="truncate max-w-[240px]">{transferProof.name}</span>
+                                            </span>
+                                        ) : (
+                                            <span className={`flex flex-col items-center gap-1.5 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                                <UploadCloud size={21} />
+                                                <span className="text-xs font-semibold">ارفع إثبات التحويل</span>
+                                                <span className="text-[9px]">JPG, PNG, WEBP أو PDF — حتى 10 MB</span>
+                                            </span>
+                                        )}
+                                    </label>
+                                </div>
+                            )}
+
                             {errorMessage && (
                                 <p className="text-red-500 text-sm font-medium">{errorMessage}</p>
                             )}
@@ -318,7 +501,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     )}
                     </>
                     )}
-                </motion.div>
+                </Motion.div>
             </div>
         </AnimatePresence>
     );

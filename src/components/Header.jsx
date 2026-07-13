@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, MessageSquare, Truck, ShoppingBag } from 'lucide-react';
+import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart } from 'lucide-react';
 import useStore from '../store/useStore';
-import DarkModeToggle from './DarkModeToggle';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
-    const { cart, toggleCart, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo } = useStore();
+    const { cart, toggleCart, wishlist, toggleWishlistSidebar, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+    const wishlistCount = wishlist.length;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [editingInfo, setEditingInfo] = useState(false);
     const [tempInfo, setTempInfo] = useState({ name: '', phone: '', address: '' });
@@ -124,6 +124,18 @@ const Header = () => {
                             </button>
                         )}
 
+                        {/* Wishlist */}
+                        <div className="relative cursor-pointer" onClick={toggleWishlistSidebar}>
+                            <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100'}`} aria-label="المفضلة">
+                                <Heart size={20} />
+                            </button>
+                            {wishlistCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                                    {wishlistCount}
+                                </span>
+                            )}
+                        </div>
+
                         {/* Cart */}
                         <div className="relative cursor-pointer" onClick={toggleCart}>
                             <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-primary hover:bg-slate-100'}`}>
@@ -161,7 +173,7 @@ const Header = () => {
                 {sidebarOpen && (
                     <>
                         {/* Backdrop */}
-                        <motion.div
+                        <Motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -169,7 +181,7 @@ const Header = () => {
                             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
                         />
                         {/* Drawer */}
-                        <motion.div
+                        <Motion.div
                             initial={{ x: isRtl ? '100%' : '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: isRtl ? '100%' : '-100%' }}
@@ -295,7 +307,7 @@ const Header = () => {
                                         
                                         <AnimatePresence>
                                             {langDropdownOpen && (
-                                                <motion.div
+                                                <Motion.div
                                                     initial={{ opacity: 0, y: -10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
@@ -319,7 +331,7 @@ const Header = () => {
                                                             {lang.label}
                                                         </button>
                                                     ))}
-                                                </motion.div>
+                                                </Motion.div>
                                             )}
                                         </AnimatePresence>
                                     </div>
@@ -393,7 +405,7 @@ const Header = () => {
                                     </button>
                                 </div>
                             )}
-                        </motion.div>
+                        </Motion.div>
                     </>
                 )}
             </AnimatePresence>

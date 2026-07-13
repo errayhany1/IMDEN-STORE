@@ -1,58 +1,59 @@
 import { useEffect, useState } from 'react';
+import useStore from '../store/useStore';
 
 export function useNotifications() {
+    const restockSubscriptions = useStore((state) => state.restockSubscriptions);
+    const notificationSupported = (
+        typeof navigator !== 'undefined'
+        && 'serviceWorker' in navigator
+        && typeof window !== 'undefined'
+        && 'Notification' in window
+    );
     const [permission, setPermission] = useState(
-        typeof window !== 'undefined' && 'Notification' in window
+        notificationSupported
             ? Notification.permission
             : 'denied'
     );
-    const [supported, setSupported] = useState(false);
-
-    // Schedule hourly checks via SW postMessage
-    const scheduleHourlyCheck = (reg) => {
-        const trigger = () => {
-            if (reg.active) {
-                reg.active.postMessage({
-                    type: 'CHECK_NEW_PRODUCTS',
-                    apiUrl: import.meta.env.VITE_NOCODB_URL,
-                    apiToken: import.meta.env.VITE_NOCODB_API_TOKEN,
-                    tableId: import.meta.env.VITE_NOCODB_TABLE_PRODUCTS,
-                });
-            }
-        };
-
-        // Run immediately when SW is ready
-        trigger();
-
-        // Schedule at the top of each subsequent hour
-        const now = Date.now();
-        const msUntilNextHour = 3600000 - (now % 3600000);
-        setTimeout(() => {
-            trigger();
-            setInterval(trigger, 3600000);
-        }, msUntilNextHour);
-    };
+    const supported = notificationSupported;
 
     useEffect(() => {
-        if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
-        setSupported(true);
+        if (!notificationSupported) return;
 
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => {
-                // Wait for SW to be active
-                if (reg.active) {
-                    scheduleHourlyCheck(reg);
-                } else {
-                    reg.addEventListener('updatefound', () => {
-                        reg.installing?.addEventListener('statechange', () => {
-                            if (reg.active) scheduleHourlyCheck(reg);
-                        });
-                    });
-                }
+        let hourlyTimer;
+        let initialTimer;
+        let cancelled = false;
+
+        const subscriptions = restockSubscriptions.map(({ id, ref, name }) => ({ id, ref, name }));
+        const trigger = (registration) => {
+            const worker = registration.active || registration.waiting;
+            worker?.postMessage({
+                type: 'CHECK_CATALOG_UPDATES',
+                apiUrl: import.meta.env.VITE_NOCODB_URL,
+                apiToken: import.meta.env.VITE_NOCODB_API_TOKEN,
+                tableId: import.meta.env.VITE_NOCODB_TABLE_PRODUCTS,
+                restockSubscriptions: subscriptions,
+            });
+        };
+
+        navigator.serviceWorker.ready
+            .then((registration) => {
+                if (cancelled) return;
+
+                trigger(registration);
+                const msUntilNextHour = 3600000 - (Date.now() % 3600000);
+                initialTimer = window.setTimeout(() => {
+                    trigger(registration);
+                    hourlyTimer = window.setInterval(() => trigger(registration), 3600000);
+                }, msUntilNextHour);
             })
-            .catch(err => console.error('[SW] Registration failed:', err));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+            .catch(err => console.error('[SW] Not ready:', err));
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(initialTimer);
+            window.clearInterval(hourlyTimer);
+        };
+    }, [notificationSupported, restockSubscriptions]);
 
     const requestPermission = async () => {
         if (!supported) return 'denied';

@@ -6,6 +6,9 @@ const useStore = create(
         (set) => ({
             products: [],
             cart: [],
+            wishlist: [],
+            restockSubscriptions: [],
+            isWishlistOpen: false,
             customerInfo: { name: '', phone: '', address: '' },
             user: null, // Firebase user object
             isAuthModalOpen: false,
@@ -123,11 +126,82 @@ const useStore = create(
             },
 
             clearCart: () => set({ cart: [] }),
+
+            // ── Wishlist ──
+            toggleWishlistSidebar: () => set((state) => ({ isWishlistOpen: !state.isWishlistOpen })),
+
+            toggleWishlistItem: (product) => {
+                set((state) => {
+                    const alreadySaved = state.wishlist.some((item) => item.id === product.id);
+                    return {
+                        wishlist: alreadySaved
+                            ? state.wishlist.filter((item) => item.id !== product.id)
+                            : [...state.wishlist, product],
+                    };
+                });
+            },
+
+            removeFromWishlist: (productId) => {
+                set((state) => ({
+                    wishlist: state.wishlist.filter((item) => item.id !== productId),
+                }));
+            },
+
+            clearWishlist: () => set({ wishlist: [] }),
+
+            moveWishlistItemToCart: (product) => {
+                set((state) => {
+                    const existingCartItem = state.cart.find((item) => item.id === product.id);
+                    const nextCart = existingCartItem
+                        ? state.cart.map((item) =>
+                            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                        )
+                        : [...state.cart, { ...product, quantity: 1 }];
+
+                    return {
+                        cart: nextCart,
+                        wishlist: state.wishlist.filter((item) => item.id !== product.id),
+                    };
+                });
+            },
+
+            // ── Back-in-stock alerts ──
+            toggleRestockSubscription: (product) => {
+                set((state) => {
+                    const key = String(product.id || product.ref);
+                    const isSubscribed = state.restockSubscriptions.some(
+                        (item) => String(item.id || item.ref) === key
+                    );
+
+                    return {
+                        restockSubscriptions: isSubscribed
+                            ? state.restockSubscriptions.filter(
+                                (item) => String(item.id || item.ref) !== key
+                            )
+                            : [...state.restockSubscriptions, {
+                                id: product.id,
+                                ref: product.ref,
+                                name: product.name,
+                                image: product.image,
+                            }],
+                    };
+                });
+            },
+
+            removeRestockSubscription: (productId) => {
+                set((state) => ({
+                    restockSubscriptions: state.restockSubscriptions.filter(
+                        (item) => String(item.id || item.ref) !== String(productId)
+                    ),
+                }));
+            },
         }),
         {
             name: 'wholesale-store-storage-v3', // v3: no longer persisting products/categoryImages (S3 signed URLs expire)
             partialize: (state) => ({
                 cart: state.cart,
+                wishlist: state.wishlist,
+                restockSubscriptions: state.restockSubscriptions,
                 customerInfo: state.customerInfo,
                 darkMode: state.darkMode,
                 // NOTE: products and categoryImages are NOT persisted because NocoDB
