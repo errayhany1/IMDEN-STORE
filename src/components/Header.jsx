@@ -49,7 +49,7 @@ const Header = () => {
     return (
         <>
             <header id="page-top" className={`sticky top-0 z-40 w-full border-b shadow-sm transition-colors duration-300
-                ${dm ? 'bg-[#012565] border-[#011b4d]' : 'bg-white border-gray-200'}`}>
+                ${dm ? 'bg-[#142038] border-[#0d172b]' : 'bg-white border-gray-200'}`}>
 
                 {/* ─── Main Bar ─── */}
                 <div className="max-w-7xl mx-auto px-3 h-12 flex items-center justify-between gap-2">
@@ -156,7 +156,7 @@ const Header = () => {
                 </div>
 
                 {/* ─── Mobile Search Bar (compact) ─── */}
-                <div className={`md:hidden px-3 pb-2 ${dm ? 'bg-[#012565]' : 'bg-white'}`}>
+                <div className={`md:hidden px-3 pb-2 ${dm ? 'bg-[#142038]' : 'bg-white'}`}>
                     <div className="relative">
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
                             <Search size={16} />
