@@ -4,6 +4,35 @@ const API_URL = import.meta.env.VITE_NOCODB_URL;
 const API_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const TABLE_ID = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
 
+let staticCatalogPromise = null;
+let localImageManifestPromise = null;
+
+const fetchJsonFallback = async (url, fallback) => {
+    try {
+        const response = await fetch(url);
+        return response.ok ? await response.json() : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+const getStaticCatalog = () => {
+    if (!staticCatalogPromise) {
+        staticCatalogPromise = fetchJsonFallback('/catalog-cache.json', null);
+    }
+    return staticCatalogPromise;
+};
+
+const getLocalImageManifest = () => {
+    if (!localImageManifestPromise) {
+        localImageManifestPromise = fetchJsonFallback(
+            '/product-images-manifest.json',
+            { products: {} }
+        );
+    }
+    return localImageManifestPromise;
+};
+
 // Helper: delay between requests to avoid 429 rate limiting
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -58,7 +87,19 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
         return result;
     }
 
-    // 3. Otherwise, start a new fetch operation
+    // 3. Show the same-origin build snapshot immediately. NocoDB is refreshed
+    // in the background, so first-time visitors do not wait before seeing images.
+    const staticCatalog = await getStaticCatalog();
+    const hasStaticCatalog = Boolean(staticCatalog?.products?.length);
+    if (hasStaticCatalog && onChunk) {
+        onChunk(
+            staticCatalog.products,
+            staticCatalog.categoryImages || {},
+            { replace: true, source: 'static-cache' }
+        );
+    }
+
+    // 4. Refresh from NocoDB in the background
     const performFetch = async () => {
         try {
             let allRecords = [];
@@ -66,6 +107,8 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
             let limit = 100;
             let hasMore = true;
             let collectedCategoryImages = {};
+            const localImageManifest = await getLocalImageManifest();
+            const localImagesByProduct = localImageManifest.products || {};
 
             // Category Mapping
             const categoryMapping = {
@@ -114,25 +157,33 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                 // Map fields and extract category images
                 const mappedChunk = visibleRecords.map(record => {
                     const isOutOfStock = record.POSTEBL === 'NO POSTEBL';
+                    const recordId = String(record.Id || record.id || '');
+                    const optimizedImages = localImagesByProduct[recordId]?.images || [];
                     
                     const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
                     let imageUrl = null;
+                    let originalImageUrl = null;
                     if (imageObj) {
-                        // Prefer permanent url when present; signedUrl expires (hurts image SEO/cache)
-                        const rawUrl = imageObj.url || imageObj.signedUrl;
+                        // NocoDB's permanent S3 path is private (403). Use the
+                        // fresh signed URL only as a fallback when no local image exists.
+                        const rawUrl = imageObj.signedUrl || imageObj.url;
                         if (rawUrl) {
-                            imageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+                            originalImageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+                            imageUrl = optimizedImages[0]?.full || originalImageUrl;
                         }
                     }
 
                     // Extract all images from Image1, Image2, Image3 columns
                     const allImages = [];
+                    let imageIndex = 0;
                     ['Image1', 'Image2', 'Image3'].forEach(col => {
                         if (record[col] && record[col].length > 0) {
                             record[col].forEach(img => {
-                                const url = img.url || img.signedUrl;
+                                const url = img.signedUrl || img.url;
                                 if (url) {
-                                    allImages.push(url.startsWith('http') ? url : `${API_URL}/${url}`);
+                                    const originalUrl = url.startsWith('http') ? url : `${API_URL}/${url}`;
+                                    allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
+                                    imageIndex++;
                                 }
                             });
                         }
@@ -173,7 +224,9 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         name: fallbackName,
                         price: record.price || 0,
                         image: imageUrl,
+                        thumbnail: optimizedImages[0]?.thumbnail || imageUrl,
                         images: allImages,
+                        originalImage: originalImageUrl,
                         category: categoryName,
                         baseCategory,
                         isAvailable: !isOutOfStock,
@@ -185,8 +238,9 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                 cache.products = [...cache.products, ...mappedChunk];
                 Object.assign(cache.categoryImages, collectedCategoryImages);
 
-                // Send chunk to UI immediately
-                if (onChunk) {
+                // When a static catalog was shown, avoid mixing duplicate/stale
+                // chunks. Replace it once the complete live catalog is ready.
+                if (onChunk && !hasStaticCatalog) {
                     onChunk(mappedChunk, collectedCategoryImages);
                 }
 
@@ -201,6 +255,13 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
 
             cache.isFetched = true;
             cache.fetchPromise = null;
+            if (onChunk && hasStaticCatalog) {
+                onChunk(
+                    allRecords,
+                    collectedCategoryImages,
+                    { replace: true, source: 'live' }
+                );
+            }
             return allRecords;
 
         } catch (error) {

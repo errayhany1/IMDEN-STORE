@@ -1,6 +1,30 @@
+/* global clients */
 import { precacheAndRoute } from 'workbox-precaching';
+import { CacheFirst } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
+import { registerRoute } from 'workbox-routing';
 
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Product images are self-hosted and content-hashed. Cache only images the
+// visitor actually views, then reuse them instantly on later visits.
+registerRoute(
+    ({ url, request }) => (
+        request.destination === 'image'
+        && url.origin === self.location.origin
+        && url.pathname.startsWith('/product-images/')
+    ),
+    new CacheFirst({
+        cacheName: 'product-images-v1',
+        plugins: [
+            new ExpirationPlugin({
+                maxEntries: 1200,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+                purgeOnQuotaError: true
+            })
+        ]
+    })
+);
 
 // Service Worker for WholesaleCatalog
 // Handles: push notifications + periodic new-product checks
@@ -9,7 +33,7 @@ const CACHE_NAME = 'wsc-v1';
 const SEEN_PRODUCTS_KEY = 'seen_product_ids';
 
 // ── Install & Activate ──────────────────────────────────────────
-self.addEventListener('install', event => {
+self.addEventListener('install', () => {
     self.skipWaiting();
 });
 
@@ -23,8 +47,8 @@ self.addEventListener('push', event => {
     const title = data.title || 'IMDEN TECHNOLOGY';
     const options = {
         body: data.body || 'تحقق من المنتجات الجديدة!',
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        icon: '/app-icon-192.png',
+        badge: '/app-icon-192.png',
         dir: 'rtl',
         lang: 'ar',
         tag: data.tag || 'new-products',
@@ -89,8 +113,8 @@ const checkNewProducts = async ({ apiUrl, apiToken, tableId }) => {
         body: count === 1
             ? `منتج جديد: ${unseen[0].Title || 'منتج جديد'}`
             : `${count} منتجات جديدة وصلت اليوم! تحقق الآن.`,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        icon: '/app-icon-192.png',
+        badge: '/app-icon-192.png',
         dir: 'rtl',
         lang: 'ar',
         tag: 'new-products',
@@ -142,8 +166,8 @@ const checkRestocks = async (config) => {
         const productName = record.Title || subscription.name || record.SKU || 'المنتج';
         await self.registration.showNotification('عاد المنتج للمخزون 🔔', {
             body: `${productName} متوفر الآن. اطلبه قبل نفاد الكمية.`,
-            icon: '/icon-192.png',
-            badge: '/icon-192.png',
+            icon: '/app-icon-192.png',
+            badge: '/app-icon-192.png',
             dir: 'rtl',
             lang: 'ar',
             tag: `restock-${subscription.id || subscription.ref}`,

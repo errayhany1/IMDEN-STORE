@@ -6,7 +6,7 @@ import './ProductCard.css';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, priority = false }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
     const gridColumns = useStore((state) => state.gridColumns);
@@ -38,7 +38,9 @@ const ProductCard = ({ product }) => {
 
     // Multi-image support
     const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
-    const displayImage = hoveredThumb !== null ? allImages[hoveredThumb] : (product.image || null);
+    const displayImage = hoveredThumb !== null
+        ? allImages[hoveredThumb]
+        : (product.thumbnail || product.image || null);
     const extraThumbs = allImages.length > 1 ? allImages.slice(1, 3) : []; // max 2 thumbnails
 
     return (
@@ -91,10 +93,16 @@ const ProductCard = ({ product }) => {
                             alt={`${product.name || product.ref} - ${product.price} DH - إلكترونيات بالجملة Errayhany Store`}
                             title={product.name || product.ref}
                             className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
-                            loading="lazy"
+                            loading={priority ? 'eager' : 'lazy'}
+                            fetchPriority={priority ? 'high' : 'auto'}
+                            decoding="async"
                             width="300"
                             height="400"
                             onError={(e) => {
+                                if (product.originalImage && e.target.src !== product.originalImage) {
+                                    e.target.src = product.originalImage;
+                                    return;
+                                }
                                 e.target.onerror = null;
                                 e.target.style.display = 'none';
                                 e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-sm ${dm ? 'text-gray-500 bg-gray-900' : 'text-slate-400 bg-slate-100'}"><span>⏳ جاري التحديث...</span></div>`;

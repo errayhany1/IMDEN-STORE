@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .env
+
+# Generated at build time and served directly by Easypanel
+public/product-images/
+public/product-images-manifest.json
+public/catalog-cache.json

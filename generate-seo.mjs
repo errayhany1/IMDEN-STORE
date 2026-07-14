@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { createHash } from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,12 +16,21 @@ const SITE_URL = 'https://errayhany.com';
 const LEGACY_SITE_URL = 'https://imdenmanadger.online';
 const BRAND = 'Errayhany Grossiste';
 const BRAND_SHORT = 'Errayhany Store';
+const PRODUCT_IMAGES_DIR = path.join(__dirname, 'public', 'product-images');
+const IMAGE_CONCURRENCY = 5;
 
 const categoryMapping = {
     1: 'شواحن', 2: 'سماعات', 3: 'ساعات ذكية', 4: 'ألعاب',
     5: 'ماوس وكيبورد', 6: 'تخزين', 7: 'شواحن حواسيب', 8: 'ستاندات',
     9: 'إضاءة', 10: 'كاميرات', 11: 'شبكات', 12: 'عام',
     13: 'ميكروفونات', 14: 'بطاريات', 15: 'نفد من المخزون'
+};
+
+const categoryMappingEn = {
+    1: 'Chargers', 2: 'Audio', 3: 'Smart Watches', 4: 'Gaming',
+    5: 'Mouse & Keyboard', 6: 'Storage', 7: 'Laptop Chargers', 8: 'Stands',
+    9: 'Lighting', 10: 'Cameras', 11: 'Network', 12: 'General',
+    13: 'Microphones', 14: 'Batteries & Power Banks', 15: 'Out of Stock'
 };
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -76,9 +87,158 @@ async function fetchAllProducts() {
 function getImageUrl(record) {
     const img = record.Image1 && record.Image1[0];
     if (!img) return null;
-    const url = img.url || img.signedUrl;
+    const url = img.signedUrl || img.url;
     if (!url) return null;
     return url.startsWith('http') ? url : `${API_URL}/${url}`;
+}
+
+function getRecordImageAttachments(record) {
+    const images = [];
+    ['Image1', 'Image2', 'Image3'].forEach(column => {
+        (record[column] || []).forEach(image => {
+            const sourceUrl = image.signedUrl || image.url;
+            if (!sourceUrl) return;
+            const resolvedSource = sourceUrl.startsWith('http')
+                ? sourceUrl
+                : `${API_URL}/${sourceUrl}`;
+            if (images.some(item => item.sourceUrl === resolvedSource)) return;
+            images.push({
+                sourceUrl: resolvedSource,
+                cacheKey: image.id || image.url || resolvedSource
+            });
+        });
+    });
+    return images;
+}
+
+function getRecordImages(record) {
+    return getRecordImageAttachments(record).map(image => image.sourceUrl);
+}
+
+function getProductId(record) {
+    return String(record.Id || record.id || record.SKU || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+async function optimizeOneImage(sourceUrl, cacheKey, productId, index) {
+    const sourceHash = createHash('sha1').update(`v1:${cacheKey}`).digest('hex').slice(0, 10);
+    const baseName = `${productId}-${index + 1}-${sourceHash}`;
+    const thumbnailFile = `${baseName}-640.webp`;
+    const fullFile = `${baseName}-1600.webp`;
+    const thumbnailPath = path.join(PRODUCT_IMAGES_DIR, thumbnailFile);
+    const fullPath = path.join(PRODUCT_IMAGES_DIR, fullFile);
+
+    if (fs.existsSync(thumbnailPath) && fs.existsSync(fullPath)) {
+        return {
+            thumbnail: `/product-images/${thumbnailFile}`,
+            full: `/product-images/${fullFile}`,
+            original: sourceUrl
+        };
+    }
+
+    const response = await axios.get(sourceUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000,
+        maxContentLength: 25 * 1024 * 1024,
+        maxBodyLength: 25 * 1024 * 1024
+    });
+    const buffer = Buffer.from(response.data);
+
+    await Promise.all([
+        sharp(buffer, { failOn: 'none' })
+            .rotate()
+            .resize({ width: 640, height: 800, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 88, effort: 4, smartSubsample: true })
+            .toFile(thumbnailPath),
+        sharp(buffer, { failOn: 'none' })
+            .rotate()
+            .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 92, effort: 4, smartSubsample: true })
+            .toFile(fullPath)
+    ]);
+
+    return {
+        thumbnail: `/product-images/${thumbnailFile}`,
+        full: `/product-images/${fullFile}`,
+        original: sourceUrl
+    };
+}
+
+async function optimizeProductImages(products) {
+    fs.mkdirSync(PRODUCT_IMAGES_DIR, { recursive: true });
+
+    const jobs = products.flatMap(product => {
+        const productId = getProductId(product);
+        return getRecordImageAttachments(product).map((image, index) => ({
+            product,
+            productId,
+            sourceUrl: image.sourceUrl,
+            cacheKey: image.cacheKey,
+            index
+        }));
+    });
+
+    const manifest = {};
+    let nextJob = 0;
+    let completed = 0;
+    let failed = 0;
+
+    const worker = async () => {
+        while (nextJob < jobs.length) {
+            const job = jobs[nextJob++];
+            try {
+                const optimized = await optimizeOneImage(
+                    job.sourceUrl,
+                    job.cacheKey,
+                    job.productId,
+                    job.index
+                );
+                const recordId = String(job.product.Id || job.product.id);
+                if (!manifest[recordId]) manifest[recordId] = { images: [] };
+                manifest[recordId].images[job.index] = optimized;
+                completed++;
+                if (completed % 50 === 0) {
+                    console.log(`🖼️  Optimized ${completed}/${jobs.length} product images`);
+                }
+            } catch (error) {
+                failed++;
+                console.warn(
+                    `[Images] Skipped product ${job.productId}, image ${job.index + 1}: ${error.message}`
+                );
+            }
+        }
+    };
+
+    await Promise.all(
+        Array.from(
+            { length: Math.min(IMAGE_CONCURRENCY, Math.max(jobs.length, 1)) },
+            () => worker()
+        )
+    );
+
+    Object.values(manifest).forEach(entry => {
+        entry.images = entry.images.filter(Boolean);
+    });
+
+    const expectedFiles = new Set(
+        Object.values(manifest).flatMap(entry => (
+            entry.images.flatMap(image => [
+                path.basename(image.thumbnail),
+                path.basename(image.full)
+            ])
+        ))
+    );
+    fs.readdirSync(PRODUCT_IMAGES_DIR).forEach(file => {
+        if (!expectedFiles.has(file)) {
+            fs.rmSync(path.join(PRODUCT_IMAGES_DIR, file), { force: true });
+        }
+    });
+
+    fs.writeFileSync(
+        path.join(__dirname, 'public', 'product-images-manifest.json'),
+        JSON.stringify({ generatedAt: new Date().toISOString(), products: manifest })
+    );
+    console.log(`🖼️  Self-hosted images ready: ${completed} optimized, ${failed} skipped`);
+    return manifest;
 }
 
 function escapeXml(str) {
@@ -102,6 +262,67 @@ async function generate() {
     console.log('🔍 Fetching products from NocoDB...');
     const products = await fetchAllProducts();
     console.log(`✅ Found ${products.length} products`);
+
+    console.log('🖼️  Downloading and optimizing product images for Easypanel...');
+    const imageManifest = await optimizeProductImages(products);
+    const optimizedImagesFor = product => (
+        imageManifest[String(product.Id || product.id)]?.images || []
+    );
+    const primaryImageFor = product => (
+        optimizedImagesFor(product)[0]?.full || getImageUrl(product)
+    );
+    const thumbnailFor = product => (
+        optimizedImagesFor(product)[0]?.thumbnail || getImageUrl(product)
+    );
+    const absoluteAssetUrl = url => (
+        url?.startsWith('/') ? `${SITE_URL}${url}` : url
+    );
+
+    const categoryImages = {};
+    products.forEach(product => {
+        const categoryId = product.Category_ID || product.category_id || 12;
+        const categoryName = categoryMappingEn[categoryId] || 'General';
+        const categoryAttachment = (product.Category_Image || product.category_image)?.[0];
+        const rawCategoryUrl = categoryAttachment?.signedUrl || categoryAttachment?.url;
+        if (rawCategoryUrl && !categoryImages[categoryName]) {
+            categoryImages[categoryName] = rawCategoryUrl.startsWith('http')
+                ? rawCategoryUrl
+                : `${API_URL}/${rawCategoryUrl}`;
+        }
+    });
+
+    const catalogProducts = products.map(product => {
+        const categoryId = product.Category_ID || product.category_id || 12;
+        const optimized = optimizedImagesFor(product);
+        const originalImages = getRecordImages(product);
+        return {
+            id: product.Id || product.id,
+            ref: product.SKU || '',
+            name: product.Title || product.Arabic_Title || product.Woo_Title || product.French_Title || product.SKU || '',
+            price: product.price || 0,
+            image: optimized[0]?.full || originalImages[0] || null,
+            thumbnail: optimized[0]?.thumbnail || originalImages[0] || null,
+            images: originalImages.map((original, index) => optimized[index]?.full || original),
+            originalImage: optimized[0] ? null : (originalImages[0] || null),
+            category: categoryMappingEn[categoryId] || 'General',
+            baseCategory: categoryMappingEn[categoryId] || 'General',
+            isAvailable: true,
+            originalData: {
+                Arabic_Title: product.Arabic_Title || '',
+                description_arabic: product.description_arabic || ''
+            }
+        };
+    });
+
+    fs.writeFileSync(
+        path.join(__dirname, 'public', 'catalog-cache.json'),
+        JSON.stringify({
+            generatedAt: new Date().toISOString(),
+            products: catalogProducts,
+            categoryImages
+        })
+    );
+    console.log(`⚡ catalog-cache.json generated with ${catalogProducts.length} products`);
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -131,7 +352,7 @@ async function generate() {
 
     let imageCount = 3;
     products.forEach(p => {
-        const imgUrl = getImageUrl(p);
+        const imgUrl = absoluteAssetUrl(primaryImageFor(p));
         if (imgUrl && imageCount < 1000) {
             const title = escapeXml(p.Title || p.SKU || '');
             const catId = p.Category_ID || p.category_id || 12;
@@ -175,7 +396,7 @@ async function generate() {
 
     // ── 2. products-jsonld.json ──
     const productJsonLd = products.slice(0, 100).map(p => {
-        const imgUrl = getImageUrl(p);
+        const imgUrl = absoluteAssetUrl(primaryImageFor(p));
         const catId = p.Category_ID || p.category_id || 12;
         const catName = categoryMapping[catId] || 'إلكترونيات';
         return {
@@ -262,7 +483,7 @@ async function generate() {
 `;
 
     products.forEach(p => {
-        const imgUrl = getImageUrl(p);
+        const imgUrl = thumbnailFor(p);
         const title = escapeHtml(p.Title || p.SKU || 'منتج');
         const catId = p.Category_ID || p.category_id || 12;
         const catName = categoryMapping[catId] || 'إلكترونيات';

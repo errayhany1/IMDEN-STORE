@@ -24,8 +24,12 @@ const ProductGrid = () => {
                 setProducts([]);
             }
 
-            await fetchProducts((chunk, newCategoryImages) => {
-                appendProducts(chunk);
+            await fetchProducts((chunk, newCategoryImages, options = {}) => {
+                if (options.replace) {
+                    setProducts(chunk);
+                } else {
+                    appendProducts(chunk);
+                }
                 updateCategoryImages(newCategoryImages);
                 setLoading(false); // Disable loading as soon as first chunk arrives
             });
@@ -38,7 +42,6 @@ const ProductGrid = () => {
     }, []); // Run once on mount
 
     // Reset display limit when category or search changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setDisplayLimit(20);
     }, [selectedCategory, searchQuery]);
@@ -138,8 +141,12 @@ const ProductGrid = () => {
         <div className="pb-24">
             {/* First 4 products (both mobile and desktop) */}
             <section className={gridClass}>
-                {mobileFirst.map(product => (
-                    <ProductCard key={product.id} product={product} />
+                {mobileFirst.map((product, index) => (
+                    <ProductCard
+                        key={product.id}
+                        product={product}
+                        priority={index < 4}
+                    />
                 ))}
 
                 {/* On desktop (lg): show 4 more products before banner */}
