@@ -3,7 +3,7 @@ import useStore from '../store/useStore';
 import { X, Mail, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import { auth, googleProvider } from '../services/firebase';
 import { 
-    signInWithRedirect, 
+    signInWithPopup, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     RecaptchaVerifier, 
@@ -59,16 +59,19 @@ const AuthModal = () => {
         setLoading(true);
         setError('');
         try {
-            // Use signInWithRedirect instead of signInWithPopup to avoid
-            // COOP (Cross-Origin-Opener-Policy) issues in production.
-            // The result is captured in App.jsx via getRedirectResult.
-            await signInWithRedirect(auth, googleProvider);
-            // Note: This line won't execute because the page redirects to Google.
-            // Auth state is handled by onAuthStateChanged in App.jsx after redirect.
+            // Keep the OAuth flow in the page that started it. Redirect-based
+            // sign-in can lose its Firebase state when returning to a custom
+            // domain because browsers partition third-party storage.
+            await signInWithPopup(auth, googleProvider);
+            setAuthModalOpen(false);
         } catch (err) {
             console.error(err);
             if (err.code === 'auth/unauthorized-domain') {
                 setError('يجب إضافة errayhany.com إلى Authorized Domains في Firebase.');
+            } else if (err.code === 'auth/popup-blocked') {
+                setError('المتصفح منع نافذة Google. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.');
+            } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+                setError('تم إغلاق نافذة Google قبل إكمال تسجيل الدخول.');
             } else {
                 setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
             }
