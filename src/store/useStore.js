@@ -49,6 +49,9 @@ const useStore = create(
             },
 
             setCustomerInfo: (info) => set({ customerInfo: info }),
+            clearCustomerInfo: () => set({
+                customerInfo: { name: '', phone: '', address: '' }
+            }),
 
             setSearchQuery: (query) => set({ searchQuery: query }),
 

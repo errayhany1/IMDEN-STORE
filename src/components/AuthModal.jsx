@@ -31,7 +31,7 @@ const AuthModal = () => {
                 window.recaptchaVerifier.clear();
                 window.recaptchaVerifier = null;
             }
-        } catch (e) {
+        } catch {
             window.recaptchaVerifier = null;
         }
         const container = document.getElementById('recaptcha-container');
@@ -67,7 +67,11 @@ const AuthModal = () => {
             // Auth state is handled by onAuthStateChanged in App.jsx after redirect.
         } catch (err) {
             console.error(err);
-            setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
+            if (err.code === 'auth/unauthorized-domain') {
+                setError('يجب إضافة errayhany.com إلى Authorized Domains في Firebase.');
+            } else {
+                setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
+            }
             setLoading(false);
         }
     };

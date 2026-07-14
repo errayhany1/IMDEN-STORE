@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { upsertCustomerProfile } from '../services/customerAccount';
 
 const Header = () => {
-    const { cart, toggleCart, wishlist, toggleWishlistSidebar, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo } = useStore();
+    const { cart, toggleCart, wishlist, toggleWishlistSidebar, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo, clearCustomerInfo } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const wishlistCount = wishlist.length;
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,12 +37,31 @@ const Header = () => {
         setEditingInfo(true);
     };
 
-    const handleSaveInfo = () => {
-        setCustomerInfo(tempInfo);
+    const handleSaveInfo = async () => {
+        const updatedInfo = {
+            ...customerInfo,
+            ...tempInfo,
+            ...(user && customerInfo?.phoneVerified
+                ? {
+                    phone: customerInfo.phone,
+                    normalizedPhone: customerInfo.normalizedPhone,
+                    phoneVerified: true,
+                }
+                : {}),
+        };
+        setCustomerInfo(updatedInfo);
         setEditingInfo(false);
+        if (user && customerInfo?.phoneVerified) {
+            try {
+                await upsertCustomerProfile(user, updatedInfo);
+            } catch (error) {
+                console.error('Failed to update customer profile:', error);
+            }
+        }
     };
 
     const handleLogout = () => {
+        clearCustomerInfo();
         import('../services/firebase').then(m => m.auth.signOut());
         setSidebarOpen(false);
     };
@@ -277,7 +297,9 @@ const Header = () => {
                                             placeholder="رقم الهاتف"
                                             value={tempInfo.phone}
                                             onChange={e => setTempInfo(p => ({ ...p, phone: e.target.value }))}
-                                            className={`w-full p-2 text-xs rounded-lg border mb-2 ${dm ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200'}`}
+                                            disabled={Boolean(user && customerInfo?.phoneVerified)}
+                                            title={user && customerInfo?.phoneVerified ? 'الرقم موثق. غيّره من صفحة الحساب عبر SMS.' : ''}
+                                            className={`w-full p-2 text-xs rounded-lg border mb-2 disabled:opacity-60 disabled:cursor-not-allowed ${dm ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200'}`}
                                         />
                                         <textarea
                                             placeholder="العنوان"

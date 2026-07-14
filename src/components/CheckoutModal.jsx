@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Send, User, ShoppingBag, Shield, Banknote, Landmark, UploadCloud, FileCheck2, Copy, Check } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
 import { sendToTelegram, sendTransferProofToTelegram } from '../utils/telegramApi';
 import { AnimatePresence, motion as Motion } from 'framer-motion';
+import {
+    normalizeMoroccanPhone,
+    upsertCustomerProfile,
+} from '../services/customerAccount';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user, setAuthModalOpen } = useStore();
@@ -24,6 +28,18 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     const [transferReference, setTransferReference] = useState('');
     const [transferProof, setTransferProof] = useState(null);
     const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const savedInfo = !user || customerInfo?.uid === user.uid
+            ? customerInfo
+            : {};
+        setFormData({
+            name: savedInfo?.name || user?.displayName || '',
+            phone: savedInfo?.phone || user?.phoneNumber || '',
+            address: savedInfo?.address || '',
+        });
+    }, [isOpen, user, customerInfo]);
 
     const bankDetails = {
         bankName: import.meta.env.VITE_BANK_NAME || '',
@@ -107,7 +123,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
         try {
             // Save the customer info to the global store (localStorage)
-            setCustomerInfo(formData);
+            setCustomerInfo({ ...customerInfo, ...formData });
 
             // 1. Format the items and address for the Notes column
             const paymentLabel = paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'الدفع عند الاستلام';
@@ -134,8 +150,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             const ordersTableId = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 
             try {
-                console.log('[CheckoutModal] Saving order to NocoDB...', { nocodbUrl, ordersTableId });
-                const orderBody = {
+                const normalizedOrderPhone = normalizeMoroccanPhone(formData.phone);
+                const legacyOrderBody = {
                     'Customer Name': formData.name,
                     'Customer Phone': formData.phone,
                     'Sale Price': subtotal,
@@ -145,37 +161,79 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     // Keep the existing NocoDB status vocabulary; payment verification is recorded in Notes.
                     'Status': 'Pending'
                 };
-                console.log('[CheckoutModal] Order payload:', orderBody);
+                const orderBody = {
+                    ...legacyOrderBody,
+                    ...(user ? {
+                        'Customer UID': user.uid,
+                        'Customer Email': user.email || '',
+                        'Customer Phone Normalized': normalizedOrderPhone,
+                    } : {}),
+                };
 
-                const nocoResponse = await fetch(`${nocodbUrl}/api/v2/tables/${ordersTableId}/records`, {
-                    method: 'POST',
-                    headers: {
-                        'xc-token': ordersToken,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(orderBody)
-                });
-                
-                const responseText = await nocoResponse.text();
-                console.log('[CheckoutModal] NocoDB response status:', nocoResponse.status, 'body:', responseText);
-
-                if (!nocoResponse.ok) {
-                    console.error("Failed to save to NocoDB:", nocoResponse.status, responseText);
-                    // Try again with array format (NocoDB v2 sometimes expects array)
-                    console.log('[CheckoutModal] Retrying with array format...');
-                    const retryResponse = await fetch(`${nocodbUrl}/api/v2/tables/${ordersTableId}/records`, {
+                const saveOrder = body => fetch(
+                    `${nocodbUrl}/api/v2/tables/${ordersTableId}/records`,
+                    {
                         method: 'POST',
                         headers: {
                             'xc-token': ordersToken,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify([orderBody])
-                    });
+                        body: JSON.stringify(body)
+                    }
+                );
+
+                let nocoResponse = await saveOrder(orderBody);
+                let responseText = await nocoResponse.text();
+
+                // Keep checkout working while the new account columns are being
+                // added in NocoDB. Once present, the first request succeeds.
+                if (!nocoResponse.ok && user) {
+                    console.warn(
+                        '[CheckoutModal] Account columns unavailable; retrying legacy order payload.',
+                        nocoResponse.status
+                    );
+                    nocoResponse = await saveOrder(legacyOrderBody);
+                    responseText = await nocoResponse.text();
+                }
+
+                if (!nocoResponse.ok) {
+                    console.error("Failed to save to NocoDB:", nocoResponse.status, responseText);
+                    // Try again with array format (NocoDB v2 sometimes expects array)
+                    const retryResponse = await saveOrder([legacyOrderBody]);
                     const retryText = await retryResponse.text();
-                    console.log('[CheckoutModal] Retry response status:', retryResponse.status, 'body:', retryText);
                     if (!retryResponse.ok) {
                         console.error("Retry also failed:", retryResponse.status, retryText);
                         throw new Error('تعذر حفظ الطلب في قاعدة البيانات.');
+                    }
+                }
+
+                if (user) {
+                    try {
+                        const verifiedAccountPhone = normalizeMoroccanPhone(
+                            user.phoneNumber
+                            || (
+                                customerInfo?.uid === user.uid
+                                && customerInfo?.phoneVerified
+                                && customerInfo?.phone
+                            )
+                        );
+                        const canUpdateVerifiedPhone = Boolean(
+                            verifiedAccountPhone
+                            && verifiedAccountPhone === normalizedOrderPhone
+                        );
+                        await upsertCustomerProfile(user, {
+                            name: formData.name,
+                            address: formData.address,
+                            ...(canUpdateVerifiedPhone ? {
+                                phone: formData.phone,
+                                normalizedPhone: normalizedOrderPhone,
+                                phoneVerified: true,
+                            } : {}),
+                        });
+                    } catch (profileError) {
+                        // The order is already saved; profile sync must not
+                        // create duplicate orders on a customer retry.
+                        console.error('Customer profile update failed:', profileError);
                     }
                 }
             } catch (dbError) {
@@ -211,7 +269,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     ? 'تم استلام طلبك وإثبات التحويل. سنراجعه ونؤكد الدفع قريباً.'
                     : 'تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.'
             );
-            setCustomerInfo(formData); // Save phone number for Account Page
+            setCustomerInfo({ ...customerInfo, ...formData }); // Save details for the next checkout
             clearCart();
             setOrderCompleted(true);
 

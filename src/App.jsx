@@ -15,6 +15,7 @@ import AccountPage from './pages/AccountPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
+import { syncCustomerAccount } from './services/customerAccount';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp } from 'lucide-react';
 
@@ -28,14 +29,39 @@ function App() {
     restockSubscriptions,
     removeRestockSubscription,
     setSearchQuery,
+    setCustomerInfo,
+    clearCustomerInfo,
   } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     // Listen for Firebase Auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (!currentUser) {
+        // Keep anonymous checkout details, but never retain a signed-in
+        // customer's profile after their Firebase session ends.
+        if (useStore.getState().customerInfo?.uid) clearCustomerInfo();
+        return;
+      }
+
+      // Never leave another customer's persisted details visible while the
+      // signed-in account is being resolved from NocoDB.
+      setCustomerInfo({
+        name: currentUser.displayName || '',
+        phone: currentUser.phoneNumber || '',
+        address: '',
+        uid: currentUser.uid,
+        phoneVerified: Boolean(currentUser.phoneNumber),
+      });
+
+      try {
+        const account = await syncCustomerAccount(currentUser);
+        setCustomerInfo(account.customerInfo);
+      } catch (error) {
+        console.error('Customer account sync failed:', error);
+      }
     });
 
     // Handle redirect result from Google Sign-In
@@ -47,7 +73,7 @@ function App() {
     });
 
     return () => unsubscribe();
-  }, [setUser]);
+  }, [clearCustomerInfo, setCustomerInfo, setUser]);
 
   // Open a product directly from a back-in-stock notification.
   useEffect(() => {

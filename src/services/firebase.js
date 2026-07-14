@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
@@ -18,5 +18,12 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// A secondary Auth instance verifies a Google/email customer's phone without
+// replacing their primary signed-in session.
+const phoneVerificationApp = getApps().find(
+  existingApp => existingApp.name === 'phone-verification'
+) || initializeApp(firebaseConfig, 'phone-verification');
+export const phoneVerificationAuth = getAuth(phoneVerificationApp);
 
 export default app;

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Package, Clock, Truck, CheckCircle, XCircle, ArrowRight, Loader2, ShoppingBag, User, LogOut, ChevronDown, ChevronUp } from 'lucide-react';
 import useStore from '../store/useStore';
 import { auth } from '../services/firebase';
-
-const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
-const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
-const ORDERS_TABLE = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
+import PhoneVerificationCard from '../components/PhoneVerificationCard';
+import {
+    getOrdersForAccount,
+    isCustomerAccountsConfigured,
+    normalizeMoroccanPhone,
+    syncCustomerAccount,
+} from '../services/customerAccount';
 
 const statusConfig = {
     'قيد المراجعة': { icon: Clock, color: 'yellow', bg: 'from-yellow-500/20 to-amber-500/20', border: 'border-yellow-500/30', text: 'text-yellow-500', label: 'قيد المراجعة', step: 1 },
@@ -22,43 +24,81 @@ const progressSteps = [
 ];
 
 const AccountPage = () => {
-    const { darkMode, user, setAuthModalOpen, customerInfo } = useStore();
+    const {
+        darkMode,
+        user,
+        setAuthModalOpen,
+        customerInfo,
+        setCustomerInfo,
+        clearCustomerInfo,
+    } = useStore();
     const dm = darkMode;
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedOrder, setExpandedOrder] = useState(null);
-    const [manualPhone, setManualPhone] = useState('');
+    const [accountError, setAccountError] = useState('');
 
-    // Determine the phone number for lookup
-    const userPhone = user?.phoneNumber || customerInfo?.phone || '';
-    const userName = user?.displayName || customerInfo?.name || '';
+    const profileBelongsToUser = Boolean(
+        user?.uid && customerInfo?.uid === user.uid
+    );
+    const userPhone = normalizeMoroccanPhone(user?.phoneNumber) || (
+        profileBelongsToUser && customerInfo?.phoneVerified
+            ? normalizeMoroccanPhone(
+                customerInfo.normalizedPhone || customerInfo.phone
+            )
+            : ''
+    );
+    const userName = (
+        profileBelongsToUser ? customerInfo?.name : ''
+    ) || user?.displayName || '';
 
     useEffect(() => {
-        if (userPhone) {
-            fetchMyOrders();
-        } else {
+        if (!user) {
+            setOrders([]);
             setLoading(false);
+            return;
         }
-    }, [userPhone]);
 
-    const fetchMyOrders = async () => {
+        loadAccount();
+        // Account sync is intentionally keyed by Firebase identity.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.uid]);
+
+    const loadAccount = async () => {
         setLoading(true);
+        setAccountError('');
+        if (!isCustomerAccountsConfigured) {
+            setOrders([]);
+            setAccountError('خدمة الحسابات تحتاج إعداد جدول Customers في Easypanel.');
+            setLoading(false);
+            return;
+        }
         try {
-            // Clean the phone number for search
-            const cleanPhone = userPhone.replace(/\s/g, '').replace('+212', '0');
-            
-            const response = await axios.get(`${NOCODB_URL}/api/v2/tables/${ORDERS_TABLE}/records`, {
-                headers: { 'xc-token': ORDERS_TOKEN },
-                params: { 
-                    where: `(Customer Phone,like,%${cleanPhone.slice(-9)}%)`,
-                    limit: 50, 
-                    sort: '-Id' 
-                }
-            });
-            setOrders(response.data.list || []);
+            const account = await syncCustomerAccount(user);
+            setCustomerInfo(account.customerInfo);
+            setOrders(account.orders);
         } catch (err) {
             console.error("Error fetching user orders:", err);
+            setAccountError('تعذر تحميل ملف الحساب. تحقق من إعداد جدول Customers ثم حاول مجدداً.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchMyOrders = async () => {
+        if (!user || !userPhone) return;
+        setLoading(true);
+        setAccountError('');
+        try {
+            const result = await getOrdersForAccount({
+                uid: user.uid,
+                phone: userPhone,
+            });
+            setOrders(result);
+        } catch (err) {
+            console.error('Error refreshing account orders:', err);
+            setAccountError('تعذر تحديث الطلبات حالياً.');
         } finally {
             setLoading(false);
         }
@@ -74,21 +114,14 @@ const AccountPage = () => {
         return statusConfig[s] || statusConfig['قيد المراجعة'];
     };
 
-    const handleLogout = () => {
-        auth.signOut();
+    const handleLogout = async () => {
+        clearCustomerInfo();
+        await auth.signOut();
         window.location.href = '/';
     };
 
-    const handlePhoneSubmit = (e) => {
-        e.preventDefault();
-        if (manualPhone.trim().length >= 9) {
-            // Save it globally so it fetches next time too
-            setCustomerInfo({ ...customerInfo, phone: manualPhone });
-        }
-    };
-
-    // If not logged in and no saved phone, show login prompt
-    if (!user && !customerInfo?.phone) {
+    // Orders are private: a locally saved phone is never enough to display them.
+    if (!user) {
         return (
             <div className={`min-h-screen ${dm ? 'bg-gray-950 text-white' : 'bg-gradient-to-br from-slate-50 to-blue-50 text-slate-900'}`}>
                 <header className={`border-b backdrop-blur-xl sticky top-0 z-10 ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-white/80 border-slate-200'}`}>
@@ -212,6 +245,22 @@ const AccountPage = () => {
                     </button>
                 </div>
 
+                {accountError && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-xs text-red-600">
+                        {accountError}
+                    </div>
+                )}
+
+                {!loading && isCustomerAccountsConfigured && user && !userPhone && (
+                    <div className={`py-10 text-center rounded-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                        <PhoneVerificationCard
+                            user={user}
+                            darkMode={dm}
+                            onVerified={loadAccount}
+                        />
+                    </div>
+                )}
+
                 {/* Loading */}
                 {loading && (
                     <div className="py-16 flex flex-col items-center justify-center text-blue-500">
@@ -221,41 +270,14 @@ const AccountPage = () => {
                 )}
 
                 {/* Empty or Needs Phone */}
-                {!loading && orders.length === 0 && (
+                {!loading && orders.length === 0 && userPhone && (
                     <div className={`py-16 text-center rounded-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
-                        {user && !userPhone ? (
-                            <div className="max-w-xs mx-auto px-4">
-                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
-                                    <Package size={32} className="text-blue-500" />
-                                </div>
-                                <h3 className={`text-base font-bold mb-2 ${dm ? 'text-white' : 'text-slate-900'}`}>أدخل رقم هاتفك لعرض طلباتك</h3>
-                                <p className={`text-xs mb-4 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
-                                    بما أنك قمت بتسجيل الدخول بحساب جوجل، نحتاج لرقم الهاتف الذي استخدمته عند الشراء للبحث عن طلباتك.
-                                </p>
-                                <form onSubmit={handlePhoneSubmit} className="space-y-3" dir="ltr">
-                                    <input 
-                                        type="tel" 
-                                        value={manualPhone}
-                                        onChange={(e) => setManualPhone(e.target.value)}
-                                        placeholder="06 XX XX XX XX"
-                                        className={`w-full px-4 py-2.5 text-center rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 ${dm ? 'bg-gray-800 border-gray-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
-                                        required
-                                    />
-                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
-                                        بحث عن طلباتي
-                                    </button>
-                                </form>
-                            </div>
-                        ) : (
-                            <>
-                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-gray-800' : 'bg-slate-100'}`}>
-                                    <ShoppingBag size={32} className={dm ? 'text-gray-600' : 'text-slate-300'} />
-                                </div>
-                                <p className={`text-sm font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لا توجد طلبات بعد</p>
-                                <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-400'}`}>عندما تقوم بعملية شراء، ستظهر طلباتك هنا.</p>
-                                <a href="/" className="inline-block mt-4 text-xs font-bold text-blue-500 hover:underline">تصفح المنتجات ←</a>
-                            </>
-                        )}
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-gray-800' : 'bg-slate-100'}`}>
+                            <ShoppingBag size={32} className={dm ? 'text-gray-600' : 'text-slate-300'} />
+                        </div>
+                        <p className={`text-sm font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لا توجد طلبات بعد</p>
+                        <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-400'}`}>عندما تقوم بعملية شراء، ستظهر طلباتك هنا.</p>
+                        <a href="/" className="inline-block mt-4 text-xs font-bold text-blue-500 hover:underline">تصفح المنتجات ←</a>
                     </div>
                 )}
 
@@ -268,7 +290,11 @@ const AccountPage = () => {
                     const isExpanded = expandedOrder === order.Id;
 
                     let items = [];
-                    try { items = JSON.parse(order['Order Metadata'] || '[]'); } catch(e) {}
+                    try {
+                        items = JSON.parse(order['Order Metadata'] || '[]');
+                    } catch {
+                        items = [];
+                    }
 
                     return (
                         <div key={order.Id} 
