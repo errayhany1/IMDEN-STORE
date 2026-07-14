@@ -17,7 +17,7 @@ import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { syncCustomerAccount } from './services/customerAccount';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
-import { User, X, ChevronUp } from 'lucide-react';
+import { User, X, ChevronUp, Loader2 } from 'lucide-react';
 
 function App() {
   const {
@@ -34,6 +34,40 @@ function App() {
   } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  // AuthModal sets this flag right before signInWithRedirect. Show a
+  // full-screen overlay until Google sends the user back so the site
+  // doesn't flash as "logged out" while the redirect is still resolving.
+  const [completingRedirect, setCompletingRedirect] = useState(
+    () => sessionStorage.getItem('pendingAuthRedirect') === '1'
+  );
+
+  useEffect(() => {
+    if (!completingRedirect) return undefined;
+
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      sessionStorage.removeItem('pendingAuthRedirect');
+      setCompletingRedirect(false);
+    };
+
+    getRedirectResult(auth)
+      .then((result) => {
+        // onAuthStateChanged also fires for this, but resolving here first
+        // makes the UI update the moment the redirect completes.
+        if (result?.user) setUser(result.user);
+      })
+      .catch((err) => {
+        console.error('Redirect auth error:', err);
+      })
+      .finally(finish);
+
+    // Safety net: if getRedirectResult never settles (e.g. storage blocked
+    // by the browser), don't leave the visitor stuck behind the overlay.
+    const timeout = setTimeout(finish, 8000);
+    return () => clearTimeout(timeout);
+  }, [completingRedirect, setUser]);
 
   useEffect(() => {
     // Listen for Firebase Auth state changes
@@ -61,14 +95,6 @@ function App() {
         setCustomerInfo(account.customerInfo);
       } catch (error) {
         console.error('Customer account sync failed:', error);
-      }
-    });
-
-    // Handle redirect result from Google Sign-In
-    getRedirectResult(auth).catch((err) => {
-      // Silently ignore errors (e.g. no redirect happened)
-      if (err.code && err.code !== 'auth/popup-closed-by-user') {
-        console.error('Redirect auth error:', err);
       }
     });
 
@@ -144,6 +170,15 @@ function App() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (completingRedirect) {
+    return (
+      <div className={`min-h-screen flex flex-col items-center justify-center gap-3 ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-white text-slate-700'}`}>
+        <Loader2 className="animate-spin text-primary" size={36} />
+        <p className="text-sm font-bold">جاري إكمال تسجيل الدخول...</p>
+      </div>
+    );
+  }
 
   // ── Simple Router ──
   const path = window.location.pathname;
