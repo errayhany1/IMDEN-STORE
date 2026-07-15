@@ -8,6 +8,7 @@ import {
     normalizeMoroccanPhone,
     upsertCustomerProfile,
 } from '../services/customerAccount';
+import { saveCloudAccount } from '../services/cloudAccount';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user, setAuthModalOpen } = useStore();
@@ -163,10 +164,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 };
                 const orderBody = {
                     ...legacyOrderBody,
+                    'Customer Phone Normalized': normalizedOrderPhone,
                     ...(user ? {
                         'Customer UID': user.uid,
                         'Customer Email': user.email || '',
-                        'Customer Phone Normalized': normalizedOrderPhone,
                     } : {}),
                 };
 
@@ -277,7 +278,24 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     ? 'تم استلام طلبك وإثبات التحويل. سنراجعه ونؤكد الدفع قريباً.'
                     : 'تم إرسال طلبيتك بنجاح! سيتم التواصل معك قريباً.'
             );
-            setCustomerInfo({ ...customerInfo, ...formData }); // Save details for the next checkout
+            const nextCustomerInfo = {
+                ...customerInfo,
+                ...formData,
+                ...(user ? {
+                    uid: user.uid,
+                    normalizedPhone: normalizeMoroccanPhone(formData.phone),
+                } : {}),
+            };
+            setCustomerInfo(nextCustomerInfo);
+            if (user) {
+                saveCloudAccount(user, {
+                    ...useStore.getState(),
+                    customerInfo: nextCustomerInfo,
+                    cart: [],
+                }).catch(error => {
+                    console.error('Post-checkout cloud save failed:', error);
+                });
+            }
             clearCart();
             setOrderCompleted(true);
 

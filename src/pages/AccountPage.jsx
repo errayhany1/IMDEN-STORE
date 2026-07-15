@@ -138,7 +138,8 @@ const AccountPage = () => {
     };
 
     const getStatus = (order) => {
-        const s = order.Status || 'قيد المراجعة';
+        const raw = order.Status || 'قيد المراجعة';
+        const s = raw === 'Pending' ? 'قيد المراجعة' : raw;
         return statusConfig[s] || statusConfig['قيد المراجعة'];
     };
 
@@ -280,7 +281,7 @@ const AccountPage = () => {
                 )}
 
                 {!loading && isCustomerAccountsConfigured && user && !userPhone && (
-                    <div className={`py-10 text-center rounded-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                    <div className={`py-6 text-center rounded-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
                         <PhoneVerificationCard
                             user={user}
                             darkMode={dm}
@@ -297,14 +298,18 @@ const AccountPage = () => {
                     </div>
                 )}
 
-                {/* Empty or Needs Phone */}
-                {!loading && orders.length === 0 && userPhone && (
+                {/* Empty */}
+                {!loading && orders.length === 0 && (
                     <div className={`py-16 text-center rounded-2xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
                         <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${dm ? 'bg-gray-800' : 'bg-slate-100'}`}>
                             <ShoppingBag size={32} className={dm ? 'text-gray-600' : 'text-slate-300'} />
                         </div>
                         <p className={`text-sm font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لا توجد طلبات بعد</p>
-                        <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-400'}`}>عندما تقوم بعملية شراء، ستظهر طلباتك هنا.</p>
+                        <p className={`text-xs ${dm ? 'text-gray-600' : 'text-slate-400'}`}>
+                            {userPhone
+                                ? 'عندما تقوم بعملية شراء وأنت مسجّل الدخول، ستظهر طلباتك هنا.'
+                                : 'وثّق هاتفك أعلاه لربط الطلبات القديمة، أو اطلب وأنت مسجّل الدخول لحفظ الطلبات الجديدة.'}
+                        </p>
                         <a href="/" className="inline-block mt-4 text-xs font-bold text-blue-500 hover:underline">تصفح المنتجات ←</a>
                     </div>
                 )}

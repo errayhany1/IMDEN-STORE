@@ -64,6 +64,29 @@ const mergeItems = (localItems, cloudItems, withQuantity = false) => {
     return [...merged.values()];
 };
 
+const buildAccountFields = (user, state) => {
+    const info = state.customerInfo?.uid === user.uid
+        ? (state.customerInfo || {})
+        : {};
+
+    return {
+        uid: user.uid,
+        email: sanitizeText(user.email || '', 320),
+        displayName: sanitizeText(user.displayName || '', 100),
+        name: sanitizeText(info.name || user.displayName || '', 100),
+        phone: sanitizeText(info.phone || user.phoneNumber || '', 30),
+        normalizedPhone: sanitizeText(info.normalizedPhone || '', 30),
+        address: sanitizeText(info.address || '', 500),
+        phoneVerified: Boolean(info.phoneVerified || user.phoneNumber),
+        cartJson: serializeItems(state.cart, MAX_CART_ITEMS, true),
+        wishlistJson: serializeItems(state.wishlist, MAX_SAVED_ITEMS),
+        restockJson: serializeItems(
+            state.restockSubscriptions,
+            MAX_SAVED_ITEMS
+        ),
+    };
+};
+
 export const loadCloudAccount = async user => {
     if (!user?.uid) return null;
     const snapshot = await getDoc(doc(db, 'customerAccounts', user.uid));
@@ -94,40 +117,53 @@ export const loadCloudAccount = async user => {
     };
 };
 
-export const mergeAccountState = (localState, cloudState) => ({
-    cart: mergeItems(localState.cart, cloudState?.cart, true).slice(0, MAX_CART_ITEMS),
-    wishlist: mergeItems(localState.wishlist, cloudState?.wishlist).slice(0, MAX_SAVED_ITEMS),
-    restockSubscriptions: mergeItems(
-        localState.restockSubscriptions,
-        cloudState?.restockSubscriptions
-    ).slice(0, MAX_SAVED_ITEMS),
-    customerInfo: {
-        ...(localState.customerInfo || {}),
-        ...(cloudState?.customerInfo || {}),
-    },
-});
+export const mergeAccountState = (localState, cloudState) => {
+    const localInfo = localState.customerInfo || {};
+    const cloudInfo = cloudState?.customerInfo || {};
+    const sameUser = Boolean(
+        localInfo.uid
+        && cloudInfo.uid
+        && localInfo.uid === cloudInfo.uid
+    );
 
-export const saveCloudAccount = async (user, state, { create = false } = {}) => {
-    if (!user?.uid) return;
-    const info = state.customerInfo?.uid === user.uid ? state.customerInfo : {};
-    const payload = {
-        uid: user.uid,
-        email: sanitizeText(user.email || '', 320),
-        displayName: sanitizeText(user.displayName || '', 100),
-        name: sanitizeText(info.name || user.displayName || '', 100),
-        phone: sanitizeText(info.phone || user.phoneNumber || '', 30),
-        normalizedPhone: sanitizeText(info.normalizedPhone || '', 30),
-        address: sanitizeText(info.address || '', 500),
-        phoneVerified: Boolean(info.phoneVerified || user.phoneNumber),
-        cartJson: serializeItems(state.cart, MAX_CART_ITEMS, true),
-        wishlistJson: serializeItems(state.wishlist, MAX_SAVED_ITEMS),
-        restockJson: serializeItems(
-            state.restockSubscriptions,
-            MAX_SAVED_ITEMS
-        ),
-        updatedAt: serverTimestamp(),
-        ...(create ? { createdAt: serverTimestamp() } : {}),
+    return {
+        cart: mergeItems(localState.cart, cloudState?.cart, true).slice(0, MAX_CART_ITEMS),
+        wishlist: mergeItems(localState.wishlist, cloudState?.wishlist).slice(0, MAX_SAVED_ITEMS),
+        restockSubscriptions: mergeItems(
+            localState.restockSubscriptions,
+            cloudState?.restockSubscriptions
+        ).slice(0, MAX_SAVED_ITEMS),
+        customerInfo: {
+            ...cloudInfo,
+            // Keep richer local delivery details for the same signed-in user.
+            ...(sameUser ? {
+                name: cloudInfo.name || localInfo.name || '',
+                phone: cloudInfo.phone || localInfo.phone || '',
+                address: cloudInfo.address || localInfo.address || '',
+                normalizedPhone: cloudInfo.normalizedPhone || localInfo.normalizedPhone || '',
+                phoneVerified: Boolean(
+                    cloudInfo.phoneVerified || localInfo.phoneVerified
+                ),
+            } : {}),
+            uid: cloudInfo.uid || localInfo.uid || '',
+        },
     };
+};
 
-    await setDoc(doc(db, 'customerAccounts', user.uid), payload, { merge: true });
+export const saveCloudAccount = async (user, state) => {
+    if (!user?.uid) return;
+
+    const ref = doc(db, 'customerAccounts', user.uid);
+    const existing = await getDoc(ref);
+    const fields = buildAccountFields(user, state);
+
+    // Always write a complete document. Omitting createdAt on a merge create
+    // is rejected by security rules and fails silently for the shopper.
+    await setDoc(ref, {
+        ...fields,
+        createdAt: existing.exists()
+            ? existing.data().createdAt
+            : serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    }, { merge: true });
 };

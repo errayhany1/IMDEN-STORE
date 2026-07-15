@@ -5,16 +5,13 @@ service cloud.firestore {
     // Assumed data model
     // ===============================================================
     // customerAccounts/{uid}
-    //   uid: string (required, immutable, Firebase UID)
-    //   email: string (required, max 320)
-    //   displayName/name: string (required, max 100)
-    //   phone/normalizedPhone: string (required, max 30)
-    //   address: string (required, max 500)
-    //   phoneVerified: bool (required)
-    //   cartJson/wishlistJson: string (required, max 200000)
-    //   restockJson: string (required, max 100000)
-    //   createdAt: timestamp (required, immutable)
-    //   updatedAt: timestamp (required, server timestamp)
+    //   uid: string (required, immutable)
+    //   email/displayName/name/phone/normalizedPhone/address: string
+    //   phoneVerified: bool
+    //   cartJson/wishlistJson/restockJson: string
+    //   createdAt: timestamp (immutable after create)
+    //   updatedAt: timestamp
+    // ===============================================================
 
     function isAuthenticated() {
       return request.auth != null;
@@ -24,14 +21,14 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    function hasValidAccountFields(data) {
-      return data.keys().hasAll([
+    function isValidAccount(data) {
+      return data.keys().hasOnly([
           'uid', 'email', 'displayName', 'name', 'phone',
           'normalizedPhone', 'address', 'phoneVerified',
           'cartJson', 'wishlistJson', 'restockJson',
           'createdAt', 'updatedAt'
         ])
-        && data.keys().hasOnly([
+        && data.keys().hasAll([
           'uid', 'email', 'displayName', 'name', 'phone',
           'normalizedPhone', 'address', 'phoneVerified',
           'cartJson', 'wishlistJson', 'restockJson',
@@ -62,25 +59,19 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
-    function isValidAccountCreate(data) {
-      return hasValidAccountFields(data)
-        && data.createdAt == request.time
-        && data.updatedAt == request.time;
-    }
-
-    function isValidAccountUpdate(data) {
-      return hasValidAccountFields(data)
-        && data.uid == resource.data.uid
-        && data.createdAt == resource.data.createdAt
-        && data.updatedAt == request.time;
-    }
-
     match /customerAccounts/{uid} {
       allow read: if isOwner(uid);
+
       allow create: if isOwner(uid)
-        && isValidAccountCreate(request.resource.data);
+        && isValidAccount(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
       allow update: if isOwner(uid)
-        && isValidAccountUpdate(request.resource.data);
+        && isValidAccount(request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
       allow delete: if false;
     }
 

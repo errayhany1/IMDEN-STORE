@@ -127,14 +127,32 @@ function App() {
 
         const merged = mergeAccountState(localState, cloudAccount);
         merged.customerInfo = {
+          ...merged.customerInfo,
           ...(account?.customerInfo || {}),
-          ...(merged.customerInfo || {}),
+          // Prefer already-verified cloud/local values over empty NocoDB gaps.
+          name: account?.customerInfo?.name
+            || merged.customerInfo?.name
+            || currentUser.displayName
+            || '',
+          phone: account?.customerInfo?.phone
+            || merged.customerInfo?.phone
+            || currentUser.phoneNumber
+            || '',
+          address: account?.customerInfo?.address
+            || merged.customerInfo?.address
+            || '',
+          normalizedPhone: account?.customerInfo?.normalizedPhone
+            || merged.customerInfo?.normalizedPhone
+            || '',
+          phoneVerified: Boolean(
+            account?.customerInfo?.phoneVerified
+            || merged.customerInfo?.phoneVerified
+            || currentUser.phoneNumber
+          ),
           uid: currentUser.uid,
         };
         setAccountState(merged);
-        await saveCloudAccount(currentUser, merged, {
-          create: !cloudAccount?.exists,
-        });
+        await saveCloudAccount(currentUser, merged);
 
         // Persist every relevant customer action after the initial restore.
         stopCloudSync = useStore.subscribe((state, previousState) => {
