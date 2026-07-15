@@ -68,7 +68,7 @@ const Header = () => {
 
     return (
         <>
-            <header id="page-top" className={`sticky top-0 z-40 w-full border-b shadow-sm transition-colors duration-300
+            <header id="page-top" className={`sticky top-0 z-40 w-full border-b shadow-sm transition-colors duration-300 pt-[env(safe-area-inset-top)]
                 ${dm ? 'bg-[#142038] border-[#0d172b]' : 'bg-white border-gray-200'}`}>
 
                 {/* ─── Main Bar ─── */}

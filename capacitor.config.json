@@ -1,9 +1,32 @@
 {
   "appId": "com.imden.store",
-  "appName": "IMDEN",
+  "appName": "Errayhany Store",
   "webDir": "dist",
   "server": {
     "url": "https://errayhany.com/",
-    "cleartext": true
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1800,
+      "launchAutoHide": true,
+      "backgroundColor": "#142038",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#142038"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#142038"
   }
 }

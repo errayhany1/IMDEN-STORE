@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { FileText, Download, Calendar, ShoppingBag, CreditCard, Users, TrendingUp } from 'lucide-react';
 
-const ReportsTab = ({ dm, orders, expenses, products }) => {
+const ReportsTab = ({ dm, orders, expenses }) => {
     const [period, setPeriod] = useState('all'); // 'all', 'month', 'week'
 
     const filteredData = useMemo(() => {
@@ -58,7 +58,7 @@ const ReportsTab = ({ dm, orders, expenses, products }) => {
             o.CreatedAt ? new Date(o.CreatedAt).toLocaleDateString('ar-MA') : '',
             (o['Delivery Address'] || '').replace(/\n/g, ' ')
         ]);
-        downloadCSV(headers, rows, 'IMDEN_Orders');
+        downloadCSV(headers, rows, 'Errayhany_Orders');
     };
 
     const exportExpensesCSV = () => {
@@ -67,13 +67,13 @@ const ReportsTab = ({ dm, orders, expenses, products }) => {
             e.Description || '', e.Amount || 0, e['Paid By'] || '',
             e.Date ? new Date(e.Date).toLocaleDateString('ar-MA') : ''
         ]);
-        downloadCSV(headers, rows, 'IMDEN_Expenses');
+        downloadCSV(headers, rows, 'Errayhany_Expenses');
     };
 
     const exportCustomersCSV = () => {
         const headers = ['الاسم', 'الهاتف', 'إجمالي المشتريات', 'عدد الطلبات'];
         const rows = filteredData.customers.map(c => [c.name, c.phone, c.total, c.count]);
-        downloadCSV(headers, rows, 'IMDEN_Customers');
+        downloadCSV(headers, rows, 'Errayhany_Customers');
     };
 
     const downloadCSV = (headers, rows, name) => {

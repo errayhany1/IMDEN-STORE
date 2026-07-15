@@ -25,6 +25,11 @@ dist-ssr
 
 .env
 
+# Android signing secrets — never commit
+android/keystore.properties
+*.keystore
+*.jks
+
 # Generated at build time and served directly by Easypanel
 public/product-images/
 public/product-images-manifest.json

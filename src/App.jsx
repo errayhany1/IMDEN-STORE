@@ -21,6 +21,7 @@ import {
   mergeAccountState,
   saveCloudAccount,
 } from './services/cloudAccount';
+import { initNativeShell } from './services/nativeShell';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp, Loader2 } from 'lucide-react';
 
@@ -46,6 +47,12 @@ function App() {
   const [completingRedirect, setCompletingRedirect] = useState(
     () => sessionStorage.getItem('pendingAuthRedirect') === '1'
   );
+
+  useEffect(() => {
+    initNativeShell().catch(error => {
+      console.warn('Native shell init failed:', error);
+    });
+  }, []);
 
   useEffect(() => {
     if (!completingRedirect) return undefined;
@@ -179,7 +186,7 @@ function App() {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('عاد المنتج للمخزون 🔔', {
           body: `${liveProduct.name || subscription.name || 'المنتج'} متوفر الآن.`,
-          icon: '/icon-192.png',
+          icon: '/app-icon-192.png',
           tag: `restock-${key}`,
         });
       }

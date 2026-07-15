@@ -44,7 +44,7 @@ self.addEventListener('activate', event => {
 // ── Push Notification (from server) ───────────────────────────
 self.addEventListener('push', event => {
     const data = event.data ? event.data.json() : {};
-    const title = data.title || 'IMDEN TECHNOLOGY';
+    const title = data.title || 'Errayhany Store';
     const options = {
         body: data.body || 'تحقق من المنتجات الجديدة!',
         icon: '/app-icon-192.png',
@@ -109,7 +109,7 @@ const checkNewProducts = async ({ apiUrl, apiToken, tableId }) => {
     await saveCachedSet(SEEN_PRODUCTS_KEY, seen);
 
     const count = unseen.length;
-    await self.registration.showNotification('IMDEN TECHNOLOGY 🆕', {
+    await self.registration.showNotification('Errayhany Store 🆕', {
         body: count === 1
             ? `منتج جديد: ${unseen[0].Title || 'منتج جديد'}`
             : `${count} منتجات جديدة وصلت اليوم! تحقق الآن.`,
