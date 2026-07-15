@@ -91,7 +91,14 @@ const PhoneVerificationCard = ({ user, darkMode, onVerified }) => {
             });
             await phoneVerificationAuth.signOut();
             cleanupRecaptcha();
-            await onVerified?.(profile);
+            await onVerified?.(profile || {
+                uid: user.uid,
+                name: user.displayName || '',
+                email: user.email || '',
+                phone: formatMoroccanPhone(verifiedPhone),
+                normalizedPhone: verifiedPhone,
+                phoneVerified: true,
+            });
         } catch (err) {
             console.error('Account phone code error:', err);
             setError('رمز التحقق غير صحيح أو انتهت صلاحيته.');

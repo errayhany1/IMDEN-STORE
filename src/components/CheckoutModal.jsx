@@ -185,20 +185,28 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 let nocoResponse = await saveOrder(orderBody);
                 let responseText = await nocoResponse.text();
 
-                // Keep checkout working while the new account columns are being
-                // added in NocoDB. Once present, the first request succeeds.
+                // A signed-in order must never be silently saved without its
+                // Firebase UID, otherwise it disappears from the account.
                 if (!nocoResponse.ok && user) {
                     console.warn(
-                        '[CheckoutModal] Account columns unavailable; retrying legacy order payload.',
+                        '[CheckoutModal] Optional account columns unavailable; retrying with UID.',
                         nocoResponse.status
                     );
-                    nocoResponse = await saveOrder(legacyOrderBody);
+                    nocoResponse = await saveOrder({
+                        ...legacyOrderBody,
+                        'Customer UID': user.uid,
+                    });
                     responseText = await nocoResponse.text();
                 }
 
                 if (!nocoResponse.ok) {
                     console.error("Failed to save to NocoDB:", nocoResponse.status, responseText);
-                    // Try again with array format (NocoDB v2 sometimes expects array)
+                    if (user) {
+                        throw new Error(
+                            'عمود Customer UID غير موجود في جدول الطلبات.'
+                        );
+                    }
+                    // Guest checkout can use the historical array payload.
                     const retryResponse = await saveOrder([legacyOrderBody]);
                     const retryText = await retryResponse.text();
                     if (!retryResponse.ok) {

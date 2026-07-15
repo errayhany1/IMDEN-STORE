@@ -13,7 +13,10 @@ const headers = {
 };
 
 export const isCustomerAccountsConfigured = Boolean(
-    NOCODB_URL && NOCODB_TOKEN && ORDERS_TABLE && CUSTOMERS_TABLE
+    NOCODB_URL && NOCODB_TOKEN && ORDERS_TABLE
+);
+export const isCustomerProfilesConfigured = Boolean(
+    isCustomerAccountsConfigured && CUSTOMERS_TABLE
 );
 
 export const normalizeMoroccanPhone = (value = '') => {
@@ -58,7 +61,7 @@ const mapProfile = record => {
 };
 
 export const getCustomerProfile = async uid => {
-    if (!isCustomerAccountsConfigured || !uid) return null;
+    if (!isCustomerProfilesConfigured || !uid) return null;
 
     const response = await axios.get(
         `${NOCODB_URL}/api/v2/tables/${CUSTOMERS_TABLE}/records`,
@@ -74,7 +77,7 @@ export const getCustomerProfile = async uid => {
 };
 
 export const upsertCustomerProfile = async (user, details = {}) => {
-    if (!isCustomerAccountsConfigured || !user?.uid) return null;
+    if (!isCustomerProfilesConfigured || !user?.uid) return null;
 
     const existing = await getCustomerProfile(user.uid);
     const normalizedPhone = normalizeMoroccanPhone(

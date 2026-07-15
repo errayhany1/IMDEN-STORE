@@ -70,13 +70,17 @@ const AccountPage = () => {
         setAccountError('');
         if (!isCustomerAccountsConfigured) {
             setOrders([]);
-            setAccountError('خدمة الحسابات تحتاج إعداد جدول Customers في Easypanel.');
+            setAccountError('خدمة الطلبات غير مكتملة الإعداد في Easypanel.');
             setLoading(false);
             return;
         }
         try {
             const account = await syncCustomerAccount(user);
-            setCustomerInfo(account.customerInfo);
+            setCustomerInfo({
+                ...account.customerInfo,
+                ...(customerInfo?.uid === user.uid ? customerInfo : {}),
+                uid: user.uid,
+            });
             setOrders(account.orders);
         } catch (err) {
             console.error("Error fetching user orders:", err);
@@ -87,7 +91,7 @@ const AccountPage = () => {
     };
 
     const fetchMyOrders = async () => {
-        if (!user || !userPhone) return;
+        if (!user) return;
         setLoading(true);
         setAccountError('');
         try {
@@ -99,6 +103,30 @@ const AccountPage = () => {
         } catch (err) {
             console.error('Error refreshing account orders:', err);
             setAccountError('تعذر تحديث الطلبات حالياً.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePhoneVerified = async profile => {
+        const verifiedInfo = {
+            ...customerInfo,
+            ...profile,
+            uid: user.uid,
+            phoneVerified: true,
+        };
+        setCustomerInfo(verifiedInfo);
+        setLoading(true);
+        setAccountError('');
+        try {
+            const result = await getOrdersForAccount({
+                uid: user.uid,
+                phone: profile.normalizedPhone || profile.phone,
+            });
+            setOrders(result);
+        } catch (err) {
+            console.error('Error linking verified phone orders:', err);
+            setAccountError('تم توثيق الهاتف، لكن تعذر تحديث الطلبات حالياً.');
         } finally {
             setLoading(false);
         }
@@ -223,7 +251,7 @@ const AccountPage = () => {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
                     {[
-                        { label: 'قيد المراجعة', count: orders.filter(o => (o.Status || 'قيد المراجعة') === 'قيد المراجعة').length, color: 'yellow' },
+                        { label: 'قيد المراجعة', count: orders.filter(o => ['Pending', 'قيد المراجعة'].includes(o.Status || 'قيد المراجعة')).length, color: 'yellow' },
                         { label: 'تم الشحن', count: orders.filter(o => o.Status === 'تم الشحن').length, color: 'green' },
                         { label: 'تم التوصيل', count: orders.filter(o => o.Status === 'تم التوصيل').length, color: 'blue' },
                     ].map((stat, i) => (
@@ -256,7 +284,7 @@ const AccountPage = () => {
                         <PhoneVerificationCard
                             user={user}
                             darkMode={dm}
-                            onVerified={loadAccount}
+                            onVerified={handlePhoneVerified}
                         />
                     </div>
                 )}

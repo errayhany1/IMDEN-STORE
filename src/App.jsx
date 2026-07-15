@@ -16,6 +16,11 @@ import IOSInstallPrompt from './components/IOSInstallPrompt';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { syncCustomerAccount } from './services/customerAccount';
+import {
+  loadCloudAccount,
+  mergeAccountState,
+  saveCloudAccount,
+} from './services/cloudAccount';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp, Loader2 } from 'lucide-react';
 
@@ -30,7 +35,8 @@ function App() {
     removeRestockSubscription,
     setSearchQuery,
     setCustomerInfo,
-    clearCustomerInfo,
+    setAccountState,
+    clearAccountState,
   } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -70,18 +76,30 @@ function App() {
   }, [completingRedirect, setUser]);
 
   useEffect(() => {
+    let activeUid = '';
+    let stopCloudSync;
+    let saveTimer;
+
+    const stopCurrentCloudSync = () => {
+      stopCloudSync?.();
+      stopCloudSync = undefined;
+      clearTimeout(saveTimer);
+    };
+
     // Listen for Firebase Auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      stopCurrentCloudSync();
+      activeUid = currentUser?.uid || '';
       setUser(currentUser);
       if (!currentUser) {
-        // Keep anonymous checkout details, but never retain a signed-in
-        // customer's profile after their Firebase session ends.
-        if (useStore.getState().customerInfo?.uid) clearCustomerInfo();
+        // Never leave one customer's private data visible after logout.
+        if (useStore.getState().customerInfo?.uid) clearAccountState();
         return;
       }
 
+      const localState = useStore.getState();
       // Never leave another customer's persisted details visible while the
-      // signed-in account is being resolved from NocoDB.
+      // signed-in account is being resolved from cloud storage.
       setCustomerInfo({
         name: currentUser.displayName || '',
         phone: currentUser.phoneNumber || '',
@@ -91,15 +109,54 @@ function App() {
       });
 
       try {
-        const account = await syncCustomerAccount(currentUser);
-        setCustomerInfo(account.customerInfo);
+        const [cloudAccount, account] = await Promise.all([
+          loadCloudAccount(currentUser),
+          syncCustomerAccount(currentUser).catch((error) => {
+            console.error('NocoDB account sync failed:', error);
+            return null;
+          }),
+        ]);
+        if (activeUid !== currentUser.uid) return;
+
+        const merged = mergeAccountState(localState, cloudAccount);
+        merged.customerInfo = {
+          ...(account?.customerInfo || {}),
+          ...(merged.customerInfo || {}),
+          uid: currentUser.uid,
+        };
+        setAccountState(merged);
+        await saveCloudAccount(currentUser, merged, {
+          create: !cloudAccount?.exists,
+        });
+
+        // Persist every relevant customer action after the initial restore.
+        stopCloudSync = useStore.subscribe((state, previousState) => {
+          if (
+            state.cart === previousState.cart
+            && state.wishlist === previousState.wishlist
+            && state.restockSubscriptions === previousState.restockSubscriptions
+            && state.customerInfo === previousState.customerInfo
+          ) return;
+
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(() => {
+            if (auth.currentUser?.uid !== currentUser.uid) return;
+            saveCloudAccount(currentUser, useStore.getState()).catch(error => {
+              console.error('Customer cloud save failed:', error);
+            });
+          }, 800);
+        });
       } catch (error) {
-        console.error('Customer account sync failed:', error);
+        console.error('Customer cloud restore failed:', error);
       }
     });
 
-    return () => unsubscribe();
-  }, [clearCustomerInfo, setCustomerInfo, setUser]);
+    return () => {
+      activeUid = '';
+      stopCurrentCloudSync();
+      unsubscribe();
+    };
+  }, [clearAccountState, setAccountState, setCustomerInfo, setUser]);
 
   // Open a product directly from a back-in-stock notification.
   useEffect(() => {

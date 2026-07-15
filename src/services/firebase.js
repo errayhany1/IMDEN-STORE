@@ -1,5 +1,6 @@
 import { getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Sign-in via popup/redirect relies on a hidden iframe hosted on
 // `authDomain` to relay the pending sign-in result back to the app. If that
@@ -44,6 +45,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // A secondary Auth instance verifies a Google/email customer's phone without

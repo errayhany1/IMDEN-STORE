@@ -52,6 +52,22 @@ const useStore = create(
             clearCustomerInfo: () => set({
                 customerInfo: { name: '', phone: '', address: '' }
             }),
+            setAccountState: (accountState) => set({
+                cart: accountState.cart || [],
+                wishlist: accountState.wishlist || [],
+                restockSubscriptions: accountState.restockSubscriptions || [],
+                customerInfo: accountState.customerInfo || {
+                    name: '',
+                    phone: '',
+                    address: '',
+                },
+            }),
+            clearAccountState: () => set({
+                cart: [],
+                wishlist: [],
+                restockSubscriptions: [],
+                customerInfo: { name: '', phone: '', address: '' },
+            }),
 
             setSearchQuery: (query) => set({ searchQuery: query }),
 
