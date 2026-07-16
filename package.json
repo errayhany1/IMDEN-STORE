@@ -2,6 +2,8 @@
   "name": "wholesalecatalog",
   "private": true,
   "version": "2.0.0",
+  "description": "Errayhany Store — wholesale electronics catalog for Morocco",
+  "author": "Errayhany",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -14,10 +16,12 @@
     "cap:sync": "npx cap sync android",
     "cap:sync:ios": "npx cap sync ios",
     "android:release": "npm run build && npm run cap:assets && npm run cap:sync",
+    "android:aab": "npm run android:release && cd android && gradlew.bat bundleRelease",
     "ios:prepare": "npm run build && npm run branding && npx capacitor-assets generate --ios && npx cap sync ios",
     "desktop": "electron .",
-    "desktop:build": "electron-builder --win",
+    "desktop:build": "node scripts/make-win-icon.cjs && electron-builder --win",
     "desktop:build:all": "electron-builder --win --mac --linux",
+    "desktop:publish-site": "node scripts/copy-desktop-download.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "bot": "node bot-server.js"
@@ -27,20 +31,19 @@
     "productName": "Errayhany Store",
     "copyright": "Copyright © Errayhany",
     "directories": {
-      "output": "dist-desktop"
+      "output": "dist-desktop",
+      "buildResources": "build"
     },
     "files": [
+      "!**/*",
       "electron/**/*",
       "package.json"
     ],
+    "asar": true,
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
         {
           "target": "portable",
           "arch": [
@@ -48,7 +51,7 @@
           ]
         }
       ],
-      "icon": "public/app-icon-512.png"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,

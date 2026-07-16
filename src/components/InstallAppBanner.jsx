@@ -3,7 +3,7 @@ import { Download, X, MonitorSmartphone } from 'lucide-react';
 import useStore from '../store/useStore';
 
 const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.imden.store';
-const INTERNAL_TEST_URL = 'https://play.google.com/apps/internaltest/4700737002005896985';
+const DESKTOP_URL = '/download.html';
 
 const InstallAppBanner = () => {
   const { darkMode } = useStore();
@@ -11,6 +11,7 @@ const InstallAppBanner = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [show, setShow] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const dismissed = localStorage.getItem('install_banner_dismissed');
@@ -18,27 +19,35 @@ const InstallAppBanner = () => {
 
     const ua = navigator.userAgent || '';
     const android = /Android/i.test(ua);
+    const ios = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const desktop = !android && !ios;
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true;
+      window.navigator.standalone === true ||
+      Boolean(window.electron);
+
     setIsAndroid(android);
+    setIsDesktop(desktop);
+
+    // iOS has its own prompt; native shells should not show this banner.
+    if (ios || standalone) return undefined;
 
     const onBip = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (!standalone) setShow(true);
+      setShow(true);
     };
     window.addEventListener('beforeinstallprompt', onBip);
 
-    if (android && !standalone) {
-      const t = setTimeout(() => setShow(true), 8000);
-      return () => {
-        clearTimeout(t);
-        window.removeEventListener('beforeinstallprompt', onBip);
-      };
-    }
+    const delay = android ? 8000 : desktop ? 12000 : 0;
+    const t = delay
+      ? setTimeout(() => setShow(true), delay)
+      : null;
 
-    return () => window.removeEventListener('beforeinstallprompt', onBip);
+    return () => {
+      if (t) clearTimeout(t);
+      window.removeEventListener('beforeinstallprompt', onBip);
+    };
   }, []);
 
   const dismiss = () => {
@@ -56,6 +65,12 @@ const InstallAppBanner = () => {
 
   if (!show) return null;
 
+  const subtitle = isAndroid
+    ? 'من Google Play أو كتطبيق على الشاشة الرئيسية'
+    : deferredPrompt
+      ? 'ثبّته كتطبيق سريع على جهازك'
+      : 'حمّل نسخة الحاسوب أو ثبّته من المتصفح';
+
   return (
     <div className="fixed bottom-20 md:bottom-6 left-3 right-3 z-[190] flex justify-center pointer-events-none">
       <div
@@ -69,7 +84,7 @@ const InstallAppBanner = () => {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold truncate">ثبّت Errayhany Store</p>
           <p className={`text-[11px] ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
-            {isAndroid ? 'من Google Play أو كتطبيق على الشاشة الرئيسية' : 'ثبّته كتطبيق سطح مكتب سريع'}
+            {subtitle}
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -91,16 +106,15 @@ const InstallAppBanner = () => {
               <Download size={14} />
               Play
             </a>
-          ) : (
+          ) : isDesktop ? (
             <a
-              href={INTERNAL_TEST_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#142038] text-white"
+              href={DESKTOP_URL}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#142038] text-white inline-flex items-center gap-1"
             >
-              تطبيق
+              <Download size={14} />
+              تحميل
             </a>
-          )}
+          ) : null}
           <button type="button" onClick={dismiss} className={`p-1.5 rounded-full ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`} aria-label="إغلاق">
             <X size={16} />
           </button>

@@ -10,7 +10,16 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-desktop
 *.local
+
+# Temp Play Console upload shards
+play-store/chunks/
+
+# Large desktop installers (publish via GitHub Releases or copy locally)
+public/downloads/*.exe
+public/downloads/*.msi
+public/downloads/*.AppImage
 
 # Editor directories and files
 .vscode/*
