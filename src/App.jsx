@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import OrderTracking from './pages/OrderTracking';
 import AccountPage from './pages/AccountPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
+import InstallAppBanner from './components/InstallAppBanner';
 import useStore from './store/useStore';
 import { auth } from './services/firebase';
 import { syncCustomerAccount } from './services/customerAccount';
@@ -308,6 +309,7 @@ function App() {
       <AuthModal />
       <AboutModal />
       <IOSInstallPrompt />
+      <InstallAppBanner />
 
       {/* Scroll to Top Button */}
       {showScrollTop && (

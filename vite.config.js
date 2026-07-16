@@ -47,16 +47,32 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: 'logo-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            form_factor: 'wide'
+            src: 'pwa-screenshots/wide-1.jpg',
+            sizes: '1920x1080',
+            type: 'image/jpeg',
+            form_factor: 'wide',
+            label: 'كتالوج Errayhany للجملة'
           },
           {
-            src: 'logo-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            form_factor: 'narrow'
+            src: 'pwa-screenshots/wide-2.jpg',
+            sizes: '1920x1080',
+            type: 'image/jpeg',
+            form_factor: 'wide',
+            label: 'تصفح المنتجات على سطح المكتب'
+          },
+          {
+            src: 'pwa-screenshots/narrow-1.jpg',
+            sizes: '1080x1920',
+            type: 'image/jpeg',
+            form_factor: 'narrow',
+            label: 'كتالوج الجملة على الهاتف'
+          },
+          {
+            src: 'pwa-screenshots/narrow-2.jpg',
+            sizes: '1080x1920',
+            type: 'image/jpeg',
+            form_factor: 'narrow',
+            label: 'سلة الطلبات'
           }
         ]
       }
