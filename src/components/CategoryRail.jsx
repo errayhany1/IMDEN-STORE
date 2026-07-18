@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import useStore from '../store/useStore';
 import { 
-    MessageSquarePlus, Layers, Zap, Headphones, Watch, Gamepad2, 
+    Layers, Zap, Headphones, Watch, Gamepad2, 
     Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera, 
     Wifi, Mic, BatteryCharging, Box, XCircle 
 } from 'lucide-react';
-import FeedbackModal from './FeedbackModal';
 
 export const categoryTranslation = {
     'All': 'الكل',
@@ -46,16 +45,7 @@ const categoryIcons = {
 };
 
 const CategoryRail = () => {
-    const { darkMode, categories, selectedCategory, setCategory, user, setAuthModalOpen } = useStore();
-    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-
-    const handleRequestProduct = () => {
-        if (user) {
-            setIsFeedbackOpen(true);
-        } else {
-            setAuthModalOpen(true);
-        }
-    };
+    const { darkMode, categories, selectedCategory, setCategory } = useStore();
 
     return (
         <section className="mb-4 mt-2 px-2 flex flex-col gap-3">
@@ -80,25 +70,6 @@ const CategoryRail = () => {
                     );
                 })}
             </div>
-
-            {/* Compact Request Product Banner */}
-            <div 
-                onClick={handleRequestProduct}
-                className={`px-3 py-2 rounded-lg border flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-md active:scale-[0.98]
-                ${darkMode ? 'bg-gray-800/60 border-gray-700 text-white hover:bg-gray-800' : 'bg-primary/5 border-primary/20 text-slate-700 hover:bg-primary/10'}`}
-                style={{ direction: 'rtl' }}
-            >
-                <div className="flex items-center gap-2 min-w-0">
-                    <MessageSquarePlus size={16} className="text-primary shrink-0" />
-                    <span className="text-xs sm:text-sm font-semibold truncate">تبحث عن منتج؟ اطلبه الآن</span>
-                </div>
-                <span className={`text-[10px] sm:text-xs shrink-0 px-2 py-0.5 rounded-full font-medium
-                    ${darkMode ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'}`}>
-                    طلب →
-                </span>
-            </div>
-
-            <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
         </section>
     );
 };
