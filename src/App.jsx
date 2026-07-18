@@ -12,6 +12,7 @@ import AboutModal from './components/AboutModal';
 import AdminDashboard from './pages/AdminDashboard';
 import OrderTracking from './pages/OrderTracking';
 import AccountPage from './pages/AccountPage';
+import ProductLandingPage from './pages/ProductLandingPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import InstallAppBanner from './components/InstallAppBanner';
 import useStore from './store/useStore';
@@ -283,6 +284,10 @@ function App() {
   }
   if (path === '/account') {
       return <AccountPage />;
+  }
+  if (path.startsWith('/p/')) {
+      const sku = path.slice(3);
+      return <ProductLandingPage sku={sku} />;
   }
 
   return (
