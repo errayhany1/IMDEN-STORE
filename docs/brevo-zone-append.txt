@@ -1,0 +1,13 @@
+; Append these records in Hostinger DNS (do NOT replace the whole zone).
+; Domain: errayhany.com — Brevo sending + branded links (em.errayhany.com)
+
+em                     IN  CNAME  em-errayhany-com.brand.brevosend.com.
+brevo1._domainkey      IN  CNAME  b1.errayhany-com.dkim.brevo.com.
+brevo2._domainkey      IN  CNAME  b2.errayhany-com.dkim.brevo.com.
+img.em                 IN  CNAME  em-errayhany-com.img.brand.brevosend.com.
+r.em                   IN  CNAME  em-errayhany-com.r.brand.brevosend.com.
+
+; Also add/update these TXT records manually in Hostinger UI:
+; @   TXT  "brevo-code:da37c32fc914682d356bd8d40de58eac"
+; @   TXT  "v=spf1 include:_spf.mail.hostinger.com include:spf.brevo.com ~all"
+; _dmarc TXT "v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com"

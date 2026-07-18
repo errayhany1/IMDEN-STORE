@@ -118,7 +118,7 @@ const AboutModal = () => {
                         <Phone size={16} className="text-green-500" />
                         تواصل معنا
                     </a>
-                    <a href="mailto:contact@imden.com" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+                    <a href="mailto:contact@errayhany.com" className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
                         <Mail size={16} className="text-blue-500" />
                         راسلنا
                     </a>

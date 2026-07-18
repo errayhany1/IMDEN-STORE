@@ -7,7 +7,7 @@
 - Internal test: https://play.google.com/apps/internaltest/4700737002005896985
 - Play listing: https://play.google.com/store/apps/details?id=com.imden.store
 - Privacy: https://errayhany.com/privacy-policy.html
-- Support: joerihani.com@gmail.com / +212664630566
+- Support: contact@errayhany.com / +212664630566
 - Assets: `play-store/final/` and `play-store/upload-*.jpg`
 - Build AAB (Windows + Android Studio JBR): `powershell -File scripts/build-android-aab.ps1`
 - Latest local AAB: `android/app/build/outputs/bundle/release/app-release.aab` (~210MB)

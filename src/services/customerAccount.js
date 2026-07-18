@@ -220,8 +220,12 @@ const performCustomerAccountSync = async user => {
         uid: user.uid,
     };
 
-    if (verifiedPhone) {
-        profile = await upsertCustomerProfile(user, customerInfo);
+    // Save profile when we have a verified phone OR an email (for offers list).
+    if (verifiedPhone || user.email) {
+        profile = await upsertCustomerProfile(user, {
+            ...customerInfo,
+            email: user.email || profile?.email || '',
+        });
     }
 
     return {

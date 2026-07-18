@@ -78,6 +78,8 @@ const buildAccountFields = (user, state) => {
         normalizedPhone: sanitizeText(info.normalizedPhone || '', 30),
         address: sanitizeText(info.address || '', 500),
         phoneVerified: Boolean(info.phoneVerified || user.phoneNumber),
+        // Default true: registering / signing in opts the shopper into offers.
+        offersOptIn: info.offersOptIn !== false,
         cartJson: serializeItems(state.cart, MAX_CART_ITEMS, true),
         wishlistJson: serializeItems(state.wishlist, MAX_SAVED_ITEMS),
         restockJson: serializeItems(

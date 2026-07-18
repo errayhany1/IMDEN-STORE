@@ -8,9 +8,15 @@ service cloud.firestore {
     //   uid: string (required, immutable)
     //   email/displayName/name/phone/normalizedPhone/address: string
     //   phoneVerified: bool
+    //   offersOptIn: bool
     //   cartJson/wishlistJson/restockJson: string
     //   createdAt: timestamp (immutable after create)
     //   updatedAt: timestamp
+    //
+    // offersLeads/{uid}
+    //   uid, email, name, phone, source: string
+    //   offersOptIn: bool
+    //   createdAt / updatedAt: timestamp
     // ===============================================================
 
     function isAuthenticated() {
@@ -25,12 +31,14 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'uid', 'email', 'displayName', 'name', 'phone',
           'normalizedPhone', 'address', 'phoneVerified',
+          'offersOptIn',
           'cartJson', 'wishlistJson', 'restockJson',
           'createdAt', 'updatedAt'
         ])
         && data.keys().hasAll([
           'uid', 'email', 'displayName', 'name', 'phone',
           'normalizedPhone', 'address', 'phoneVerified',
+          'offersOptIn',
           'cartJson', 'wishlistJson', 'restockJson',
           'createdAt', 'updatedAt'
         ])
@@ -49,12 +57,38 @@ service cloud.firestore {
         && data.address is string
         && data.address.size() <= 500
         && data.phoneVerified is bool
+        && data.offersOptIn is bool
         && data.cartJson is string
         && data.cartJson.size() <= 200000
         && data.wishlistJson is string
         && data.wishlistJson.size() <= 200000
         && data.restockJson is string
         && data.restockJson.size() <= 100000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOffersLead(data) {
+      return data.keys().hasOnly([
+          'uid', 'email', 'name', 'phone', 'source',
+          'offersOptIn', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'uid', 'email', 'name', 'phone', 'source',
+          'offersOptIn', 'createdAt', 'updatedAt'
+        ])
+        && data.uid is string
+        && data.uid == request.auth.uid
+        && data.email is string
+        && data.email.size() <= 320
+        && data.email.size() > 3
+        && data.name is string
+        && data.name.size() <= 100
+        && data.phone is string
+        && data.phone.size() <= 30
+        && data.source is string
+        && data.source.size() <= 40
+        && data.offersOptIn is bool
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -68,6 +102,22 @@ service cloud.firestore {
 
       allow update: if isOwner(uid)
         && isValidAccount(request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    match /offersLeads/{uid} {
+      allow read: if isOwner(uid);
+
+      allow create: if isOwner(uid)
+        && isValidOffersLead(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isOwner(uid)
+        && isValidOffersLead(request.resource.data)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time;

@@ -22,6 +22,7 @@ import {
   mergeAccountState,
   saveCloudAccount,
 } from './services/cloudAccount';
+import { upsertOffersLead } from './services/offersLead';
 import { initNativeShell } from './services/nativeShell';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp, Loader2 } from 'lucide-react';
@@ -154,6 +155,15 @@ function App() {
         };
         setAccountState(merged);
         await saveCloudAccount(currentUser, merged);
+        // Collect registrant emails for wholesale offer campaigns.
+        upsertOffersLead(currentUser, {
+          name: merged.customerInfo?.name,
+          phone: merged.customerInfo?.phone,
+          source: 'auth',
+          offersOptIn: true,
+        }).catch((error) => {
+          console.error('Offers lead save failed:', error);
+        });
 
         // Persist every relevant customer action after the initial restore.
         stopCloudSync = useStore.subscribe((state, previousState) => {
