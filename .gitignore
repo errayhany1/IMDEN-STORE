@@ -16,10 +16,15 @@ dist-desktop
 # Temp Play Console upload shards
 play-store/chunks/
 
-# Large desktop installers (publish via GitHub Releases or copy locally)
+# Large desktop installers / APKs — publish via Releases or Easypanel volume
+# (kept out of git so EasyPanel GitHub archive downloads do not fail)
 public/downloads/*.exe
 public/downloads/*.msi
 public/downloads/*.AppImage
+public/*.apk
+public/**/*.apk
+*.apk
+*.exe
 
 # Editor directories and files
 .vscode/*
@@ -46,3 +51,4 @@ android/keystore.properties
 public/product-images/
 public/product-images-manifest.json
 public/catalog-cache.json
+bot/node_modules/

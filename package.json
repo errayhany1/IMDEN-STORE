@@ -24,7 +24,9 @@
     "desktop:publish-site": "node scripts/copy-desktop-download.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "bot": "node bot-server.js"
+    "bot": "node bot-server.js",
+    "bot:install": "npm install --prefix bot",
+    "bot:start": "npm start --prefix bot"
   },
   "build": {
     "appId": "com.imden.store",

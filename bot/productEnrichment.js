@@ -1,3 +1,7 @@
+/**
+ * Enrichment after Telegram images downloaded.
+ * Always uploads at least the real photos so products never go live without images.
+ */
 import {
   generateProductCopy,
   generateProductImages,
@@ -12,7 +16,7 @@ export function buildSellerSku(ref) {
     .replace(/[^a-zA-Z0-9/_-]/g, '')
     .toUpperCase();
   if (clean.startsWith('ERY-')) return clean;
-  return `ERY-${clean}`;
+  return `ERY-${clean || 'REF'}`;
 }
 
 export function cleanReference(ref) {
@@ -27,6 +31,17 @@ function publicUrlFromNoco(fileObj, nocodbUrl) {
   const raw = fileObj.signedUrl || fileObj.url || '';
   if (!raw) return '';
   return raw.startsWith('http') ? raw : `${nocodbUrl}/${raw}`;
+}
+
+async function uploadBuffers(uploadToNocoDB, buffers, prefix) {
+  const uploaded = [];
+  for (let i = 0; i < buffers.length; i++) {
+    const buf = buffers[i];
+    if (!buf) continue;
+    const file = await uploadToNocoDB(buf, `${prefix}-${i + 1}.jpg`);
+    if (file) uploaded.push(file);
+  }
+  return uploaded;
 }
 
 /**
@@ -44,66 +59,91 @@ export async function enrichProduct({
   const enabled = String(process.env.PRODUCT_AI_ENRICHMENT || 'true').toLowerCase() !== 'false';
   const sellerSku = buildSellerSku(ref);
   const referenceClean = cleanReference(ref);
-  const realBuffer = originalBuffers[0];
+  const realBuffers = (originalBuffers || []).filter(Boolean);
+  const realBuffer = realBuffers[0];
 
-  if (!enabled || !isOpenRouterConfigured() || !realBuffer) {
+  if (!realBuffer) {
+    throw new Error('No original image buffers to upload');
+  }
+
+  // Always upload original photos first — never create a product without images.
+  const originalUploads = await uploadBuffers(
+    uploadToNocoDB,
+    realBuffers.slice(0, 5),
+    `real-${sellerSku}`
+  );
+
+  if (!originalUploads.length) {
+    throw new Error('Failed to upload original images to NocoDB storage');
+  }
+
+  if (!enabled || !isOpenRouterConfigured()) {
+    const imageUrls = originalUploads.map((f) => publicUrlFromNoco(f, nocodbUrl));
     return {
       sellerSku,
       referenceClean,
       skippedAi: true,
       copy: null,
-      nocoImages: null,
-      imageUrls: [],
+      nocoImages: originalUploads,
+      imageUrls,
       sheet: null,
     };
   }
 
-  const copy = await generateProductCopy({
-    imageBuffer: realBuffer,
-    name,
-    price,
-    ref: referenceClean,
-  });
+  let copy = null;
+  let aiUploads = [];
 
-  const aiBuffers = await generateProductImages({
-    imageBuffer: realBuffer,
-    titleFr: copy.french_title || name,
-    price,
-  });
-
-  // Order: 4 AI (clean + 3 promo) then real photo last
-  const ordered = [
-    aiBuffers[0] || realBuffer,
-    aiBuffers[1] || null,
-    aiBuffers[2] || null,
-    aiBuffers[3] || null,
-    realBuffer,
-  ].filter(Boolean);
-
-  const uploaded = [];
-  for (let i = 0; i < ordered.length; i++) {
-    const buf = ordered[i];
-    const file = await uploadToNocoDB(buf, `ai-${sellerSku}-${i + 1}.jpg`);
-    uploaded.push(file);
+  try {
+    copy = await generateProductCopy({
+      imageBuffer: realBuffer,
+      name,
+      price,
+      ref: referenceClean,
+    });
+  } catch (e) {
+    console.error('AI copy failed, continuing with originals:', e.message);
   }
 
-  const imageUrls = uploaded.map((f) => publicUrlFromNoco(f, nocodbUrl));
+  try {
+    const aiBuffers = await generateProductImages({
+      imageBuffer: realBuffer,
+      titleFr: copy?.french_title || name,
+      price,
+    });
+    // Prefer AI images first, keep one real photo last (max 5 slots)
+    const ordered = [
+      aiBuffers[0],
+      aiBuffers[1],
+      aiBuffers[2],
+      aiBuffers[3],
+      realBuffer,
+    ].filter(Boolean).slice(0, 5);
+
+    if (ordered.length) {
+      aiUploads = await uploadBuffers(uploadToNocoDB, ordered, `ai-${sellerSku}`);
+    }
+  } catch (e) {
+    console.error('AI images failed, using originals only:', e.message);
+  }
+
+  const nocoImages = aiUploads.length ? aiUploads : originalUploads;
+  const imageUrls = nocoImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
 
   const productForSheet = {
     referenceClean,
     sellerSku,
     price,
-    frenchTitle: copy.french_title || name,
-    arabicTitle: copy.arabic_title || name,
-    shortFr: copy.short_description_fr || '',
-    shortAr: copy.short_description_ar || '',
-    descriptionFr: copy.description_french || '',
-    descriptionAr: copy.description_arabic || '',
-    metaTitle: copy.meta_title || copy.french_title || name,
-    metaDescription: copy.meta_description || '',
-    wooTitle: copy.woo_title || copy.french_title || name,
-    brand: copy.brand || 'Generic',
-    color: copy.color || 'Multicolore',
+    frenchTitle: copy?.french_title || name,
+    arabicTitle: copy?.arabic_title || name,
+    shortFr: copy?.short_description_fr || '',
+    shortAr: copy?.short_description_ar || '',
+    descriptionFr: copy?.description_french || '',
+    descriptionAr: copy?.description_arabic || '',
+    metaTitle: copy?.meta_title || copy?.french_title || name,
+    metaDescription: copy?.meta_description || '',
+    wooTitle: copy?.woo_title || copy?.french_title || name,
+    brand: copy?.brand || 'Generic',
+    color: copy?.color || 'Multicolore',
     jumiaCategory: '',
     imageUrls,
     stock: 10,
@@ -124,9 +164,9 @@ export async function enrichProduct({
   return {
     sellerSku,
     referenceClean,
-    skippedAi: false,
+    skippedAi: !copy,
     copy,
-    nocoImages: uploaded,
+    nocoImages,
     imageUrls,
     sheet: sheetResult,
     productForSheet,
@@ -148,8 +188,6 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
     description_arabic: copy.description_arabic || '',
   };
 
-  // Optional fields — ignored by NocoDB if column missing? Better send conservatively.
-  // Keep extras that commonly exist in their sheet-backed tables.
   if (copy.description_french) record.description_french = copy.description_french;
   if (copy.short_description_ar) record.short_description_ar = copy.short_description_ar;
   if (copy.short_description_fr) record.short_description_fr = copy.short_description_fr;
