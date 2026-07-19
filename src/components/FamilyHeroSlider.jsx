@@ -6,7 +6,7 @@ import useStore from '../store/useStore';
 const AUTO_MS = 5000;
 
 const FamilyHeroSlider = () => {
-    const { setFamily, selectedFamily } = useStore();
+    const { setFamily, selectedFamily, browseMode } = useStore();
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
     const touchStartX = useRef(null);
@@ -18,19 +18,17 @@ const FamilyHeroSlider = () => {
 
     const openFamily = useCallback((familyId) => {
         setFamily(familyId);
-        // Shareable family URL without a full router rewrite
-        const url = new URL(window.location.href);
-        url.pathname = `/family/${familyId}`;
-        url.search = '';
-        window.history.pushState({ family: familyId }, '', url.pathname);
-        // Scroll products into view after paint
+        const nextPath = browseMode === 'catalog'
+            ? `/catalog/family/${familyId}`
+            : `/family/${familyId}`;
+        window.history.pushState({ family: familyId }, '', nextPath);
         requestAnimationFrame(() => {
             document.getElementById('family-products')?.scrollIntoView({
                 behavior: 'smooth',
                 block: 'start',
             });
         });
-    }, [setFamily]);
+    }, [setFamily, browseMode]);
 
     useEffect(() => {
         if (paused || selectedFamily) return undefined;

@@ -10,6 +10,7 @@ const ProductCard = ({ product, priority = false }) => {
     const addToCart = useStore((state) => state.addToCart);
     const darkMode = useStore((state) => state.darkMode);
     const gridColumns = useStore((state) => state.gridColumns);
+    const browseMode = useStore((state) => state.browseMode);
     const wishlist = useStore((state) => state.wishlist);
     const toggleWishlistItem = useStore((state) => state.toggleWishlistItem);
     const restockSubscriptions = useStore((state) => state.restockSubscriptions);
@@ -19,6 +20,8 @@ const ProductCard = ({ product, priority = false }) => {
     const [addedToCart, setAddedToCart] = useState(false);
 
     const isWishlisted = wishlist.some((item) => item.id === product.id);
+    const isCatalog = browseMode === 'catalog';
+    const productHref = `/p/${encodeURIComponent(product.ref || product.id)}`;
 
     const dm = darkMode;
     const singleCol = gridColumns === 1;
@@ -26,6 +29,27 @@ const ProductCard = ({ product, priority = false }) => {
     const isWatchingRestock = restockSubscriptions.some(
         (item) => String(item.id || item.ref) === String(product.id || product.ref)
     );
+
+    const rememberBrowseMode = () => {
+        try {
+            sessionStorage.setItem('lastBrowseMode', isCatalog ? 'catalog' : 'shop');
+        } catch {
+            /* ignore */
+        }
+    };
+
+    const openProductPage = () => {
+        rememberBrowseMode();
+        window.location.assign(productHref);
+    };
+
+    const handleMediaClick = () => {
+        if (isCatalog) {
+            setIsModalOpen(true);
+            return;
+        }
+        openProductPage();
+    };
 
     const handleRestockAlert = async (event) => {
         event.stopPropagation();
@@ -57,7 +81,7 @@ const ProductCard = ({ product, priority = false }) => {
                     </div>
                 )}
 
-                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={() => setIsModalOpen(true)}>
+                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={handleMediaClick}>
 
                     {/* Wishlist Toggle */}
                     <button
@@ -72,17 +96,22 @@ const ProductCard = ({ product, priority = false }) => {
                         <Heart size={15} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
                     </button>
 
-                    {/* Product landing page */}
-                    <a
-                        href={`/p/${encodeURIComponent(product.ref || product.id)}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className={`absolute top-12 right-2 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm transition-all duration-300 active:scale-90
-                            ${dm ? 'bg-gray-900/60 text-sky-300 hover:text-sky-200' : 'bg-white/85 text-sky-600 hover:text-sky-700'}`}
-                        title="صفحة المنتج"
-                        aria-label="صفحة المنتج"
-                    >
-                        <Eye size={15} />
-                    </a>
+                    {/* Catalog only: eye opens the dedicated product page */}
+                    {isCatalog && (
+                        <a
+                            href={productHref}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                rememberBrowseMode();
+                            }}
+                            className={`absolute top-12 right-2 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm transition-all duration-300 active:scale-90
+                                ${dm ? 'bg-gray-900/60 text-sky-300 hover:text-sky-200' : 'bg-white/85 text-sky-600 hover:text-sky-700'}`}
+                            title="صفحة المنتج"
+                            aria-label="صفحة المنتج"
+                        >
+                            <Eye size={15} />
+                        </a>
+                    )}
 
                     {isOutOfStock && (
                         <button
@@ -146,7 +175,10 @@ const ProductCard = ({ product, priority = false }) => {
 
                 </div>
 
-                <div className={`p-3 flex flex-col gap-3 ${isOutOfStock ? 'opacity-80' : ''}`}>
+                <div
+                    className={`p-3 flex flex-col gap-3 ${isOutOfStock ? 'opacity-80' : ''} ${!isCatalog ? 'cursor-pointer' : ''}`}
+                    onClick={!isCatalog ? openProductPage : undefined}
+                >
                     {/* Price and Ref Row */}
                     <div className="flex items-center justify-between flex-row-reverse gap-1">
                         <div className="text-right flex-shrink-0">
@@ -177,7 +209,7 @@ const ProductCard = ({ product, priority = false }) => {
                         </div>
                     )}
 
-                    <div className="flex gap-2 flex-row-reverse">
+                    <div className="flex gap-2 flex-row-reverse" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={() => {
                                 if (!isOutOfStock && !addedToCart) {
@@ -210,12 +242,14 @@ const ProductCard = ({ product, priority = false }) => {
                 </div>
             </article>
 
-            {/* Quick View Modal */}
-            <QuickViewModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                product={product}
-            />
+            {/* Quick View Modal — catalog mode only */}
+            {isCatalog && (
+                <QuickViewModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    product={product}
+                />
+            )}
         </>
     );
 };

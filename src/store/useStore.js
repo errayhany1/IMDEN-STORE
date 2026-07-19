@@ -35,6 +35,9 @@ const useStore = create(
             ],
             selectedCategory: 'All',
             selectedFamily: null, // e.g. 'power' | 'audio' | 'devices'
+            browseMode: (typeof window !== 'undefined' && window.location.pathname.startsWith('/catalog'))
+                ? 'catalog'
+                : 'shop',
             isLoading: false,
             isCartOpen: false,
             darkMode: false,
@@ -116,6 +119,10 @@ const useStore = create(
             clearFamily: () => set({
                 selectedFamily: null,
                 selectedCategory: 'All',
+            }),
+
+            setBrowseMode: (mode) => set({
+                browseMode: mode === 'catalog' ? 'catalog' : 'shop',
             }),
 
             toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),

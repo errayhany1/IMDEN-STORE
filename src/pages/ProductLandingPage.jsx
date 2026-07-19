@@ -62,6 +62,14 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
   const dm = darkMode;
 
+  const backHref = (() => {
+    try {
+      return sessionStorage.getItem('lastBrowseMode') === 'catalog' ? '/catalog' : '/';
+    } catch {
+      return '/';
+    }
+  })();
+
   if (loading && !product) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-700'}`}>
@@ -75,8 +83,8 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       <div className={`min-h-screen flex flex-col items-center justify-center gap-4 p-6 ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-800'}`}>
         <p className="font-bold text-lg">المنتج غير موجود</p>
         <p className="text-sm opacity-70">{sku}</p>
-        <a href="/" className="text-primary font-bold flex items-center gap-2">
-          <ArrowRight size={16} /> العودة للكتالوج
+        <a href={backHref} className="text-primary font-bold flex items-center gap-2">
+          <ArrowRight size={16} /> العودة
         </a>
       </div>
     );
@@ -90,7 +98,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     <div className={`min-h-screen ${dm ? 'bg-gray-950 text-gray-100' : 'bg-slate-50 text-slate-900'}`} dir={isFr ? 'ltr' : 'rtl'}>
       <header className={`sticky top-0 z-20 border-b backdrop-blur ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-white/90 border-slate-200'}`}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <a href="/" className="font-bold text-primary flex items-center gap-2">
+          <a href={backHref} className="font-bold text-primary flex items-center gap-2">
             <ArrowRight size={18} className={isFr ? 'rotate-180' : ''} />
             Errayhany Store
           </a>
