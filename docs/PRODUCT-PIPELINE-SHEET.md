@@ -10,7 +10,14 @@ Telegram → OpenRouter (نصوص AR/FR + 4 صور) → NocoDB → Sheet webhook
 
 ## Env على EasyPanel → imden-bot
 
+**مهم (إصلاح tar/EOF):** اضبط Root Directory = `bot` و Dockerfile = `bot/Dockerfile`
+حتى لا يفشل تنزيل أرشيف المستودع الكبير. انظر `bot/README.md`.
+
 ```env
+TELEGRAM_BOT_TOKEN=
+VITE_NOCODB_URL=
+VITE_NOCODB_API_TOKEN=
+VITE_NOCODB_TABLE_PRODUCTS=
 OPENROUTER_API_KEY=sk-or-v1-...
 PRODUCT_AI_ENRICHMENT=true
 PRODUCT_SHEET_ID=1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4

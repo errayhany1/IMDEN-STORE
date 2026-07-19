@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log*
+.env
+.env.*
+*.log
+.DS_Store
+.git
+dist
+public
+android
+ios
+play-store
+app-store
+electron
+src
