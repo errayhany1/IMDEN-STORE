@@ -16,6 +16,11 @@ import 'dotenv/config';
 import express from 'express';
 import axios from 'axios';
 import FormData from 'form-data';
+import {
+  enrichProduct,
+  buildNocoRecordFromEnrichment,
+  buildSellerSku,
+} from './bot/productEnrichment.js';
 
 const app = express();
 app.use(express.json());
@@ -25,6 +30,7 @@ const BOT_TOKEN      = process.env.TELEGRAM_BOT_TOKEN;
 const NOCODB_URL     = process.env.VITE_NOCODB_URL;
 const NOCODB_TOKEN   = process.env.VITE_NOCODB_API_TOKEN;
 const NOCODB_TABLE   = process.env.VITE_NOCODB_TABLE_PRODUCTS;
+const SITE_URL       = process.env.PUBLIC_SITE_URL || 'https://errayhany.com';
 const TG_API         = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const TG_FILE_API    = `https://api.telegram.org/file/bot${BOT_TOKEN}`;
 
@@ -113,52 +119,120 @@ const albumBuffer = {};
 
 async function processProduct(chatId, files, caption) {
   const { price, name, sku } = parseCaption(caption);
-  console.log(`📦 Processing product: "${name}" | ${price} DH | ${files.length} images`);
+  const sellerSku = buildSellerSku(sku);
+  console.log(`📦 Processing product: "${name}" | ${price} DH | ${files.length} images | SKU ${sellerSku}`);
 
-  // ✅ Send instant feedback so user knows it's working
-  await sendMessage(chatId, `⏳ جاري رفع المنتج...\n📦 ${name} | 💰 ${price} DH`);
+  await sendMessage(
+    chatId,
+    `⏳ جاري رفع المنتج وتوليد النصوص/الصور بالذكاء الاصطناعي...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+  );
 
-  // ✅ Download & upload ALL images in parallel (much faster!)
-  const uploadedFiles = await Promise.all(
+  // Download all Telegram images first (buffers)
+  const downloaded = await Promise.all(
     files.map(async (f) => {
       try {
-        const { buffer, fileName } = await downloadTelegramFileData(f.fileId, f.extName);
-        return await uploadToNocoDB(buffer, fileName);
+        return await downloadTelegramFileData(f.fileId, f.extName);
       } catch (e) {
-        console.error('Image upload error:', e.message);
+        console.error('Telegram download error:', e.message);
         return null;
       }
     })
   );
-  const validFiles = uploadedFiles.filter(Boolean);
+  const originalBuffers = downloaded.filter(Boolean).map((d) => d.buffer);
+  if (!originalBuffers.length) {
+    await sendMessage(chatId, '❌ فشل تحميل الصور من تيليجرام. أعد الإرسال.');
+    return;
+  }
 
-  // Create NocoDB Record
+  let enrichment;
+  try {
+    enrichment = await enrichProduct({
+      originalBuffers,
+      name,
+      price,
+      ref: sku,
+      uploadToNocoDB,
+      nocodbUrl: NOCODB_URL,
+    });
+  } catch (e) {
+    console.error('AI enrichment failed, falling back to raw upload:', e.message);
+    await sendMessage(chatId, `⚠️ فشل التوليد بالذكاء الاصطناعي، سيتم الحفظ بالصور الأصلية فقط.\n${e.message}`);
+    const uploadedFiles = [];
+    for (const d of downloaded.filter(Boolean)) {
+      uploadedFiles.push(await uploadToNocoDB(d.buffer, d.fileName));
+    }
+    enrichment = {
+      sellerSku,
+      skippedAi: true,
+      copy: null,
+      nocoImages: uploadedFiles,
+      sheet: { skipped: true },
+    };
+  }
+
   const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
-  const recordData = {
-    Title: name,
-    SKU: sku,
-    price: price,
-    Category_ID: 12,
-    POSTEBL: 'POSTEBL'
-  };
+  let recordData = enrichment.skippedAi
+    ? {
+        Title: name,
+        SKU: sellerSku,
+        price,
+        Category_ID: 12,
+        POSTEBL: 'POSTEBL',
+      }
+    : buildNocoRecordFromEnrichment({ price, name, enrichment });
 
-  if (validFiles.length > 0) recordData.Image1 = [validFiles[0]];
-  if (validFiles.length > 1) { recordData.Image2 = [validFiles[1]]; recordData.image2 = [validFiles[1]]; }
-  if (validFiles.length > 2) { recordData.Image3 = [validFiles[2]]; recordData.image3 = [validFiles[2]]; }
-  if (validFiles.length > 3) { recordData.Image4 = [validFiles[3]]; recordData.image4 = [validFiles[3]]; }
-  if (validFiles.length > 4) { recordData.Image5 = [validFiles[4]]; recordData.image5 = [validFiles[4]]; }
+  if (enrichment.skippedAi && enrichment.nocoImages?.length) {
+    const validFiles = enrichment.nocoImages;
+    if (validFiles[0]) recordData.Image1 = [validFiles[0]];
+    if (validFiles[1]) { recordData.Image2 = [validFiles[1]]; recordData.image2 = [validFiles[1]]; }
+    if (validFiles[2]) { recordData.Image3 = [validFiles[2]]; recordData.image3 = [validFiles[2]]; }
+    if (validFiles[3]) { recordData.Image4 = [validFiles[3]]; recordData.image4 = [validFiles[3]]; }
+    if (validFiles[4]) { recordData.Image5 = [validFiles[4]]; recordData.image5 = [validFiles[4]]; }
+  }
 
-  const { data } = await http.post(recordUrl, recordData, {
-    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }
-  });
+  let data;
+  try {
+    ({ data } = await http.post(recordUrl, recordData, {
+      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+    }));
+  } catch (e) {
+    // Retry without optional AI text columns if NocoDB rejects unknown fields
+    console.error('NocoDB create failed, retrying minimal fields:', e?.response?.data || e.message);
+    const minimal = {
+      Title: recordData.Title || name,
+      Arabic_Title: recordData.Arabic_Title,
+      French_Title: recordData.French_Title,
+      SKU: sellerSku,
+      price,
+      Category_ID: 12,
+      POSTEBL: 'POSTEBL',
+      description_arabic: recordData.description_arabic || '',
+      Image1: recordData.Image1,
+      Image2: recordData.Image2,
+      Image3: recordData.Image3,
+      Image4: recordData.Image4,
+      Image5: recordData.Image5,
+    };
+    ({ data } = await http.post(recordUrl, minimal, {
+      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+    }));
+  }
 
   const rowId = data.Id || data.id;
+  const landing = `${SITE_URL}/p/${encodeURIComponent(sellerSku)}`;
+  const imgCount = enrichment.nocoImages?.length || 0;
+  const sheetNote = enrichment.sheet?.skipped
+    ? '\n📄 Sheet: لم يُربط بعد (أضف PRODUCT_SHEET_WEBHOOK_URL)'
+    : enrichment.sheet?.error
+      ? `\n📄 Sheet خطأ: ${enrichment.sheet.error}`
+      : '\n📄 Sheet: تم الإرسال';
+
   console.log(`✅ NocoDB row created: #${rowId}`);
 
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${validFiles.length}) صور!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sku}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }

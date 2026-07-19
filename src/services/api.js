@@ -175,10 +175,10 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         }
                     }
 
-                    // Extract all images from Image1, Image2, Image3 columns
+                    // Extract all images from Image1…Image5 columns
                     const allImages = [];
                     let imageIndex = 0;
-                    ['Image1', 'Image2', 'Image3'].forEach(col => {
+                    ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach(col => {
                         if (record[col] && record[col].length > 0) {
                             record[col].forEach(img => {
                                 const url = img.signedUrl || img.url;
@@ -218,7 +218,14 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         collectedCategoryImages['All'] = allImgObj.signedUrl || allImgObj.url;
                     }
 
-                    const fallbackName = record.Title || record.Arabic_Title || record.Woo_Title || record.French_Title || record.SKU || "";
+                    let siteLang = 'ar';
+                    try {
+                        siteLang = localStorage.getItem('site_lang') === 'fr' ? 'fr' : 'ar';
+                    } catch { /* ignore */ }
+
+                    const fallbackName = siteLang === 'fr'
+                        ? (record.French_Title || record.Woo_Title || record.Title || record.Arabic_Title || record.SKU || "")
+                        : (record.Arabic_Title || record.Title || record.Woo_Title || record.French_Title || record.SKU || "");
 
                     return {
                         id: record.Id || record.id || Math.random().toString(36).substr(2, 9),

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Check, Heart, Bell, BellRing } from 'lucide-react';
+import { ShoppingCart, Check, Heart, Bell, BellRing, Eye } from 'lucide-react';
 import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
 import './ProductCard.css';
@@ -71,6 +71,18 @@ const ProductCard = ({ product, priority = false }) => {
                     >
                         <Heart size={15} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
                     </button>
+
+                    {/* Product landing page */}
+                    <a
+                        href={`/p/${encodeURIComponent(product.ref || product.id)}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`absolute top-12 right-2 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm transition-all duration-300 active:scale-90
+                            ${dm ? 'bg-gray-900/60 text-sky-300 hover:text-sky-200' : 'bg-white/85 text-sky-600 hover:text-sky-700'}`}
+                        title="صفحة المنتج"
+                        aria-label="صفحة المنتج"
+                    >
+                        <Eye size={15} />
+                    </a>
 
                     {isOutOfStock && (
                         <button

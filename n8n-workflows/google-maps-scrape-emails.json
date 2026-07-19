@@ -1,0 +1,176 @@
+{
+  "name": "كشط جوجل مابس (مواقع)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-1",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=APIFY_TOKEN_HERE",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"language\": \"ar\",\n  \"locationQuery\": \"Casablanca, Morocco\",\n  \"maxCrawledPlacesPerSearch\": 20,\n  \"maxImages\": 0,\n  \"scrapeContacts\": false,\n  \"scrapePlaceDetailPage\": false,\n  \"searchStringsArray\": [\n    \"electronics store\",\n    \"محل هواتف\",\n    \"Computer store\",\n    \"Magasin électronique\"\n  ],\n  \"skipClosedPlaces\": false\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "id": "apify-1",
+      "name": "Apify Google Maps",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 300],
+      "notesInFlow": true,
+      "notes": "يركّز على المحلات + المواقع (بدون كشط إيميل). الإيميلات تُستخرج يدوياً من المواقع."
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction normalizeWebsite(url) {\n  if (!url) return '';\n  const u = String(url).trim();\n  if (!u) return '';\n  if (/^https?:\\/\\//i.test(u)) return u;\n  return `http://${u}`;\n}\n\nfunction isSocialOnly(url) {\n  return /facebook\\.com|instagram\\.com|tiktok\\.com|youtube\\.com|twitter\\.com|\\bx\\.com\\b|wa\\.me|whatsapp/i.test(url || '');\n}\n\nlet places = [];\nfor (const item of items) {\n  const raw = item.json;\n  if (Array.isArray(raw)) places.push(...raw);\n  else if (Array.isArray(raw.data)) places.push(...raw.data);\n  else if (raw && typeof raw === 'object') places.push(raw);\n}\n\nreturn places.map((it) => {\n  const website = normalizeWebsite(it.website || '');\n  const facebooks = [].concat(it.facebooks || []).filter(Boolean);\n  const instagrams = [].concat(it.instagrams || []).filter(Boolean);\n  const fb = facebooks[0] || ( /facebook\\.com/i.test(website) ? website : '' );\n  const ig = instagrams[0] || ( /instagram\\.com/i.test(website) ? website : '' );\n  const hasRealWebsite = Boolean(website) && !isSocialOnly(website);\n\n  return {\n    json: {\n      title: it.title || '',\n      phone: it.phoneUnformatted || it.phone || '',\n      city: it.city || '',\n      address: it.address || '',\n      website: hasRealWebsite ? website : '',\n      facebook: fb || '',\n      instagram: ig || '',\n      categoryName: it.categoryName || '',\n      totalScore: it.totalScore ?? '',\n      placeId: it.placeId || '',\n      hasWebsite: hasRealWebsite ? 'yes' : 'no',\n      email: '',\n      emails: ''\n    }\n  };\n}).sort((a, b) => Number(b.json.hasWebsite === 'yes') - Number(a.json.hasWebsite === 'yes'));"
+      },
+      "id": "normalize-1",
+      "name": "Normalize websites",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-website",
+              "leftValue": "={{ $json.hasWebsite }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-1",
+      "name": "Has website?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [760, 300],
+      "notesInFlow": true,
+      "notes": "يمرّر فقط المحلات التي لها موقع حقيقي (ليس فيسبوك) لاستخراج الإيميل يدوياً"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "18-7lqtYyEFG4T-Mtwve0VHXVzpjXlPRox89mEfC3kdE",
+          "mode": "list",
+          "cachedResultName": "CUSTOMER INFORMATION",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18-7lqtYyEFG4T-Mtwve0VHXVzpjXlPRox89mEfC3kdE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "الورقة1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18-7lqtYyEFG4T-Mtwve0VHXVzpjXlPRox89mEfC3kdE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "phone": "={{ $json.phone }}",
+            "city": "={{ $json.city }}",
+            "address": "={{ $json.address }}",
+            "website": "={{ $json.website }}",
+            "email": "={{ $json.email }}",
+            "emails": "={{ $json.emails }}",
+            "categoryName": "={{ $json.categoryName }}",
+            "totalScore": "={{ $json.totalScore }}",
+            "instagram": "={{ $json.instagram }}",
+            "facebook": "={{ $json.facebook }}",
+            "placeId (using to match)": "={{ $json.placeId }}"
+          },
+          "matchingColumns": ["placeId (using to match)"],
+          "schema": [
+            { "id": "phone", "displayName": "phone", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "title", "displayName": "title", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "placeId (using to match)", "displayName": "placeId (using to match)", "required": false, "defaultMatch": true, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "city", "displayName": "city", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "address", "displayName": "address", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "website", "displayName": "website", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "email", "displayName": "email", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "emails", "displayName": "emails", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "categoryName", "displayName": "categoryName", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "totalScore", "displayName": "totalScore", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "facebook", "displayName": "facebook", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "instagram", "displayName": "instagram", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "sheets-1",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1020, 200],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "irO4wFFccv7wg4Md",
+          "name": "Google Sheets account 3"
+        }
+      },
+      "notes": "عمود email فارغ — املأه يدوياً من الموقع"
+    },
+    {
+      "parameters": {
+        "content": "## مواقع فقط\n1. Apify يجلب المحلات + المواقع\n2. يمرّ فقط من له موقع حقيقي\n3. عمود email فارغ → تملأونه يدوياً\n\nإيميلات الزبائن المسجّلين تأتي من Firebase (انظر scripts/export-firebase-emails-for-brevo.cjs)",
+        "height": 300,
+        "width": 320
+      },
+      "id": "note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [700, -40]
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [[{ "node": "Apify Google Maps", "type": "main", "index": 0 }]]
+    },
+    "Apify Google Maps": {
+      "main": [[{ "node": "Normalize websites", "type": "main", "index": 0 }]]
+    },
+    "Normalize websites": {
+      "main": [[{ "node": "Has website?", "type": "main", "index": 0 }]]
+    },
+    "Has website?": {
+      "main": [
+        [{ "node": "Google Sheets", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
