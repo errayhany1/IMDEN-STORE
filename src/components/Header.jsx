@@ -131,46 +131,47 @@ const Header = () => {
                             تطبيق الأندرويد
                         </a>
 
-                        {/* Account */}
-                        {user ? (
-                            <div className="cursor-pointer transition-transform hover:scale-105" 
-                                 onClick={() => setSidebarOpen(true)}
-                                 title="حسابي"
-                            >
-                                <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random&size=32`} alt="User" className="w-7 h-7 rounded-full shadow-sm border border-gray-200" />
+                        {/* Account / Wishlist / Cart — desktop only (mobile uses bottom nav) */}
+                        <div className="hidden md:flex items-center gap-0.5">
+                            {user ? (
+                                <div
+                                    className="cursor-pointer transition-transform hover:scale-105"
+                                    onClick={() => setSidebarOpen(true)}
+                                    title="حسابي"
+                                >
+                                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random&size=32`} alt="User" className="w-7 h-7 rounded-full shadow-sm border border-gray-200" />
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setAuthModalOpen(true)}
+                                    className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                                    aria-label="تسجيل الدخول"
+                                >
+                                    <User size={20} />
+                                </button>
+                            )}
+
+                            <div className="relative cursor-pointer" onClick={toggleWishlistSidebar}>
+                                <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100'}`} aria-label="المفضلة">
+                                    <Heart size={20} />
+                                </button>
+                                {wishlistCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                                        {wishlistCount}
+                                    </span>
+                                )}
                             </div>
-                        ) : (
-                            <button
-                                onClick={() => setAuthModalOpen(true)}
-                                className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
-                                aria-label="تسجيل الدخول"
-                            >
-                                <User size={20} />
-                            </button>
-                        )}
 
-                        {/* Wishlist */}
-                        <div className="relative cursor-pointer" onClick={toggleWishlistSidebar}>
-                            <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100'}`} aria-label="المفضلة">
-                                <Heart size={20} />
-                            </button>
-                            {wishlistCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                                    {wishlistCount}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Cart */}
-                        <div className="relative cursor-pointer" onClick={toggleCart}>
-                            <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-primary hover:bg-slate-100'}`}>
-                                <ShoppingCart size={20} />
-                            </button>
-                            {cartCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
-                                    {cartCount}
-                                </span>
-                            )}
+                            <div className="relative cursor-pointer" onClick={toggleCart}>
+                                <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-primary hover:bg-slate-100'}`} aria-label="السلة">
+                                    <ShoppingCart size={20} />
+                                </button>
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
