@@ -5,7 +5,7 @@ const TELEGRAM_URL = 'https://t.me/Imden_technology';
 const WA_NUMBER = '212664630566';
 
 const FloatingWhatsApp = () => (
-    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-50 flex flex-col items-center gap-4">
+    <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-50 flex flex-col items-center gap-4">
         {/* Telegram (SVG) */}
         <SocialButton
             type="telegram"

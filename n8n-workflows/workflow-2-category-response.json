@@ -3,13 +3,18 @@
   "nodes": [
     {
       "parameters": {
-        "updates": ["callback_query"],
+        "updates": [
+          "callback_query"
+        ],
         "additionalFields": {}
       },
       "name": "Callback Query Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "id": "b2c3d4e5-0001-0001-0001-000000000001",
       "webhookId": "97992efe-bd59-441b-9eb3-48a04b830f7b",
       "credentials": {
@@ -21,12 +26,15 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse the callback data: format is 'cat_CATID_row_ROWID'\n// Example: 'cat_1_row_450'\nconst callbackData = items[0].json.callback_query.data;\nconst chatId = items[0].json.callback_query.message.chat.id;\nconst messageId = items[0].json.callback_query.message.message_id;\nconst callbackQueryId = items[0].json.callback_query.id;\n\n// Parse cat and row IDs\nconst parts = callbackData.split('_');\n// parts: ['cat', '1', 'row', '450']\nconst categoryId = parseInt(parts[1]);\nconst rowId = parseInt(parts[3]);\n\n// Map category ID to Arabic name\nconst categoryNames = {\n  1:  '🔌 شواحن',\n  2:  '🎧 سماعات',\n  3:  '⌚ ساعات ذكية',\n  4:  '🎮 ألعاب',\n  5:  '🖱️ ماوس وكيبورد',\n  6:  '💾 تخزين',\n  7:  '💻 شواحن حواسيب',\n  8:  '📐 ستاندات',\n  9:  '💡 إضاءة',\n  10: '📷 كاميرات',\n  11: '📡 شبكات',\n  12: '📦 عام',\n  13: '🎙️ ميكروفونات',\n  14: '🔋 بطاريات وباوربانك'\n};\n\nconst categoryName = categoryNames[categoryId] || 'عام';\n\nreturn [{\n  json: {\n    category_id: categoryId,\n    category_name: categoryName,\n    row_id: rowId,\n    chat_id: chatId,\n    message_id: messageId,\n    callback_query_id: callbackQueryId\n  }\n}];"
+        "functionCode": "// Parse the callback data: format is 'cat_CATID_row_ROWID'\n// Example: 'cat_1_row_450'\nconst callbackData = items[0].json.callback_query.data;\nconst chatId = items[0].json.callback_query.message.chat.id;\nconst messageId = items[0].json.callback_query.message.message_id;\nconst callbackQueryId = items[0].json.callback_query.id;\n\n// Parse cat and row IDs\nconst parts = callbackData.split('_');\n// parts: ['cat', '1', 'row', '450']\nconst categoryId = parseInt(parts[1]);\nconst rowId = parseInt(parts[3]);\n\n// Map category ID to Arabic name\nconst categoryNames = {\n  1:  '🔌 شواحن',\n  2:  '🎧 سماعات',\n  3:  '⌚ ساعات ذكية',\n  4:  '🎮 ألعاب',\n  5:  '🖱️ ماوس وكيبورد',\n  6:  '💾 تخزين',\n  7:  '💻 شواحن حواسيب',\n  8:  '📐 ستاندات',\n  9:  '💡 إضاءة',\n  10: '📷 كاميرات',\n  11: '📡 شبكات',\n  12: '📦 عام',\n  13: '🎙️ ميكروفونات',\n  14: '🔋 بطاريات وباوربانك',\n  16: '🔗 كابلات',\n  17: '🚗 إكسسوارات السيارة'\n};\n\nconst categoryName = categoryNames[categoryId] || 'عام';\n\nreturn [{\n  json: {\n    category_id: categoryId,\n    category_name: categoryName,\n    row_id: rowId,\n    chat_id: chatId,\n    message_id: messageId,\n    callback_query_id: callbackQueryId\n  }\n}];"
       },
       "name": "Parse Callback Data",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "id": "b2c3d4e5-0002-0002-0002-000000000002"
     },
     {
@@ -49,7 +57,10 @@
       "name": "Update Category in NocoDB",
       "type": "n8n-nodes-base.nocoDb",
       "typeVersion": 3,
-      "position": [680, 300],
+      "position": [
+        680,
+        300
+      ],
       "id": "b2c3d4e5-0003-0003-0003-000000000003",
       "credentials": {
         "nocoDbApiToken": {
@@ -69,7 +80,10 @@
       "name": "Answer Callback Query",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1,
-      "position": [900, 200],
+      "position": [
+        900,
+        200
+      ],
       "id": "b2c3d4e5-0004-0004-0004-000000000004",
       "credentials": {
         "telegramApi": {
@@ -92,7 +106,10 @@
       "name": "Edit Message - Remove Buttons",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1,
-      "position": [900, 400],
+      "position": [
+        900,
+        400
+      ],
       "id": "b2c3d4e5-0005-0005-0005-000000000005",
       "credentials": {
         "telegramApi": {
@@ -104,20 +121,40 @@
   ],
   "connections": {
     "Callback Query Trigger": {
-      "main": [[{ "node": "Parse Callback Data", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parse Callback Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Callback Data": {
       "main": [
         [
-          { "node": "Update Category in NocoDB", "type": "main", "index": 0 }
+          {
+            "node": "Update Category in NocoDB",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Update Category in NocoDB": {
       "main": [
         [
-          { "node": "Answer Callback Query", "type": "main", "index": 0 },
-          { "node": "Edit Message - Remove Buttons", "type": "main", "index": 0 }
+          {
+            "node": "Answer Callback Query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Message - Remove Buttons",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }

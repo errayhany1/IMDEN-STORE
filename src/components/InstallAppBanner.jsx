@@ -72,7 +72,7 @@ const InstallAppBanner = () => {
       : 'حمّل نسخة الحاسوب أو ثبّته من المتصفح';
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-3 right-3 z-[190] flex justify-center pointer-events-none">
+    <div className="fixed bottom-28 md:bottom-6 left-3 right-3 z-[190] flex justify-center pointer-events-none">
       <div
         className={`pointer-events-auto max-w-md w-full rounded-2xl border shadow-xl px-4 py-3 flex items-center gap-3 ${
           dm ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200 text-slate-900'

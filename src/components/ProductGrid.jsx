@@ -5,9 +5,21 @@ import ProductCard from './ProductCard';
 import PromotionalBanner from './PromotionalBanner';
 
 import { categoryTranslation } from './CategoryRail';
+import { getFamilyById } from '../data/families';
 
 const ProductGrid = () => {
-    const { products, setProducts, appendProducts, updateCategoryImages, setLoading, isLoading, selectedCategory, searchQuery, gridColumns } = useStore();
+    const {
+        products,
+        setProducts,
+        appendProducts,
+        updateCategoryImages,
+        setLoading,
+        isLoading,
+        selectedCategory,
+        selectedFamily,
+        searchQuery,
+        gridColumns,
+    } = useStore();
 
     const [displayLimit, setDisplayLimit] = React.useState(20);
     const hasFetched = React.useRef(false);
@@ -41,10 +53,13 @@ const ProductGrid = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
 
-    // Reset display limit when category or search changes
+    // Reset display limit when category, family, or search changes
     useEffect(() => {
         setDisplayLimit(20);
-    }, [selectedCategory, searchQuery]);
+    }, [selectedCategory, selectedFamily, searchQuery]);
+
+    const activeFamily = selectedFamily ? getFamilyById(selectedFamily) : null;
+    const familyCategories = activeFamily?.categories || null;
 
     const filteredProducts = products.filter(p => {
         let matchesSearch = true;
@@ -71,7 +86,20 @@ const ProductGrid = () => {
             return matchesSearch;
         }
 
-        // If not searching, use category filtering
+        // Family view: only products that belong to this family's categories
+        // (use baseCategory when stock forced the display category to Out of Stock)
+        const productType = p.baseCategory || p.category;
+        if (familyCategories) {
+            const inFamily = familyCategories.includes(productType)
+                || (p.category !== 'Out of Stock' && familyCategories.includes(p.category));
+            if (!inFamily) return false;
+            if (selectedCategory === 'All') {
+                return p.category !== 'Out of Stock';
+            }
+            return productType === selectedCategory || p.category === selectedCategory;
+        }
+
+        // Home view: category filtering
         const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock') || p.category === selectedCategory;
         return matchesCategory;
     });

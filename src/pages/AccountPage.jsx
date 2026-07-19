@@ -3,6 +3,10 @@ import { Package, Clock, Truck, CheckCircle, XCircle, ArrowRight, Loader2, Shopp
 import useStore from '../store/useStore';
 import { auth } from '../services/firebase';
 import PhoneVerificationCard from '../components/PhoneVerificationCard';
+import BottomNavBar from '../components/BottomNavBar';
+import CartSidebar from '../components/CartSidebar';
+import WishlistSidebar from '../components/WishlistSidebar';
+import AuthModal from '../components/AuthModal';
 import {
     getOrdersForAccount,
     isCustomerAccountsConfigured,
@@ -436,7 +440,7 @@ const AccountPage = () => {
                 })}
 
                 {/* Footer */}
-                <div className={`text-center text-xs py-6 ${dm ? 'text-gray-600' : 'text-slate-400'}`}>
+                <div className={`text-center text-xs py-6 pb-28 md:pb-6 ${dm ? 'text-gray-600' : 'text-slate-400'}`}>
                     <p>هل لديك سؤال حول طلبك؟</p>
                     <a href="https://wa.me/212664630566" target="_blank" rel="noopener noreferrer"
                         className="text-green-500 font-bold hover:underline mt-1 inline-block">
@@ -444,6 +448,11 @@ const AccountPage = () => {
                     </a>
                 </div>
             </main>
+
+            <CartSidebar />
+            <WishlistSidebar />
+            <AuthModal />
+            <BottomNavBar activeOverride="account" />
         </div>
     );
 };

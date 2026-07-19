@@ -28,10 +28,13 @@ const useStore = create(
                 'Network',
                 'Microphones',
                 'Batteries & Power Banks',
+                'Cables',
+                'Car Accessories',
                 'General',
                 'Out of Stock'
             ],
             selectedCategory: 'All',
+            selectedFamily: null, // e.g. 'power' | 'audio' | 'devices'
             isLoading: false,
             isCartOpen: false,
             darkMode: false,
@@ -103,6 +106,17 @@ const useStore = create(
             setLoading: (loading) => set({ isLoading: loading }),
 
             setCategory: (category) => set({ selectedCategory: category }),
+
+            setFamily: (familyId) => set({
+                selectedFamily: familyId || null,
+                selectedCategory: 'All',
+                searchQuery: '',
+            }),
+
+            clearFamily: () => set({
+                selectedFamily: null,
+                selectedCategory: 'All',
+            }),
 
             toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
 

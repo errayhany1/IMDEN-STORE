@@ -17,7 +17,25 @@ const PRODUCTS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const PRODUCTS_TABLE = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
 const EXPENSES_TABLE = import.meta.env.VITE_NOCODB_TABLE_EXPENSES;
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'imden2026';
-const CAT_MAP = {1:'Chargers',2:'Audio',3:'Smart Watches',4:'Gaming',5:'Mouse & Keyboard',6:'Storage',7:'Laptop Chargers',8:'Stands',9:'Lighting',10:'Cameras',11:'Network',12:'General',13:'Microphones',14:'Batteries',15:'Out of Stock'};
+const CAT_MAP = {
+    1: 'Chargers',
+    2: 'Audio',
+    3: 'Smart Watches',
+    4: 'Gaming',
+    5: 'Mouse & Keyboard',
+    6: 'Storage',
+    7: 'Laptop Chargers',
+    8: 'Stands',
+    9: 'Lighting',
+    10: 'Cameras',
+    11: 'Network',
+    12: 'General',
+    13: 'Microphones',
+    14: 'Batteries',
+    15: 'Out of Stock',
+    16: 'Cables',
+    17: 'Car Accessories',
+};
 
 const AdminDashboard = () => {
     const { darkMode } = useStore();

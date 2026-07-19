@@ -126,7 +126,9 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                 12: "General",         // الستابليزاتور → General
                 13: "Microphones",      // الميكروفونات
                 14: "Batteries & Power Banks", // بطاريات وبنوك الطاقة
-                15: "Out of Stock"      // نفد من المخزون
+                15: "Out of Stock",     // نفد من المخزون
+                16: "Cables",           // الكابلات
+                17: "Car Accessories",  // إكسسوارات السيارة
             };
 
             while (hasMore) {
