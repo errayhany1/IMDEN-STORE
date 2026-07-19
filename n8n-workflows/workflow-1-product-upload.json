@@ -3,13 +3,18 @@
   "nodes": [
     {
       "parameters": {
-        "updates": ["message"],
+        "updates": [
+          "message"
+        ],
         "additionalFields": {}
       },
       "name": "BOT DJEMLA - Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "id": "a1b2c3d4-0001-0001-0001-000000000001",
       "webhookId": "97992efe-bd59-441b-9eb3-48a04b830f7a",
       "credentials": {
@@ -33,7 +38,10 @@
       "name": "Has Photo?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "id": "a1b2c3d4-0002-0002-0002-000000000002"
     },
     {
@@ -43,7 +51,10 @@
       "name": "Parse Caption",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [680, 300],
+      "position": [
+        680,
+        300
+      ],
       "id": "a1b2c3d4-0003-0003-0003-000000000003"
     },
     {
@@ -55,7 +66,10 @@
       "name": "Get Photo File",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1,
-      "position": [900, 300],
+      "position": [
+        900,
+        300
+      ],
       "id": "a1b2c3d4-0004-0004-0004-000000000004",
       "webhookId": "cee6b38e-689d-48e6-8fe5-b92fa57973e4",
       "credentials": {
@@ -105,7 +119,10 @@
       "name": "Create NocoDB Row",
       "type": "n8n-nodes-base.nocoDb",
       "typeVersion": 3,
-      "position": [1120, 300],
+      "position": [
+        1120,
+        300
+      ],
       "id": "a1b2c3d4-0005-0005-0005-000000000005",
       "credentials": {
         "nocoDbApiToken": {
@@ -116,12 +133,15 @@
     },
     {
       "parameters": {
-        "functionCode": "// Build the inline keyboard with all categories\n// Callback data format: cat_CATEGORY_ID_row_ROW_ID\nconst rowId = items[0].json.Id || items[0].json.id;\nconst chatId = $('Parse Caption').item.json.chat_id;\nconst productName = $('Parse Caption').item.json.extracted_name;\nconst productPrice = $('Parse Caption').item.json.extracted_price;\nconst productSku = $('Parse Caption').item.json.extracted_sku;\n\nconst keyboard = {\n  inline_keyboard: [\n    [\n      { text: \"🔌 شواحن\", callback_data: `cat_1_row_${rowId}` },\n      { text: \"🎧 سماعات\", callback_data: `cat_2_row_${rowId}` }\n    ],\n    [\n      { text: \"⌚ ساعات ذكية\", callback_data: `cat_3_row_${rowId}` },\n      { text: \"🎮 ألعاب\", callback_data: `cat_4_row_${rowId}` }\n    ],\n    [\n      { text: \"🖱️ ماوس وكيبورد\", callback_data: `cat_5_row_${rowId}` },\n      { text: \"💾 تخزين\", callback_data: `cat_6_row_${rowId}` }\n    ],\n    [\n      { text: \"💻 شواحن حواسيب\", callback_data: `cat_7_row_${rowId}` },\n      { text: \"📐 ستاندات\", callback_data: `cat_8_row_${rowId}` }\n    ],\n    [\n      { text: \"💡 إضاءة\", callback_data: `cat_9_row_${rowId}` },\n      { text: \"📷 كاميرات\", callback_data: `cat_10_row_${rowId}` }\n    ],\n    [\n      { text: \"📡 شبكات\", callback_data: `cat_11_row_${rowId}` },\n      { text: \"🎙️ ميكروفونات\", callback_data: `cat_13_row_${rowId}` }\n    ],\n    [\n      { text: \"🔋 بطاريات وباوربانك\", callback_data: `cat_14_row_${rowId}` },\n      { text: \"📦 عام\", callback_data: `cat_12_row_${rowId}` }\n    ]\n  ]\n};\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    text: `✅ تم حفظ المنتج رقم #${rowId} بنجاح!\\n\\n📦 الاسم: ${productName}\\n💰 السعر: ${productPrice} DH\\n📋 المرجع: ${productSku}\\n\\n⬇️ اختر التصنيف المناسب للمنتج:`,\n    reply_markup: JSON.stringify(keyboard)\n  }\n}];"
+        "functionCode": "// Build the inline keyboard with all categories\n// Callback data format: cat_CATEGORY_ID_row_ROW_ID\nconst rowId = items[0].json.Id || items[0].json.id;\nconst chatId = $('Parse Caption').item.json.chat_id;\nconst productName = $('Parse Caption').item.json.extracted_name;\nconst productPrice = $('Parse Caption').item.json.extracted_price;\nconst productSku = $('Parse Caption').item.json.extracted_sku;\n\nconst keyboard = {\n  inline_keyboard: [\n    [\n      { text: \"🔌 شواحن\", callback_data: `cat_1_row_${rowId}` },\n      { text: \"🎧 سماعات\", callback_data: `cat_2_row_${rowId}` }\n    ],\n    [\n      { text: \"⌚ ساعات ذكية\", callback_data: `cat_3_row_${rowId}` },\n      { text: \"🎮 ألعاب\", callback_data: `cat_4_row_${rowId}` }\n    ],\n    [\n      { text: \"🖱️ ماوس وكيبورد\", callback_data: `cat_5_row_${rowId}` },\n      { text: \"💾 تخزين\", callback_data: `cat_6_row_${rowId}` }\n    ],\n    [\n      { text: \"💻 شواحن حواسيب\", callback_data: `cat_7_row_${rowId}` },\n      { text: \"📐 ستاندات\", callback_data: `cat_8_row_${rowId}` }\n    ],\n    [\n      { text: \"💡 إضاءة\", callback_data: `cat_9_row_${rowId}` },\n      { text: \"📷 كاميرات\", callback_data: `cat_10_row_${rowId}` }\n    ],\n    [\n      { text: \"📡 شبكات\", callback_data: `cat_11_row_${rowId}` },\n      { text: \"🎙️ ميكروفونات\", callback_data: `cat_13_row_${rowId}` }\n    ],\n    [\n      { text: \"🔋 بطاريات وباوربانك\", callback_data: `cat_14_row_${rowId}` },\n      { text: \"📦 عام\", callback_data: `cat_12_row_${rowId}` }\n    ],\n    [\n      { text: \"🔗 كابلات\", callback_data: `cat_16_row_${rowId}` },\n      { text: \"🚗 إكسسوارات السيارة\", callback_data: `cat_17_row_${rowId}` }\n    ]\n  ]\n};\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    text: `✅ تم حفظ المنتج رقم #${rowId} بنجاح!\\n\\n📦 الاسم: ${productName}\\n💰 السعر: ${productPrice} DH\\n📋 المرجع: ${productSku}\\n\\n⬇️ اختر التصنيف المناسب للمنتج:`,\n    reply_markup: JSON.stringify(keyboard)\n  }\n}];"
       },
       "name": "Build Category Keyboard",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [1340, 300],
+      "position": [
+        1340,
+        300
+      ],
       "id": "a1b2c3d4-0006-0006-0006-000000000006"
     },
     {
@@ -135,7 +155,10 @@
       "name": "Send Category Keyboard",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1,
-      "position": [1560, 300],
+      "position": [
+        1560,
+        300
+      ],
       "id": "a1b2c3d4-0007-0007-0007-000000000007",
       "credentials": {
         "telegramApi": {
@@ -147,22 +170,70 @@
   ],
   "connections": {
     "BOT DJEMLA - Trigger": {
-      "main": [[{ "node": "Has Photo?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Photo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Photo?": {
-      "main": [[{ "node": "Parse Caption", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parse Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Caption": {
-      "main": [[{ "node": "Get Photo File", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Get Photo File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Get Photo File": {
-      "main": [[{ "node": "Create NocoDB Row", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Create NocoDB Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Create NocoDB Row": {
-      "main": [[{ "node": "Build Category Keyboard", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Category Keyboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Category Keyboard": {
-      "main": [[{ "node": "Send Category Keyboard", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send Category Keyboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "meta": {

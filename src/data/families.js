@@ -10,7 +10,7 @@ export const productFamilies = [
         taglineAr: 'كل ما تحتاجه للطاقة والشحن',
         banner: '/banners/family-power.jpg',
         accent: '#156cb8',
-        categories: ['Chargers', 'Laptop Chargers', 'Batteries & Power Banks'],
+        categories: ['Chargers', 'Laptop Chargers', 'Batteries & Power Banks', 'Cables'],
     },
     {
         id: 'audio',
@@ -36,6 +36,7 @@ export const productFamilies = [
             'Network',
             'Lighting',
             'Stands',
+            'Car Accessories',
         ],
     },
 ];

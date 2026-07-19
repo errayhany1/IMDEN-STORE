@@ -3,7 +3,7 @@ import useStore from '../store/useStore';
 import {
     MessageSquarePlus, Layers, Zap, Headphones, Watch, Gamepad2,
     Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera,
-    Wifi, Mic, BatteryCharging, Box, XCircle, ArrowRight
+    Wifi, Mic, BatteryCharging, Box, XCircle, ArrowRight, Cable, Car
 } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
 import { getFamilyById } from '../data/families';
@@ -23,6 +23,8 @@ export const categoryTranslation = {
     'Network': 'شبكات',
     'Microphones': 'ميكروفونات',
     'Batteries & Power Banks': 'بطاريات وباوربانك',
+    'Cables': 'كابلات',
+    'Car Accessories': 'إكسسوارات السيارة',
     'General': 'عام',
     'Out of Stock': 'نفد من المخزون'
 };
@@ -42,6 +44,8 @@ const categoryIcons = {
     'Network': Wifi,
     'Microphones': Mic,
     'Batteries & Power Banks': BatteryCharging,
+    'Cables': Cable,
+    'Car Accessories': Car,
     'General': Box,
     'Out of Stock': XCircle
 };

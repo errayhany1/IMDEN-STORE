@@ -28,6 +28,8 @@ const useStore = create(
                 'Network',
                 'Microphones',
                 'Batteries & Power Banks',
+                'Cables',
+                'Car Accessories',
                 'General',
                 'Out of Stock'
             ],
