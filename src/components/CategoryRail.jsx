@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import useStore from '../store/useStore';
-import { 
-    MessageSquarePlus, Layers, Zap, Headphones, Watch, Gamepad2, 
-    Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera, 
-    Wifi, Mic, BatteryCharging, Box, XCircle 
+import {
+    MessageSquarePlus, Layers, Zap, Headphones, Watch, Gamepad2,
+    Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera,
+    Wifi, Mic, BatteryCharging, Box, XCircle, ArrowRight
 } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
+import { getFamilyById } from '../data/families';
 
 export const categoryTranslation = {
     'All': 'الكل',
-    'Chargers': 'شواحن',
+    'Chargers': 'شواحن جوال',
     'Audio': 'سماعات',
     'Smart Watches': 'ساعات ذكية',
     'Gaming': 'ألعاب',
     'Mouse & Keyboard': 'ماوس وكيبورد',
     'Storage': 'تخزين',
     'Laptop Chargers': 'شواحن حواسيب',
-    'Stands': 'ستاندات',
+    'Stands': 'حوامل',
     'Lighting': 'إضاءة',
     'Cameras': 'كاميرات',
     'Network': 'شبكات',
@@ -46,8 +47,22 @@ const categoryIcons = {
 };
 
 const CategoryRail = () => {
-    const { darkMode, categories, selectedCategory, setCategory, user, setAuthModalOpen } = useStore();
+    const {
+        darkMode,
+        categories,
+        selectedCategory,
+        setCategory,
+        selectedFamily,
+        clearFamily,
+        user,
+        setAuthModalOpen,
+    } = useStore();
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
+    const activeFamily = selectedFamily ? getFamilyById(selectedFamily) : null;
+    const visibleCategories = activeFamily
+        ? ['All', ...activeFamily.categories]
+        : categories.filter((cat) => cat !== 'Out of Stock');
 
     const handleRequestProduct = () => {
         if (user) {
@@ -57,21 +72,59 @@ const CategoryRail = () => {
         }
     };
 
+    const handleBackToHome = () => {
+        clearFamily();
+        const url = new URL(window.location.href);
+        url.pathname = '/';
+        window.history.pushState({}, '', '/');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     return (
-        <section className="mb-4 mt-2 px-2 flex flex-col gap-3">
+        <section id="family-products" className="mb-4 mt-2 px-2 flex flex-col gap-3 scroll-mt-20">
+            {activeFamily && (
+                <div
+                    className={`rounded-xl border px-3 py-3 flex items-center justify-between gap-3 ${
+                        darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'
+                    }`}
+                    style={{ direction: 'rtl' }}
+                >
+                    <div className="min-w-0">
+                        <p className="text-sm font-bold truncate" style={{ color: activeFamily.accent }}>
+                            {activeFamily.nameAr}
+                        </p>
+                        <p className={`text-xs mt-0.5 truncate ${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                            {activeFamily.taglineAr}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleBackToHome}
+                        className={`shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border transition
+                            ${darkMode
+                                ? 'border-gray-600 text-gray-200 hover:bg-gray-800'
+                                : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        <ArrowRight size={14} />
+                        كل العائلات
+                    </button>
+                </div>
+            )}
+
             {/* Category Chips Horizontal Rail */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x rtl" style={{ direction: 'rtl' }}>
-                {categories.map((cat, idx) => {
+                {visibleCategories.map((cat) => {
                     const Icon = categoryIcons[cat] || Box;
                     return (
                         <button
-                            key={idx}
+                            key={cat}
+                            type="button"
                             onClick={() => setCategory(cat)}
                             className={`snap-center shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2 border whitespace-nowrap
-                                ${selectedCategory === cat 
-                                    ? 'bg-primary text-white border-primary shadow-md transform scale-105' 
-                                    : darkMode 
-                                        ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
+                                ${selectedCategory === cat
+                                    ? 'bg-primary text-white border-primary shadow-md transform scale-105'
+                                    : darkMode
+                                        ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
                                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
                         >
                             <Icon size={16} className={selectedCategory === cat ? 'text-white' : (darkMode ? 'text-gray-400' : 'text-slate-500')} />
@@ -82,7 +135,7 @@ const CategoryRail = () => {
             </div>
 
             {/* Compact Request Product Banner */}
-            <div 
+            <div
                 onClick={handleRequestProduct}
                 className={`px-3 py-2 rounded-lg border flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-md active:scale-[0.98]
                 ${darkMode ? 'bg-gray-800/60 border-gray-700 text-white hover:bg-gray-800' : 'bg-primary/5 border-primary/20 text-slate-700 hover:bg-primary/10'}`}

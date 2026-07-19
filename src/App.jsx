@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Header from './components/Header';
 import CategoryRail from './components/CategoryRail';
+import FamilyHeroSlider from './components/FamilyHeroSlider';
 import ProductGrid from './components/ProductGrid';
+import { getFamilyById } from './data/families';
 import CartSidebar from './components/CartSidebar';
 import WishlistSidebar from './components/WishlistSidebar';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
@@ -39,6 +41,8 @@ function App() {
     setCustomerInfo,
     setAccountState,
     clearAccountState,
+    setFamily,
+    clearFamily,
   } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -54,6 +58,23 @@ function App() {
       console.warn('Native shell init failed:', error);
     });
   }, []);
+
+  // Sync /family/:id URLs with store (slider clicks + browser back/forward)
+  useEffect(() => {
+    const syncFamilyFromPath = () => {
+      const match = window.location.pathname.match(/^\/family\/([a-z0-9-]+)\/?$/i);
+      const familyId = match?.[1]?.toLowerCase();
+      if (familyId && getFamilyById(familyId)) {
+        setFamily(familyId);
+      } else if (window.location.pathname === '/' || window.location.pathname === '') {
+        clearFamily();
+      }
+    };
+
+    syncFamilyFromPath();
+    window.addEventListener('popstate', syncFamilyFromPath);
+    return () => window.removeEventListener('popstate', syncFamilyFromPath);
+  }, [setFamily, clearFamily]);
 
   useEffect(() => {
     if (!completingRedirect) return undefined;
@@ -274,6 +295,7 @@ function App() {
   if (path === '/account') {
       return <AccountPage />;
   }
+  // /family/:id is handled by the main storefront + selectedFamily state
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
@@ -291,7 +313,10 @@ function App() {
       {/* Main Content */}
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6">
 
-        {/* Categories Rail */}
+        {/* Family hero slider — click opens the family catalog */}
+        <FamilyHeroSlider />
+
+        {/* Categories Rail (narrows to family subcategories when a family is open) */}
         <CategoryRail />
 
         {/* Featured & New Products (hourly rotation + today's new) */}
