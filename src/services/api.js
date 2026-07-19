@@ -284,3 +284,161 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
     return cache.fetchPromise;
 };
 
+const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
+    const isOutOfStock = record.POSTEBL === 'NO POSTEBL';
+    const recordId = String(record.Id || record.id || '');
+    const optimizedImages = localImagesByProduct[recordId]?.images || [];
+
+    const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
+    let imageUrl = null;
+    let originalImageUrl = null;
+    if (imageObj) {
+        const rawUrl = imageObj.signedUrl || imageObj.url;
+        if (rawUrl) {
+            originalImageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+            imageUrl = optimizedImages[0]?.full || originalImageUrl;
+        }
+    }
+
+    const allImages = [];
+    let imageIndex = 0;
+    ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach((col) => {
+        if (record[col] && record[col].length > 0) {
+            record[col].forEach((img) => {
+                const url = img.signedUrl || img.url;
+                if (url) {
+                    const originalUrl = url.startsWith('http') ? url : `${API_URL}/${url}`;
+                    allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
+                    imageIndex += 1;
+                }
+            });
+        }
+    });
+
+    const categoryMapping = {
+        1: 'Chargers', 2: 'Audio', 3: 'Smart Watches', 4: 'Gaming',
+        5: 'Mouse & Keyboard', 6: 'Storage', 7: 'Laptop Chargers', 8: 'Stands',
+        9: 'Lighting', 10: 'Cameras', 11: 'Network', 12: 'General',
+        13: 'Microphones', 14: 'Batteries & Power Banks', 15: 'Out of Stock',
+        16: 'Cables', 17: 'Car Accessories',
+    };
+
+    let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+    if (isOutOfStock) categoryId = 15;
+    const categoryName = categoryMapping[categoryId] || 'General';
+    const originalCategoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
+    const baseCategory = categoryMapping[originalCategoryId] || 'General';
+
+    let siteLang = 'ar';
+    try {
+        siteLang = localStorage.getItem('site_lang') === 'fr' ? 'fr' : 'ar';
+    } catch { /* ignore */ }
+
+    const fallbackName = siteLang === 'fr'
+        ? (record.French_Title || record.Woo_Title || record.Title || record.Arabic_Title || record.SKU || '')
+        : (record.Arabic_Title || record.Title || record.Woo_Title || record.French_Title || record.SKU || '');
+
+    return {
+        id: record.Id || record.id || Math.random().toString(36).substr(2, 9),
+        ref: record.SKU || '',
+        name: fallbackName,
+        price: record.price || 0,
+        image: imageUrl,
+        thumbnail: optimizedImages[0]?.thumbnail || imageUrl,
+        images: allImages.length ? allImages : (imageUrl ? [imageUrl] : []),
+        originalImage: originalImageUrl,
+        category: categoryName,
+        baseCategory,
+        isAvailable: !isOutOfStock,
+        originalData: record,
+    };
+};
+
+/** Normalize SKUs for comparison (spaces, ERY- prefix, encoding). */
+export const normalizeSku = (value) =>
+    String(value || '')
+        .trim()
+        .replace(/\+/g, ' ')
+        .toLowerCase()
+        .replace(/^ery-/, '');
+
+export const skusMatch = (a, b) => {
+    const left = normalizeSku(a);
+    const right = normalizeSku(b);
+    if (!left || !right) return false;
+    return left === right
+        || left === `ery-${right}`
+        || right === `ery-${left}`
+        || left.includes(right)
+        || right.includes(left);
+};
+
+/**
+ * Fetch a single product by SKU for landing pages.
+ * Tries exact SKU, then ERY- prefixed variant.
+ */
+export const fetchProductBySku = async (rawSku) => {
+    if (!API_URL || !API_TOKEN || !TABLE_ID || !rawSku) return null;
+
+    let sku = rawSku;
+    try {
+        sku = decodeURIComponent(String(rawSku).trim());
+    } catch {
+        sku = String(rawSku).trim();
+    }
+
+    const candidates = Array.from(new Set([
+        sku,
+        sku.toUpperCase(),
+        sku.startsWith('ERY-') ? sku : `ERY-${sku}`,
+        sku.startsWith('ERY-') ? sku.slice(4) : sku,
+    ].filter(Boolean)));
+
+    const localImageManifest = await getLocalImageManifest();
+    const localImagesByProduct = localImageManifest.products || {};
+
+    for (const candidate of candidates) {
+        try {
+            const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
+            const response = await fetchWithRetry(url, {
+                headers: {
+                    'xc-token': API_TOKEN,
+                    accept: 'application/json',
+                },
+                params: {
+                    limit: 5,
+                    where: `(SKU,eq,${candidate})`,
+                },
+            });
+            const list = response.data?.list || [];
+            if (list.length) {
+                return mapNocoRecordToProduct(list[0], localImagesByProduct);
+            }
+        } catch (error) {
+            console.warn('fetchProductBySku failed for', candidate, error?.message || error);
+        }
+    }
+
+    // Fallback: recent records scan (SKU filters can be picky with spaces/accents)
+    try {
+        const url = `${API_URL}/api/v2/tables/${TABLE_ID}/records`;
+        const response = await fetchWithRetry(url, {
+            headers: {
+                'xc-token': API_TOKEN,
+                accept: 'application/json',
+            },
+            params: {
+                limit: 100,
+                sort: '-Id',
+            },
+        });
+        const list = response.data?.list || [];
+        const hit = list.find((record) => skusMatch(record.SKU, sku));
+        if (hit) return mapNocoRecordToProduct(hit, localImagesByProduct);
+    } catch (error) {
+        console.error('fetchProductBySku fallback failed:', error);
+    }
+
+    return null;
+};
+

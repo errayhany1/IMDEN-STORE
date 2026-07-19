@@ -1,7 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ShoppingCart, MessageCircle } from 'lucide-react';
 import useStore from '../store/useStore';
-import { fetchProducts } from '../services/api';
+import {
+  fetchProducts,
+  fetchProductBySku,
+  skusMatch,
+} from '../services/api';
+import BottomNavBar from '../components/BottomNavBar';
+import CartSidebar from '../components/CartSidebar';
+import WishlistSidebar from '../components/WishlistSidebar';
+import AuthModal from '../components/AuthModal';
 
 const WA_NUMBER = '212664630566';
 
@@ -10,6 +18,14 @@ function getLang() {
     return localStorage.getItem('site_lang') === 'fr' ? 'fr' : 'ar';
   } catch {
     return 'ar';
+  }
+}
+
+function decodeSku(value) {
+  try {
+    return decodeURIComponent(String(value || '').trim());
+  } catch {
+    return String(value || '').trim();
   }
 }
 
@@ -22,33 +38,79 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
   const [lang, setLang] = useState(getLang);
   const [activeImg, setActiveImg] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [directProduct, setDirectProduct] = useState(null);
+  const [loadError, setLoadError] = useState('');
 
   const sku = useMemo(() => {
-    if (skuProp) return decodeURIComponent(skuProp);
+    if (skuProp) return decodeSku(skuProp);
     const parts = window.location.pathname.split('/').filter(Boolean);
-    return decodeURIComponent(parts[1] || '');
+    return decodeSku(parts[1] || '');
   }, [skuProp]);
 
-  useEffect(() => {
-    if (storeProducts?.length) return undefined;
-    let cancelled = false;
-    setLoading(true);
-    fetchProducts((chunk, _cats, meta) => {
-      if (cancelled || !chunk?.length) return;
-      if (meta?.replace) setProducts(chunk);
-      else appendProducts(chunk);
-    }).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, [storeProducts, setProducts, appendProducts]);
-
-  const product = useMemo(() => {
+  const productFromStore = useMemo(() => {
     const list = storeProducts || [];
-    return list.find((p) => String(p.ref).toLowerCase() === String(sku).toLowerCase())
-      || list.find((p) => String(p.ref).toLowerCase().includes(String(sku).toLowerCase()));
+    return list.find((p) => skusMatch(p.ref, sku))
+      || list.find((p) => skusMatch(p.id, sku))
+      || null;
   }, [storeProducts, sku]);
+
+  const product = directProduct || productFromStore;
+
+  // Load full catalog without cancelling when the static cache arrives,
+  // then fall back to a direct SKU lookup for brand-new products.
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setLoadError('');
+      setDirectProduct(null);
+      setActiveImg(0);
+
+      try {
+        await fetchProducts((chunk, _cats, meta = {}) => {
+          if (cancelled || !chunk?.length) return;
+          if (meta.replace) setProducts(chunk);
+          else appendProducts(chunk);
+        });
+      } catch (error) {
+        console.error('Landing catalog fetch failed:', error);
+      }
+
+      if (cancelled) return;
+
+      // Re-read store after catalog fetch — new uploads may only exist live
+      const latest = useStore.getState().products || [];
+      const found = latest.find((p) => skusMatch(p.ref, sku))
+        || latest.find((p) => skusMatch(p.id, sku));
+
+      if (!found) {
+        try {
+          const single = await fetchProductBySku(sku);
+          if (!cancelled && single) {
+            setDirectProduct(single);
+            // Also merge into the store so cart/wishlist share the same object shape
+            const exists = (useStore.getState().products || []).some((p) => skusMatch(p.ref, single.ref));
+            if (!exists) appendProducts([single]);
+          }
+        } catch (error) {
+          console.error('Direct SKU fetch failed:', error);
+          if (!cancelled) setLoadError('تعذر تحميل المنتج حالياً.');
+        }
+      }
+
+      if (!cancelled) setLoading(false);
+    };
+
+    if (!sku) {
+      setLoading(false);
+      return undefined;
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [sku, setProducts, appendProducts]);
 
   const od = product?.originalData || {};
   const isFr = lang === 'fr';
@@ -58,7 +120,13 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const description = isFr
     ? (od.description_french || od.short_description_fr || '')
     : (od.description_arabic || od.short_description_ar || '');
-  const images = (product?.images?.length ? product.images : [product?.image]).filter(Boolean);
+
+  const images = useMemo(() => {
+    const list = (product?.images?.length
+      ? product.images
+      : [product?.image, product?.originalImage].filter(Boolean));
+    return Array.from(new Set((list || []).filter(Boolean)));
+  }, [product]);
 
   const dm = darkMode;
 
@@ -83,6 +151,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       <div className={`min-h-screen flex flex-col items-center justify-center gap-4 p-6 ${dm ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-800'}`}>
         <p className="font-bold text-lg">المنتج غير موجود</p>
         <p className="text-sm opacity-70">{sku}</p>
+        {loadError && <p className="text-xs text-red-500">{loadError}</p>}
         <a href={backHref} className="text-primary font-bold flex items-center gap-2">
           <ArrowRight size={16} /> العودة
         </a>
@@ -95,7 +164,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   );
 
   return (
-    <div className={`min-h-screen ${dm ? 'bg-gray-950 text-gray-100' : 'bg-slate-50 text-slate-900'}`} dir={isFr ? 'ltr' : 'rtl'}>
+    <div className={`min-h-screen pb-24 md:pb-6 ${dm ? 'bg-gray-950 text-gray-100' : 'bg-slate-50 text-slate-900'}`} dir={isFr ? 'ltr' : 'rtl'}>
       <header className={`sticky top-0 z-20 border-b backdrop-blur ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-white/90 border-slate-200'}`}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <a href={backHref} className="font-bold text-primary flex items-center gap-2">
@@ -122,9 +191,18 @@ const ProductLandingPage = ({ sku: skuProp }) => {
         <section>
           <div className={`rounded-2xl overflow-hidden border aspect-square flex items-center justify-center ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
             {images[activeImg] ? (
-              <img src={images[activeImg]} alt={title} className="w-full h-full object-contain p-4" />
+              <img
+                src={images[activeImg]}
+                alt={title}
+                className="w-full h-full object-contain p-4"
+                onError={(e) => {
+                  if (product.originalImage && e.currentTarget.src !== product.originalImage) {
+                    e.currentTarget.src = product.originalImage;
+                  }
+                }}
+              />
             ) : (
-              <span className="opacity-50">No image</span>
+              <span className="opacity-50">لا توجد صورة</span>
             )}
           </div>
           {images.length > 1 && (
@@ -179,6 +257,11 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           </div>
         </section>
       </main>
+
+      <CartSidebar />
+      <WishlistSidebar />
+      <AuthModal />
+      <BottomNavBar />
     </div>
   );
 };
