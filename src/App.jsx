@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Header from './components/Header';
 import CategoryRail from './components/CategoryRail';
 import FamilyHeroSlider from './components/FamilyHeroSlider';
+import BottomNavBar from './components/BottomNavBar';
 import ProductGrid from './components/ProductGrid';
 import { getFamilyById } from './data/families';
 import CartSidebar from './components/CartSidebar';
@@ -75,6 +76,18 @@ function App() {
     window.addEventListener('popstate', syncFamilyFromPath);
     return () => window.removeEventListener('popstate', syncFamilyFromPath);
   }, [setFamily, clearFamily]);
+
+  // Support /#categories-section deep links (e.g. from bottom nav on Account page)
+  useEffect(() => {
+    if (window.location.hash !== '#categories-section') return undefined;
+    const timer = setTimeout(() => {
+      document.getElementById('categories-section')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!completingRedirect) return undefined;
@@ -310,8 +323,8 @@ function App() {
       {/* Notification prompt */}
       <NotificationPrompt />
 
-      {/* Main Content */}
-      <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6">
+      {/* Main Content — extra bottom padding clears the mobile bottom nav */}
+      <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6 pb-28 md:pb-6">
 
         {/* Family hero slider — click opens the family catalog */}
         <FamilyHeroSlider />
@@ -335,12 +348,13 @@ function App() {
       <AboutModal />
       <IOSInstallPrompt />
       <InstallAppBanner />
+      <BottomNavBar />
 
       {/* Scroll to Top Button */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-24 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
+          className={`fixed bottom-28 md:bottom-24 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
           ${darkMode ? 'bg-gray-800 text-white border border-gray-700 hover:bg-gray-700' : 'bg-white text-primary border border-slate-200 hover:bg-primary hover:text-white'}`}
           style={{ animation: 'slideUp 0.3s ease-out' }}
           aria-label="العودة للأعلى"
@@ -352,7 +366,7 @@ function App() {
       {/* Login Toast Notification */}
       {showLoginToast && !user && (
         <div 
-          className={`fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50 
+          className={`fixed bottom-28 md:bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50 
           rounded-2xl shadow-2xl border p-4 flex items-center gap-3 cursor-pointer
           ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
           style={{ direction: 'rtl', animation: 'slideUp 0.4s ease-out' }}

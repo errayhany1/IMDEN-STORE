@@ -67,7 +67,8 @@ const FamilyHeroSlider = () => {
 
     return (
         <section
-            className="mb-4 mt-1"
+            id="categories-section"
+            className="mb-4 mt-1 scroll-mt-20"
             aria-roledescription="carousel"
             aria-label="عائلات المنتجات"
             onMouseEnter={() => setPaused(true)}
