@@ -66,9 +66,8 @@ const CategoryRail = () => {
 
     const handleBackToHome = () => {
         clearFamily();
-        const url = new URL(window.location.href);
-        url.pathname = '/';
-        window.history.pushState({}, '', '/');
+        const homePath = useStore.getState().browseMode === 'catalog' ? '/catalog' : '/';
+        window.history.pushState({}, '', homePath);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 

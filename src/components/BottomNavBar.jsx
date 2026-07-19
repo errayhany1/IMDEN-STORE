@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, LayoutGrid, ShoppingCart, Heart, User } from 'lucide-react';
+import { Home, BookOpen, ShoppingCart, Heart, User } from 'lucide-react';
 import useStore from '../store/useStore';
 
 const BottomNavBar = ({ activeOverride = null }) => {
@@ -12,12 +12,14 @@ const BottomNavBar = ({ activeOverride = null }) => {
         toggleCart,
         toggleWishlistSidebar,
         clearFamily,
-        selectedFamily,
+        setBrowseMode,
+        browseMode,
     } = useStore();
 
     const path = window.location.pathname;
     const onAccount = path === '/account';
-    const onStorefront = path === '/' || path.startsWith('/family/');
+    const onCatalog = path === '/catalog' || path.startsWith('/catalog/');
+    const onShop = path === '/' || path.startsWith('/family/');
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const wishlistCount = wishlist.length;
@@ -27,39 +29,32 @@ const BottomNavBar = ({ activeOverride = null }) => {
         if (isCartOpen) active = 'cart';
         else if (isWishlistOpen) active = 'wishlist';
         else if (onAccount) active = 'account';
+        else if (onCatalog) active = 'catalog';
         else active = 'home';
     }
 
-    const goHome = () => {
+    const goShop = () => {
         clearFamily();
-        if (!onStorefront || path.startsWith('/family/')) {
-            window.history.pushState({}, '', '/');
-            if (!onStorefront) {
-                window.location.assign('/');
-                return;
-            }
-            window.dispatchEvent(new PopStateEvent('popstate'));
+        setBrowseMode('shop');
+        if (!onShop) {
+            window.location.assign('/');
+            return;
         }
+        window.history.pushState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const goCategories = () => {
-        if (!onStorefront) {
-            window.location.assign('/#categories-section');
+    const goCatalog = () => {
+        clearFamily();
+        setBrowseMode('catalog');
+        if (!onCatalog) {
+            window.location.assign('/catalog');
             return;
         }
-        if (selectedFamily) {
-            clearFamily();
-            window.history.pushState({}, '', '/');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-        }
-        // Wait a tick so the family slider remounts after leaving a family view
-        setTimeout(() => {
-            document.getElementById('categories-section')?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start',
-            });
-        }, 80);
+        window.history.pushState({}, '', '/catalog');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const goAccount = () => {
@@ -83,16 +78,16 @@ const BottomNavBar = ({ activeOverride = null }) => {
             },
         },
         {
-            id: 'categories',
-            label: 'الأقسام',
-            Icon: LayoutGrid,
-            onClick: goCategories,
+            id: 'catalog',
+            label: 'الكتالوج',
+            Icon: BookOpen,
+            onClick: goCatalog,
         },
         {
             id: 'home',
             label: 'الرئيسية',
             Icon: Home,
-            onClick: goHome,
+            onClick: goShop,
         },
         {
             id: 'wishlist',
@@ -113,8 +108,6 @@ const BottomNavBar = ({ activeOverride = null }) => {
         },
     ];
 
-    // Visual order matches the screenshot (RTL): السلة … الحساب
-    // With dir=rtl on html, flex row already places first item on the right.
     return (
         <nav
             className={`fixed bottom-0 inset-x-0 z-[60] md:hidden border-t pb-[env(safe-area-inset-bottom)]
@@ -144,7 +137,7 @@ const BottomNavBar = ({ activeOverride = null }) => {
                                 <Icon
                                     size={22}
                                     strokeWidth={isActive ? 2.4 : 1.9}
-                                    fill={isActive && id === 'home' ? 'currentColor' : 'none'}
+                                    fill={isActive && (id === 'home' || (id === 'catalog' && browseMode === 'catalog')) ? 'currentColor' : 'none'}
                                 />
                                 {badge > 0 && (
                                     <span

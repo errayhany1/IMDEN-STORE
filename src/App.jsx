@@ -46,6 +46,8 @@ function App() {
     clearAccountState,
     setFamily,
     clearFamily,
+    setBrowseMode,
+    browseMode,
   } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -62,22 +64,31 @@ function App() {
     });
   }, []);
 
-  // Sync /family/:id URLs with store (slider clicks + browser back/forward)
+  // Sync shop/catalog + /family/:id URLs with store
   useEffect(() => {
-    const syncFamilyFromPath = () => {
-      const match = window.location.pathname.match(/^\/family\/([a-z0-9-]+)\/?$/i);
+    const syncFromPath = () => {
+      const path = window.location.pathname;
+      const catalog = path === '/catalog' || path.startsWith('/catalog/');
+      setBrowseMode(catalog ? 'catalog' : 'shop');
+
+      const match = path.match(/^\/(?:catalog\/)?family\/([a-z0-9-]+)\/?$/i);
       const familyId = match?.[1]?.toLowerCase();
       if (familyId && getFamilyById(familyId)) {
         setFamily(familyId);
-      } else if (window.location.pathname === '/' || window.location.pathname === '') {
+      } else if (
+        path === '/' ||
+        path === '' ||
+        path === '/catalog' ||
+        path === '/catalog/'
+      ) {
         clearFamily();
       }
     };
 
-    syncFamilyFromPath();
-    window.addEventListener('popstate', syncFamilyFromPath);
-    return () => window.removeEventListener('popstate', syncFamilyFromPath);
-  }, [setFamily, clearFamily]);
+    syncFromPath();
+    window.addEventListener('popstate', syncFromPath);
+    return () => window.removeEventListener('popstate', syncFromPath);
+  }, [setFamily, clearFamily, setBrowseMode]);
 
   // Support /#categories-section deep links (e.g. from bottom nav on Account page)
   useEffect(() => {
@@ -323,7 +334,7 @@ function App() {
       const sku = path.slice(3);
       return <ProductLandingPage sku={sku} />;
   }
-  // /family/:id is handled by the main storefront + selectedFamily state
+  // /family/:id and /catalog(/family/:id) are handled by the main storefront + store state
 
   return (
     <div className={`min-h-screen font-sans flex flex-col transition-colors duration-300
@@ -340,6 +351,17 @@ function App() {
 
       {/* Main Content — extra bottom padding clears the mobile bottom nav */}
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6 pb-28 md:pb-6">
+
+        {browseMode === 'catalog' && (
+          <div
+            className={`mb-3 rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold flex items-center justify-between gap-2
+              ${darkMode ? 'bg-violet-500/10 border-violet-500/30 text-violet-200' : 'bg-violet-50 border-violet-200 text-violet-800'}`}
+            style={{ direction: 'rtl' }}
+          >
+            <span>وضع الكتالوج — اضغط العين لفتح صفحة المنتج، أو على الصورة للمعاينة السريعة</span>
+            <a href="/" className="shrink-0 underline underline-offset-2 opacity-80 hover:opacity-100">المتجر</a>
+          </div>
+        )}
 
         {/* Family hero slider — click opens the family catalog */}
         <FamilyHeroSlider />
