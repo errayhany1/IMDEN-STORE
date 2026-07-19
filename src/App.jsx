@@ -331,7 +331,7 @@ function App() {
       return <AccountPage />;
   }
   if (path.startsWith('/p/')) {
-      const sku = path.slice(3);
+      const sku = decodeURIComponent(path.slice(3));
       return <ProductLandingPage sku={sku} />;
   }
   // /family/:id and /catalog(/family/:id) are handled by the main storefront + store state
