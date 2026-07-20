@@ -113,10 +113,10 @@ const CategoryRail = () => {
                             onClick={() => setCategory(cat)}
                             className={`snap-center shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2 border whitespace-nowrap
                                 ${selectedCategory === cat
-                                    ? 'bg-primary text-white border-primary shadow-md transform scale-105'
+                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-white border-transparent shadow-md shadow-primary/30 scale-105'
                                     : darkMode
-                                        ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                                        ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:border-gray-600'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40 hover:text-primary hover:bg-primary/5'}`}
                         >
                             <Icon size={16} className={selectedCategory === cat ? 'text-white' : (darkMode ? 'text-gray-400' : 'text-slate-500')} />
                             {categoryTranslation[cat] || cat}

@@ -69,8 +69,8 @@ const ProductCard = ({ product, priority = false }) => {
 
     return (
         <>
-        <article className={`rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
-                ${dm ? 'bg-gray-800 border-gray-700' : 'bg-surface-light border-slate-100'}`}>
+        <article className={`rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
+                ${dm ? 'bg-gray-800 border-gray-700 hover:border-gray-600' : 'bg-surface-light border-slate-200/70 hover:border-primary/40'}`}>
 
                 {/* Out of Stock Overlay */}
                 {isOutOfStock && (
@@ -81,7 +81,7 @@ const ProductCard = ({ product, priority = false }) => {
                     </div>
                 )}
 
-                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={handleMediaClick}>
+                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-gradient-to-b from-slate-50 to-white'}`} onClick={handleMediaClick}>
 
                     {/* Wishlist Toggle */}
                     <button
@@ -182,7 +182,10 @@ const ProductCard = ({ product, priority = false }) => {
                     {/* Price and Ref Row */}
                     <div className="flex items-center justify-between flex-row-reverse gap-1">
                         <div className="text-right flex-shrink-0">
-                            <span className={`text-lg font-bold text-primary`}>{product.price} DH</span>
+                            <span className="text-lg font-extrabold text-primary tracking-tight">
+                                {product.price}
+                                <span className="text-[11px] font-bold text-primary/60 mx-0.5">DH</span>
+                            </span>
                         </div>
                         <div className="text-left min-w-0 flex-1 flex items-center gap-0.5">
                             <button
@@ -219,7 +222,7 @@ const ProductCard = ({ product, priority = false }) => {
                                 }
                             }}
                             disabled={isOutOfStock}
-                            className={`flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white transition-all duration-300 active:scale-[0.96]
+                            className={`flex-1 font-semibold py-2 px-4 rounded-xl flex items-center justify-center gap-2 text-white transition-all duration-300 active:scale-[0.96]
                                 ${addedToCart ? 'bg-green-500 shadow-lg shadow-green-500/30' 
                                     : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none' 
                                     : 'btn-add-cart'}`}
@@ -234,7 +237,7 @@ const ProductCard = ({ product, priority = false }) => {
                             href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-sm"
+                            className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-sm shadow-[#25D366]/30"
                         >
                             <img src={WA_ICON} alt="WhatsApp" className="w-5 h-5" />
                         </a>

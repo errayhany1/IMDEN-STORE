@@ -1,38 +1,33 @@
-/* Uiverse Add-to-Cart Button Effect (by Allyhere) — colors kept as primary */
+/* Add-to-Cart Button — clean modern gradient */
 
 .btn-add-cart {
-    --radii: 0.5em;
+    --radii: 0.75rem;
     cursor: pointer;
-    transition: 0.8s;
-    background-size: 280% auto;
-    /* Gradient uses the app's primary blue tones */
-    background-image: linear-gradient(325deg,
-            hsla(217 100% 45% / 1) 0%,
-            hsla(207 100% 60% / 1) 55%,
-            hsla(217 100% 45% / 1) 90%);
+    transition: background-position 0.5s ease, box-shadow 0.3s ease, transform 0.15s ease;
+    background-size: 200% auto;
+    background-image: linear-gradient(135deg,
+            #2b8ef0 0%,
+            #197fe6 50%,
+            #1466c4 100%);
     border: none;
     border-radius: var(--radii);
     box-shadow:
-        0px 0px 16px rgba(28, 100, 242, 0.45),
-        0px 4px 5px -1px rgba(28, 100, 242, 0.2),
-        inset 3px 3px 7px rgba(147, 197, 253, 0.4),
-        inset -3px -3px 7px rgba(14, 63, 185, 0.3);
+        0 6px 16px -4px rgba(25, 127, 230, 0.45),
+        0 2px 4px -1px rgba(25, 127, 230, 0.25);
 }
 
 .btn-add-cart:hover {
-    background-position: right top;
+    background-position: right center;
     box-shadow:
-        0px 0px 22px rgba(28, 100, 242, 0.6),
-        0px 6px 8px -1px rgba(28, 100, 242, 0.3),
-        inset 3px 3px 7px rgba(147, 197, 253, 0.4),
-        inset -3px -3px 7px rgba(14, 63, 185, 0.3);
+        0 10px 22px -4px rgba(25, 127, 230, 0.55),
+        0 4px 8px -2px rgba(25, 127, 230, 0.3);
 }
 
 .btn-add-cart:is(:focus, :focus-visible, :active) {
     outline: none;
     box-shadow:
-        0 0 0 3px white,
-        0 0 0 6px hsla(217 100% 45% / 1);
+        0 0 0 3px #ffffff,
+        0 0 0 5px rgba(25, 127, 230, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
