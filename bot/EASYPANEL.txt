@@ -1,0 +1,3 @@
+# EasyPanel: imden-bot MUST use this folder as Root Directory.
+# Wrong (causes POST /webhook → 405): repo-root Dockerfile (nginx storefront).
+# Right: Root Directory = bot, Dockerfile = Dockerfile, Port = 3000.
