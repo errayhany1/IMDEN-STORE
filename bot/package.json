@@ -1,7 +1,7 @@
 {
   "name": "errayhany-imden-bot",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Errayhany Telegram bot — product upload, AI enrichment, NocoDB",
   "type": "module",
   "main": "server.js",

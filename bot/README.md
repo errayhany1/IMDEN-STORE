@@ -31,7 +31,23 @@ OPENROUTER_API_KEY=
 PRODUCT_AI_ENRICHMENT=true
 PRODUCT_SHEET_WEBHOOK_URL=
 PRODUCT_SHEET_ID=1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4
+
+# الاستقبال من تيليجرام:
+# - بدون WEBHOOK → البوت يستخدم long-polling تلقائياً (موصى به إذا توقف الرد)
+# - مع WEBHOOK → TELEGRAM_MODE=webhook و TELEGRAM_WEBHOOK_URL=https://YOUR-BOT-HOST
+# TELEGRAM_MODE=polling
+# TELEGRAM_WEBHOOK_URL=https://imden-bot.YOUR-DOMAIN
+# AI_ENRICH_TIMEOUT_MS=90000
+# AI_IMAGE_COUNT=2
 ```
+
+## إذا توقف البوت عن الرد
+
+1. أعد نشر خدمة **imden-bot** على EasyPanel بعد سحب آخر `main`
+2. تأكد أن Root Directory = `bot` و Dockerfile يعمل (ليس `node bot-server.js` من جذر الريبو)
+3. اترك `TELEGRAM_MODE` فارغاً أو `polling` — لا تحتاج رابط webhook عام
+4. في تيليجرام أرسل `/ping` — يجب أن يرد فوراً
+5. افتح `GET /health` على دومين الخدمة وتأكد أن `ok: true`
 
 ## تشغيل محلي
 

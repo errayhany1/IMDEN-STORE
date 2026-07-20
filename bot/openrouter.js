@@ -102,7 +102,7 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
       ],
       temperature: 0.4,
     },
-    { headers: headers(), timeout: 120000 }
+    { headers: headers(), timeout: 45000 }
   );
 
   const text = data?.choices?.[0]?.message?.content;
@@ -128,7 +128,7 @@ async function generateOneImage({ imageBuffer, prompt }) {
       ],
       modalities: ['image', 'text'],
     },
-    { headers: headers(), timeout: 180000 }
+    { headers: headers(), timeout: 45000 }
   );
 
   const message = data?.choices?.[0]?.message;
@@ -166,8 +166,10 @@ Create IMAGE 4 — PROMO:
 - Clear wholesale CTA style, Moroccan ecommerce`,
   ];
 
+  // Generate at most 2 AI images to avoid long hangs / OOM that freeze the bot.
+  const limited = prompts.slice(0, Number(process.env.AI_IMAGE_COUNT || 2));
   const results = [];
-  for (const prompt of prompts) {
+  for (const prompt of limited) {
     try {
       const buf = await generateOneImage({ imageBuffer, prompt });
       results.push(buf);

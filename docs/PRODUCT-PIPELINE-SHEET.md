@@ -23,6 +23,9 @@ PRODUCT_AI_ENRICHMENT=true
 PRODUCT_SHEET_ID=1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4
 PRODUCT_SHEET_WEBHOOK_URL=
 PUBLIC_SITE_URL=https://errayhany.com
+# اختياري: اتركه فارغاً لاستخدام long-polling (أثبت عند توقف الردود)
+# TELEGRAM_MODE=polling
+# TELEGRAM_WEBHOOK_URL=https://YOUR-BOT-HOST
 ```
 
 للتفعيل Sheet: انشر `docs/sheets-webhook.gs` كـ Web App والصق الرابط في `PRODUCT_SHEET_WEBHOOK_URL`.
