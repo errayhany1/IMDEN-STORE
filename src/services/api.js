@@ -36,6 +36,40 @@ const getLocalImageManifest = () => {
 // Helper: delay between requests to avoid 429 rate limiting
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * NocoDB attachment columns are usually arrays of file objects, but some
+ * rows (bot/sheets/manual edits) store a plain URL string or a single object.
+ * Treating those as arrays caused: "…forEach is not a function" and aborted
+ * the entire live catalog refresh — so new products never reached /p/{sku}.
+ */
+const asAttachmentList = (value) => {
+    if (value == null || value === '') return [];
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed ? [{ url: trimmed }] : [];
+    }
+    if (typeof value === 'object' && (value.url || value.signedUrl || value.path)) {
+        return [value];
+    }
+    return [];
+};
+
+const attachmentRawUrl = (img) => {
+    if (!img) return null;
+    if (typeof img === 'string') {
+        const trimmed = img.trim();
+        return trimmed || null;
+    }
+    return img.signedUrl || img.url || null;
+};
+
+const resolveAttachmentUrl = (img) => {
+    const rawUrl = attachmentRawUrl(img);
+    if (!rawUrl) return null;
+    return rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+};
+
 // Helper: retry a request with exponential backoff on 429 errors
 const fetchWithRetry = async (url, options, maxRetries = 3) => {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -153,6 +187,12 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     break;
                 }
 
+                // On the first page of a live refresh, drop any partial cache from a
+                // previous failed attempt so we do not accumulate duplicates.
+                if (offset === 0) {
+                    cache.products = [];
+                }
+
                 // Filter: Show POSTEBL and NO POSTEBL
                 const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL' || record.POSTEBL === 'NO POSTEBL');
 
@@ -161,16 +201,16 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     const isOutOfStock = record.POSTEBL === 'NO POSTEBL';
                     const recordId = String(record.Id || record.id || '');
                     const optimizedImages = localImagesByProduct[recordId]?.images || [];
-                    
-                    const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
+
+                    const image1List = asAttachmentList(record.Image1);
+                    const imageObj = image1List[0] || null;
                     let imageUrl = null;
                     let originalImageUrl = null;
                     if (imageObj) {
                         // NocoDB's permanent S3 path is private (403). Use the
                         // fresh signed URL only as a fallback when no local image exists.
-                        const rawUrl = imageObj.signedUrl || imageObj.url;
-                        if (rawUrl) {
-                            originalImageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+                        originalImageUrl = resolveAttachmentUrl(imageObj);
+                        if (originalImageUrl) {
                             imageUrl = optimizedImages[0]?.full || originalImageUrl;
                         }
                     }
@@ -179,16 +219,13 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     const allImages = [];
                     let imageIndex = 0;
                     ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach(col => {
-                        if (record[col] && record[col].length > 0) {
-                            record[col].forEach(img => {
-                                const url = img.signedUrl || img.url;
-                                if (url) {
-                                    const originalUrl = url.startsWith('http') ? url : `${API_URL}/${url}`;
-                                    allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
-                                    imageIndex++;
-                                }
-                            });
-                        }
+                        asAttachmentList(record[col]).forEach(img => {
+                            const originalUrl = resolveAttachmentUrl(img);
+                            if (originalUrl) {
+                                allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
+                                imageIndex++;
+                            }
+                        });
                     });
 
                     // Resolve Category Name from ID
@@ -201,21 +238,20 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     const baseCategory = categoryMapping[originalCategoryId] || "General";
 
                     // Extract Category Image if available and not yet found for this category
-                    const catImgObj = (record.Category_Image || record.category_image) && (record.Category_Image || record.category_image).length > 0
-                        ? (record.Category_Image || record.category_image)[0]
-                        : null;
+                    const catImgObj = asAttachmentList(
+                        record.Category_Image || record.category_image
+                    )[0] || null;
 
                     if (catImgObj && !collectedCategoryImages[categoryName]) {
-                        collectedCategoryImages[categoryName] = catImgObj.signedUrl || catImgObj.url;
+                        collectedCategoryImages[categoryName] =
+                            attachmentRawUrl(catImgObj);
                     }
 
                     // Extract "All" category image from the new Category_ID1 column
-                    const allImgObj = record.Category_ID1 && record.Category_ID1.length > 0
-                        ? record.Category_ID1[0]
-                        : null;
+                    const allImgObj = asAttachmentList(record.Category_ID1)[0] || null;
 
                     if (allImgObj && !collectedCategoryImages['All']) {
-                        collectedCategoryImages['All'] = allImgObj.signedUrl || allImgObj.url;
+                        collectedCategoryImages['All'] = attachmentRawUrl(allImgObj);
                     }
 
                     let siteLang = 'ar';
@@ -276,6 +312,16 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
         } catch (error) {
             console.error("Error fetching products:", error);
             cache.fetchPromise = null;
+            // Do not mark isFetched — allow a later retry. Still return whatever
+            // we already have so callers (landing page) are not left empty.
+            if (cache.products.length) {
+                return cache.products;
+            }
+            if (hasStaticCatalog) {
+                cache.products = staticCatalog.products;
+                cache.categoryImages = staticCatalog.categoryImages || {};
+                return cache.products;
+            }
             return [];
         }
     };
@@ -289,13 +335,13 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
     const recordId = String(record.Id || record.id || '');
     const optimizedImages = localImagesByProduct[recordId]?.images || [];
 
-    const imageObj = record.Image1 && record.Image1.length > 0 ? record.Image1[0] : null;
+    const image1List = asAttachmentList(record.Image1);
+    const imageObj = image1List[0] || null;
     let imageUrl = null;
     let originalImageUrl = null;
     if (imageObj) {
-        const rawUrl = imageObj.signedUrl || imageObj.url;
-        if (rawUrl) {
-            originalImageUrl = rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+        originalImageUrl = resolveAttachmentUrl(imageObj);
+        if (originalImageUrl) {
             imageUrl = optimizedImages[0]?.full || originalImageUrl;
         }
     }
@@ -303,16 +349,13 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
     const allImages = [];
     let imageIndex = 0;
     ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach((col) => {
-        if (record[col] && record[col].length > 0) {
-            record[col].forEach((img) => {
-                const url = img.signedUrl || img.url;
-                if (url) {
-                    const originalUrl = url.startsWith('http') ? url : `${API_URL}/${url}`;
-                    allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
-                    imageIndex += 1;
-                }
-            });
-        }
+        asAttachmentList(record[col]).forEach((img) => {
+            const originalUrl = resolveAttachmentUrl(img);
+            if (originalUrl) {
+                allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
+                imageIndex += 1;
+            }
+        });
     });
 
     const categoryMapping = {
