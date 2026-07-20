@@ -133,7 +133,7 @@ const FamilyHeroSlider = () => {
                                 <img
                                     src={family.banner}
                                     alt={family.taglineAr}
-                                    className="block w-full h-auto aspect-[16/9] object-cover object-center select-none"
+                                    className="block w-full h-auto max-h-[140px] sm:max-h-[180px] md:max-h-[220px] aspect-[16/9] object-cover object-center select-none"
                                     draggable={false}
                                     loading={family.id === productFamilies[0].id ? 'eager' : 'lazy'}
                                 />
