@@ -30,4 +30,4 @@ PUBLIC_SITE_URL=https://errayhany.com
 ## الموديلات
 
 - نص: `google/gemini-2.5-flash`
-- صور: `google/gemini-2.5-flash-image`
+- صور: `google/gemini-3.1-flash-image` (أو `OPENROUTER_IMAGE_MODEL`)
