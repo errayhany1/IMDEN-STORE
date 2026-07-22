@@ -8,28 +8,12 @@ export const categoryTranslation = CATEGORY_LABEL_AR;
 
 const BRAND_BLUE = '#197fe6';
 
-/** Wave divider matching Template-2 blue footer */
-const WaveFooter = ({ label, active }) => (
-    <div
-        className="absolute inset-x-0 bottom-0 z-[1] flex items-end justify-center pb-2.5 pt-5 px-1.5"
-        style={{ backgroundColor: active ? '#156cb8' : BRAND_BLUE }}
-    >
-        <svg
-            className="absolute left-0 right-0 -top-[14px] w-full h-[15px] pointer-events-none"
-            viewBox="0 0 120 16"
-            preserveAspectRatio="none"
-            aria-hidden
-        >
-            <path
-                d="M0 16 C30 2 90 2 120 16 L120 16 L0 16 Z"
-                fill={active ? '#156cb8' : BRAND_BLUE}
-            />
-        </svg>
-        <span className="relative z-[1] text-white text-[11px] sm:text-xs font-bold text-center leading-tight line-clamp-2">
-            {label}
-        </span>
-    </div>
-);
+/**
+ * Mobile: ~5.5 cards visible across the viewport.
+ * main px-4 (2rem) + rail px-1 (0.5rem) + 5 gaps of gap-2 (2.5rem).
+ */
+const CARD_WIDTH =
+    'w-[calc((100vw-5rem)/5.5)] sm:w-[88px] md:w-[96px]';
 
 const CategoryRail = () => {
     const {
@@ -55,10 +39,10 @@ const CategoryRail = () => {
     };
 
     return (
-        <section id="family-products" className="mb-4 mt-2 px-1 flex flex-col gap-3 scroll-mt-20">
+        <section id="family-products" className="mb-3 mt-1 px-0.5 flex flex-col gap-2.5 scroll-mt-20">
             {activeFamily && (
                 <div
-                    className={`rounded-xl border px-3 py-3 flex items-center justify-between gap-3 mx-1 ${
+                    className={`rounded-xl border px-3 py-2.5 flex items-center justify-between gap-3 mx-1 ${
                         darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'
                     }`}
                     style={{ direction: 'rtl' }}
@@ -85,9 +69,9 @@ const CategoryRail = () => {
                 </div>
             )}
 
-            {/* Template-2 style category cards */}
+            {/* Image-only Template-2 cards — ~5.5 visible on phone */}
             <div
-                className="flex gap-2.5 overflow-x-auto pb-2 pt-0.5 px-1 scrollbar-hide snap-x"
+                className="flex gap-2 overflow-x-auto pb-1.5 px-1 scrollbar-hide snap-x"
                 style={{ direction: 'rtl' }}
             >
                 {visibleCategories.map((cat) => {
@@ -104,45 +88,52 @@ const CategoryRail = () => {
                             onClick={() => setCategory(cat)}
                             aria-label={label}
                             aria-current={isActive ? 'true' : undefined}
-                            className={`snap-center shrink-0 w-[104px] sm:w-[112px] focus:outline-none transition-transform
-                                ${isActive ? 'scale-[1.03]' : 'hover:scale-[1.02]'}`}
+                            className={`snap-start shrink-0 ${CARD_WIDTH} focus:outline-none transition-transform
+                                ${isActive ? 'scale-[1.04]' : 'active:scale-[0.98]'}`}
                         >
                             <div
-                                className={`relative w-full aspect-[3/4] rounded-[18px] overflow-hidden shadow-sm
+                                className={`relative w-full aspect-[3/4] rounded-[14px] overflow-hidden
                                     ${isActive
-                                        ? 'ring-2 ring-primary ring-offset-1 shadow-md'
+                                        ? 'ring-2 ring-primary shadow-md'
                                         : darkMode
                                             ? 'ring-1 ring-white/10'
-                                            : 'ring-1 ring-slate-200/80'}`}
+                                            : 'ring-1 ring-slate-200/70 shadow-sm'}`}
                             >
                                 {thumb ? (
-                                    <>
-                                        {/* Product area — crop bottom English banner from artwork */}
-                                        <img
-                                            src={thumb}
-                                            alt=""
-                                            className="absolute inset-0 w-full h-[72%] object-cover object-top bg-[#f4f7fb]"
-                                            loading="lazy"
-                                        />
-                                        <WaveFooter label={label} active={isActive} />
-                                    </>
+                                    <img
+                                        src={thumb}
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full object-cover object-center bg-[#f4f7fb]"
+                                        loading="lazy"
+                                    />
                                 ) : (
-                                    <>
-                                        {/* "All" card */}
-                                        <div className={`absolute inset-0 h-[72%] flex items-center justify-center
-                                            ${darkMode ? 'bg-slate-800' : 'bg-[#f4f7fb]'}`}>
-                                            <span className="grid grid-cols-2 gap-1.5 p-2">
+                                    /* "All" — icon only, no text */
+                                    <div className={`absolute inset-0 flex flex-col ${darkMode ? 'bg-slate-800' : 'bg-[#f4f7fb]'}`}>
+                                        <div className="flex-1 flex items-center justify-center">
+                                            <span className="grid grid-cols-2 gap-1">
                                                 {[0, 1, 2, 3].map((i) => (
                                                     <span
                                                         key={i}
-                                                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-md"
+                                                        className="w-3.5 h-3.5 rounded-[5px]"
                                                         style={{ backgroundColor: BRAND_BLUE }}
                                                     />
                                                 ))}
                                             </span>
                                         </div>
-                                        <WaveFooter label={label} active={isActive} />
-                                    </>
+                                        <div
+                                            className="relative h-[28%] shrink-0"
+                                            style={{ backgroundColor: BRAND_BLUE }}
+                                        >
+                                            <svg
+                                                className="absolute left-0 right-0 -top-[10px] w-full h-[11px] pointer-events-none"
+                                                viewBox="0 0 120 16"
+                                                preserveAspectRatio="none"
+                                                aria-hidden
+                                            >
+                                                <path d="M0 16 C30 2 90 2 120 16 L120 16 L0 16 Z" fill={BRAND_BLUE} />
+                                            </svg>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </button>
