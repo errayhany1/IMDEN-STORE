@@ -1,40 +1,35 @@
 import React from 'react';
 import useStore from '../store/useStore';
-import {
-    Layers, Zap, Headphones, Watch, Gamepad2,
-    Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera,
-    Wifi, Mic, BatteryCharging, Box, XCircle, ArrowRight, Cable, Car,
-    Usb, Tv, Fan, Smartphone,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { getFamilyById } from '../data/families';
 import { CATEGORY_LABEL_AR, getCategoryImage } from '../data/categories';
 
 export const categoryTranslation = CATEGORY_LABEL_AR;
 
-const categoryIcons = {
-    All: Layers,
-    Chargers: Zap,
-    Audio: Headphones,
-    'Smart Watches': Watch,
-    Gaming: Gamepad2,
-    'Mouse & Keyboard': Mouse,
-    Storage: HardDrive,
-    'Laptop Chargers': Laptop,
-    Stands: MonitorUp,
-    Lighting: Lightbulb,
-    Cameras: Camera,
-    Network: Wifi,
-    Microphones: Mic,
-    'Batteries & Power Banks': BatteryCharging,
-    Cables: Cable,
-    'Car Accessories': Car,
-    'Adapters & Hubs': Usb,
-    'TV Boxes': Tv,
-    Cooling: Fan,
-    Phones: Smartphone,
-    General: Box,
-    'Out of Stock': XCircle,
-};
+const BRAND_BLUE = '#197fe6';
+
+/** Wave divider matching Template-2 blue footer */
+const WaveFooter = ({ label, active }) => (
+    <div
+        className="absolute inset-x-0 bottom-0 z-[1] flex items-end justify-center pb-2.5 pt-5 px-1.5"
+        style={{ backgroundColor: active ? '#156cb8' : BRAND_BLUE }}
+    >
+        <svg
+            className="absolute left-0 right-0 -top-[14px] w-full h-[15px] pointer-events-none"
+            viewBox="0 0 120 16"
+            preserveAspectRatio="none"
+            aria-hidden
+        >
+            <path
+                d="M0 16 C30 2 90 2 120 16 L120 16 L0 16 Z"
+                fill={active ? '#156cb8' : BRAND_BLUE}
+            />
+        </svg>
+        <span className="relative z-[1] text-white text-[11px] sm:text-xs font-bold text-center leading-tight line-clamp-2">
+            {label}
+        </span>
+    </div>
+);
 
 const CategoryRail = () => {
     const {
@@ -60,10 +55,10 @@ const CategoryRail = () => {
     };
 
     return (
-        <section id="family-products" className="mb-4 mt-2 px-2 flex flex-col gap-3 scroll-mt-20">
+        <section id="family-products" className="mb-4 mt-2 px-1 flex flex-col gap-3 scroll-mt-20">
             {activeFamily && (
                 <div
-                    className={`rounded-xl border px-3 py-3 flex items-center justify-between gap-3 ${
+                    className={`rounded-xl border px-3 py-3 flex items-center justify-between gap-3 mx-1 ${
                         darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'
                     }`}
                     style={{ direction: 'rtl' }}
@@ -90,38 +85,66 @@ const CategoryRail = () => {
                 </div>
             )}
 
-            {/* Category Chips Horizontal Rail */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x rtl" style={{ direction: 'rtl' }}>
+            {/* Template-2 style category cards */}
+            <div
+                className="flex gap-2.5 overflow-x-auto pb-2 pt-0.5 px-1 scrollbar-hide snap-x"
+                style={{ direction: 'rtl' }}
+            >
                 {visibleCategories.map((cat) => {
-                    const Icon = categoryIcons[cat] || Box;
+                    const label = CATEGORY_LABEL_AR[cat] || cat;
                     const thumb = cat !== 'All' && cat !== 'Out of Stock'
                         ? getCategoryImage(cat, categoryImages)
                         : null;
                     const isActive = selectedCategory === cat;
+
                     return (
                         <button
                             key={cat}
                             type="button"
                             onClick={() => setCategory(cat)}
-                            className={`snap-center shrink-0 pl-2 pr-3.5 py-1.5 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2 border whitespace-nowrap
-                                ${isActive
-                                    ? 'bg-primary text-white border-primary shadow-md scale-105'
-                                    : darkMode
-                                        ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                            aria-label={label}
+                            aria-current={isActive ? 'true' : undefined}
+                            className={`snap-center shrink-0 w-[104px] sm:w-[112px] focus:outline-none transition-transform
+                                ${isActive ? 'scale-[1.03]' : 'hover:scale-[1.02]'}`}
                         >
-                            {thumb ? (
-                                <img
-                                    src={thumb}
-                                    alt=""
-                                    className={`w-7 h-7 rounded-full object-cover shrink-0 ring-1
-                                        ${isActive ? 'ring-white/40' : 'ring-slate-200'}`}
-                                    loading="lazy"
-                                />
-                            ) : (
-                                <Icon size={16} className={isActive ? 'text-white' : (darkMode ? 'text-gray-400' : 'text-slate-500')} />
-                            )}
-                            {categoryTranslation[cat] || cat}
+                            <div
+                                className={`relative w-full aspect-[3/4] rounded-[18px] overflow-hidden shadow-sm
+                                    ${isActive
+                                        ? 'ring-2 ring-primary ring-offset-1 shadow-md'
+                                        : darkMode
+                                            ? 'ring-1 ring-white/10'
+                                            : 'ring-1 ring-slate-200/80'}`}
+                            >
+                                {thumb ? (
+                                    <>
+                                        {/* Product area — crop bottom English banner from artwork */}
+                                        <img
+                                            src={thumb}
+                                            alt=""
+                                            className="absolute inset-0 w-full h-[72%] object-cover object-top bg-[#f4f7fb]"
+                                            loading="lazy"
+                                        />
+                                        <WaveFooter label={label} active={isActive} />
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* "All" card */}
+                                        <div className={`absolute inset-0 h-[72%] flex items-center justify-center
+                                            ${darkMode ? 'bg-slate-800' : 'bg-[#f4f7fb]'}`}>
+                                            <span className="grid grid-cols-2 gap-1.5 p-2">
+                                                {[0, 1, 2, 3].map((i) => (
+                                                    <span
+                                                        key={i}
+                                                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-md"
+                                                        style={{ backgroundColor: BRAND_BLUE }}
+                                                    />
+                                                ))}
+                                            </span>
+                                        </div>
+                                        <WaveFooter label={label} active={isActive} />
+                                    </>
+                                )}
+                            </div>
                         </button>
                     );
                 })}
