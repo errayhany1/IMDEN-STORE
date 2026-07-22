@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { LOCAL_CATEGORY_IMAGES } from '../data/categories';
 
 const useStore = create(
     persist(
@@ -47,7 +48,7 @@ const useStore = create(
             darkMode: false,
             gridColumns: 2, // 1 or 2 columns on mobile
 
-            categoryImages: {}, // Stores category images: { "Chargers": "url", ... }
+            categoryImages: { ...LOCAL_CATEGORY_IMAGES }, // Template-2 artwork; NocoDB can merge on top then local overrides
             searchQuery: "",
 
             setUser: (user) => set({ user }),

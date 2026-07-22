@@ -1,46 +1,19 @@
 import React from 'react';
-import {
-    Layers, Zap, Headphones, Watch, Gamepad2,
-    Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera,
-    Wifi, Mic, BatteryCharging, Box, Cable, Car,
-    Usb, Tv, Fan, Smartphone,
-} from 'lucide-react';
+import { Layers } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import useStore from '../store/useStore';
 import { productFamilies } from '../data/families';
-import { CATEGORY_LABEL_AR } from '../data/categories';
-
-const categoryIcons = {
-    Chargers: Zap,
-    Audio: Headphones,
-    'Smart Watches': Watch,
-    Gaming: Gamepad2,
-    'Mouse & Keyboard': Mouse,
-    Storage: HardDrive,
-    'Laptop Chargers': Laptop,
-    Stands: MonitorUp,
-    Lighting: Lightbulb,
-    Cameras: Camera,
-    Network: Wifi,
-    Microphones: Mic,
-    'Batteries & Power Banks': BatteryCharging,
-    Cables: Cable,
-    'Car Accessories': Car,
-    'Adapters & Hubs': Usb,
-    'TV Boxes': Tv,
-    Cooling: Fan,
-    Phones: Smartphone,
-    General: Box,
-};
+import { CATEGORY_LABEL_AR, getCategoryImage } from '../data/categories';
 
 /**
- * Dedicated mobile page: families + category grid only (no product list).
+ * Dedicated page: families + Template-2 category image grid.
  */
 const CategoriesPage = () => {
     const {
         darkMode,
         categories,
+        categoryImages,
         setCategory,
         setFamily,
         clearFamily,
@@ -114,42 +87,62 @@ const CategoriesPage = () => {
                     </div>
                 </section>
 
-                {/* All categories */}
+                {/* All categories — Template 2 cards */}
                 <section>
                     <h2 className={`text-sm font-bold mb-3 ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
                         كل الفئات
                     </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         <button
                             type="button"
                             onClick={() => openShopWithCategory('All')}
-                            className={`flex items-center gap-2.5 rounded-2xl border px-3 py-3 text-sm font-semibold transition
+                            className={`rounded-2xl overflow-hidden border aspect-square flex flex-col items-center justify-center gap-2 transition shadow-sm
                                 ${dm
-                                    ? 'bg-gray-900 border-gray-800 text-gray-200 hover:bg-gray-800'
-                                    : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50 shadow-sm'}`}
+                                    ? 'bg-gray-900 border-gray-800 text-gray-200 hover:border-primary/50'
+                                    : 'bg-white border-slate-100 text-slate-700 hover:border-primary/40'}`}
                         >
-                            <span className={`flex items-center justify-center w-9 h-9 rounded-xl ${dm ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'}`}>
-                                <Layers size={18} />
+                            <span className={`flex items-center justify-center w-14 h-14 rounded-2xl
+                                ${dm ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'}`}>
+                                <Layers size={28} />
                             </span>
-                            الكل
+                            <span className="text-sm font-bold">الكل</span>
                         </button>
+
                         {list.map((cat) => {
-                            const Icon = categoryIcons[cat] || Box;
+                            const src = getCategoryImage(cat, categoryImages);
+                            const label = CATEGORY_LABEL_AR[cat] || cat;
                             return (
                                 <button
                                     key={cat}
                                     type="button"
                                     onClick={() => openShopWithCategory(cat)}
-                                    className={`flex items-center gap-2.5 rounded-2xl border px-3 py-3 text-sm font-semibold transition
-                                        ${dm
-                                            ? 'bg-gray-900 border-gray-800 text-gray-200 hover:bg-gray-800'
-                                            : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50 shadow-sm'}`}
+                                    className="group flex flex-col gap-1.5 text-start"
+                                    aria-label={label}
                                 >
-                                    <span className={`flex items-center justify-center w-9 h-9 rounded-xl shrink-0
-                                        ${dm ? 'bg-gray-800 text-gray-300' : 'bg-slate-50 text-slate-600'}`}>
-                                        <Icon size={18} />
+                                    <span
+                                        className={`relative block w-full aspect-square rounded-2xl overflow-hidden border transition shadow-sm
+                                            ${dm
+                                                ? 'border-gray-800 group-hover:border-primary/50'
+                                                : 'border-slate-100 group-hover:border-primary/40 group-hover:shadow-md'}`}
+                                    >
+                                        {src ? (
+                                            <img
+                                                src={src}
+                                                alt={label}
+                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <span className={`absolute inset-0 flex items-center justify-center text-sm font-bold
+                                                ${dm ? 'bg-gray-900 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>
+                                                {label}
+                                            </span>
+                                        )}
                                     </span>
-                                    <span className="truncate">{CATEGORY_LABEL_AR[cat] || cat}</span>
+                                    <span className={`text-xs sm:text-sm font-bold text-center truncate px-0.5
+                                        ${dm ? 'text-gray-200' : 'text-slate-700'}`}>
+                                        {label}
+                                    </span>
                                 </button>
                             );
                         })}

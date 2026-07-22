@@ -7,7 +7,7 @@ import {
     Usb, Tv, Fan, Smartphone,
 } from 'lucide-react';
 import { getFamilyById } from '../data/families';
-import { CATEGORY_LABEL_AR } from '../data/categories';
+import { CATEGORY_LABEL_AR, getCategoryImage } from '../data/categories';
 
 export const categoryTranslation = CATEGORY_LABEL_AR;
 
@@ -40,6 +40,7 @@ const CategoryRail = () => {
     const {
         darkMode,
         categories,
+        categoryImages,
         selectedCategory,
         setCategory,
         selectedFamily,
@@ -93,19 +94,33 @@ const CategoryRail = () => {
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x rtl" style={{ direction: 'rtl' }}>
                 {visibleCategories.map((cat) => {
                     const Icon = categoryIcons[cat] || Box;
+                    const thumb = cat !== 'All' && cat !== 'Out of Stock'
+                        ? getCategoryImage(cat, categoryImages)
+                        : null;
+                    const isActive = selectedCategory === cat;
                     return (
                         <button
                             key={cat}
                             type="button"
                             onClick={() => setCategory(cat)}
-                            className={`snap-center shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2 border whitespace-nowrap
-                                ${selectedCategory === cat
-                                    ? 'bg-primary text-white border-primary shadow-md transform scale-105'
+                            className={`snap-center shrink-0 pl-2 pr-3.5 py-1.5 rounded-full text-sm font-semibold transition-all shadow-sm flex items-center gap-2 border whitespace-nowrap
+                                ${isActive
+                                    ? 'bg-primary text-white border-primary shadow-md scale-105'
                                     : darkMode
                                         ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
                                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
                         >
-                            <Icon size={16} className={selectedCategory === cat ? 'text-white' : (darkMode ? 'text-gray-400' : 'text-slate-500')} />
+                            {thumb ? (
+                                <img
+                                    src={thumb}
+                                    alt=""
+                                    className={`w-7 h-7 rounded-full object-cover shrink-0 ring-1
+                                        ${isActive ? 'ring-white/40' : 'ring-slate-200'}`}
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <Icon size={16} className={isActive ? 'text-white' : (darkMode ? 'text-gray-400' : 'text-slate-500')} />
+                            )}
                             {categoryTranslation[cat] || cat}
                         </button>
                     );

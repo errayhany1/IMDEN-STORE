@@ -6,7 +6,7 @@ import PromotionalBanner from './PromotionalBanner';
 
 import { categoryTranslation } from './CategoryRail';
 import { getFamilyById } from '../data/families';
-
+import { LOCAL_CATEGORY_IMAGES } from '../data/categories';
 const ProductGrid = () => {
     const {
         products,
@@ -42,7 +42,7 @@ const ProductGrid = () => {
                 } else {
                     appendProducts(chunk);
                 }
-                updateCategoryImages(newCategoryImages);
+                updateCategoryImages({ ...(newCategoryImages || {}), ...LOCAL_CATEGORY_IMAGES });
                 setLoading(false); // Disable loading as soon as first chunk arrives
             });
 

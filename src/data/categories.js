@@ -132,3 +132,30 @@ export const STOREFRONT_CATEGORY_ORDER = [
 ];
 
 export const getCategoryName = (id) => CATEGORY_BY_ID[id] || 'General';
+
+/** Local Template-2 category artwork under /public/category-images */
+export const LOCAL_CATEGORY_IMAGES = {
+    Chargers: '/category-images/chargers.png',
+    Audio: '/category-images/audio.png',
+    'Smart Watches': '/category-images/smart-watches.png',
+    Gaming: '/category-images/gaming.png',
+    'Mouse & Keyboard': '/category-images/mouse-keyboard.png',
+    Storage: '/category-images/storage.png',
+    'Laptop Chargers': '/category-images/laptop-chargers.png',
+    Stands: '/category-images/stands.png',
+    Lighting: '/category-images/lighting.png',
+    Cameras: '/category-images/cameras.png',
+    Network: '/category-images/network.png',
+    Microphones: '/category-images/microphones.png',
+    'Batteries & Power Banks': '/category-images/batteries-power-banks.png',
+    Cables: '/category-images/cables.png',
+    'Car Accessories': '/category-images/car-accessories.png',
+    'Adapters & Hubs': '/category-images/adapters-hubs.png',
+    'TV Boxes': '/category-images/tv-boxes.png',
+    Cooling: '/category-images/cooling.png',
+    Phones: '/category-images/phones.png',
+    General: '/category-images/general.png',
+};
+
+export const getCategoryImage = (categoryName, remoteMap = {}) =>
+    remoteMap?.[categoryName] || LOCAL_CATEGORY_IMAGES[categoryName] || null;
