@@ -68,128 +68,116 @@ const Header = () => {
 
     return (
         <>
-            <header id="page-top" className={`sticky top-0 z-40 w-full border-b shadow-sm transition-colors duration-300 pt-[env(safe-area-inset-top)]
-                ${dm ? 'bg-[#142038] border-[#0d172b]' : 'bg-white border-gray-200'}`}>
-
-                {/* ─── Main Bar ─── */}
-                <div className="max-w-7xl mx-auto px-3 h-12 flex items-center justify-between gap-2">
-
-                    {/* Menu Button (Mobile) */}
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
-                        aria-label="القائمة"
+            <header
+                id="page-top"
+                className={`sticky top-0 z-40 w-full transition-colors duration-300 pt-[env(safe-area-inset-top)]
+                    ${dm ? 'bg-gray-950' : 'bg-background-light'}`}
+            >
+                <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2">
+                    {/* Floating bar — logo | search | menu (matches brand mockup) */}
+                    <div
+                        dir="ltr"
+                        className={`flex items-center gap-2.5 sm:gap-4 h-14 sm:h-[60px] px-3 sm:px-5 rounded-2xl border shadow-[0_4px_18px_rgba(15,23,42,0.07)]
+                            ${dm ? 'bg-[#142038] border-white/5 shadow-black/30' : 'bg-white border-slate-100'}`}
                     >
-                        <Menu size={20} />
-                    </button>
-
-                    {/* Logo */}
-                    <div className="flex items-center flex-shrink-0 cursor-pointer" onClick={scrollToTop}>
-                        <img
-                            src={dm ? '/logo-dark.png' : '/logo.png'}
-                            alt="Errayhany Grossiste"
-                            className="h-8 sm:h-10 w-auto object-contain"
-                            style={{ maxWidth: '160px' }}
-                        />
-                    </div>
-
-                    {/* Desktop Search Bar */}
-                    <div className="hidden md:flex flex-1 max-w-md mx-4 relative">
-                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="text-slate-400" size={16} />
-                        </span>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={`block w-full pl-9 pr-3 py-1.5 border rounded-lg text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary
-                                ${dm ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'}`}
-                            placeholder="...ابحث بالمرجع أو الاسم"
-                        />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-0.5">
-
-                        {/* Grid Toggle — Mobile only */}
+                        {/* Logo */}
                         <button
-                            onClick={toggleGridColumns}
-                            className={`md:hidden p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
-                            aria-label="تغيير عدد الأعمدة"
+                            type="button"
+                            onClick={scrollToTop}
+                            className="flex items-center flex-shrink-0 focus:outline-none"
+                            aria-label="Errayhany Grossiste"
                         >
-                            {gridColumns === 1 ? <LayoutGrid size={20} /> : <Columns2 size={20} />}
+                            <img
+                                src={dm ? '/logo-dark.png' : '/logo.png'}
+                                alt="Errayhany TECHNOLOGY"
+                                className="h-8 sm:h-9 w-auto object-contain"
+                                style={{ maxWidth: '150px' }}
+                            />
                         </button>
 
-                        {/* Download App (Desktop) */}
-                        <a
-                            href="/ImdenStore.apk"
-                            download="ImdenStore.apk"
-                            title="تحميل التطبيق"
-                            className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 mx-1 rounded-lg font-bold text-xs transition-colors bg-green-500 text-white hover:bg-green-600`}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            تطبيق الأندرويد
-                        </a>
+                        {/* Pill search */}
+                        <div className="relative flex-1 min-w-0">
+                            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <Search className={dm ? 'text-slate-400' : 'text-slate-400'} size={16} strokeWidth={2} />
+                            </span>
+                            <input
+                                type="search"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                dir="rtl"
+                                className={`block w-full h-10 sm:h-11 pl-10 pr-4 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow
+                                    ${dm
+                                        ? 'bg-[#0f1a2e] border-slate-600 text-white placeholder-gray-400'
+                                        : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
+                                placeholder="ابحث عن المنتجات..."
+                                aria-label="ابحث عن المنتجات"
+                            />
+                        </div>
 
-                        {/* Account / Wishlist / Cart — desktop only (mobile uses bottom nav) */}
-                        <div className="hidden md:flex items-center gap-0.5">
+                        {/* Desktop actions (mobile uses bottom nav) */}
+                        <div className="hidden md:flex items-center gap-0.5 flex-shrink-0">
                             {user ? (
-                                <div
-                                    className="cursor-pointer transition-transform hover:scale-105"
+                                <button
+                                    type="button"
+                                    className="cursor-pointer transition-transform hover:scale-105 p-0.5"
                                     onClick={() => setSidebarOpen(true)}
                                     title="حسابي"
                                 >
-                                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random&size=32`} alt="User" className="w-7 h-7 rounded-full shadow-sm border border-gray-200" />
-                                </div>
+                                    <img
+                                        src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random&size=32`}
+                                        alt="User"
+                                        className="w-7 h-7 rounded-full shadow-sm border border-gray-200"
+                                    />
+                                </button>
                             ) : (
                                 <button
+                                    type="button"
                                     onClick={() => setAuthModalOpen(true)}
-                                    className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                                    className={`p-2 rounded-xl transition-colors ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-[#0B2B5A] hover:bg-slate-100'}`}
                                     aria-label="تسجيل الدخول"
                                 >
                                     <User size={20} />
                                 </button>
                             )}
 
-                            <div className="relative cursor-pointer" onClick={toggleWishlistSidebar}>
-                                <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100'}`} aria-label="المفضلة">
-                                    <Heart size={20} />
-                                </button>
+                            <button
+                                type="button"
+                                onClick={toggleWishlistSidebar}
+                                className={`relative p-2 rounded-xl transition-colors ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-[#0B2B5A] hover:text-red-500 hover:bg-slate-100'}`}
+                                aria-label="المفضلة"
+                            >
+                                <Heart size={20} />
                                 {wishlistCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                                    <span className="absolute top-0.5 end-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                                         {wishlistCount}
                                     </span>
                                 )}
-                            </div>
+                            </button>
 
-                            <div className="relative cursor-pointer" onClick={toggleCart}>
-                                <button className={`p-1.5 rounded-lg transition-colors ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-500 hover:text-primary hover:bg-slate-100'}`} aria-label="السلة">
-                                    <ShoppingCart size={20} />
-                                </button>
+                            <button
+                                type="button"
+                                onClick={toggleCart}
+                                className={`relative p-2 rounded-xl transition-colors ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-[#0B2B5A] hover:text-primary hover:bg-slate-100'}`}
+                                aria-label="السلة"
+                            >
+                                <ShoppingCart size={20} />
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
+                                    <span className="absolute top-0.5 end-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
                                         {cartCount}
                                     </span>
                                 )}
-                            </div>
+                            </button>
                         </div>
-                    </div>
-                </div>
 
-                {/* ─── Mobile Search Bar (compact) ─── */}
-                <div className={`md:hidden px-3 pb-2 ${dm ? 'bg-[#142038]' : 'bg-white'}`}>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                            <Search size={16} />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={`block w-full py-2 pr-9 pl-3 border rounded-xl text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all
-                                ${dm ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'}`}
-                            placeholder="ابحث عن المنتجات..."
-                        />
+                        {/* Menu */}
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(true)}
+                            className={`flex-shrink-0 p-2 rounded-xl transition-colors ${dm ? 'text-gray-200 hover:bg-white/10' : 'text-[#0B2B5A] hover:bg-slate-100'}`}
+                            aria-label="القائمة"
+                        >
+                            <Menu size={22} strokeWidth={2.25} />
+                        </button>
                     </div>
                 </div>
             </header>
@@ -364,6 +352,16 @@ const Header = () => {
                                         </AnimatePresence>
                                     </div>
                                 </div>
+
+                                {/* Grid columns (mobile) */}
+                                <button
+                                    onClick={toggleGridColumns}
+                                    className={`md:hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
+                                    ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
+                                >
+                                    {gridColumns === 1 ? <LayoutGrid size={18} className="text-primary" /> : <Columns2 size={18} className="text-primary" />}
+                                    {gridColumns === 1 ? 'عرض عمودين' : 'عرض عمود واحد'}
+                                </button>
 
                                 {/* Dark Mode */}
                                 <button
