@@ -3,50 +3,37 @@ import useStore from '../store/useStore';
 import {
     Layers, Zap, Headphones, Watch, Gamepad2,
     Mouse, HardDrive, Laptop, MonitorUp, Lightbulb, Camera,
-    Wifi, Mic, BatteryCharging, Box, XCircle, ArrowRight, Cable, Car
+    Wifi, Mic, BatteryCharging, Box, XCircle, ArrowRight, Cable, Car,
+    Usb, Tv, Fan, Smartphone,
 } from 'lucide-react';
 import { getFamilyById } from '../data/families';
+import { CATEGORY_LABEL_AR } from '../data/categories';
 
-export const categoryTranslation = {
-    'All': 'الكل',
-    'Chargers': 'شواحن جوال',
-    'Audio': 'سماعات',
-    'Smart Watches': 'ساعات ذكية',
-    'Gaming': 'ألعاب',
-    'Mouse & Keyboard': 'ماوس وكيبورد',
-    'Storage': 'تخزين',
-    'Laptop Chargers': 'شواحن حواسيب',
-    'Stands': 'حوامل',
-    'Lighting': 'إضاءة',
-    'Cameras': 'كاميرات',
-    'Network': 'شبكات',
-    'Microphones': 'ميكروفونات',
-    'Batteries & Power Banks': 'بطاريات وباوربانك',
-    'Cables': 'كابلات',
-    'Car Accessories': 'إكسسوارات السيارة',
-    'General': 'عام',
-    'Out of Stock': 'نفد من المخزون'
-};
+export const categoryTranslation = CATEGORY_LABEL_AR;
 
 const categoryIcons = {
-    'All': Layers,
-    'Chargers': Zap,
-    'Audio': Headphones,
+    All: Layers,
+    Chargers: Zap,
+    Audio: Headphones,
     'Smart Watches': Watch,
-    'Gaming': Gamepad2,
+    Gaming: Gamepad2,
     'Mouse & Keyboard': Mouse,
-    'Storage': HardDrive,
+    Storage: HardDrive,
     'Laptop Chargers': Laptop,
-    'Stands': MonitorUp,
-    'Lighting': Lightbulb,
-    'Cameras': Camera,
-    'Network': Wifi,
-    'Microphones': Mic,
+    Stands: MonitorUp,
+    Lighting: Lightbulb,
+    Cameras: Camera,
+    Network: Wifi,
+    Microphones: Mic,
     'Batteries & Power Banks': BatteryCharging,
-    'Cables': Cable,
+    Cables: Cable,
     'Car Accessories': Car,
-    'General': Box,
-    'Out of Stock': XCircle
+    'Adapters & Hubs': Usb,
+    'TV Boxes': Tv,
+    Cooling: Fan,
+    Phones: Smartphone,
+    General: Box,
+    'Out of Stock': XCircle,
 };
 
 const CategoryRail = () => {

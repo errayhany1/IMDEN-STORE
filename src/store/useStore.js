@@ -30,8 +30,12 @@ const useStore = create(
                 'Batteries & Power Banks',
                 'Cables',
                 'Car Accessories',
+                'Adapters & Hubs',
+                'TV Boxes',
+                'Cooling',
+                'Phones',
                 'General',
-                'Out of Stock'
+                'Out of Stock',
             ],
             selectedCategory: 'All',
             selectedFamily: null, // e.g. 'power' | 'audio' | 'devices'

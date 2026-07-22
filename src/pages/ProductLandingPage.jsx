@@ -48,6 +48,10 @@ const ACCENTS = {
   'Batteries & Power Banks': '#276749',
   Cables: '#2B6CB0',
   'Car Accessories': '#2C7A7B',
+  'Adapters & Hubs': '#3182CE',
+  'TV Boxes': '#6B46C1',
+  Cooling: '#2B6CB0',
+  Phones: '#2C7A7B',
   General: '#1A6BB5',
   'Out of Stock': '#718096',
 };

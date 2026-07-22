@@ -24,7 +24,8 @@ const categoryMapping = {
     5: 'ماوس وكيبورد', 6: 'تخزين', 7: 'شواحن حواسيب', 8: 'ستاندات',
     9: 'إضاءة', 10: 'كاميرات', 11: 'شبكات', 12: 'عام',
     13: 'ميكروفونات', 14: 'بطاريات', 15: 'نفد من المخزون',
-    16: 'كابلات', 17: 'إكسسوارات السيارة'
+    16: 'كابلات', 17: 'إكسسوارات السيارة',
+    18: 'محولات وHUB', 19: 'أجهزة بث', 20: 'تبريد', 21: 'هواتف',
 };
 
 const categoryMappingEn = {
@@ -32,7 +33,8 @@ const categoryMappingEn = {
     5: 'Mouse & Keyboard', 6: 'Storage', 7: 'Laptop Chargers', 8: 'Stands',
     9: 'Lighting', 10: 'Cameras', 11: 'Network', 12: 'General',
     13: 'Microphones', 14: 'Batteries & Power Banks', 15: 'Out of Stock',
-    16: 'Cables', 17: 'Car Accessories'
+    16: 'Cables', 17: 'Car Accessories',
+    18: 'Adapters & Hubs', 19: 'TV Boxes', 20: 'Cooling', 21: 'Phones',
 };
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));

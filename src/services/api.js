@@ -146,23 +146,27 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
 
             // Category Mapping
             const categoryMapping = {
-                1: "Chargers",          // الشواحن
-                2: "Audio",             // السماعات
-                3: "Smart Watches",     // ساعة الذكيه والاساور
-                4: "Gaming",            // العاب
-                5: "Mouse & Keyboard",  // الماوس والكيبورد
-                6: "Storage",           // الفلاشه والميموار
-                7: "Laptop Chargers",   // شواحن الحواسيب
-                8: "Stands",            // السبورات
-                9: "Lighting",          // الإضائة
-                10: "Cameras",          // الكمرات
-                11: "Network",          // الانترنت والشبكة
-                12: "General",         // الستابليزاتور → General
-                13: "Microphones",      // الميكروفونات
+                1: "Chargers",                 // الشواحن
+                2: "Audio",                    // السماعات
+                3: "Smart Watches",            // ساعة الذكيه والاساور
+                4: "Gaming",                   // العاب
+                5: "Mouse & Keyboard",         // الماوس والكيبورد
+                6: "Storage",                  // الفلاشه والميموار
+                7: "Laptop Chargers",          // شواحن الحواسيب
+                8: "Stands",                   // الحوامل والستاندات
+                9: "Lighting",                 // الإضائة
+                10: "Cameras",                 // الكمرات
+                11: "Network",                 // الانترنت والشبكة
+                12: "General",                 // أخرى
+                13: "Microphones",             // الميكروفونات
                 14: "Batteries & Power Banks", // بطاريات وبنوك الطاقة
-                15: "Out of Stock",     // نفد من المخزون
-                16: "Cables",           // الكابلات
-                17: "Car Accessories",  // إكسسوارات السيارة
+                15: "Out of Stock",            // نفد من المخزون
+                16: "Cables",                  // الكابلات
+                17: "Car Accessories",         // إكسسوارات السيارة
+                18: "Adapters & Hubs",         // محولات وHUB
+                19: "TV Boxes",                // أجهزة بث
+                20: "Cooling",                 // تبريد
+                21: "Phones",                  // هواتف
             };
 
             while (hasMore) {
@@ -363,7 +367,8 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
         5: 'Mouse & Keyboard', 6: 'Storage', 7: 'Laptop Chargers', 8: 'Stands',
         9: 'Lighting', 10: 'Cameras', 11: 'Network', 12: 'General',
         13: 'Microphones', 14: 'Batteries & Power Banks', 15: 'Out of Stock',
-        16: 'Cables', 17: 'Car Accessories',
+        16: 'Cables', 17: 'Car Accessories', 18: 'Adapters & Hubs',
+        19: 'TV Boxes', 20: 'Cooling', 21: 'Phones',
     };
 
     let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;

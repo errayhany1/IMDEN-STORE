@@ -1,6 +1,6 @@
 /**
  * Product family taxonomy for the storefront hero slider.
- * Categories use the same English keys as Category_ID mapping in api.js.
+ * Categories use the same English keys as Category_ID mapping.
  */
 export const productFamilies = [
     {
@@ -10,16 +10,22 @@ export const productFamilies = [
         taglineAr: 'كل ما تحتاجه للطاقة والشحن',
         banner: '/banners/family-power.jpg',
         accent: '#156cb8',
-        categories: ['Chargers', 'Laptop Chargers', 'Batteries & Power Banks', 'Cables'],
+        categories: [
+            'Chargers',
+            'Laptop Chargers',
+            'Batteries & Power Banks',
+            'Cables',
+            'Adapters & Hubs',
+        ],
     },
     {
         id: 'audio',
         nameAr: 'صوت وترفيه',
         nameEn: 'Sound & Entertainment',
-        taglineAr: 'استمتع بأفضل صوت وألعاب',
+        taglineAr: 'استمتع بأفضل صوت وألعاب وبث',
         banner: '/banners/family-audio.jpg',
         accent: '#7c3aed',
-        categories: ['Audio', 'Microphones', 'Gaming'],
+        categories: ['Audio', 'Microphones', 'Gaming', 'TV Boxes'],
     },
     {
         id: 'devices',
@@ -37,6 +43,8 @@ export const productFamilies = [
             'Lighting',
             'Stands',
             'Car Accessories',
+            'Cooling',
+            'Phones',
         ],
     },
 ];

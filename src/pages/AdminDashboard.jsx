@@ -31,10 +31,14 @@ const CAT_MAP = {
     11: 'Network',
     12: 'General',
     13: 'Microphones',
-    14: 'Batteries',
+    14: 'Batteries & Power Banks',
     15: 'Out of Stock',
     16: 'Cables',
     17: 'Car Accessories',
+    18: 'Adapters & Hubs',
+    19: 'TV Boxes',
+    20: 'Cooling',
+    21: 'Phones',
 };
 
 const AdminDashboard = () => {

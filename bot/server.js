@@ -56,6 +56,7 @@ const CATEGORIES = {
   9: '💡 إضاءة', 10: '📷 كاميرات', 11: '📡 شبكات', 12: '📦 عام',
   13: '🎙️ ميكروفونات', 14: '🔋 بطاريات وباوربانك',
   16: '🔗 كابلات', 17: '🚗 إكسسوارات السيارة',
+  18: '🔌 محولات وHUB', 19: '📺 أجهزة بث', 20: '❄️ تبريد', 21: '📱 هواتف',
 };
 
 const MAIN_KEYBOARD = {
@@ -69,7 +70,7 @@ const MAIN_KEYBOARD = {
 };
 
 function buildCategoryKeyboard(rowId) {
-  const catIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17];
+  const catIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21];
   const rows = [];
   for (let i = 0; i < catIds.length; i += 2) {
     const row = [];
