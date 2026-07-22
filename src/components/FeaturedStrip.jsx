@@ -52,13 +52,14 @@ const FeaturedStrip = () => {
     return (
         <div className="mb-6">
             {/* Header row */}
-            <div className="flex items-center justify-end mb-3">
-                <div className="flex items-center gap-2">
-                    <RefreshCw size={16} className="text-primary animate-spin" style={{ animationDuration: '8s' }} />
-                    <h2 className={`text-base font-bold ${dm ? 'text-white' : 'text-slate-800'}`}>
+            <div className="flex items-center justify-between mb-4" dir="rtl">
+                <div className="flex items-center gap-2.5">
+                    <span className="inline-block h-6 w-1.5 rounded-full bg-gradient-to-b from-primary to-primary-dark" />
+                    <h2 className={`text-lg sm:text-xl font-extrabold tracking-tight ${dm ? 'text-white' : 'text-slate-800'}`}>
                         منتجات مميزة
                     </h2>
                 </div>
+                <RefreshCw size={16} className="text-primary/70 animate-spin" style={{ animationDuration: '8s' }} />
             </div>
 
             {/* Product cards */}
