@@ -452,7 +452,7 @@ const AccountPage = () => {
             <CartSidebar />
             <WishlistSidebar />
             <AuthModal />
-            <BottomNavBar activeOverride="account" />
+            <BottomNavBar />
         </div>
     );
 };

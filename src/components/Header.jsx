@@ -227,6 +227,16 @@ const Header = () => {
                             {/* Drawer Body */}
                             <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1">
                                 
+                                {/* Account — primary entry (moved from bottom nav) */}
+                                <a
+                                    href="/account"
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition mb-1
+                                    ${dm ? 'hover:bg-gray-800 text-gray-100 bg-gray-800/60' : 'hover:bg-blue-50 text-slate-800 bg-slate-50'}`}
+                                >
+                                    <User size={18} className="text-primary" />
+                                    الحساب
+                                </a>
+
                                 {!user && (
                                     <button
                                         onClick={() => { setSidebarOpen(false); setAuthModalOpen(true); }}
