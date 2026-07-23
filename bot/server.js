@@ -292,7 +292,7 @@ async function processProduct(chatId, files, caption) {
     chatId,
     amazonUrl
       ? `⏳ جاري كشط أمازون وتوليد النصوص/الصور...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}\n🔗 Amazon`
-      : `⏳ جاري رفع المنتج وتوليد النصوص/الصور بالذكاء الاصطناعي...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+      : `⏳ جاري إنشاء صورة احترافية من صور المنتج وتوليد النصوص...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
   );
 
   const downloaded = await Promise.all(
@@ -392,13 +392,16 @@ async function processProduct(chatId, files, caption) {
       ? `\n📄 Sheet خطأ: ${enrichment.sheet.error}`
       : '\n📄 Sheet: تم الإرسال';
   const amazonNote = enrichment.amazonUrl ? '\n🛒 تم دمج بيانات أمازون' : '';
+  const aiNote = !enrichment.amazonUrl && (enrichment.nocoImages || []).length > 1
+    ? '\n✨ تم إنشاء صور استوديو احترافية من صور المنتج'
+    : '';
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }

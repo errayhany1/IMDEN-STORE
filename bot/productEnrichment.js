@@ -212,15 +212,25 @@ export async function enrichProduct({
   }
 
   try {
-    const aiBuffers = await generateProductImages({
-      imageBuffer: realBuffer,
-      titleFr: copy?.french_title || displayName,
-      price,
-    });
-    // Upload AI buffers with ai- prefix only (do NOT mix real into this prefix).
-    const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 3);
-    if (aiOnly.length) {
-      aiUploads = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
+    if (!isOpenRouterConfigured()) {
+      console.warn('OPENROUTER_API_KEY missing — skipping professional AI image generation');
+    } else {
+      const aiBuffers = await generateProductImages({
+        imageBuffer: realBuffer,
+        imageBuffers: realBuffers.slice(0, 3),
+        titleFr: copy?.french_title || displayName,
+        price,
+        // Without Amazon URL: always craft studio images from the seller photos.
+        mode: amazonUrl ? 'amazon' : 'photo',
+      });
+      // Upload AI buffers with ai- prefix only (do NOT mix real into this prefix).
+      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, amazonUrl ? 2 : 3);
+      if (aiOnly.length) {
+        aiUploads = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
+        console.log(`AI studio images uploaded: ${aiUploads.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
+      } else if (!amazonUrl) {
+        console.error('No AI studio image produced from seller photos');
+      }
     }
   } catch (e) {
     console.error('AI images failed, continuing without AI gallery:', e.message);
