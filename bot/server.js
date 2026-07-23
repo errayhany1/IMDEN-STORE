@@ -9,7 +9,9 @@
  *   TELEGRAM_MODE=webhook  → HTTP /webhook (needs TELEGRAM_WEBHOOK_URL)
  */
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import axios from 'axios';
 import FormData from 'form-data';
@@ -18,6 +20,11 @@ import {
   buildNocoRecordFromEnrichment,
   buildSellerSku,
 } from './productEnrichment.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -99,11 +106,36 @@ async function withTimeout(promise, ms, label = 'operation') {
   }
 }
 
+async function withRetry(fn, { retries = 4, baseMs = 1000, label = 'request' } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const status = e?.response?.status;
+      const retryAfter = Number(e?.response?.headers?.['retry-after']);
+      const isRetryable = status === 429 || status === 502 || status === 503 || status === 504
+        || /Too Many Requests|ECONNRESET|ETIMEDOUT|socket hang up/i.test(e?.message || '');
+      if (!isRetryable || attempt === retries) break;
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : baseMs * (2 ** attempt);
+      console.warn(`⏳ ${label} retry ${attempt + 1}/${retries} in ${waitMs}ms (${e.message})`);
+      await delay(waitMs);
+    }
+  }
+  throw lastErr;
+}
+
 // ─── TELEGRAM HELPERS ──────────────────────────────────────────────────────
 async function sendMessage(chatId, text, replyMarkup = null) {
   const params = { chat_id: chatId, text };
   if (replyMarkup) params.reply_markup = replyMarkup;
-  await axios.post(`${TG_API}/sendMessage`, params, { timeout: 30000 });
+  await withRetry(
+    () => axios.post(`${TG_API}/sendMessage`, params, { timeout: 30000 }),
+    { retries: 4, baseMs: 1200, label: 'sendMessage' }
+  );
 }
 
 async function editMessage(chatId, messageId, text) {
@@ -181,12 +213,16 @@ async function findProductBySku(rawSku) {
   for (const candidate of skuCandidates(rawSku)) {
     try {
       const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
-      const { data } = await axios.get(url, {
-        headers: { 'xc-token': NOCODB_TOKEN },
-        params: { limit: 5, where: `(SKU,eq,${candidate})` },
-        timeout: 30000,
-      });
+      const { data } = await withRetry(
+        () => axios.get(url, {
+          headers: { 'xc-token': NOCODB_TOKEN },
+          params: { limit: 5, where: `(SKU,eq,${candidate})` },
+          timeout: 30000,
+        }),
+        { retries: 3, baseMs: 1500, label: `sku:${candidate}` }
+      );
       if (data.list?.length) return data.list[0];
+      await delay(200);
     } catch (e) {
       console.warn('SKU lookup failed for', candidate, e.message);
     }
@@ -195,11 +231,14 @@ async function findProductBySku(rawSku) {
   // Fallback: scan recent rows (SKU filter can miss spaced/legacy refs)
   try {
     const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
-    const { data } = await axios.get(url, {
-      headers: { 'xc-token': NOCODB_TOKEN },
-      params: { limit: 200, sort: '-Id' },
-      timeout: 30000,
-    });
+    const { data } = await withRetry(
+      () => axios.get(url, {
+        headers: { 'xc-token': NOCODB_TOKEN },
+        params: { limit: 200, sort: '-Id' },
+        timeout: 30000,
+      }),
+      { retries: 3, baseMs: 1500, label: 'sku-fallback' }
+    );
     const wanted = skuCandidates(rawSku).map((s) => s.toLowerCase());
     return (data.list || []).find((row) => {
       const rowSku = String(row.SKU || '').trim().toLowerCase();
@@ -672,9 +711,12 @@ async function startPolling() {
 
       for (const update of data.result || []) {
         offset = update.update_id + 1;
-        handleUpdate(update).catch((err) => {
+        // Process sequentially — parallel replies flood Telegram/NocoDB (429).
+        try {
+          await handleUpdate(update);
+        } catch (err) {
           console.error('❌ Update error:', err?.response?.data || err.message);
-        });
+        }
       }
     } catch (e) {
       if (e.code !== 'ECONNABORTED') {
@@ -699,7 +741,22 @@ if (!assertBotConfig()) {
 
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🤖 Errayhany Bot server running on port ${PORT} (mode=${TELEGRAM_MODE})`);
-  if (!BOT_TOKEN) return;
+  if (!BOT_TOKEN) {
+    console.error('❌ TELEGRAM_BOT_TOKEN missing — bot will not receive messages');
+    return;
+  }
+
+  try {
+    const { data: me } = await axios.get(`${TG_API}/getMe`, { timeout: 10000 });
+    const { data: wh } = await axios.get(`${TG_API}/getWebhookInfo`, { timeout: 10000 });
+    console.log(`👤 Bot @${me?.result?.username || '?'} id=${me?.result?.id || '?'}`);
+    console.log(`📬 Webhook url="${wh?.result?.url || ''}" pending=${wh?.result?.pending_update_count ?? '?'}`);
+    if (wh?.result?.last_error_message) {
+      console.warn(`⚠️ Last webhook error: ${wh.result.last_error_message}`);
+    }
+  } catch (e) {
+    console.warn('Telegram getMe/getWebhookInfo failed:', e.message);
+  }
 
   try {
     if (TELEGRAM_MODE === 'webhook') {
