@@ -7,6 +7,7 @@ import {
   generateProductImages,
   isOpenRouterConfigured,
 } from './openrouter.js';
+import { generateLandingPageCopy, isOpenAIConfigured } from './openai.js';
 import { appendProductToSheet, isSheetWebhookConfigured } from './sheetsAppend.js';
 
 export function buildSellerSku(ref) {
@@ -77,7 +78,7 @@ export async function enrichProduct({
     throw new Error('Failed to upload original images to NocoDB storage');
   }
 
-  if (!enabled || !isOpenRouterConfigured()) {
+  if (!enabled || (!isOpenAIConfigured() && !isOpenRouterConfigured())) {
     const imageUrls = originalUploads.map((f) => publicUrlFromNoco(f, nocodbUrl));
     return {
       sellerSku,
@@ -93,15 +94,40 @@ export async function enrichProduct({
   let copy = null;
   let aiUploads = [];
 
+  // Prefer OpenAI for landing-page copy; fall back to OpenRouter.
   try {
-    copy = await generateProductCopy({
-      imageBuffer: realBuffer,
-      name,
-      price,
-      ref: referenceClean,
-    });
+    if (isOpenAIConfigured()) {
+      copy = await generateLandingPageCopy({
+        imageBuffer: realBuffer,
+        name,
+        price,
+        ref: referenceClean,
+      });
+      console.log('Landing copy: OpenAI OK');
+    } else {
+      copy = await generateProductCopy({
+        imageBuffer: realBuffer,
+        name,
+        price,
+        ref: referenceClean,
+      });
+      console.log('Landing copy: OpenRouter OK');
+    }
   } catch (e) {
-    console.error('AI copy failed, continuing with originals:', e.message);
+    console.error('AI copy (primary) failed:', e.message);
+    if (isOpenAIConfigured() && isOpenRouterConfigured()) {
+      try {
+        copy = await generateProductCopy({
+          imageBuffer: realBuffer,
+          name,
+          price,
+          ref: referenceClean,
+        });
+        console.log('Landing copy: OpenRouter fallback OK');
+      } catch (e2) {
+        console.error('AI copy fallback failed:', e2.message);
+      }
+    }
   }
 
   try {
@@ -193,6 +219,14 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
   if (copy.short_description_fr) record.short_description_fr = copy.short_description_fr;
   if (copy.meta_title) record.Meta_Title = copy.meta_title;
   if (copy.meta_description) record.Meta_Description = copy.meta_description;
+  if (copy.hero_line_ar) record.Hero_Line_AR = copy.hero_line_ar;
+  if (copy.hero_line_fr) record.Hero_Line_FR = copy.hero_line_fr;
+  if (Array.isArray(copy.faq_ar) && copy.faq_ar.length) {
+    record.Landing_FAQ_AR = JSON.stringify(copy.faq_ar);
+  }
+  if (Array.isArray(copy.faq_fr) && copy.faq_fr.length) {
+    record.Landing_FAQ_FR = JSON.stringify(copy.faq_fr);
+  }
 
   const files = enrichment.nocoImages || [];
   if (files[0]) record.Image1 = [files[0]];

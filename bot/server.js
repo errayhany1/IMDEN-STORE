@@ -625,6 +625,7 @@ app.get('/health', async (req, res) => {
     hasTelegram: Boolean(BOT_TOKEN),
     hasNoco: Boolean(NOCODB_URL && NOCODB_TOKEN && NOCODB_TABLE),
     ai: Boolean(process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY),
+    openai: Boolean(process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY),
     webhookUrlEnv: Boolean(TELEGRAM_WEBHOOK_URL),
     telegramWebhook: webhook,
   });

@@ -384,7 +384,17 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     text,
   }));
 
-  const faqs = isFr
+  const faqsFromDb = (() => {
+    const raw = isFr ? (od.Landing_FAQ_FR || od.landing_faq_fr) : (od.Landing_FAQ_AR || od.landing_faq_ar);
+    if (!raw) return null;
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    } catch { /* ignore */ }
+    return null;
+  })();
+
+  const faqs = faqsFromDb || (isFr
     ? [
       { q: 'Le paiement à la livraison est-il disponible ?', a: 'Oui. Vous pouvez payer cash à la réception dans la plupart des villes du Maroc.' },
       { q: 'Puis-je commander en gros ?', a: `Oui. ${BRAND} est orienté grossiste — contactez-nous sur WhatsApp pour des quantités.` },
@@ -394,7 +404,11 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       { q: 'هل يمكن الدفع عند الاستلام؟', a: 'نعم. الدفع نقداً عند الاستلام متاح في معظم المدن المغربية.' },
       { q: 'هل الطلب بالجملة متاح؟', a: `نعم. ${BRAND} متخصص في الجملة — راسلنا على واتساب للكميات.` },
       { q: 'كم مدة التوصيل؟', a: 'عادةً بين 24 و72 ساعة حسب المدينة بعد تأكيد الطلب.' },
-    ];
+    ]);
+
+  const heroLine = isFr
+    ? (od.Hero_Line_FR || od.hero_line_fr || '')
+    : (od.Hero_Line_AR || od.hero_line_ar || '');
 
   const fontBody = isFr
     ? "'Manrope', system-ui, sans-serif"
@@ -424,11 +438,12 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     );
   }
 
-  const sellLine = plainDesc
-    ? plainDesc.slice(0, 140) + (plainDesc.length > 140 ? '…' : '')
-    : (isFr
-      ? `Produit grossiste sélectionné par ${BRAND} — qualité, prix et livraison.`
-      : `منتج جملة مختار من ${BRAND} — جودة، سعر، وتوصيل.`);
+  const sellLine = (heroLine && String(heroLine).trim())
+    || (plainDesc
+      ? plainDesc.slice(0, 140) + (plainDesc.length > 140 ? '…' : '')
+      : (isFr
+        ? `Produit grossiste sélectionné par ${BRAND} — qualité, prix et livraison.`
+        : `منتج جملة مختار من ${BRAND} — جودة، سعر، وتوصيل.`));
 
   return (
     <div
