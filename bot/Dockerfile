@@ -9,7 +9,7 @@ ENV PORT=3000
 COPY package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
-COPY server.js openai.js openrouter.js productEnrichment.js sheetsAppend.js ./
+COPY server.js openai.js openrouter.js productEnrichment.js sheetsAppend.js amazonScrape.js ./
 
 EXPOSE 3000
 
@@ -18,5 +18,5 @@ HEALTHCHECK --interval=30s --timeout=8s --start-period=25s --retries=3 \
 
 CMD ["node", "server.js"]
 
-# rebuild bump 20260723220000 — force EasyPanel redeploy after bot went silent
-LABEL imden.bot.rebuild="20260723220000"
+# rebuild bump 20260723220045 — amazon scrape + primary image mode
+LABEL imden.bot.rebuild="20260723220045"

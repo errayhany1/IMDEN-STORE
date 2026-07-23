@@ -187,11 +187,27 @@ async function updateNocoDBCategory(rowId, categoryId) {
 
 function parseCaption(caption) {
   const lines = (caption || '').split('\n').map((l) => l.trim()).filter(Boolean);
-  const priceMatch = (lines[0] || '0').match(/(\d+[.,]?\d*)/);
-  const price = priceMatch ? parseFloat(priceMatch[0]) : 0;
-  const name = lines[1] || 'منتج غير محدد';
-  const sku = lines[2] || lines[1] || 'REF-000';
-  return { price, name, sku };
+  let amazonUrl = '';
+  const contentLines = [];
+
+  for (const line of lines) {
+    const urlMatch = line.match(/https?:\/\/\S+/i);
+    if (urlMatch) {
+      amazonUrl = urlMatch[0].replace(/[)\]>,.'"]+$/g, '');
+      const rest = line.replace(urlMatch[0], '').trim();
+      if (rest) contentLines.push(rest);
+    } else {
+      contentLines.push(line);
+    }
+  }
+
+  const priceMatch = (contentLines[0] || '0').match(/(\d+[.,]?\d*)/);
+  const price = priceMatch ? parseFloat(priceMatch[0].replace(',', '.')) : 0;
+  const name = contentLines[1] || 'منتج غير محدد';
+  // Skip SKU line if it looks like a leftover URL fragment
+  let sku = contentLines[2] || contentLines[1] || 'REF-000';
+  if (/^https?:\/\//i.test(sku)) sku = contentLines[1] || 'REF-000';
+  return { price, name, sku, amazonUrl };
 }
 
 function skuCandidates(rawSku) {
@@ -266,13 +282,17 @@ function enqueueProduct(task) {
 }
 
 async function processProduct(chatId, files, caption) {
-  const { price, name, sku } = parseCaption(caption);
+  const { price, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
-  console.log(`📦 Processing product: "${name}" | ${price} DH | ${files.length} images | SKU ${sellerSku}`);
+  console.log(
+    `📦 Processing product: "${name}" | ${price} DH | ${files.length} images | SKU ${sellerSku}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
+  );
 
   await sendMessage(
     chatId,
-    `⏳ جاري رفع المنتج وتوليد النصوص/الصور بالذكاء الاصطناعي...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+    amazonUrl
+      ? `⏳ جاري كشط أمازون وتوليد النصوص/الصور...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}\n🔗 Amazon`
+      : `⏳ جاري رفع المنتج وتوليد النصوص/الصور بالذكاء الاصطناعي...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
   );
 
   const downloaded = await Promise.all(
@@ -291,6 +311,10 @@ async function processProduct(chatId, files, caption) {
     return;
   }
 
+  const enrichTimeout = amazonUrl
+    ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_TIMEOUT_MS, 180000))
+    : AI_ENRICH_TIMEOUT_MS;
+
   let enrichment;
   try {
     enrichment = await withTimeout(
@@ -299,10 +323,11 @@ async function processProduct(chatId, files, caption) {
         name,
         price,
         ref: sku,
+        amazonUrl,
         uploadToNocoDB,
         nocodbUrl: NOCODB_URL,
       }),
-      AI_ENRICH_TIMEOUT_MS,
+      enrichTimeout,
       'AI enrichment'
     );
   } catch (e) {
@@ -310,10 +335,11 @@ async function processProduct(chatId, files, caption) {
     await sendMessage(chatId, `⚠️ فشل التوليد بالذكاء الاصطناعي، سيتم الحفظ بالصور الأصلية فقط.\n${e.message}`);
     const uploadedFiles = [];
     for (const d of downloaded.filter(Boolean)) {
-      uploadedFiles.push(await uploadToNocoDB(d.buffer, d.fileName));
+      uploadedFiles.push(await uploadToNocoDB(d.buffer, `real-${sellerSku}-${uploadedFiles.length + 1}.jpg`));
     }
     enrichment = {
       sellerSku,
+      amazonUrl: amazonUrl || '',
       skippedAi: true,
       copy: null,
       nocoImages: uploadedFiles,
@@ -351,6 +377,7 @@ async function processProduct(chatId, files, caption) {
       Image4: recordData.Image4,
       Image5: recordData.Image5,
     };
+    if (recordData.Amazon_URL) minimal.Amazon_URL = recordData.Amazon_URL;
     ({ data } = await http.post(recordUrl, minimal, {
       headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
     }));
@@ -364,13 +391,14 @@ async function processProduct(chatId, files, caption) {
     : enrichment.sheet?.error
       ? `\n📄 Sheet خطأ: ${enrichment.sheet.error}`
       : '\n📄 Sheet: تم الإرسال';
+  const amazonNote = enrichment.amazonUrl ? '\n🛒 تم دمج بيانات أمازون' : '';
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }
@@ -417,7 +445,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n💡 عند الضغط على أي زر، سيبقى فعالاً حتى تضغط على "إعادة تشغيل البوت".',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n💡 عند الضغط على أي زر، سيبقى فعالاً حتى تضغط على "إعادة تشغيل البوت".',
         MAIN_KEYBOARD
       );
       return;
@@ -665,6 +693,7 @@ app.get('/health', async (req, res) => {
     hasNoco: Boolean(NOCODB_URL && NOCODB_TOKEN && NOCODB_TABLE),
     ai: Boolean(process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY),
     openai: Boolean(process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY),
+    apify: Boolean(process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN),
     webhookUrlEnv: Boolean(TELEGRAM_WEBHOOK_URL),
     telegramWebhook: webhook,
   });

@@ -40,25 +40,41 @@ function extractJson(text) {
 
 /**
  * Generate bilingual landing-page copy from product photo + seller caption.
+ * Optional amazonMeta (title/description/features) improves copy when scraping Amazon.
  */
-export async function generateLandingPageCopy({ imageBuffer, name, price, ref }) {
+export async function generateLandingPageCopy({
+  imageBuffer,
+  name,
+  price,
+  ref,
+  amazonMeta = null,
+}) {
   if (!isOpenAIConfigured()) {
     throw new Error('OPENAI_API_KEY missing');
   }
 
-  const dataUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+  const amazonBlock = amazonMeta
+    ? `
+Données Amazon (source produit):
+- Titre Amazon: ${amazonMeta.title || ''}
+- ASIN: ${amazonMeta.asin || ''}
+- Features: ${(amazonMeta.features || []).slice(0, 8).join(' | ')}
+- Description: ${String(amazonMeta.description || '').slice(0, 1200)}
+`
+    : '';
+
   const prompt = `Tu es un expert e-commerce grossiste au Maroc (Errayhany / Jumia / WhatsApp).
-Analyse la photo produit et rédige le contenu d'une PAGE D'ATTERRISSAGE de conversion (AR + FR).
+Analyse ${amazonMeta ? 'les données Amazon + ' : ''}la photo produit et rédige le contenu d'une PAGE D'ATTERRISSAGE de conversion (AR + FR).
 
 Données vendeur:
 - Nom: ${name}
 - Prix: ${price} MAD
 - Référence: ${ref}
-
+${amazonBlock}
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
 {
-  "french_title": "titre FR SEO max 120 chars",
-  "arabic_title": "عنوان عربي SEO max 120",
+  "french_title": "titre FR SEO max 120 chars (PAS de chiffres)",
+  "arabic_title": "عنوان عربي SEO max 120 (بدون أرقام)",
   "woo_title": "titre court FR max 80",
   "short_description_fr": "HTML <ul><li>...</li></ul> 4-6 bullets FR (bénéfices vente)",
   "short_description_ar": "HTML <ul><li>...</li></ul> 4-6 bullets AR",
@@ -76,8 +92,20 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
 
 Règles:
 - Ton grossiste Maroc, clair, vendeur, sans claims médicaux.
+- Titres FR/AR: AUCUN chiffre (ni dimensions).
 - FAQ: paiement COD, délai livraison 24-72h, commande en gros WhatsApp.
+- Contenu brand-neutral (pas de marque Amazon).
 - Pas de markdown hors JSON. Pas de texte hors JSON.`;
+
+  const content = [{ type: 'text', text: prompt }];
+  if (imageBuffer) {
+    content.push({
+      type: 'image_url',
+      image_url: {
+        url: `data:image/jpeg;base64,${imageBuffer.toString('base64')}`,
+      },
+    });
+  }
 
   const { data } = await axios.post(
     OPENAI_URL,
@@ -85,15 +113,7 @@ Règles:
       model: TEXT_MODEL,
       temperature: 0.4,
       response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: dataUrl } },
-          ],
-        },
-      ],
+      messages: [{ role: 'user', content }],
     },
     { headers: headers(), timeout: 90000 }
   );

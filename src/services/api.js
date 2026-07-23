@@ -70,6 +70,127 @@ const resolveAttachmentUrl = (img) => {
     return rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
 };
 
+const PRIMARY_IMAGE_MODE_KEY = 'ery_primary_image_mode';
+
+export const getPrimaryImageMode = () => {
+    try {
+        const mode = localStorage.getItem(PRIMARY_IMAGE_MODE_KEY);
+        if (mode === 'amazon' || mode === 'original' || mode === 'ai') return mode;
+    } catch { /* ignore */ }
+    return 'ai';
+};
+
+export const setPrimaryImageModeStorage = (mode) => {
+    const next = mode === 'amazon' || mode === 'original' || mode === 'ai' ? mode : 'ai';
+    try {
+        localStorage.setItem(PRIMARY_IMAGE_MODE_KEY, next);
+    } catch { /* ignore */ }
+    return next;
+};
+
+/** Classify NocoDB attachment by upload filename prefix (ai- / amazon- / real-). */
+export const classifyAttachmentSource = (img) => {
+    const hay = `${img?.title || ''} ${img?.path || ''} ${img?.url || ''} ${img?.signedUrl || ''}`.toLowerCase();
+    if (hay.includes('amazon-') || hay.includes('/amazon-')) return 'amazon';
+    if (hay.includes('real-') || hay.includes('/real-')) return 'original';
+    if (/(^|\/|_)ai-/.test(hay) || hay.includes('/ai-') || hay.includes('ai-')) return 'ai';
+    return 'unknown';
+};
+
+/**
+ * Build tagged image source lists from Image1…Image5 attachments.
+ * Fallback for legacy products: treat Image1 as ai, last filled as original.
+ */
+export const buildImageSourcesFromRecord = (record, localOptimized = []) => {
+    const sources = { ai: [], amazon: [], original: [], unknown: [] };
+    let imageIndex = 0;
+    const allUrls = [];
+
+    ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach((col) => {
+        asAttachmentList(record[col]).forEach((img) => {
+            const originalUrl = resolveAttachmentUrl(img);
+            if (!originalUrl) return;
+            const url = localOptimized[imageIndex]?.full || originalUrl;
+            const thumb = localOptimized[imageIndex]?.thumbnail || url;
+            imageIndex += 1;
+            const kind = classifyAttachmentSource(img);
+            sources[kind].push({ url, thumbnail: thumb });
+            allUrls.push({ url, thumbnail: thumb, kind });
+        });
+    });
+
+    // Legacy fallback: no tagged filenames → Image1 ~ AI, last slot ~ original
+    if (!sources.ai.length && !sources.amazon.length && !sources.original.length && allUrls.length) {
+        sources.ai = [allUrls[0]];
+        sources.original = [allUrls[allUrls.length - 1]];
+        if (allUrls.length > 2) {
+            sources.amazon = allUrls.slice(1, -1);
+        }
+    } else if (!sources.original.length && allUrls.length) {
+        sources.original = [allUrls[allUrls.length - 1]];
+    }
+
+    return {
+        ai: sources.ai.map((x) => x.url),
+        amazon: sources.amazon.map((x) => x.url),
+        original: sources.original[0]?.url || null,
+        all: allUrls.map((x) => x.url),
+        thumbnails: {
+            ai: sources.ai[0]?.thumbnail || null,
+            amazon: sources.amazon[0]?.thumbnail || null,
+            original: sources.original[0]?.thumbnail || null,
+        },
+    };
+};
+
+export const pickPrimaryFromSources = (imageSources, mode = getPrimaryImageMode()) => {
+    const order = mode === 'original'
+        ? ['original', 'ai', 'amazon']
+        : mode === 'amazon'
+            ? ['amazon', 'ai', 'original']
+            : ['ai', 'amazon', 'original'];
+
+    for (const key of order) {
+        if (key === 'original') {
+            if (imageSources?.original) {
+                return {
+                    url: imageSources.original,
+                    thumbnail: imageSources.thumbnails?.original || imageSources.original,
+                };
+            }
+            continue;
+        }
+        const list = imageSources?.[key];
+        if (Array.isArray(list) && list[0]) {
+            return {
+                url: list[0],
+                thumbnail: imageSources.thumbnails?.[key] || list[0],
+            };
+        }
+    }
+    const fallback = imageSources?.all?.[0] || null;
+    return { url: fallback, thumbnail: fallback };
+};
+
+/** Remap a product's display image fields for a new primary mode. */
+export const applyPrimaryImageMode = (product, mode = getPrimaryImageMode()) => {
+    if (!product) return product;
+    const sources = product.imageSources || {
+        ai: [],
+        amazon: [],
+        original: product.originalImage || null,
+        all: product.images || (product.image ? [product.image] : []),
+        thumbnails: {},
+    };
+    const picked = pickPrimaryFromSources(sources, mode);
+    return {
+        ...product,
+        image: picked.url || product.image,
+        thumbnail: picked.thumbnail || product.thumbnail || picked.url || product.image,
+        imageSources: sources,
+    };
+};
+
 // Helper: retry a request with exponential backoff on 429 errors
 const fetchWithRetry = async (url, options, maxRetries = 3) => {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -206,31 +327,13 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                     const recordId = String(record.Id || record.id || '');
                     const optimizedImages = localImagesByProduct[recordId]?.images || [];
 
-                    const image1List = asAttachmentList(record.Image1);
-                    const imageObj = image1List[0] || null;
-                    let imageUrl = null;
-                    let originalImageUrl = null;
-                    if (imageObj) {
-                        // NocoDB's permanent S3 path is private (403). Use the
-                        // fresh signed URL only as a fallback when no local image exists.
-                        originalImageUrl = resolveAttachmentUrl(imageObj);
-                        if (originalImageUrl) {
-                            imageUrl = optimizedImages[0]?.full || originalImageUrl;
-                        }
-                    }
-
-                    // Extract all images from Image1…Image5 columns
-                    const allImages = [];
-                    let imageIndex = 0;
-                    ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach(col => {
-                        asAttachmentList(record[col]).forEach(img => {
-                            const originalUrl = resolveAttachmentUrl(img);
-                            if (originalUrl) {
-                                allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
-                                imageIndex++;
-                            }
-                        });
-                    });
+                    const imageSources = buildImageSourcesFromRecord(record, optimizedImages);
+                    const primary = pickPrimaryFromSources(imageSources);
+                    const imageUrl = primary.url;
+                    const originalImageUrl = imageSources.original || imageSources.all[imageSources.all.length - 1] || null;
+                    const allImages = imageSources.all.length
+                        ? imageSources.all
+                        : (imageUrl ? [imageUrl] : []);
 
                     // Resolve Category Name from ID
                     let categoryId = record.Category_ID || record.category_id || record.CategoryId || record.categoryId;
@@ -273,9 +376,11 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         name: fallbackName,
                         price: record.price || 0,
                         image: imageUrl,
-                        thumbnail: optimizedImages[0]?.thumbnail || imageUrl,
+                        thumbnail: primary.thumbnail || imageUrl,
                         images: allImages,
                         originalImage: originalImageUrl,
+                        imageSources,
+                        amazonUrl: record.Amazon_URL || record.amazon_url || '',
                         category: categoryName,
                         baseCategory,
                         isAvailable: !isOutOfStock,
@@ -339,28 +444,13 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
     const recordId = String(record.Id || record.id || '');
     const optimizedImages = localImagesByProduct[recordId]?.images || [];
 
-    const image1List = asAttachmentList(record.Image1);
-    const imageObj = image1List[0] || null;
-    let imageUrl = null;
-    let originalImageUrl = null;
-    if (imageObj) {
-        originalImageUrl = resolveAttachmentUrl(imageObj);
-        if (originalImageUrl) {
-            imageUrl = optimizedImages[0]?.full || originalImageUrl;
-        }
-    }
-
-    const allImages = [];
-    let imageIndex = 0;
-    ['Image1', 'Image2', 'Image3', 'Image4', 'Image5'].forEach((col) => {
-        asAttachmentList(record[col]).forEach((img) => {
-            const originalUrl = resolveAttachmentUrl(img);
-            if (originalUrl) {
-                allImages.push(optimizedImages[imageIndex]?.full || originalUrl);
-                imageIndex += 1;
-            }
-        });
-    });
+    const imageSources = buildImageSourcesFromRecord(record, optimizedImages);
+    const primary = pickPrimaryFromSources(imageSources);
+    const imageUrl = primary.url;
+    const originalImageUrl = imageSources.original || imageSources.all[imageSources.all.length - 1] || null;
+    const allImages = imageSources.all.length
+        ? imageSources.all
+        : (imageUrl ? [imageUrl] : []);
 
     const categoryMapping = {
         1: 'Chargers', 2: 'Audio', 3: 'Smart Watches', 4: 'Gaming',
@@ -392,9 +482,11 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
         name: fallbackName,
         price: record.price || 0,
         image: imageUrl,
-        thumbnail: optimizedImages[0]?.thumbnail || imageUrl,
+        thumbnail: primary.thumbnail || imageUrl,
         images: allImages.length ? allImages : (imageUrl ? [imageUrl] : []),
         originalImage: originalImageUrl,
+        imageSources,
+        amazonUrl: record.Amazon_URL || record.amazon_url || '',
         category: categoryName,
         baseCategory,
         isAvailable: !isOutOfStock,

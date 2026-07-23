@@ -42,7 +42,7 @@ const CAT_MAP = {
 };
 
 const AdminDashboard = () => {
-    const { darkMode } = useStore();
+    const { darkMode, primaryImageMode, setPrimaryImageMode } = useStore();
     const dm = darkMode;
     
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -1280,6 +1280,39 @@ const AdminDashboard = () => {
                         <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
                             <p className="text-sm font-bold mb-1">معلومات النظام</p>
                             <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الإصدار: 1.0 | الطلبات: {orders.length} | الزبائن: {customers.length}</p>
+                        </div>
+                        <div className={`p-4 rounded-xl border space-y-3 ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
+                            <div>
+                                <p className="text-sm font-bold mb-1">الصورة الأساسية للمنتجات</p>
+                                <p className={`text-xs mb-3 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                    يطبّق على كل المنتجات في الموقع فوراً (AI / أمازون / الصورة الحقيقية).
+                                </p>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                {[
+                                    { id: 'ai', label: 'معدّلة بالذكاء الاصطناعي' },
+                                    { id: 'amazon', label: 'صورة أمازون' },
+                                    { id: 'original', label: 'الصورة الأصلية' },
+                                ].map((opt) => {
+                                    const active = (primaryImageMode || 'ai') === opt.id;
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => setPrimaryImageMode(opt.id)}
+                                            className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition ${
+                                                active
+                                                    ? 'bg-[#142038] text-white border-[#142038]'
+                                                    : dm
+                                                        ? 'bg-gray-900 border-gray-600 text-gray-200 hover:border-primary/50'
+                                                        : 'bg-white border-slate-200 text-slate-700 hover:border-primary/40'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                         <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
                             <p className="text-sm font-bold mb-1">كلمة السر</p>

@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { LOCAL_CATEGORY_IMAGES } from '../data/categories';
+import {
+    applyPrimaryImageMode,
+    getPrimaryImageMode,
+    setPrimaryImageModeStorage,
+} from '../services/api';
 
 const useStore = create(
     persist(
@@ -14,6 +19,7 @@ const useStore = create(
             user: null, // Firebase user object
             isAuthModalOpen: false,
             isAboutModalOpen: false,
+            primaryImageMode: typeof window !== 'undefined' ? getPrimaryImageMode() : 'ai',
             categories: [
                 'All',
                 'Chargers',
@@ -56,7 +62,19 @@ const useStore = create(
             setAboutModalOpen: (isOpen) => set({ isAboutModalOpen: isOpen }),
 
             setProducts: (data) => {
-                set({ products: data });
+                const mode = getPrimaryImageMode();
+                const list = Array.isArray(data)
+                    ? data.map((p) => applyPrimaryImageMode(p, mode))
+                    : data;
+                set({ products: list, primaryImageMode: mode });
+            },
+
+            setPrimaryImageMode: (mode) => {
+                const next = setPrimaryImageModeStorage(mode);
+                set((state) => ({
+                    primaryImageMode: next,
+                    products: (state.products || []).map((p) => applyPrimaryImageMode(p, next)),
+                }));
             },
 
             setCustomerInfo: (info) => set({ customerInfo: info }),
@@ -98,9 +116,12 @@ const useStore = create(
 
             appendProducts: (newProducts) => {
                 set((state) => {
+                    const mode = state.primaryImageMode || getPrimaryImageMode();
                     // Avoid duplicates just in case
                     const existingIds = new Set(state.products.map(p => p.id));
-                    const uniqueNew = newProducts.filter(p => !existingIds.has(p.id));
+                    const uniqueNew = newProducts
+                        .filter(p => !existingIds.has(p.id))
+                        .map((p) => applyPrimaryImageMode(p, mode));
                     return { products: [...state.products, ...uniqueNew] };
                 });
             },
@@ -249,6 +270,7 @@ const useStore = create(
                 restockSubscriptions: state.restockSubscriptions,
                 customerInfo: state.customerInfo,
                 darkMode: state.darkMode,
+                primaryImageMode: state.primaryImageMode,
                 // NOTE: products and categoryImages are NOT persisted because NocoDB
                 // uses temporary S3 signed URLs that expire after ~2 hours.
                 // Persisting them causes all images to break on subsequent visits.

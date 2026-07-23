@@ -1,6 +1,7 @@
 /**
  * Enrichment after Telegram images downloaded.
  * Always uploads at least the real photos so products never go live without images.
+ * With Amazon URL: scrape Apify → AI copy from Amazon data → gallery = AI + Amazon + real last.
  */
 import {
   generateProductCopy,
@@ -9,6 +10,11 @@ import {
 } from './openrouter.js';
 import { generateLandingPageCopy, isOpenAIConfigured } from './openai.js';
 import { appendProductToSheet, isSheetWebhookConfigured } from './sheetsAppend.js';
+import {
+  scrapeAmazonProduct,
+  downloadImageBuffers,
+  isApifyConfigured,
+} from './amazonScrape.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -46,14 +52,26 @@ async function uploadBuffers(uploadToNocoDB, buffers, prefix) {
 }
 
 /**
+ * Build Image1…Image5 order: AI → Amazon → real last (max 5).
+ * Real photo is always the final slot when present.
+ */
+function orderGalleryUploads({ aiUploads = [], amazonUploads = [], realUploads = [] }) {
+  const realLast = realUploads[0] ? [realUploads[0]] : [];
+  const slotsLeft = Math.max(0, 5 - realLast.length);
+  const front = [...aiUploads, ...amazonUploads].filter(Boolean).slice(0, slotsLeft);
+  return [...front, ...realLast].slice(0, 5);
+}
+
+/**
  * Enrichment after Telegram images downloaded.
- * Returns fields for NocoDB + sheet + landing.
+ * Returns fields for NocoDB + sheet + UX.
  */
 export async function enrichProduct({
   originalBuffers,
   name,
   price,
   ref,
+  amazonUrl = '',
   uploadToNocoDB,
   nocodbUrl,
 }) {
@@ -67,10 +85,10 @@ export async function enrichProduct({
     throw new Error('No original image buffers to upload');
   }
 
-  // Always upload original photos first — never create a product without images.
+  // Always upload original photos with real- prefix — never create a product without images.
   const originalUploads = await uploadBuffers(
     uploadToNocoDB,
-    realBuffers.slice(0, 5),
+    realBuffers.slice(0, 1),
     `real-${sellerSku}`
   );
 
@@ -78,36 +96,99 @@ export async function enrichProduct({
     throw new Error('Failed to upload original images to NocoDB storage');
   }
 
+  let amazonMeta = null;
+  let amazonUploads = [];
+
+  if (amazonUrl) {
+    if (!isApifyConfigured()) {
+      console.warn('Amazon URL provided but APIFY_TOKEN missing — skipping scrape');
+    } else {
+      try {
+        amazonMeta = await scrapeAmazonProduct(amazonUrl);
+        console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || amazonUrl}`);
+        const amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 4 });
+        if (amazonBuffers.length) {
+          amazonUploads = await uploadBuffers(
+            uploadToNocoDB,
+            amazonBuffers,
+            `amazon-${sellerSku}`
+          );
+        }
+      } catch (e) {
+        console.error('Amazon scrape failed:', e.message);
+        amazonMeta = { title: '', description: '', features: [], asin: '', url: amazonUrl, imageUrls: [] };
+      }
+    }
+  }
+
   if (!enabled || (!isOpenAIConfigured() && !isOpenRouterConfigured())) {
-    const imageUrls = originalUploads.map((f) => publicUrlFromNoco(f, nocodbUrl));
+    const nocoImages = orderGalleryUploads({
+      amazonUploads,
+      realUploads: originalUploads,
+    });
+    const imageUrls = nocoImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
+    const productForSheet = {
+      referenceClean,
+      sellerSku,
+      price,
+      frenchTitle: amazonMeta?.title || name,
+      arabicTitle: name,
+      shortFr: '',
+      shortAr: '',
+      descriptionFr: amazonMeta?.description || '',
+      descriptionAr: '',
+      metaTitle: amazonMeta?.title || name,
+      metaDescription: '',
+      wooTitle: amazonMeta?.title || name,
+      brand: 'Generic',
+      color: 'Multicolore',
+      jumiaCategory: '',
+      amazonUrl: amazonUrl || amazonMeta?.url || '',
+      imageUrls,
+      stock: 10,
+    };
+    let sheetResult = null;
+    if (isSheetWebhookConfigured()) {
+      try {
+        sheetResult = await appendProductToSheet(productForSheet);
+      } catch (e) {
+        sheetResult = { error: e.message };
+      }
+    } else {
+      sheetResult = { skipped: true, reason: 'no_webhook' };
+    }
     return {
       sellerSku,
       referenceClean,
+      amazonUrl: amazonUrl || amazonMeta?.url || '',
       skippedAi: true,
       copy: null,
-      nocoImages: originalUploads,
+      nocoImages,
       imageUrls,
-      sheet: null,
+      sheet: sheetResult,
+      productForSheet,
     };
   }
 
   let copy = null;
   let aiUploads = [];
+  const displayName = amazonMeta?.title || name;
 
   // Prefer OpenAI for landing-page copy; fall back to OpenRouter.
   try {
     if (isOpenAIConfigured()) {
       copy = await generateLandingPageCopy({
         imageBuffer: realBuffer,
-        name,
+        name: displayName,
         price,
         ref: referenceClean,
+        amazonMeta,
       });
       console.log('Landing copy: OpenAI OK');
     } else {
       copy = await generateProductCopy({
         imageBuffer: realBuffer,
-        name,
+        name: displayName,
         price,
         ref: referenceClean,
       });
@@ -119,7 +200,7 @@ export async function enrichProduct({
       try {
         copy = await generateProductCopy({
           imageBuffer: realBuffer,
-          name,
+          name: displayName,
           price,
           ref: referenceClean,
         });
@@ -133,44 +214,44 @@ export async function enrichProduct({
   try {
     const aiBuffers = await generateProductImages({
       imageBuffer: realBuffer,
-      titleFr: copy?.french_title || name,
+      titleFr: copy?.french_title || displayName,
       price,
     });
-    // Prefer AI images first, keep one real photo last (max 5 slots)
-    const ordered = [
-      aiBuffers[0],
-      aiBuffers[1],
-      aiBuffers[2],
-      aiBuffers[3],
-      realBuffer,
-    ].filter(Boolean).slice(0, 5);
-
-    if (ordered.length) {
-      aiUploads = await uploadBuffers(uploadToNocoDB, ordered, `ai-${sellerSku}`);
+    // Upload AI buffers with ai- prefix only (do NOT mix real into this prefix).
+    const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 3);
+    if (aiOnly.length) {
+      aiUploads = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
     }
   } catch (e) {
-    console.error('AI images failed, using originals only:', e.message);
+    console.error('AI images failed, continuing without AI gallery:', e.message);
   }
 
-  const nocoImages = aiUploads.length ? aiUploads : originalUploads;
-  const imageUrls = nocoImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
+  const nocoImages = orderGalleryUploads({
+    aiUploads,
+    amazonUploads,
+    realUploads: originalUploads,
+  });
+  // Fallback if ordering somehow empty
+  const finalImages = nocoImages.length ? nocoImages : originalUploads;
+  const imageUrls = finalImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
 
   const productForSheet = {
     referenceClean,
     sellerSku,
     price,
-    frenchTitle: copy?.french_title || name,
+    frenchTitle: copy?.french_title || displayName,
     arabicTitle: copy?.arabic_title || name,
     shortFr: copy?.short_description_fr || '',
     shortAr: copy?.short_description_ar || '',
-    descriptionFr: copy?.description_french || '',
+    descriptionFr: copy?.description_french || amazonMeta?.description || '',
     descriptionAr: copy?.description_arabic || '',
-    metaTitle: copy?.meta_title || copy?.french_title || name,
+    metaTitle: copy?.meta_title || copy?.french_title || displayName,
     metaDescription: copy?.meta_description || '',
-    wooTitle: copy?.woo_title || copy?.french_title || name,
+    wooTitle: copy?.woo_title || copy?.french_title || displayName,
     brand: copy?.brand || 'Generic',
     color: copy?.color || 'Multicolore',
     jumiaCategory: '',
+    amazonUrl: amazonUrl || amazonMeta?.url || '',
     imageUrls,
     stock: 10,
   };
@@ -190,9 +271,10 @@ export async function enrichProduct({
   return {
     sellerSku,
     referenceClean,
+    amazonUrl: amazonUrl || amazonMeta?.url || '',
     skippedAi: !copy,
     copy,
-    nocoImages,
+    nocoImages: finalImages,
     imageUrls,
     sheet: sheetResult,
     productForSheet,
@@ -226,6 +308,9 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
   }
   if (Array.isArray(copy.faq_fr) && copy.faq_fr.length) {
     record.Landing_FAQ_FR = JSON.stringify(copy.faq_fr);
+  }
+  if (enrichment.amazonUrl) {
+    record.Amazon_URL = enrichment.amazonUrl;
   }
 
   const files = enrichment.nocoImages || [];
