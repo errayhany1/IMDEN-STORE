@@ -69,7 +69,7 @@ const CategoryRail = () => {
                 </div>
             )}
 
-            {/* Image-only Template-2 cards — ~5.5 visible on phone */}
+            {/* Transparent category images — ~5.5 visible on phone */}
             <div
                 className="flex gap-2 overflow-x-auto pb-1.5 px-1 scrollbar-hide snap-x"
                 style={{ direction: 'rtl' }}
@@ -92,47 +92,30 @@ const CategoryRail = () => {
                                 ${isActive ? 'scale-[1.04]' : 'active:scale-[0.98]'}`}
                         >
                             <div
-                                className={`relative w-full aspect-[3/4] rounded-[14px] overflow-hidden
+                                className={`relative w-full aspect-square rounded-2xl overflow-hidden
                                     ${isActive
                                         ? 'ring-2 ring-primary shadow-md'
-                                        : darkMode
-                                            ? 'ring-1 ring-white/10'
-                                            : 'ring-1 ring-slate-200/70 shadow-sm'}`}
+                                        : ''}`}
                             >
                                 {thumb ? (
                                     <img
-                                        src={thumb}
+                                        src={`${thumb}?v=transparent`}
                                         alt=""
-                                        className="absolute inset-0 w-full h-full object-cover object-center bg-[#f4f7fb]"
+                                        className="absolute inset-0 w-full h-full object-contain object-center p-0.5 bg-transparent"
                                         loading="lazy"
                                     />
                                 ) : (
-                                    /* "All" — icon only, no text */
-                                    <div className={`absolute inset-0 flex flex-col ${darkMode ? 'bg-slate-800' : 'bg-[#f4f7fb]'}`}>
-                                        <div className="flex-1 flex items-center justify-center">
-                                            <span className="grid grid-cols-2 gap-1">
-                                                {[0, 1, 2, 3].map((i) => (
-                                                    <span
-                                                        key={i}
-                                                        className="w-3.5 h-3.5 rounded-[5px]"
-                                                        style={{ backgroundColor: BRAND_BLUE }}
-                                                    />
-                                                ))}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className="relative h-[28%] shrink-0"
-                                            style={{ backgroundColor: BRAND_BLUE }}
-                                        >
-                                            <svg
-                                                className="absolute left-0 right-0 -top-[10px] w-full h-[11px] pointer-events-none"
-                                                viewBox="0 0 120 16"
-                                                preserveAspectRatio="none"
-                                                aria-hidden
-                                            >
-                                                <path d="M0 16 C30 2 90 2 120 16 L120 16 L0 16 Z" fill={BRAND_BLUE} />
-                                            </svg>
-                                        </div>
+                                    /* "All" — transparent-friendly icon tile */
+                                    <div className="absolute inset-0 flex items-center justify-center bg-transparent">
+                                        <span className="grid grid-cols-2 gap-1 p-2 rounded-xl bg-primary/10">
+                                            {[0, 1, 2, 3].map((i) => (
+                                                <span
+                                                    key={i}
+                                                    className="w-3.5 h-3.5 rounded-[5px]"
+                                                    style={{ backgroundColor: BRAND_BLUE }}
+                                                />
+                                            ))}
+                                        </span>
                                     </div>
                                 )}
                             </div>

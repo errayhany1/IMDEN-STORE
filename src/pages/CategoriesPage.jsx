@@ -127,9 +127,9 @@ const CategoriesPage = () => {
                                     >
                                         {src ? (
                                             <img
-                                                src={src}
+                                                src={`${src}?v=transparent`}
                                                 alt={label}
-                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                                className="absolute inset-0 w-full h-full object-contain object-center p-1 bg-transparent transition-transform duration-300 group-hover:scale-[1.03]"
                                                 loading="lazy"
                                             />
                                         ) : (
