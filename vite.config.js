@@ -22,7 +22,8 @@ export default defineConfig({
         description: 'متجر بيع الإلكترونيات بالجملة',
         theme_color: '#142038',
         background_color: '#142038',
-        display: 'standalone',
+        // Open in a normal browser tab (desktop Electron app paused).
+        display: 'browser',
         orientation: 'portrait',
         dir: 'rtl',
         lang: 'ar',

@@ -3,7 +3,8 @@ import { Download, X, MonitorSmartphone } from 'lucide-react';
 import useStore from '../store/useStore';
 
 const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.imden.store';
-const DESKTOP_URL = '/download.html';
+/** Desktop Windows app download paused — use the browser until further notice. */
+const DESKTOP_APP_ENABLED = false;
 
 const InstallAppBanner = () => {
   const { darkMode } = useStore();
@@ -11,7 +12,6 @@ const InstallAppBanner = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [show, setShow] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const dismissed = localStorage.getItem('install_banner_dismissed');
@@ -27,10 +27,10 @@ const InstallAppBanner = () => {
       Boolean(window.electron);
 
     setIsAndroid(android);
-    setIsDesktop(desktop);
 
     // iOS has its own prompt; native shells should not show this banner.
-    if (ios || standalone) return undefined;
+    // Desktop Windows app is paused — no install CTA on desktop.
+    if (ios || standalone || (desktop && !DESKTOP_APP_ENABLED)) return undefined;
 
     const onBip = (e) => {
       e.preventDefault();
@@ -39,10 +39,8 @@ const InstallAppBanner = () => {
     };
     window.addEventListener('beforeinstallprompt', onBip);
 
-    const delay = android ? 8000 : desktop ? 12000 : 0;
-    const t = delay
-      ? setTimeout(() => setShow(true), delay)
-      : null;
+    const delay = android ? 8000 : 0;
+    const t = delay ? setTimeout(() => setShow(true), delay) : null;
 
     return () => {
       if (t) clearTimeout(t);
@@ -69,7 +67,7 @@ const InstallAppBanner = () => {
     ? 'من Google Play أو كتطبيق على الشاشة الرئيسية'
     : deferredPrompt
       ? 'ثبّته كتطبيق سريع على جهازك'
-      : 'حمّل نسخة الحاسوب أو ثبّته من المتصفح';
+      : 'استخدم الموقع من المتصفح';
 
   return (
     <div className="fixed bottom-28 md:bottom-6 left-3 right-3 z-[190] flex justify-center pointer-events-none">
@@ -105,14 +103,6 @@ const InstallAppBanner = () => {
             >
               <Download size={14} />
               Play
-            </a>
-          ) : isDesktop ? (
-            <a
-              href={DESKTOP_URL}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#142038] text-white inline-flex items-center gap-1"
-            >
-              <Download size={14} />
-              تحميل
             </a>
           ) : null}
           <button type="button" onClick={dismiss} className={`p-1.5 rounded-full ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`} aria-label="إغلاق">
