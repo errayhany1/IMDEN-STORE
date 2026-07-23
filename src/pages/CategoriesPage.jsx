@@ -22,6 +22,8 @@ const CategoriesPage = () => {
 
     const dm = darkMode;
     const list = categories.filter((c) => c !== 'All' && c !== 'Out of Stock');
+    const allSrc = getCategoryImage('All', categoryImages);
+    const allLabel = CATEGORY_LABEL_AR.All || 'الكل';
 
     const openShopWithCategory = (cat) => {
         clearFamily();
@@ -96,16 +98,30 @@ const CategoriesPage = () => {
                         <button
                             type="button"
                             onClick={() => openShopWithCategory('All')}
-                            className={`rounded-2xl overflow-hidden border aspect-square flex flex-col items-center justify-center gap-2 transition shadow-sm
-                                ${dm
-                                    ? 'bg-gray-900 border-gray-800 text-gray-200 hover:border-primary/50'
-                                    : 'bg-white border-slate-100 text-slate-700 hover:border-primary/40'}`}
+                            className="group flex flex-col gap-1.5 text-start"
+                            aria-label={allLabel}
                         >
-                            <span className={`flex items-center justify-center w-14 h-14 rounded-2xl
-                                ${dm ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'}`}>
-                                <Layers size={28} />
+                            <span
+                                className={`relative block w-full aspect-square rounded-2xl overflow-hidden border transition shadow-sm
+                                    ${dm
+                                        ? 'border-gray-800 group-hover:border-primary/50'
+                                        : 'border-slate-100 group-hover:border-primary/40 group-hover:shadow-md'}`}
+                            >
+                                {allSrc ? (
+                                    <img
+                                        src={allSrc}
+                                        alt={allLabel}
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <span className={`absolute inset-0 flex flex-col items-center justify-center gap-2
+                                        ${dm ? 'bg-gray-900 text-gray-200' : 'bg-white text-slate-700'}`}>
+                                        <Layers size={28} className="text-primary" />
+                                        <span className="text-sm font-bold">الكل</span>
+                                    </span>
+                                )}
                             </span>
-                            <span className="text-sm font-bold">الكل</span>
                         </button>
 
                         {list.map((cat) => {

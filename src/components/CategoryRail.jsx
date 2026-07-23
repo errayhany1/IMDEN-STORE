@@ -76,7 +76,7 @@ const CategoryRail = () => {
             >
                 {visibleCategories.map((cat) => {
                     const label = CATEGORY_LABEL_AR[cat] || cat;
-                    const thumb = cat !== 'All' && cat !== 'Out of Stock'
+                    const thumb = cat !== 'Out of Stock'
                         ? getCategoryImage(cat, categoryImages)
                         : null;
                     const isActive = selectedCategory === cat;

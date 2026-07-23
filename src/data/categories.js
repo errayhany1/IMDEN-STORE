@@ -135,6 +135,7 @@ export const getCategoryName = (id) => CATEGORY_BY_ID[id] || 'General';
 
 /** Local Template-2 category artwork under /public/category-images */
 export const LOCAL_CATEGORY_IMAGES = {
+    All: '/category-images/all.png',
     Chargers: '/category-images/chargers.png',
     Audio: '/category-images/audio.png',
     'Smart Watches': '/category-images/smart-watches.png',
