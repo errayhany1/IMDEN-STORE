@@ -9,7 +9,7 @@ ENV PORT=3000
 COPY package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
-COPY server.js openrouter.js productEnrichment.js sheetsAppend.js ./
+COPY server.js openai.js openrouter.js productEnrichment.js sheetsAppend.js ./
 
 EXPOSE 3000
 
