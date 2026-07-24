@@ -191,6 +191,7 @@ export async function enrichProduct({
         name: displayName,
         price,
         ref: referenceClean,
+        amazonMeta,
       });
       console.log('Landing copy: OpenRouter OK');
     }
@@ -203,6 +204,7 @@ export async function enrichProduct({
           name: displayName,
           price,
           ref: referenceClean,
+          amazonMeta,
         });
         console.log('Landing copy: OpenRouter fallback OK');
       } catch (e2) {

@@ -1290,9 +1290,9 @@ const AdminDashboard = () => {
                             </div>
                             <div className="grid gap-2 sm:grid-cols-3">
                                 {[
-                                    { id: 'ai', label: 'معدّلة بالذكاء الاصطناعي' },
+                                    { id: 'ai', label: 'الصورة المعدّلة بالذكاء الاصطناعي' },
                                     { id: 'amazon', label: 'صورة أمازون' },
-                                    { id: 'original', label: 'الصورة الأصلية' },
+                                    { id: 'original', label: 'الصورة الأصلية الحقيقية' },
                                 ].map((opt) => {
                                     const active = (primaryImageMode || 'ai') === opt.id;
                                     return (

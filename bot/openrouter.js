@@ -62,16 +62,27 @@ function extractImageBuffers(message) {
   return out;
 }
 
-export async function generateProductCopy({ imageBuffer, name, price, ref }) {
-  const dataUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+export async function generateProductCopy({ imageBuffer, name, price, ref, amazonMeta = null }) {
+  const dataUrl = imageBuffer
+    ? `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
+    : null;
+  const amazonBlock = amazonMeta
+    ? `
+Données Amazon (source produit):
+- Titre Amazon: ${amazonMeta.title || ''}
+- ASIN: ${amazonMeta.asin || ''}
+- Features: ${(amazonMeta.features || []).slice(0, 8).join(' | ')}
+- Description: ${String(amazonMeta.description || '').slice(0, 1200)}
+`
+    : '';
   const prompt = `Tu es un expert e-commerce Maroc (Jumia / vente en gros électronique).
-Analyse la photo du produit et génère du contenu bilingue FR/AR.
+Analyse ${amazonMeta ? 'les données Amazon + ' : ''}la photo du produit et génère du contenu bilingue FR/AR.
 
 Produit donné par le vendeur:
 - Nom: ${name}
 - Prix: ${price} MAD
 - Référence: ${ref}
-
+${amazonBlock}
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
 {
   "french_title": "titre FR SEO max 120 chars",
@@ -87,19 +98,16 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "color": "couleur principale ou Multicolore"
 }`;
 
+  const content = [{ type: 'text', text: prompt }];
+  if (dataUrl) {
+    content.push({ type: 'image_url', image_url: { url: dataUrl } });
+  }
+
   const { data } = await axios.post(
     OPENROUTER_URL,
     {
       model: TEXT_MODEL,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: dataUrl } },
-          ],
-        },
-      ],
+      messages: [{ role: 'user', content }],
       temperature: 0.4,
     },
     { headers: headers(), timeout: 45000 }

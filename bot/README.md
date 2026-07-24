@@ -56,6 +56,7 @@ OPENAI_API_KEY=
 PRODUCT_AI_ENRICHMENT=true
 PRODUCT_SHEET_WEBHOOK_URL=
 PRODUCT_SHEET_ID=1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4
+# أعد إنشاء أي توكن ظهر في Git/JSON، ثم أضفه في EasyPanel → imden-bot → Env → Rebuild
 APIFY_TOKEN=
 APIFY_AMAZON_ACT=junglee~free-amazon-product-scraper
 
@@ -92,6 +93,17 @@ npm start
 ```
 
 فحص الصحة: `GET /health`
+
+## EasyPanel بعد دمج أمازون
+
+على `imden-bot` أضف ثم **Rebuild**:
+
+- `APIFY_TOKEN` — توكن Apify جديد (لا تستخدم أي توكن ظهر في JSON/Git؛ أعد إنشاءه إن تسرّب)
+- `APIFY_AMAZON_ACT=junglee~free-amazon-product-scraper` (اختياري؛ هذا الافتراضي)
+- `OPENAI_API_KEY` — لنصوص الصفحة من بيانات أمازون
+- `OPENROUTER_API_KEY` — لصور الاستوديو AI
+
+تحقق من `/health` أن `"apify": true` و `"openai": true`.
 
 ## السلوك بعد إعادة البناء
 

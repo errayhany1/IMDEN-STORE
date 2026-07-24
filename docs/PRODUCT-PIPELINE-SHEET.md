@@ -4,9 +4,9 @@ Sheet: https://docs.google.com/spreadsheets/d/1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_Tcl
 
 ## تدفق البوت (بدون N8N)
 
-Telegram → OpenRouter (نصوص AR/FR + 4 صور) → NocoDB → Sheet webhook → رابط `/p/ERY-...`
+Telegram (+ رابط أمازون اختياري) → Apify scrape → OpenAI نصوص → OpenRouter صور AI → NocoDB → Sheet webhook → رابط `/p/ERY-...`
 
-ترتيب الصور: Image1 نظيفة · Image2–4 عروض · Image5 الصورة الحقيقية
+ترتيب الصور: AI (`ai-…`) → Amazon (`amazon-…`) → الصورة الحقيقية آخر عنصر دائماً (`real-…`)
 
 ## Env على EasyPanel → imden-bot
 
@@ -19,6 +19,9 @@ VITE_NOCODB_URL=
 VITE_NOCODB_API_TOKEN=
 VITE_NOCODB_TABLE_PRODUCTS=
 OPENROUTER_API_KEY=sk-or-v1-...
+OPENAI_API_KEY=
+APIFY_TOKEN=
+APIFY_AMAZON_ACT=junglee~free-amazon-product-scraper
 PRODUCT_AI_ENRICHMENT=true
 PRODUCT_SHEET_ID=1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4
 PRODUCT_SHEET_WEBHOOK_URL=
@@ -27,6 +30,8 @@ PUBLIC_SITE_URL=https://errayhany.com
 # TELEGRAM_MODE=polling
 # TELEGRAM_WEBHOOK_URL=https://YOUR-BOT-HOST
 ```
+
+بعد إضافة `APIFY_TOKEN` / `OPENAI_API_KEY`: Rebuild لـ `imden-bot` على EasyPanel. أعد إنشاء أي توكن Apify ظهر في ملفات JSON.
 
 للتفعيل Sheet: انشر `docs/sheets-webhook.gs` كـ Web App والصق الرابط في `PRODUCT_SHEET_WEBHOOK_URL`.
 
