@@ -44,9 +44,10 @@ COPY --from=tracking-deps /tracking/node_modules /tracking/node_modules
 COPY bot/package.json /tracking/package.json
 COPY bot/*.js /tracking/
 
-# Rendered by the nginx entrypoint (envsubst). Default to the colocated
-# tracking process so order APIs work even if imden-bot is down/misbuilt.
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+# Install our SPA + /bot-api config directly. Do not use
+# /etc/nginx/templates + envsubst: a skipped/failed render leaves the stock
+# default.conf, which serves only real files and 404s every React route.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 ENV BOT_UPSTREAM=127.0.0.1:3001
 ENV TRACKING_PORT=3001
 
@@ -56,6 +57,5 @@ RUN chmod +x /docker-entrypoint-store.sh \
 
 EXPOSE 80
 
-# Keep nginx's stock entrypoint so /etc/nginx/templates are envsubst'd,
-# then start both tracking + nginx.
-CMD ["/bin/sh", "-c", "/docker-entrypoint.sh /docker-entrypoint-store.sh"]
+# Start tracking API + nginx (config already baked into the image).
+CMD ["/docker-entrypoint-store.sh"]

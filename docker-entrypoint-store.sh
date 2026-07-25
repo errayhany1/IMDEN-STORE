@@ -7,6 +7,17 @@ export TRACKING_PORT="${TRACKING_PORT:-3001}"
 export PORT="$TRACKING_PORT"
 export BOT_UPSTREAM="127.0.0.1:${TRACKING_PORT}"
 
+# Bail early if the baked SPA config is missing — better than silently
+# serving stock nginx and 404'ing /catalog, /account, /p/*, /bot-api.
+if ! grep -q 'try_files \$uri \$uri/ /index.html' /etc/nginx/conf.d/default.conf 2>/dev/null; then
+  echo "ERROR: /etc/nginx/conf.d/default.conf is missing SPA try_files" >&2
+  exit 1
+fi
+if ! nginx -t; then
+  echo "ERROR: nginx config test failed" >&2
+  exit 1
+fi
+
 node /tracking/trackingServer.js &
 TRACK_PID=$!
 
