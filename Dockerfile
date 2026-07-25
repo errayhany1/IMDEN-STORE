@@ -19,6 +19,8 @@ ARG VITE_BANK_NAME
 ARG VITE_BANK_ACCOUNT_HOLDER
 ARG VITE_BANK_RIB
 ARG VITE_BANK_IBAN
+ARG VITE_TIFAWT_LEAD_URL
+ARG VITE_TRACKING_API_URL
 
 COPY package*.json ./
 RUN npm install
@@ -26,16 +28,34 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production Stage
+# Tracking API deps (axios/express/dotenv/form-data)
+FROM node:22-alpine AS tracking-deps
+WORKDIR /tracking
+COPY bot/package.json ./
+RUN npm install --omit=dev && npm cache clean --force
+
+# Production Stage — nginx + local tracking API (no cross-service hop)
 FROM nginx:alpine
 
-COPY --from=build /app/dist /usr/share/nginx/html
+RUN apk add --no-cache nodejs
 
-# Rendered by the nginx entrypoint (envsubst) so the bot upstream can be
-# changed per environment without rebuilding the config by hand.
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=tracking-deps /tracking/node_modules /tracking/node_modules
+COPY bot/package.json /tracking/package.json
+COPY bot/*.js /tracking/
+
+# Rendered by the nginx entrypoint (envsubst). Default to the colocated
+# tracking process so order APIs work even if imden-bot is down/misbuilt.
 COPY nginx.conf /etc/nginx/templates/default.conf.template
-ENV BOT_UPSTREAM=store-app_imden-bot:3000
+ENV BOT_UPSTREAM=127.0.0.1:3001
+ENV TRACKING_PORT=3001
+
+COPY docker-entrypoint-store.sh /docker-entrypoint-store.sh
+RUN chmod +x /docker-entrypoint-store.sh \
+  && sed -i 's/\r$//' /docker-entrypoint-store.sh
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Keep nginx's stock entrypoint so /etc/nginx/templates are envsubst'd,
+# then start both tracking + nginx.
+CMD ["/bin/sh", "-c", "/docker-entrypoint.sh /docker-entrypoint-store.sh"]
