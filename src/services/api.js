@@ -500,17 +500,20 @@ export const normalizeSku = (value) =>
         .trim()
         .replace(/\+/g, ' ')
         .toLowerCase()
-        .replace(/^ery-/, '');
+        .replace(/^ery-/, '')
+        // Collapse any run of separators/spaces to a single dash so
+        // "ps3 sony" and "ps3-sony" compare equal.
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
+// Exact match only. Substring matching used to make short references
+// (e.g. "1", "ps3") collide with unrelated products, so opening a card
+// could load a completely different item.
 export const skusMatch = (a, b) => {
     const left = normalizeSku(a);
     const right = normalizeSku(b);
     if (!left || !right) return false;
-    return left === right
-        || left === `ery-${right}`
-        || right === `ery-${left}`
-        || left.includes(right)
-        || right.includes(left);
+    return left === right;
 };
 
 /**

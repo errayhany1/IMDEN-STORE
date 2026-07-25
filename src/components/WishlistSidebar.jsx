@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { X, Trash2, ShoppingCart, Heart } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import ImageModal from './ImageModal';
 
 const WishlistSidebar = () => {
     const {
@@ -17,8 +16,6 @@ const WishlistSidebar = () => {
     } = useStore();
     const dm = darkMode;
 
-    const [modalImage, setModalImage] = useState(null);
-    const [modalAlt, setModalAlt] = useState('');
     const [confirmClear, setConfirmClear] = useState(false);
     const [movedId, setMovedId] = useState(null);
     const [currentLang, setCurrentLang] = useState('ar');
@@ -31,6 +28,19 @@ const WishlistSidebar = () => {
     }, []);
 
     const isRtl = currentLang === 'ar';
+
+    const openProduct = (item) => {
+        const ref = item.ref || item.id;
+        if (!ref) return;
+        try {
+            const mode = useStore.getState().browseMode === 'catalog' ? 'catalog' : 'shop';
+            sessionStorage.setItem('lastBrowseMode', mode);
+        } catch {
+            /* ignore */
+        }
+        toggleWishlistSidebar();
+        window.location.assign(`/p/${encodeURIComponent(ref)}`);
+    };
 
     const handleMoveToCart = (item) => {
         moveWishlistItemToCart(item);
@@ -114,10 +124,10 @@ const WishlistSidebar = () => {
 
                                         return (
                                             <div key={item.id} className={`group flex gap-3 flex-row-reverse pb-3 border-b border-dashed last:border-b-0 ${dm ? 'border-gray-700' : 'border-slate-200'}`}>
-                                                {/* Thumbnail — click to zoom */}
+                                                {/* Thumbnail — click to open the product page */}
                                                 <div
-                                                    className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden bg-slate-100 border border-slate-100 cursor-zoom-in"
-                                                    onClick={() => { if (displayImage) { setModalImage(displayImage); setModalAlt(item.name); } }}
+                                                    className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden bg-slate-100 border border-slate-100 cursor-pointer"
+                                                    onClick={() => openProduct(item)}
                                                 >
                                                     {displayImage ? (
                                                         <img src={displayImage} alt={item.name} className="w-full h-full object-cover" />
@@ -134,7 +144,10 @@ const WishlistSidebar = () => {
                                                 <div className="flex-1 flex flex-col justify-between py-0 text-right">
                                                     <div>
                                                         <div className="flex justify-between items-start gap-1 sm:gap-2 flex-row-reverse">
-                                                            <h3 className={`font-semibold leading-tight text-sm sm:text-base line-clamp-2 ${dm ? 'text-white' : 'text-slate-900'}`}>{item.name}</h3>
+                                                            <h3
+                                                                onClick={() => openProduct(item)}
+                                                                className={`font-semibold leading-tight text-sm sm:text-base line-clamp-2 cursor-pointer hover:text-primary transition-colors ${dm ? 'text-white' : 'text-slate-900'}`}
+                                                            >{item.name}</h3>
                                                             <button onClick={() => removeFromWishlist(item.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1 -m-1">
                                                                 <Trash2 size={16} />
                                                             </button>
@@ -180,14 +193,6 @@ const WishlistSidebar = () => {
                     </>
                 )}
             </AnimatePresence>
-
-            {/* Image lightbox */}
-            <ImageModal
-                isOpen={!!modalImage}
-                onClose={() => setModalImage(null)}
-                image={modalImage}
-                alt={modalAlt}
-            />
 
             {/* ── Confirm Clear Wishlist Modal ── */}
             {confirmClear && (
