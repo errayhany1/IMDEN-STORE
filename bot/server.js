@@ -75,8 +75,10 @@ const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://errayhany.com';
 const TELEGRAM_WEBHOOK_URL = (process.env.TELEGRAM_WEBHOOK_URL || '').replace(/\/$/, '');
 const TELEGRAM_MODE = (process.env.TELEGRAM_MODE || '').toLowerCase()
   || (TELEGRAM_WEBHOOK_URL ? 'webhook' : 'polling');
-/** Soft timeout so AI cannot hang the whole bot forever. */
-const AI_ENRICH_TIMEOUT_MS = Number(process.env.AI_ENRICH_TIMEOUT_MS || 90000);
+/** Soft timeout so AI cannot hang the whole bot forever.
+ *  Copy + barcode + 2 studio cutouts + background composites routinely
+ *  exceed 90s on large Telegram photos, so the default is 5 minutes. */
+const AI_ENRICH_TIMEOUT_MS = Number(process.env.AI_ENRICH_TIMEOUT_MS || 300000);
 
 function assertBotConfig() {
   const missing = [];
@@ -498,6 +500,8 @@ async function processProduct(chatId, files, caption, destination = 'both') {
       copy: null,
       nocoImages: uploadedFiles,
       sheet: { skipped: true },
+      aiFailures: [`timeout_or_error:${e.message}`],
+      hasAiImages: false,
     };
   }
 
@@ -563,8 +567,15 @@ async function processProduct(chatId, files, caption, destination = 'both') {
       ? `\n📄 Sheet خطأ: ${enrichment.sheet.error}`
       : '\n📄 Sheet: تم الإرسال';
   const amazonNote = enrichment.amazonUrl ? '\n🛒 تم دمج بيانات أمازون' : '';
-  const aiNote = !enrichment.amazonUrl && (enrichment.nocoImages || []).length > 1
+  const aiNote = enrichment.hasAiImages
     ? '\n✨ تم إنشاء صور استوديو احترافية من صور المنتج'
+    : enrichment.skippedAi
+      ? '\n⚠️ لم يُنشأ عنوان/وصف بالذكاء الاصطناعي — تم الحفظ بالاسم الأصلي'
+      : !enrichment.amazonUrl
+        ? '\n⚠️ لم تُنشأ صور استوديو — تم الحفظ بالصورة الأصلية فقط'
+        : '';
+  const failNote = (enrichment.aiFailures || []).length
+    ? `\n🛠️ تفاصيل: ${enrichment.aiFailures.slice(0, 2).join(' | ')}`
     : '';
   const saleNote = oldPrice ? `\n🔥 تخفيض من ${oldPrice} إلى ${price} DH` : '';
 
@@ -604,7 +615,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${failNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }

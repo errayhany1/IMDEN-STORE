@@ -44,3 +44,40 @@ export async function normalizeCatalogImages(buffers = []) {
   }
   return out;
 }
+
+/**
+ * Downscale seller photos before sending them to vision / image models.
+ * Full-resolution Telegram photos (often 2000–4000px) make AI calls slow
+ * and push the enrichment pipeline past the soft timeout, which used to
+ * save products with only the raw caption and a single real image.
+ *
+ * @param {Buffer[]} buffers
+ * @param {{ maxEdge?: number, quality?: number }} [opts]
+ * @returns {Promise<Buffer[]>}
+ */
+export async function prepareVisionBuffers(buffers = [], opts = {}) {
+  const maxEdge = opts.maxEdge || Number(process.env.AI_VISION_MAX_EDGE || 1280);
+  const quality = opts.quality || Number(process.env.AI_VISION_JPEG_QUALITY || 82);
+  const out = [];
+  for (const buf of buffers) {
+    if (!buf?.length) continue;
+    try {
+      out.push(
+        await sharp(buf)
+          .rotate()
+          .resize({
+            width: maxEdge,
+            height: maxEdge,
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .jpeg({ quality, mozjpeg: true })
+          .toBuffer()
+      );
+    } catch (e) {
+      console.warn('prepareVisionBuffers failed, keeping original:', e.message);
+      out.push(buf);
+    }
+  }
+  return out;
+}

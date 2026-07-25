@@ -17,6 +17,7 @@ import {
   isApifyConfigured,
   normalizeAmazonUrl,
 } from './amazonScrape.js';
+import { prepareVisionBuffers } from './imageNormalize.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -176,95 +177,145 @@ export async function enrichProduct({
       imageUrls,
       sheet: sheetResult,
       productForSheet,
+      aiFailures: ['ai_disabled_or_unconfigured'],
+      hasAiImages: false,
     };
   }
 
   let copy = null;
   let aiUploads = [];
   const displayName = amazonMeta?.title || name;
+  const aiFailures = [];
 
-  // Prefer OpenAI for landing-page copy; fall back to OpenRouter.
-  try {
+  // Downscale before any vision call — full Telegram photos regularly blow
+  // past the soft timeout and leave products with only the raw caption.
+  const visionBuffers = await prepareVisionBuffers(realBuffers.slice(0, 4));
+  const visionPrimary = visionBuffers[0] || realBuffer;
+
+  async function runCopyOnce() {
     if (isOpenAIConfigured()) {
-      copy = await generateLandingPageCopy({
-        imageBuffer: realBuffer,
-        imageBuffers: realBuffers.slice(0, 4),
+      return generateLandingPageCopy({
+        imageBuffer: visionPrimary,
+        imageBuffers: visionBuffers,
         name: displayName,
         price,
         ref: referenceClean,
         amazonMeta,
       });
-      console.log('Landing copy: OpenAI OK');
-    } else {
-      copy = await generateProductCopy({
-        imageBuffer: realBuffer,
-        imageBuffers: realBuffers.slice(0, 4),
-        name: displayName,
-        price,
-        ref: referenceClean,
-        amazonMeta,
-      });
-      console.log('Landing copy: OpenRouter OK');
     }
-  } catch (e) {
-    console.error('AI copy (primary) failed:', e.message);
-    if (isOpenAIConfigured() && isOpenRouterConfigured()) {
-      try {
-        copy = await generateProductCopy({
-          imageBuffer: realBuffer,
-          imageBuffers: realBuffers.slice(0, 4),
-          name: displayName,
-          price,
-          ref: referenceClean,
-          amazonMeta,
-        });
-        console.log('Landing copy: OpenRouter fallback OK');
-      } catch (e2) {
-        console.error('AI copy fallback failed:', e2.message);
-      }
-    }
+    return generateProductCopy({
+      imageBuffer: visionPrimary,
+      imageBuffers: visionBuffers,
+      name: displayName,
+      price,
+      ref: referenceClean,
+      amazonMeta,
+    });
   }
 
-  // The copy pass reads the barcode as one of many fields, so it is the first
-  // thing to drop when the model is under pressure. A dedicated vision pass
-  // keeps the barcode even when the copy call failed outright.
-  let barcode = String(copy?.barcode || '').trim();
-  if (!barcode) {
+  async function runImagesOnce(titleFr) {
+    if (!isOpenRouterConfigured()) {
+      throw new Error('OPENROUTER_API_KEY missing');
+    }
+    return generateProductImages({
+      imageBuffer: visionPrimary,
+      imageBuffers: visionBuffers,
+      titleFr: titleFr || displayName,
+      price,
+      oldPrice,
+      mode: amazonUrl ? 'amazon' : 'photo',
+    });
+  }
+
+  // Copy and studio images can run in parallel — images only need a display
+  // title, not the finished SEO copy. That cuts wall-clock time roughly in half.
+  const copyPromise = (async () => {
     try {
-      barcode = await detectProductBarcode(realBuffers.slice(0, 4));
-      if (barcode) console.log(`Barcode recovered by dedicated pass: ${barcode}`);
+      const first = await runCopyOnce();
+      console.log(`Landing copy: ${isOpenAIConfigured() ? 'OpenAI' : 'OpenRouter'} OK`);
+      return first;
+    } catch (e) {
+      console.error('AI copy (primary) failed:', e.message);
+      if (isOpenAIConfigured() && isOpenRouterConfigured()) {
+        try {
+          const fallback = await generateProductCopy({
+            imageBuffer: visionPrimary,
+            imageBuffers: visionBuffers,
+            name: displayName,
+            price,
+            ref: referenceClean,
+            amazonMeta,
+          });
+          console.log('Landing copy: OpenRouter fallback OK');
+          return fallback;
+        } catch (e2) {
+          console.error('AI copy fallback failed:', e2.message);
+          aiFailures.push(`copy:${e2.message}`);
+          return null;
+        }
+      }
+      aiFailures.push(`copy:${e.message}`);
+      return null;
+    }
+  })();
+
+  const imagesPromise = (async () => {
+    try {
+      const aiBuffers = await runImagesOnce(displayName);
+      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, amazonUrl ? 2 : 3);
+      if (!aiOnly.length) {
+        throw new Error('No AI studio image produced from seller photos');
+      }
+      const uploaded = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
+      console.log(`AI studio images uploaded: ${uploaded.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
+      return uploaded;
+    } catch (e) {
+      console.error('AI images failed, retrying once:', e.message);
+      try {
+        const aiBuffers = await runImagesOnce(displayName);
+        const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, amazonUrl ? 2 : 3);
+        if (!aiOnly.length) throw new Error('No AI studio image on retry');
+        const uploaded = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
+        console.log(`AI studio images uploaded on retry: ${uploaded.length}`);
+        return uploaded;
+      } catch (e2) {
+        console.error('AI images retry failed:', e2.message);
+        aiFailures.push(`images:${e2.message}`);
+        return [];
+      }
+    }
+  })();
+
+  const barcodePromise = (async () => {
+    try {
+      return await detectProductBarcode(visionBuffers);
     } catch (e) {
       console.warn('Barcode detection skipped:', e.message);
+      return '';
+    }
+  })();
+
+  const [copyResult, imageUploads, barcodeDetected] = await Promise.all([
+    copyPromise,
+    imagesPromise,
+    barcodePromise,
+  ]);
+
+  copy = copyResult;
+  aiUploads = imageUploads || [];
+
+  // If copy still empty, one more dedicated retry after images finished.
+  if (!copy) {
+    try {
+      copy = await runCopyOnce();
+      console.log('Landing copy: late retry OK');
+    } catch (e) {
+      console.error('AI copy late retry failed:', e.message);
     }
   }
 
-  try {
-    if (!isOpenRouterConfigured()) {
-      console.warn('OPENROUTER_API_KEY missing — skipping professional AI image generation');
-    } else {
-      const aiBuffers = await generateProductImages({
-        imageBuffer: realBuffer,
-        // Every photo the seller sent informs the studio renders; photo 1 is
-        // still the only one that reaches the gallery (as the last image).
-        imageBuffers: realBuffers.slice(0, 4),
-        titleFr: copy?.french_title || displayName,
-        price,
-        oldPrice,
-        // Without Amazon URL: always craft studio images from the seller photos.
-        mode: amazonUrl ? 'amazon' : 'photo',
-      });
-      // Upload AI buffers with ai- prefix only (do NOT mix real into this prefix).
-      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, amazonUrl ? 2 : 3);
-      if (aiOnly.length) {
-        aiUploads = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
-        console.log(`AI studio images uploaded: ${aiUploads.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
-      } else if (!amazonUrl) {
-        console.error('No AI studio image produced from seller photos');
-      }
-    }
-  } catch (e) {
-    console.error('AI images failed, continuing without AI gallery:', e.message);
-  }
+  let barcode = String(copy?.barcode || barcodeDetected || '').trim();
+  if (barcode) console.log(`Barcode: ${barcode}`);
 
   const nocoImages = orderGalleryUploads({
     aiUploads,
@@ -322,6 +373,8 @@ export async function enrichProduct({
     imageUrls,
     sheet: sheetResult,
     productForSheet,
+    aiFailures,
+    hasAiImages: aiUploads.length > 0,
   };
 }
 
