@@ -18,6 +18,7 @@ import WishlistSidebar from '../components/WishlistSidebar';
 import AuthModal from '../components/AuthModal';
 import ImageModal from '../components/ImageModal';
 import ProductRatingStars from '../components/ProductRatingStars';
+import RelatedProducts from '../components/RelatedProducts';
 import {
   listItemsFromHtml,
   productDescriptionHtml,
@@ -481,6 +482,20 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             </div>
           )}
         </section>
+
+        {/* Related / complementary products — full width under the buy column on mobile,
+            spans both columns on desktop so the strip has room to scroll. */}
+        <div className={`mt-8 md:mt-10 md:col-span-2 pt-6 border-t ${line}`}>
+          <RelatedProducts
+            product={product}
+            lang={lang}
+            limit={8}
+            onSelect={(item) => {
+              const ref = encodeURIComponent(item.ref || item.id);
+              window.location.assign(`/p/${ref}`);
+            }}
+          />
+        </div>
       </main>
 
       {/* Sticky mobile buy bar */}
