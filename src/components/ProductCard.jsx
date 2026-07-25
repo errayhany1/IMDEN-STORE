@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Check, Heart, Bell, BellRing, Eye } from 'lucide-react';
 import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
+import ProductRatingStars from './ProductRatingStars';
 import './ProductCard.css';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
@@ -208,6 +209,8 @@ const ProductCard = ({ product, priority = false }) => {
                             {product.name}
                         </div>
                     )}
+
+                    <ProductRatingStars product={product} darkMode={dm} />
 
                     <div className="flex gap-2 flex-row-reverse" onClick={(e) => e.stopPropagation()}>
                         <button

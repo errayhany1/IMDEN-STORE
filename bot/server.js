@@ -24,6 +24,9 @@ import {
   createTifawtProduct,
   isTifawtProductSyncConfigured,
 } from './tifawtProducts.js';
+import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
+import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
+import { resolveLinkedPhone } from './linkedCustomerPhone.js';
 import { normalizeAmazonUrl } from './amazonScrape.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +36,25 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
+
+// Storefront origins allowed to call the /api/* endpoints from the browser.
+const ALLOWED_ORIGINS = (
+  process.env.STOREFRONT_ORIGINS
+  || 'https://errayhany.com,https://www.errayhany.com,https://imdenmanadger.online,https://www.imdenmanadger.online,http://localhost:5173,http://localhost:4173'
+).split(',').map((o) => o.trim()).filter(Boolean);
+
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  return next();
+});
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN;
@@ -704,6 +726,95 @@ app.post('/webhook/order', async (req, res) => {
     console.log('✅ Order successfully synced to Tifawt ERP');
   } catch (err) {
     console.error('❌ Error syncing to Tifawt ERP:', err?.response?.data || err.message);
+  }
+});
+
+// ─── CUSTOMER ORDER TRACKING (Tifawt, self-service) ────────────────────────
+// The browser never sees Tifawt credentials: it sends the Firebase ID token of
+// an SMS sign-in, and only the orders belonging to that verified phone number
+// are returned.
+const trackingHits = new Map();
+const TRACKING_WINDOW_MS = 60_000;
+const TRACKING_MAX_PER_WINDOW = 10;
+
+function trackingRateLimited(key) {
+  const now = Date.now();
+  const hits = (trackingHits.get(key) || []).filter((t) => now - t < TRACKING_WINDOW_MS);
+  hits.push(now);
+  trackingHits.set(key, hits);
+  if (trackingHits.size > 5000) trackingHits.clear();
+  return hits.length > TRACKING_MAX_PER_WINDOW;
+}
+
+app.post('/api/orders/track', async (req, res) => {
+  const clientKey = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+  if (trackingRateLimited(String(clientKey))) {
+    return res.status(429).json({ ok: false, error: 'rate_limited' });
+  }
+
+  const verified = await verifyPhoneIdToken(req.body?.idToken);
+  if (!verified.ok) {
+    return res.status(401).json({ ok: false, error: verified.error });
+  }
+
+  try {
+    const result = await getCustomerOrders(verified.phone);
+    if (!result.ok) {
+      return res.status(result.error === 'tifawt_not_configured' ? 503 : 400).json(result);
+    }
+    return res.json({
+      ok: true,
+      phone: normalizePhone(verified.phone),
+      orders: result.orders,
+    });
+  } catch (err) {
+    console.error('❌ Tracking lookup failed:', err?.response?.data || err.message);
+    return res.status(502).json({ ok: false, error: 'tifawt_unavailable' });
+  }
+});
+
+/**
+ * Account page: logged-in Firebase user (email / Google) → linked verified phone
+ * → Tifawt orders for that phone only. The client never chooses the phone freely.
+ */
+app.post('/api/orders/account', async (req, res) => {
+  const clientKey = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+  if (trackingRateLimited(`acct:${clientKey}`)) {
+    return res.status(429).json({ ok: false, error: 'rate_limited' });
+  }
+
+  const identity = await verifyFirebaseIdToken(req.body?.idToken);
+  if (!identity.ok) {
+    return res.status(401).json({ ok: false, error: identity.error });
+  }
+
+  const linked = await resolveLinkedPhone({
+    uid: identity.uid,
+    authPhone: identity.phone,
+    idToken: req.body?.idToken,
+  });
+  if (!linked.ok) {
+    return res.status(403).json({
+      ok: false,
+      error: linked.error || 'phone_not_linked',
+      requiresPhoneVerification: true,
+    });
+  }
+
+  try {
+    const result = await getCustomerOrders(linked.phone);
+    if (!result.ok) {
+      return res.status(result.error === 'tifawt_not_configured' ? 503 : 400).json(result);
+    }
+    return res.json({
+      ok: true,
+      phone: linked.phone,
+      email: identity.email || '',
+      orders: result.orders,
+    });
+  } catch (err) {
+    console.error('❌ Account orders lookup failed:', err?.response?.data || err.message);
+    return res.status(502).json({ ok: false, error: 'tifawt_unavailable' });
   }
 });
 

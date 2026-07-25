@@ -354,7 +354,7 @@ function App() {
       <NotificationPrompt />
 
       {/* Main Content — extra bottom padding clears the mobile bottom nav */}
-      <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6 pb-28 md:pb-6">
+      <main className="flex-grow max-w-7xl mx-auto w-full px-4 pt-3 pb-28 md:pb-6">
 
         {browseMode === 'catalog' && (
           <div

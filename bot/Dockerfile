@@ -9,7 +9,9 @@ ENV PORT=3000
 COPY package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
-COPY server.js openai.js openrouter.js productEnrichment.js sheetsAppend.js amazonScrape.js ./
+# Copy every bot module (tifawt*, firebase*, enrichment, ...) so new files
+# never get left out of the image.
+COPY *.js ./
 
 EXPOSE 3000
 

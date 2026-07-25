@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { productFamilies } from '../data/families';
 import useStore from '../store/useStore';
@@ -9,19 +9,97 @@ const DESKTOP_SLIDE_FRAC = 0.5;
 const DESKTOP_GAP_PX = 12;
 const DESKTOP_MQ = '(min-width: 640px)';
 
+const TOTAL = productFamilies.length;
+
+/** [lastClone, ...real, firstClone] for seamless infinite looping. */
+const buildLoopSlides = () => {
+    if (TOTAL === 0) return [];
+    if (TOTAL === 1) {
+        return [{ ...productFamilies[0], _key: `${productFamilies[0].id}-only`, _logical: 0 }];
+    }
+    const last = productFamilies[TOTAL - 1];
+    const first = productFamilies[0];
+    return [
+        { ...last, _key: `${last.id}-clone-end`, _logical: TOTAL - 1 },
+        ...productFamilies.map((family, i) => ({
+            ...family,
+            _key: family.id,
+            _logical: i,
+        })),
+        { ...first, _key: `${first.id}-clone-start`, _logical: 0 },
+    ];
+};
+
 const FamilyHeroSlider = () => {
     const { setFamily, selectedFamily, browseMode } = useStore();
-    const [index, setIndex] = useState(0);
+    // Track index into loopSlides (1 = first real slide when TOTAL > 1)
+    const [trackIndex, setTrackIndex] = useState(TOTAL > 1 ? 1 : 0);
+    const [animate, setAnimate] = useState(true);
     const [paused, setPaused] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
     const [trackWidth, setTrackWidth] = useState(0);
     const viewportRef = useRef(null);
     const touchStartX = useRef(null);
+    const jumpingRef = useRef(false);
 
-    const goTo = useCallback((next) => {
-        const total = productFamilies.length;
-        setIndex(((next % total) + total) % total);
+    const loopSlides = useMemo(() => buildLoopSlides(), []);
+
+    const logicalIndex = (() => {
+        if (TOTAL <= 1) return 0;
+        if (trackIndex <= 0) return TOTAL - 1;
+        if (trackIndex >= TOTAL + 1) return 0;
+        return trackIndex - 1;
+    })();
+
+    const goNext = useCallback(() => {
+        if (TOTAL <= 1 || jumpingRef.current) return;
+        setAnimate(true);
+        setTrackIndex((i) => i + 1);
     }, []);
+
+    const goPrev = useCallback(() => {
+        if (TOTAL <= 1 || jumpingRef.current) return;
+        setAnimate(true);
+        setTrackIndex((i) => i - 1);
+    }, []);
+
+    const goToLogical = useCallback((logical) => {
+        if (TOTAL <= 1) return;
+        const clamped = ((logical % TOTAL) + TOTAL) % TOTAL;
+        setAnimate(true);
+        setTrackIndex(clamped + 1);
+    }, []);
+
+    const handleTransitionEnd = useCallback(() => {
+        if (TOTAL <= 1 || jumpingRef.current) return;
+
+        // Landed on clone of first (after last real) → snap to real first
+        if (trackIndex >= TOTAL + 1) {
+            jumpingRef.current = true;
+            setAnimate(false);
+            setTrackIndex(1);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    jumpingRef.current = false;
+                    setAnimate(true);
+                });
+            });
+            return;
+        }
+
+        // Landed on clone of last (before first real) → snap to real last
+        if (trackIndex <= 0) {
+            jumpingRef.current = true;
+            setAnimate(false);
+            setTrackIndex(TOTAL);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    jumpingRef.current = false;
+                    setAnimate(true);
+                });
+            });
+        }
+    }, [trackIndex]);
 
     const openFamily = useCallback((familyId) => {
         setFamily(familyId);
@@ -71,16 +149,16 @@ const FamilyHeroSlider = () => {
     }, [isDesktop]);
 
     useEffect(() => {
-        if (paused || selectedFamily) return undefined;
-        const timer = setInterval(() => goTo(index + 1), AUTO_MS);
+        if (paused || selectedFamily || TOTAL <= 1) return undefined;
+        const timer = setInterval(goNext, AUTO_MS);
         return () => clearInterval(timer);
-    }, [index, paused, selectedFamily, goTo]);
+    }, [paused, selectedFamily, goNext, trackIndex]);
 
     useEffect(() => {
         if (!selectedFamily) return;
         const familyIndex = productFamilies.findIndex((f) => f.id === selectedFamily);
-        if (familyIndex >= 0) setIndex(familyIndex);
-    }, [selectedFamily]);
+        if (familyIndex >= 0) goToLogical(familyIndex);
+    }, [selectedFamily, goToLogical]);
 
     const onTouchStart = (e) => {
         touchStartX.current = e.changedTouches[0]?.clientX ?? null;
@@ -94,8 +172,8 @@ const FamilyHeroSlider = () => {
         if (start == null) return;
         const delta = e.changedTouches[0].clientX - start;
         if (Math.abs(delta) < 40) return;
-        if (delta > 0) goTo(index - 1);
-        else goTo(index + 1);
+        if (delta > 0) goPrev();
+        else goNext();
     };
 
     if (selectedFamily) return null;
@@ -108,8 +186,12 @@ const FamilyHeroSlider = () => {
         ? (trackWidth - slideWidth) / 2
         : 0;
     const desktopOffset = isDesktop && trackWidth > 0
-        ? sidePad - index * (slideWidth + DESKTOP_GAP_PX)
+        ? sidePad - trackIndex * (slideWidth + DESKTOP_GAP_PX)
         : 0;
+
+    const transitionClass = animate
+        ? 'transition-transform duration-500 ease-out'
+        : 'transition-none';
 
     return (
         <section
@@ -132,7 +214,7 @@ const FamilyHeroSlider = () => {
                 onTouchEnd={onTouchEnd}
             >
                 <div
-                    className={`flex transition-transform duration-500 ease-out ${
+                    className={`flex ${transitionClass} ${
                         isDesktop ? 'items-stretch will-change-transform' : ''
                     }`}
                     style={
@@ -141,16 +223,17 @@ const FamilyHeroSlider = () => {
                                 gap: DESKTOP_GAP_PX,
                                 transform: `translateX(${desktopOffset}px)`,
                             }
-                            : { transform: `translateX(-${index * 100}%)` }
+                            : { transform: `translateX(-${trackIndex * 100}%)` }
                     }
+                    onTransitionEnd={handleTransitionEnd}
                 >
-                    {productFamilies.map((family, i) => {
-                        const isActive = i === index;
+                    {loopSlides.map((family) => {
+                        const isActive = family._logical === logicalIndex;
 
                         if (!isDesktop) {
                             return (
                                 <button
-                                    key={family.id}
+                                    key={family._key}
                                     type="button"
                                     onClick={() => openFamily(family.id)}
                                     className="relative w-full shrink-0 basis-full cursor-pointer text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
@@ -161,7 +244,7 @@ const FamilyHeroSlider = () => {
                                         alt={family.taglineAr}
                                         className="block w-full h-auto aspect-[3/2] object-cover object-center select-none"
                                         draggable={false}
-                                        loading={family.id === productFamilies[0].id ? 'eager' : 'lazy'}
+                                        loading={family._logical === 0 ? 'eager' : 'lazy'}
                                     />
                                     <span className="sr-only">{family.nameAr} — اضغط لفتح العائلة</span>
                                 </button>
@@ -170,7 +253,7 @@ const FamilyHeroSlider = () => {
 
                         return (
                             <button
-                                key={family.id}
+                                key={family._key}
                                 type="button"
                                 onClick={() => openFamily(family.id)}
                                 className={`relative shrink-0 overflow-hidden rounded-xl border text-right cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-[opacity,transform,box-shadow] duration-500 ${
@@ -189,7 +272,7 @@ const FamilyHeroSlider = () => {
                                     alt={family.taglineAr}
                                     className="block w-full h-auto max-h-[180px] md:max-h-[220px] aspect-[16/9] object-cover object-center select-none"
                                     draggable={false}
-                                    loading={family.id === productFamilies[0].id ? 'eager' : 'lazy'}
+                                    loading={family._logical === 0 ? 'eager' : 'lazy'}
                                 />
                                 <span className="sr-only">{family.nameAr} — اضغط لفتح العائلة</span>
                             </button>
@@ -199,7 +282,7 @@ const FamilyHeroSlider = () => {
 
                 <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); goTo(index + 1); }}
+                    onClick={(e) => { e.stopPropagation(); goNext(); }}
                     className={`absolute top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/85 hover:bg-white text-slate-700 shadow flex items-center justify-center backdrop-blur-sm ${
                         isDesktop
                             ? 'right-1 sm:right-2 w-8 h-8 sm:w-9 sm:h-9'
@@ -211,7 +294,7 @@ const FamilyHeroSlider = () => {
                 </button>
                 <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); goTo(index - 1); }}
+                    onClick={(e) => { e.stopPropagation(); goPrev(); }}
                     className={`absolute top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/85 hover:bg-white text-slate-700 shadow flex items-center justify-center backdrop-blur-sm ${
                         isDesktop
                             ? 'left-1 sm:left-2 w-8 h-8 sm:w-9 sm:h-9'
@@ -232,18 +315,18 @@ const FamilyHeroSlider = () => {
                         <button
                             key={family.id}
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); goTo(i); }}
+                            onClick={(e) => { e.stopPropagation(); goToLogical(i); }}
                             className={`rounded-full transition-all ${
                                 isDesktop
-                                    ? (i === index
+                                    ? (i === logicalIndex
                                         ? 'h-1.5 w-5 bg-primary'
                                         : 'h-1.5 w-1.5 bg-slate-300 hover:bg-slate-400')
-                                    : (i === index
+                                    : (i === logicalIndex
                                         ? 'h-2 w-6 bg-white shadow'
                                         : 'h-2 w-2 bg-white/55 hover:bg-white/80')
                             }`}
                             aria-label={`عرض ${family.nameAr}`}
-                            aria-current={i === index ? 'true' : undefined}
+                            aria-current={i === logicalIndex ? 'true' : undefined}
                         />
                     ))}
                 </div>

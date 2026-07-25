@@ -6,6 +6,16 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    // Mirrors the nginx /bot-api proxy so order tracking works in dev too.
+    proxy: {
+      '/bot-api': {
+        target: process.env.BOT_DEV_URL || 'http://127.0.0.1:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/bot-api/, ''),
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

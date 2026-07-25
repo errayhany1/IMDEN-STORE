@@ -126,7 +126,7 @@ const BottomNavBar = ({ activeOverride = null }) => {
 
     return (
         <nav
-            className="fixed bottom-0 inset-x-0 z-[60] md:hidden pointer-events-none pb-[max(10px,env(safe-area-inset-bottom))] px-3"
+            className="fixed bottom-0 inset-x-0 z-[60] md:hidden pointer-events-none pb-[max(4px,env(safe-area-inset-bottom))] px-3"
             aria-label="التنقل السفلي"
         >
             <div

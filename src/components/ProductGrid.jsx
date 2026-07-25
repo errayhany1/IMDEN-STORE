@@ -18,6 +18,8 @@ const ProductGrid = () => {
         selectedCategory,
         selectedFamily,
         searchQuery,
+        sortBy,
+        stockFilter,
         gridColumns,
     } = useStore();
 
@@ -53,56 +55,74 @@ const ProductGrid = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
 
-    // Reset display limit when category, family, or search changes
+    // Reset display limit when category, family, search, or filters change
     useEffect(() => {
         setDisplayLimit(20);
-    }, [selectedCategory, selectedFamily, searchQuery]);
+    }, [selectedCategory, selectedFamily, searchQuery, sortBy, stockFilter]);
 
     const activeFamily = selectedFamily ? getFamilyById(selectedFamily) : null;
     const familyCategories = activeFamily?.categories || null;
 
-    const filteredProducts = products.filter(p => {
-        let matchesSearch = true;
+    const isOutOfStock = (p) =>
+        p.category === 'Out of Stock' || p.isAvailable === false;
 
-        if (searchQuery) {
-            const cleanQuery = searchQuery.toLowerCase()
-                .replace(/(جملة|بالجملة|للجملة|wholesale|gros|en gros)/g, '')
-                .trim();
+    const filteredProducts = products
+        .filter(p => {
+            let matchesSearch = true;
 
-            if (cleanQuery !== '') {
-                const terms = cleanQuery.split(/\s+/).filter(Boolean);
-                const arabicCategory = categoryTranslation[p.category] || "";
-                const arabicTitle = p.originalData?.Arabic_Title || "";
-                const arabicDesc = p.originalData?.description_arabic || "";
-                const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${arabicTitle} ${arabicDesc}`.toLowerCase();
-                matchesSearch = terms.every(term => searchableText.includes(term));
+            if (searchQuery) {
+                const cleanQuery = searchQuery.toLowerCase()
+                    .replace(/(جملة|بالجملة|للجملة|wholesale|gros|en gros)/g, '')
+                    .trim();
+
+                if (cleanQuery !== '') {
+                    const terms = cleanQuery.split(/\s+/).filter(Boolean);
+                    const arabicCategory = categoryTranslation[p.category] || "";
+                    const arabicTitle = p.originalData?.Arabic_Title || "";
+                    const arabicDesc = p.originalData?.description_arabic || "";
+                    const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${arabicTitle} ${arabicDesc}`.toLowerCase();
+                    matchesSearch = terms.every(term => searchableText.includes(term));
+                }
+
+                // If the user is actively searching, show the product regardless of the selected category tab!
+                // However, we still hide Out of Stock items from the general search unless they specifically search for them.
+                if (isOutOfStock(p) && stockFilter !== 'out-of-stock' && !cleanQuery.includes('نفد') && !cleanQuery.includes('stock')) {
+                    return false;
+                }
+                if (!matchesSearch) return false;
+            } else if (familyCategories) {
+                // Family view: only products that belong to this family's categories
+                // (use baseCategory when stock forced the display category to Out of Stock)
+                const productType = p.baseCategory || p.category;
+                const inFamily = familyCategories.includes(productType)
+                    || (p.category !== 'Out of Stock' && familyCategories.includes(p.category));
+                if (!inFamily) return false;
+                if (selectedCategory === 'All') {
+                    if (p.category === 'Out of Stock' && stockFilter !== 'out-of-stock') return false;
+                } else if (!(productType === selectedCategory || p.category === selectedCategory)) {
+                    return false;
+                }
+            } else {
+                // Home view: category filtering
+                const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock')
+                    || p.category === selectedCategory;
+                if (!matchesCategory && !(stockFilter === 'out-of-stock' && selectedCategory === 'All' && isOutOfStock(p))) {
+                    return false;
+                }
             }
-            
-            // If the user is actively searching, show the product regardless of the selected category tab!
-            // However, we still hide Out of Stock items from the general search unless they specifically search for them.
-            if (p.category === 'Out of Stock' && !cleanQuery.includes('نفد') && !cleanQuery.includes('stock')) {
-                return false;
-            }
-            return matchesSearch;
-        }
 
-        // Family view: only products that belong to this family's categories
-        // (use baseCategory when stock forced the display category to Out of Stock)
-        const productType = p.baseCategory || p.category;
-        if (familyCategories) {
-            const inFamily = familyCategories.includes(productType)
-                || (p.category !== 'Out of Stock' && familyCategories.includes(p.category));
-            if (!inFamily) return false;
-            if (selectedCategory === 'All') {
-                return p.category !== 'Out of Stock';
+            if (stockFilter === 'in-stock' && isOutOfStock(p)) return false;
+            if (stockFilter === 'out-of-stock' && !isOutOfStock(p)) return false;
+            return true;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'price-asc') return (Number(a.price) || 0) - (Number(b.price) || 0);
+            if (sortBy === 'price-desc') return (Number(b.price) || 0) - (Number(a.price) || 0);
+            if (sortBy === 'name-asc') {
+                return String(a.name || a.ref || '').localeCompare(String(b.name || b.ref || ''), 'ar');
             }
-            return productType === selectedCategory || p.category === selectedCategory;
-        }
-
-        // Home view: category filtering
-        const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock') || p.category === selectedCategory;
-        return matchesCategory;
-    });
+            return 0;
+        });
 
     const displayedProducts = filteredProducts.slice(0, displayLimit);
 

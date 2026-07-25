@@ -125,6 +125,67 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Public product ratings (anonymous visitors + signed-in users).
+    // One vote doc per (productKey, voterId); summary docs hold avg/count/sum.
+    function isValidRatingSummary(data) {
+      return data.keys().hasOnly([
+          'productKey', 'ref', 'productId', 'sum', 'count', 'avg', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'productKey', 'sum', 'count', 'avg', 'updatedAt'
+        ])
+        && data.productKey is string
+        && data.productKey.size() > 0
+        && data.productKey.size() <= 120
+        && data.sum is number
+        && data.sum >= 0
+        && data.sum <= 500000
+        && data.count is number
+        && data.count >= 0
+        && data.count <= 100000
+        && data.count == math.round(data.count)
+        && data.avg is number
+        && data.avg >= 0
+        && data.avg <= 5
+        && data.updatedAt == request.time
+        && (!('ref' in data) || (data.ref is string && data.ref.size() <= 120))
+        && (!('productId' in data) || (data.productId is string && data.productId.size() <= 120));
+    }
+
+    function isValidRatingVote(data) {
+      return data.keys().hasOnly([
+          'productKey', 'voterId', 'rating', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'productKey', 'voterId', 'rating', 'updatedAt'
+        ])
+        && data.productKey is string
+        && data.productKey.size() > 0
+        && data.productKey.size() <= 120
+        && data.voterId is string
+        && data.voterId.size() > 3
+        && data.voterId.size() <= 80
+        && data.rating is number
+        && data.rating >= 1
+        && data.rating <= 5
+        && data.rating == math.round(data.rating)
+        && data.updatedAt == request.time;
+    }
+
+    match /productRatings/{productKey} {
+      allow read: if true;
+      allow create, update: if isValidRatingSummary(request.resource.data)
+        && request.resource.data.productKey == productKey;
+      allow delete: if false;
+    }
+
+    match /productRatingVotes/{voteId} {
+      allow read: if true;
+      allow create, update: if isValidRatingVote(request.resource.data)
+        && voteId == request.resource.data.productKey + '__' + request.resource.data.voterId;
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

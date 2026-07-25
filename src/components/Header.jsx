@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart } from 'lucide-react';
+import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart, Settings, ChevronDown, Globe2 } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { upsertCustomerProfile } from '../services/customerAccount';
@@ -13,6 +13,7 @@ const Header = () => {
     const [tempInfo, setTempInfo] = useState({ name: '', phone: '', address: '' });
     const [currentLang, setCurrentLang] = useState('ar');
     const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+    const [additionalSettingsOpen, setAdditionalSettingsOpen] = useState(false);
 
     React.useEffect(() => {
         const match = document.cookie.match(/googtrans=\/ar\/([a-z]{2})/);
@@ -314,74 +315,106 @@ const Header = () => {
                                     </div>
                                 )}
 
-                                {/* Language Switcher */}
-                                <div className={`px-3 py-3 mt-1 mb-1 rounded-xl border ${dm ? 'border-gray-700 bg-gray-800/50' : 'border-slate-200 bg-slate-50'}`}>
-                                    <p className="text-xs font-bold mb-2 flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                                        لغة الموقع / Language
-                                    </p>
-                                    <div className="relative">
-                                        <button 
-                                            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                                            className={`w-full flex items-center justify-between text-xs px-3 py-2.5 rounded-lg font-bold shadow-sm transition border ${dm ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}`}
-                                        >
-                                            <span className="flex items-center gap-2">
-                                                {currentLang === 'ar' ? 'العربية' : currentLang === 'fr' ? 'Français' : currentLang === 'en' ? 'English' : 'Español'}
-                                            </span>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transform transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
-                                        </button>
-                                        
-                                        <AnimatePresence>
-                                            {langDropdownOpen && (
-                                                <Motion.div
-                                                    initial={{ opacity: 0, y: -10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: -10 }}
-                                                    className={`absolute top-full left-0 right-0 mt-1 z-10 rounded-lg shadow-xl border overflow-hidden ${dm ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}
-                                                >
-                                                    {[
-                                                        { code: 'ar', label: 'العربية' },
-                                                        { code: 'fr', label: 'Français' },
-                                                        { code: 'en', label: 'English' },
-                                                        { code: 'es', label: 'Español' }
-                                                    ].map((lang) => (
+                                {/* Additional settings */}
+                                <div className={`mt-1 mb-1 rounded-xl border overflow-visible ${dm ? 'border-gray-700 bg-gray-800/40' : 'border-slate-200 bg-slate-50'}`}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAdditionalSettingsOpen((open) => !open);
+                                            if (additionalSettingsOpen) setLangDropdownOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition
+                                            ${dm ? 'text-gray-200 hover:bg-gray-800' : 'text-slate-700 hover:bg-slate-100'}`}
+                                        aria-expanded={additionalSettingsOpen}
+                                    >
+                                        <Settings size={18} className="text-primary" />
+                                        <span className="flex-1 text-start">إعدادات إضافية</span>
+                                        <ChevronDown
+                                            size={16}
+                                            className={`transition-transform duration-200 ${additionalSettingsOpen ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
+
+                                    <AnimatePresence initial={false}>
+                                        {additionalSettingsOpen && (
+                                            <Motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-visible"
+                                            >
+                                                <div className={`mx-2 mb-2 pt-2 border-t space-y-1 ${dm ? 'border-gray-700' : 'border-slate-200'}`}>
+                                                    {/* Language Switcher */}
+                                                    <div className="relative">
                                                         <button
-                                                            key={lang.code}
-                                                            onClick={() => {
-                                                                document.cookie = `googtrans=/ar/${lang.code}; path=/; domain=${window.location.hostname}`;
-                                                                document.cookie = `googtrans=/ar/${lang.code}; path=/;`;
-                                                                window.location.reload();
-                                                            }}
-                                                            className={`w-full text-start px-3 py-2.5 text-xs font-bold transition-colors border-b last:border-b-0 ${currentLang === lang.code ? (dm ? 'bg-primary/20 text-primary' : 'bg-blue-50 text-blue-600') : (dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-700 hover:bg-slate-50')} ${dm ? 'border-gray-700' : 'border-slate-100'}`}
+                                                            type="button"
+                                                            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                                                            className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-sm font-medium transition
+                                                                ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-700 hover:bg-white'}`}
                                                         >
-                                                            {lang.label}
+                                                            <Globe2 size={18} className="text-sky-500" />
+                                                            <span className="flex-1 text-start">لغة الموقع</span>
+                                                            <span className={`text-[11px] ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                                                {currentLang === 'ar' ? 'العربية' : currentLang === 'fr' ? 'Français' : currentLang === 'en' ? 'English' : 'Español'}
+                                                            </span>
+                                                            <ChevronDown size={14} className={`transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
                                                         </button>
-                                                    ))}
-                                                </Motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
+
+                                                        <AnimatePresence>
+                                                            {langDropdownOpen && (
+                                                                <Motion.div
+                                                                    initial={{ opacity: 0, y: -6 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    exit={{ opacity: 0, y: -6 }}
+                                                                    className={`mt-1 rounded-lg shadow-lg border overflow-hidden ${dm ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}
+                                                                >
+                                                                    {[
+                                                                        { code: 'ar', label: 'العربية' },
+                                                                        { code: 'fr', label: 'Français' },
+                                                                        { code: 'en', label: 'English' },
+                                                                        { code: 'es', label: 'Español' }
+                                                                    ].map((lang) => (
+                                                                        <button
+                                                                            key={lang.code}
+                                                                            onClick={() => {
+                                                                                document.cookie = `googtrans=/ar/${lang.code}; path=/; domain=${window.location.hostname}`;
+                                                                                document.cookie = `googtrans=/ar/${lang.code}; path=/;`;
+                                                                                window.location.reload();
+                                                                            }}
+                                                                            className={`w-full text-start px-3 py-2.5 text-xs font-bold transition-colors border-b last:border-b-0 ${currentLang === lang.code ? (dm ? 'bg-primary/20 text-primary' : 'bg-blue-50 text-blue-600') : (dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-700 hover:bg-slate-50')} ${dm ? 'border-gray-700' : 'border-slate-100'}`}
+                                                                        >
+                                                                            {lang.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </Motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    </div>
+
+                                                    {/* Grid columns (mobile) */}
+                                                    <button
+                                                        onClick={toggleGridColumns}
+                                                        className={`md:hidden w-full flex items-center gap-3 px-2 py-2 rounded-lg text-sm font-medium transition
+                                                            ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-700 hover:bg-white'}`}
+                                                    >
+                                                        {gridColumns === 1 ? <LayoutGrid size={18} className="text-primary" /> : <Columns2 size={18} className="text-primary" />}
+                                                        {gridColumns === 1 ? 'عرض عمودين' : 'عرض عمود واحد'}
+                                                    </button>
+
+                                                    {/* Dark Mode */}
+                                                    <button
+                                                        onClick={toggleDarkMode}
+                                                        className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-sm font-medium transition
+                                                            ${dm ? 'text-gray-300 hover:bg-gray-700' : 'text-slate-700 hover:bg-white'}`}
+                                                    >
+                                                        {dm ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-slate-500" />}
+                                                        {dm ? 'الوضع الفاتح' : 'الوضع الداكن'}
+                                                    </button>
+                                                </div>
+                                            </Motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
-
-                                {/* Grid columns (mobile) */}
-                                <button
-                                    onClick={toggleGridColumns}
-                                    className={`md:hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
-                                    ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
-                                >
-                                    {gridColumns === 1 ? <LayoutGrid size={18} className="text-primary" /> : <Columns2 size={18} className="text-primary" />}
-                                    {gridColumns === 1 ? 'عرض عمودين' : 'عرض عمود واحد'}
-                                </button>
-
-                                {/* Dark Mode */}
-                                <button
-                                    onClick={toggleDarkMode}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
-                                    ${dm ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-slate-50 text-slate-700'}`}
-                                >
-                                    {dm ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-slate-500" />}
-                                    {dm ? 'الوضع الفاتح' : 'الوضع الداكن'}
-                                </button>
 
                                 {/* Track Order */}
                                 <a

@@ -56,6 +56,8 @@ const useStore = create(
 
             categoryImages: { ...LOCAL_CATEGORY_IMAGES }, // Template-2 artwork; NocoDB can merge on top then local overrides
             searchQuery: "",
+            sortBy: 'default', // default | price-asc | price-desc | name-asc
+            stockFilter: 'all', // all | in-stock | out-of-stock
 
             setUser: (user) => set({ user }),
             setAuthModalOpen: (isOpen) => set({ isAuthModalOpen: isOpen }),
@@ -99,6 +101,9 @@ const useStore = create(
             }),
 
             setSearchQuery: (query) => set({ searchQuery: query }),
+            setSortBy: (sortBy) => set({ sortBy: sortBy || 'default' }),
+            setStockFilter: (stockFilter) => set({ stockFilter: stockFilter || 'all' }),
+            resetProductFilters: () => set({ sortBy: 'default', stockFilter: 'all' }),
 
             toggleDarkMode: () => set((state) => {
                 const next = !state.darkMode;

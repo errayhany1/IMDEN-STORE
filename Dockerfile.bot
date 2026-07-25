@@ -10,7 +10,7 @@ ENV PORT=3000
 COPY bot/package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
-COPY bot/server.js bot/openai.js bot/openrouter.js bot/productEnrichment.js bot/sheetsAppend.js bot/amazonScrape.js ./
+COPY bot/*.js ./
 
 EXPOSE 3000
 
