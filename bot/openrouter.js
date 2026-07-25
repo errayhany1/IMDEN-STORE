@@ -3,10 +3,7 @@
  */
 import axios from 'axios';
 import { normalizeCatalogImages } from './imageNormalize.js';
-import {
-  getActiveTemplatesForProduct,
-  compositeProductOnBackground,
-} from './imageTemplates.js';
+import { composeWhiteStudioProduct } from './studioImage.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || 'google/gemini-2.5-flash';
@@ -205,8 +202,8 @@ async function generateOneImage({ imageBuffers, prompt }) {
 
 /**
  * Returns website-ready product images:
- * 1) AI cleans the product onto a plain studio plate
- * 2) We composite it onto the seller-selected BACKGROUND templates (fixed 1080²)
+ * 1) AI cleans the product (white plate)
+ * 2) We trim margins, enlarge to fill the square, and add soft studio shadows
  *
  * @param {{
  *   imageBuffer?: Buffer,
@@ -236,27 +233,27 @@ export async function generateProductImages({
     throw new Error('No reference photo for AI image generation');
   }
 
-  const backgrounds = getActiveTemplatesForProduct({ oldPrice });
   const cutoutCount = Math.min(
-    Math.max(backgrounds.length, 1),
-    Number(process.env.AI_IMAGE_COUNT || 2)
+    Number(process.env.AI_IMAGE_COUNT || 2),
+    3
   );
 
   const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
 Use the product in the reference photo(s) as the ONLY product.
 Keep exact identity: shape, color, ports, branding marks. Do NOT invent a different product.
-Output a square 1:1 photo of the product alone on a PLAIN seamless WHITE background.
-Centered, soft studio lighting, no text, no badges, no props, no hands, no clutter.
-Leave clean margins so the product can later be placed on another background.`;
+Output a square 1:1 photo on a PLAIN seamless WHITE background.
+The product must FILL the frame (about 85–90% of the image) — large, centered, tight crop, minimal empty margins.
+Soft realistic studio lighting and a soft natural contact shadow under the product.
+No text, no badges, no props, no hands, no clutter, no colored backdrop.`;
 
   const angleHints = [
-    'Front / hero angle.',
-    'Slight 3/4 alternate angle or useful detail view, same white background.',
+    'Front / hero angle, product filling the frame.',
+    'Slight 3/4 alternate angle or useful detail view, same white background, product still fills the frame.',
   ];
 
   const cutouts = [];
   for (let i = 0; i < cutoutCount; i++) {
-    const prompt = `${base}\n${angleHints[i % angleHints.length]}`;
+    const prompt = `${base}\n${angleHints[i % angleHints.length]}${titleFr ? `\nProduct: ${titleFr}` : ''}\nMode hint: ${mode}.`;
     try {
       const buf = await generateOneImage({ imageBuffers: refs, prompt });
       if (buf) cutouts.push(buf);
@@ -267,7 +264,7 @@ Leave clean margins so the product can later be placed on another background.`;
 
   if (!cutouts.length) {
     try {
-      const buf = await generateOneImage({ imageBuffers: refs, prompt: `${base}\nFront hero.` });
+      const buf = await generateOneImage({ imageBuffers: refs, prompt: `${base}\nFront hero, fill the frame.` });
       if (buf) cutouts.push(buf);
     } catch (e) {
       console.error('Cutout retry failed:', e.message);
@@ -276,23 +273,17 @@ Leave clean margins so the product can later be placed on another background.`;
 
   if (!cutouts.length) return [];
 
-  // Normalize cutouts, then place each onto an active background template.
   const clean = await normalizeCatalogImages(cutouts);
-  const sale = { price, oldPrice };
-  const composed = [];
-  for (let i = 0; i < backgrounds.length; i++) {
-    const cutout = clean[i % clean.length];
-    const tpl = backgrounds[i];
+  const finished = [];
+  for (const cutout of clean) {
     try {
-      composed.push(await compositeProductOnBackground(cutout, tpl, sale));
+      finished.push(await composeWhiteStudioProduct(cutout, { price, oldPrice }));
     } catch (e) {
-      console.error(`Background composite failed (${tpl.id}):`, e.message);
-      composed.push(cutout);
+      console.error('White studio finish failed:', e.message);
+      finished.push(cutout);
     }
   }
-
-  // If somehow no backgrounds selected, still return normalized cutouts.
-  return composed.length ? composed : clean;
+  return finished;
 }
 
 export function isOpenRouterConfigured() {

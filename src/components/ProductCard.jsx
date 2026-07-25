@@ -138,7 +138,7 @@ const ProductCard = ({ product, priority = false }) => {
                             src={displayImage}
                             alt={`${product.name || product.ref} - ${product.price} DH - إلكترونيات بالجملة Errayhany Store`}
                             title={product.name || product.ref}
-                            className={`w-full h-full object-contain p-1 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
+                            className={`w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
                             loading={priority ? 'eager' : 'lazy'}
                             fetchPriority={priority ? 'high' : 'auto'}
                             decoding="async"

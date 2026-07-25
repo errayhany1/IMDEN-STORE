@@ -18,6 +18,10 @@ import {
   normalizeAmazonUrl,
 } from './amazonScrape.js';
 import { prepareVisionBuffers } from './imageNormalize.js';
+import {
+  bulletsFromHtml,
+  renderSpecsCard,
+} from './studioImage.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -55,14 +59,29 @@ async function uploadBuffers(uploadToNocoDB, buffers, prefix) {
 }
 
 /**
- * Build Image1…Image5 order: AI → Amazon → real last (max 5).
+ * Build Image1…Image5 order: AI hero → specs card → Amazon → real last (max 5).
  * Real photo is always the final slot when present.
  */
-function orderGalleryUploads({ aiUploads = [], amazonUploads = [], realUploads = [] }) {
+function orderGalleryUploads({
+  aiUploads = [],
+  specsUploads = [],
+  amazonUploads = [],
+  realUploads = [],
+}) {
   const realLast = realUploads[0] ? [realUploads[0]] : [];
   const slotsLeft = Math.max(0, 5 - realLast.length);
-  const front = [...aiUploads, ...amazonUploads].filter(Boolean).slice(0, slotsLeft);
+  const front = [...aiUploads, ...specsUploads, ...amazonUploads]
+    .filter(Boolean)
+    .slice(0, slotsLeft);
   return [...front, ...realLast].slice(0, 5);
+}
+
+function injectSpecsIntoDescription(html, specsUrl, lang = 'fr') {
+  if (!specsUrl) return html || '';
+  const label = lang === 'ar' ? 'بطاقة المواصفات' : 'Fiche technique';
+  const block = `<figure class="specs-card"><img src="${specsUrl}" alt="${label}" loading="lazy"/><figcaption>${label}</figcaption></figure>`;
+  const base = String(html || '').trim();
+  return base ? `${base}\n${block}` : block;
 }
 
 /**
@@ -317,8 +336,55 @@ export async function enrichProduct({
   let barcode = String(copy?.barcode || barcodeDetected || '').trim();
   if (barcode) console.log(`Barcode: ${barcode}`);
 
+  // Professional specs card from the generated bullets — shown in gallery + description.
+  let specsUploads = [];
+  let specsUrl = '';
+  if (copy) {
+    try {
+      const bulletsFr = bulletsFromHtml(
+        copy.short_description_fr || copy.description_french || '',
+        6
+      );
+      const bulletsAr = bulletsFromHtml(
+        copy.short_description_ar || copy.description_arabic || '',
+        6
+      );
+      const specsBuf = await renderSpecsCard({
+        title: copy.french_title || displayName,
+        bullets: bulletsFr.length ? bulletsFr : bulletsAr,
+        brand: copy.brand,
+        color: copy.color,
+        sku: sellerSku,
+        price,
+        lang: 'fr',
+      });
+      specsUploads = await uploadBuffers(uploadToNocoDB, [specsBuf], `specs-${sellerSku}`);
+      if (specsUploads[0]) {
+        specsUrl = publicUrlFromNoco(specsUploads[0], nocodbUrl);
+        console.log('Specs card uploaded');
+      }
+    } catch (e) {
+      console.error('Specs card failed:', e.message);
+      aiFailures.push(`specs:${e.message}`);
+    }
+  }
+
+  if (copy && specsUrl) {
+    copy.description_french = injectSpecsIntoDescription(
+      copy.description_french,
+      specsUrl,
+      'fr'
+    );
+    copy.description_arabic = injectSpecsIntoDescription(
+      copy.description_arabic,
+      specsUrl,
+      'ar'
+    );
+  }
+
   const nocoImages = orderGalleryUploads({
     aiUploads,
+    specsUploads,
     amazonUploads,
     realUploads: originalUploads,
   });
@@ -375,6 +441,7 @@ export async function enrichProduct({
     productForSheet,
     aiFailures,
     hasAiImages: aiUploads.length > 0,
+    hasSpecsImage: specsUploads.length > 0,
   };
 }
 
