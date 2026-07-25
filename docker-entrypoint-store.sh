@@ -1,7 +1,12 @@
 #!/bin/sh
 set -eu
 # Local tracking API (Tifawt order lookup) — same container as nginx.
-export PORT="${TRACKING_PORT:-3001}"
+# Always proxy /bot-api to the colocated process, even if EasyPanel still has
+# a stale BOT_UPSTREAM pointing at the separate imden-bot service.
+export TRACKING_PORT="${TRACKING_PORT:-3001}"
+export PORT="$TRACKING_PORT"
+export BOT_UPSTREAM="127.0.0.1:${TRACKING_PORT}"
+
 node /tracking/trackingServer.js &
 TRACK_PID=$!
 
