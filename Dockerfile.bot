@@ -12,6 +12,7 @@ RUN npm install --omit=dev && npm cache clean --force
 
 COPY bot/*.js ./
 COPY bot/template-selection.json ./
+COPY bot/backgrounds ./backgrounds
 
 EXPOSE 3000
 

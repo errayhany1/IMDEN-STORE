@@ -44,6 +44,7 @@ COPY --from=tracking-deps /tracking/node_modules /tracking/node_modules
 COPY bot/package.json /tracking/package.json
 COPY bot/*.js /tracking/
 COPY bot/template-selection.json /tracking/template-selection.json
+COPY bot/backgrounds /tracking/backgrounds
 
 # Install our SPA + /bot-api config directly. Do not use
 # /etc/nginx/templates + envsubst: a skipped/failed render leaves the stock

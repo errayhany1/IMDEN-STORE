@@ -1,5 +1,5 @@
 {
-  "regular": ["bg-pure-white", "bg-soft-gray"],
-  "sale": ["sale-bg-white", "sale-bg-blue"],
+  "regular": ["bg-tech-hex", "bg-tech-blue"],
+  "sale": ["sale-tech-hex", "sale-tech-blue"],
   "updatedAt": null
 }

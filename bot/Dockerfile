@@ -13,6 +13,7 @@ RUN npm install --omit=dev && npm cache clean --force
 # never get left out of the image.
 COPY *.js ./
 COPY template-selection.json ./
+COPY backgrounds ./backgrounds
 
 EXPOSE 3000
 
