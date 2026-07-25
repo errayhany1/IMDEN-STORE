@@ -290,10 +290,13 @@ function parseCaption(caption) {
   return { price, oldPrice, name, sku, amazonUrl };
 }
 
-/** SKU exactly as the seller typed it (for Tifawt). Soft-clean only. */
+/** Tifawt SKU: uppercase A–Z / 0–9 only (no spaces, dashes, or punctuation). */
 function tifawtSkuFromCaption(rawSku) {
-  const cleaned = cleanReference(rawSku);
-  return cleaned || String(rawSku || 'REF').trim() || 'REF';
+  const cleaned = String(rawSku || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  return cleaned || 'REF';
 }
 
 function skuCandidates(rawSku) {
