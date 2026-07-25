@@ -62,10 +62,14 @@ function extractImageBuffers(message) {
   return out;
 }
 
-export async function generateProductCopy({ imageBuffer, name, price, ref, amazonMeta = null }) {
-  const dataUrl = imageBuffer
-    ? `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
-    : null;
+export async function generateProductCopy({
+  imageBuffer,
+  imageBuffers,
+  name,
+  price,
+  ref,
+  amazonMeta = null,
+}) {
   const amazonBlock = amazonMeta
     ? `
 Données Amazon (source produit):
@@ -76,7 +80,7 @@ Données Amazon (source produit):
 `
     : '';
   const prompt = `Tu es un expert e-commerce Maroc (Jumia / vente en gros électronique).
-Analyse ${amazonMeta ? 'les données Amazon + ' : ''}la photo du produit et génère du contenu bilingue FR/AR.
+Analyse ${amazonMeta ? 'les données Amazon + ' : ''}toutes les photos du produit et génère du contenu bilingue FR/AR.
 
 Produit donné par le vendeur:
 - Nom: ${name}
@@ -95,12 +99,19 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "meta_description": "meta description FR max 160",
   "woo_title": "titre court Woo FR",
   "brand": "marque si visible sinon Generic",
-  "color": "couleur principale ou Multicolore"
+  "color": "couleur principale ou Multicolore",
+  "barcode": "code-barres exact visible sur une photo, sinon chaîne vide"
 }`;
 
   const content = [{ type: 'text', text: prompt }];
-  if (dataUrl) {
-    content.push({ type: 'image_url', image_url: { url: dataUrl } });
+  const refs = (imageBuffers?.length ? imageBuffers : [imageBuffer])
+    .filter(Boolean)
+    .slice(0, 4);
+  for (const buffer of refs) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${buffer.toString('base64')}` },
+    });
   }
 
   const { data } = await axios.post(
@@ -119,8 +130,44 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   return parsed;
 }
 
+/**
+ * Lightweight vision pass for the Tifawt-only path. It never generates copy or
+ * new images; it only reads a clearly visible barcode from up to four photos.
+ */
+export async function detectProductBarcode(imageBuffers = []) {
+  if (!isOpenRouterConfigured()) return '';
+  const refs = imageBuffers.filter(Boolean).slice(0, 4);
+  if (!refs.length) return '';
+
+  const content = [{
+    type: 'text',
+    text: `Inspect all product photos and read the barcode printed on the product or packaging.
+Return ONLY valid JSON: {"barcode":"..."}.
+Copy every visible character exactly. Never guess. If no barcode is clearly readable, return {"barcode":""}.`,
+  }];
+  for (const buffer of refs) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${buffer.toString('base64')}` },
+    });
+  }
+
+  const { data } = await axios.post(
+    OPENROUTER_URL,
+    {
+      model: TEXT_MODEL,
+      messages: [{ role: 'user', content }],
+      temperature: 0,
+    },
+    { headers: headers(), timeout: 45000 }
+  );
+  const text = data?.choices?.[0]?.message?.content;
+  const parsed = extractJson(typeof text === 'string' ? text : JSON.stringify(text));
+  return String(parsed?.barcode || '').trim().replace(/[^a-zA-Z0-9-]/g, '').slice(0, 64);
+}
+
 async function generateOneImage({ imageBuffers, prompt }) {
-  const refs = (imageBuffers || []).filter(Boolean).slice(0, 3);
+  const refs = (imageBuffers || []).filter(Boolean).slice(0, 4);
   if (!refs.length) {
     throw new Error('No reference images for AI generation');
   }

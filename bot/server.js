@@ -20,6 +20,7 @@ import {
   buildNocoRecordFromEnrichment,
   buildSellerSku,
 } from './productEnrichment.js';
+import { detectProductBarcode } from './openrouter.js';
 import {
   createTifawtProduct,
   isTifawtProductSyncConfigured,
@@ -299,7 +300,41 @@ async function findProductBySku(rawSku) {
 // ─── ALBUM BUFFER ──────────────────────────────────────────────────────────
 const albumBuffer = {};
 const userState = {};
+const pendingDestinations = new Map();
 let productQueue = Promise.resolve();
+
+function destinationKeyboard(token) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🌐 NocoDB فقط', callback_data: `dest:noco:${token}` },
+        { text: '🛒 Tifawt فقط', callback_data: `dest:tifawt:${token}` },
+      ],
+      [{ text: '🔄 كلاهما', callback_data: `dest:both:${token}` }],
+      [{ text: '✖️ إلغاء', callback_data: `dest:cancel:${token}` }],
+    ],
+  };
+}
+
+async function requestProductDestination(chatId, files, caption) {
+  const now = Date.now();
+  for (const [key, pending] of pendingDestinations) {
+    if (pending.expiresAt < now) pendingDestinations.delete(key);
+  }
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  const parsed = parseCaption(caption);
+  const expiresAt = now + (10 * 60 * 1000);
+  pendingDestinations.set(token, { chatId, files, caption, expiresAt });
+
+  const imageNote = files.length >= 2 && files.length <= 4
+    ? `${files.length} صور`
+    : `${files.length} صورة (يفضّل إرسال 2 إلى 4)`;
+  await sendMessage(
+    chatId,
+    `📍 أين تريد حفظ هذا المنتج؟\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH\n📋 ${buildSellerSku(parsed.sku)}\n🖼️ ${imageNote}\n\n• Tifawt فقط: حفظ مباشر بالصورة الأولى، بدون إنشاء وصف أو صور.\n• NocoDB أو كلاهما: إنشاء عنوان ووصف وصور مختلفة، ووضع الصورة الأولى كآخر صورة في الموقع.`,
+    destinationKeyboard(token)
+  );
+}
 
 function enqueueProduct(task) {
   productQueue = productQueue.then(task).catch((err) => {
@@ -308,18 +343,20 @@ function enqueueProduct(task) {
   return productQueue;
 }
 
-async function processProduct(chatId, files, caption) {
+async function processProduct(chatId, files, caption, destination = 'both') {
   const { price, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
   console.log(
-    `📦 Processing product: "${name}" | ${price} DH | ${files.length} images | SKU ${sellerSku}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
+    `📦 Processing product: "${name}" | ${price} DH | ${files.length} images | SKU ${sellerSku} | destination=${destination}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
   );
 
   await sendMessage(
     chatId,
-    amazonUrl
-      ? `⏳ جاري كشط أمازون وتوليد النصوص/الصور...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}\n🔗 Amazon`
-      : `⏳ جاري إنشاء صورة احترافية من صور المنتج وتوليد النصوص...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+    destination === 'tifawt'
+      ? `⏳ جاري إرسال المنتج مباشرة إلى Tifawt...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+      : amazonUrl
+        ? `⏳ جاري كشط أمازون وتوليد النصوص/الصور...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}\n🔗 Amazon`
+        : `⏳ جاري تحليل جميع الصور وإنشاء صور وعناوين وأوصاف مختلفة...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
   );
 
   const downloaded = await Promise.all(
@@ -338,6 +375,34 @@ async function processProduct(chatId, files, caption) {
     return;
   }
 
+  // Tifawt-only is intentionally direct: no NocoDB upload, copy generation,
+  // or studio images. A lightweight vision pass only reads a visible barcode.
+  if (destination === 'tifawt') {
+    let barcode = '';
+    try {
+      barcode = await detectProductBarcode(originalBuffers);
+    } catch (e) {
+      console.warn('Barcode detection skipped:', e.message);
+    }
+    const result = await createTifawtProduct({
+      name,
+      sku: sellerSku,
+      price,
+      barcode,
+      imageBuffer: originalBuffers[0],
+      imageFileName: `${sellerSku}.jpg`,
+    });
+    if (result?.ok) {
+      await sendMessage(
+        chatId,
+        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${barcode ? `\n🏷️ الباركود: ${barcode}` : '\n🏷️ لم يظهر باركود مقروء'}`
+      );
+    } else {
+      await sendMessage(chatId, `❌ تعذر إنشاء المنتج في Tifawt:\n${result?.error || result?.reason || 'خطأ غير معروف'}`);
+    }
+    return;
+  }
+
   const enrichTimeout = amazonUrl
     ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_TIMEOUT_MS, 180000))
     : AI_ENRICH_TIMEOUT_MS;
@@ -353,6 +418,8 @@ async function processProduct(chatId, files, caption) {
         amazonUrl,
         uploadToNocoDB,
         nocodbUrl: NOCODB_URL,
+        // Destination choices are explicit: NocoDB, Tifawt, or both.
+        syncSheet: false,
       }),
       enrichTimeout,
       'AI enrichment'
@@ -405,16 +472,33 @@ async function processProduct(chatId, files, caption) {
       Image5: recordData.Image5,
     };
     if (recordData.Amazon_URL) minimal.Amazon_URL = recordData.Amazon_URL;
-    ({ data } = await http.post(recordUrl, minimal, {
-      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
-    }));
+    if (recordData.Barcode) minimal.Barcode = recordData.Barcode;
+    try {
+      ({ data } = await http.post(recordUrl, minimal, {
+        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+      }));
+    } catch (minimalError) {
+      // Older Products tables may not have a Barcode column yet. Product
+      // creation must still succeed; the completion message makes this clear.
+      if (!minimal.Barcode) throw minimalError;
+      console.warn('NocoDB Barcode column unavailable; retrying without it');
+      minimal.Description = [minimal.Description, `Barcode: ${minimal.Barcode}`]
+        .filter(Boolean)
+        .join('\n');
+      delete minimal.Barcode;
+      ({ data } = await http.post(recordUrl, minimal, {
+        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+      }));
+    }
   }
 
   const rowId = data.Id || data.id;
   const landing = `${SITE_URL}/p/${encodeURIComponent(sellerSku)}`;
   const imgCount = enrichment.nocoImages?.length || 0;
-  const sheetNote = enrichment.sheet?.skipped
-    ? '\n📄 Sheet: لم يُربط بعد (أضف PRODUCT_SHEET_WEBHOOK_URL)'
+  const sheetNote = enrichment.sheet?.reason === 'destination_choice'
+    ? ''
+    : enrichment.sheet?.skipped
+      ? '\n📄 Sheet: لم يُربط بعد (أضف PRODUCT_SHEET_WEBHOOK_URL)'
     : enrichment.sheet?.error
       ? `\n📄 Sheet خطأ: ${enrichment.sheet.error}`
       : '\n📄 Sheet: تم الإرسال';
@@ -425,8 +509,9 @@ async function processProduct(chatId, files, caption) {
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
+  const barcode = String(enrichment.barcode || enrichment.copy?.barcode || '').trim();
   let tifawtNote = '';
-  if (isTifawtProductSyncConfigured()) {
+  if (destination === 'both' && isTifawtProductSyncConfigured()) {
     try {
       const tifawtName = enrichment.copy?.arabic_title
         || enrichment.copy?.french_title
@@ -437,6 +522,7 @@ async function processProduct(chatId, files, caption) {
         name: tifawtName,
         sku: sellerSku,
         price,
+        barcode,
         imageBuffer: tifawtImage,
         imageFileName: `${sellerSku}.jpg`,
       });
@@ -452,14 +538,16 @@ async function processProduct(chatId, files, caption) {
       console.error('Tifawt product sync error:', e.message);
       tifawtNote = `\n🛒 Tifawt خطأ: ${e.message}`;
     }
-  } else {
+  } else if (destination === 'both') {
     tifawtNote = '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD';
+  } else {
+    tifawtNote = '\n🌐 تم الحفظ في NocoDB فقط';
   }
 
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }
@@ -625,14 +713,16 @@ async function handleUpdate(update) {
             const album = albumBuffer[groupId];
             delete albumBuffer[groupId];
             if (!album) return;
-            enqueueProduct(() => processProduct(album.chatId, album.files, album.caption));
+            requestProductDestination(album.chatId, album.files, album.caption).catch((err) => {
+              console.error('Destination prompt failed:', err.message);
+            });
           }, 3000),
         };
       }
       albumBuffer[groupId].files.push({ fileId, extName });
       if (msg.caption) albumBuffer[groupId].caption = msg.caption;
     } else {
-      enqueueProduct(() => processProduct(chatId, [{ fileId, extName }], msg.caption));
+      await requestProductDestination(chatId, [{ fileId, extName }], msg.caption);
     }
     return;
   }
@@ -642,6 +732,49 @@ async function handleUpdate(update) {
     const chatId = cb.message.chat.id;
     const msgId = cb.message.message_id;
     const data = cb.data;
+
+    if (data.startsWith('dest:')) {
+      const [, destination, token] = data.split(':');
+      const pending = pendingDestinations.get(token);
+      if (!pending || pending.chatId !== chatId || pending.expiresAt < Date.now()) {
+        pendingDestinations.delete(token);
+        await answerCallback(cb.id, 'انتهت صلاحية الاختيار. أرسل المنتج مجدداً.');
+        await editMessage(chatId, msgId, '⌛ انتهت صلاحية هذا الطلب. أرسل صور المنتج مجدداً.');
+        return;
+      }
+      pendingDestinations.delete(token);
+
+      if (destination === 'cancel') {
+        await answerCallback(cb.id, 'تم الإلغاء');
+        await editMessage(chatId, msgId, '✖️ تم إلغاء إضافة المنتج.');
+        return;
+      }
+
+      const labels = {
+        noco: 'NocoDB فقط',
+        tifawt: 'Tifawt فقط',
+        both: 'NocoDB وTifawt',
+      };
+      if (!labels[destination]) {
+        await answerCallback(cb.id, 'اختيار غير صالح');
+        return;
+      }
+
+      await answerCallback(cb.id, `تم اختيار ${labels[destination]}`);
+      await editMessage(chatId, msgId, `✅ الوجهة: ${labels[destination]}\nبدأت معالجة المنتج...`);
+      enqueueProduct(() => processProduct(
+        pending.chatId,
+        pending.files,
+        pending.caption,
+        destination
+      ));
+      return;
+    }
+
+    if (!data.startsWith('cat_')) {
+      await answerCallback(cb.id, 'أمر غير معروف');
+      return;
+    }
 
     const parts = data.split('_');
     const catId = parseInt(parts[1], 10);

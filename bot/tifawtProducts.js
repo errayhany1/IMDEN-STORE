@@ -22,6 +22,7 @@ export function isTifawtProductSyncConfigured() {
  *   name: string,
  *   sku: string,
  *   price: number,
+ *   barcode?: string,
  *   imageBuffer?: Buffer,
  *   imageFileName?: string,
  * }} product
@@ -43,6 +44,9 @@ export async function createTifawtProduct(product) {
     form.append('name', name);
     form.append('sku', sku);
     form.append('price', String(price));
+    if (product.barcode) {
+      form.append('barcode', String(product.barcode).trim());
+    }
     if (Number.isFinite(BUSINESS_ID) && BUSINESS_ID > 0) {
       form.append('businessId', String(BUSINESS_ID));
     }

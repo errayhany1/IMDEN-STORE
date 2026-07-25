@@ -4,6 +4,7 @@
  * With Amazon URL: scrape Apify → AI copy from Amazon data → gallery = AI + Amazon + real last.
  */
 import {
+  detectProductBarcode,
   generateProductCopy,
   generateProductImages,
   isOpenRouterConfigured,
@@ -75,6 +76,7 @@ export async function enrichProduct({
   amazonUrl = '',
   uploadToNocoDB,
   nocodbUrl,
+  syncSheet = true,
 }) {
   const enabled = String(process.env.PRODUCT_AI_ENRICHMENT || 'true').toLowerCase() !== 'false';
   const sellerSku = buildSellerSku(ref);
@@ -150,14 +152,17 @@ export async function enrichProduct({
       stock: 10,
     };
     let sheetResult = null;
-    if (isSheetWebhookConfigured()) {
+    if (syncSheet && isSheetWebhookConfigured()) {
       try {
         sheetResult = await appendProductToSheet(productForSheet);
       } catch (e) {
         sheetResult = { error: e.message };
       }
     } else {
-      sheetResult = { skipped: true, reason: 'no_webhook' };
+      sheetResult = {
+        skipped: true,
+        reason: syncSheet ? 'no_webhook' : 'destination_choice',
+      };
     }
     return {
       sellerSku,
@@ -165,6 +170,7 @@ export async function enrichProduct({
       amazonUrl: amazonUrl || amazonMeta?.url || '',
       skippedAi: true,
       copy: null,
+      barcode: '',
       nocoImages,
       imageUrls,
       sheet: sheetResult,
@@ -181,6 +187,7 @@ export async function enrichProduct({
     if (isOpenAIConfigured()) {
       copy = await generateLandingPageCopy({
         imageBuffer: realBuffer,
+        imageBuffers: realBuffers.slice(0, 4),
         name: displayName,
         price,
         ref: referenceClean,
@@ -190,6 +197,7 @@ export async function enrichProduct({
     } else {
       copy = await generateProductCopy({
         imageBuffer: realBuffer,
+        imageBuffers: realBuffers.slice(0, 4),
         name: displayName,
         price,
         ref: referenceClean,
@@ -203,6 +211,7 @@ export async function enrichProduct({
       try {
         copy = await generateProductCopy({
           imageBuffer: realBuffer,
+          imageBuffers: realBuffers.slice(0, 4),
           name: displayName,
           price,
           ref: referenceClean,
@@ -215,13 +224,28 @@ export async function enrichProduct({
     }
   }
 
+  // The copy pass reads the barcode as one of many fields, so it is the first
+  // thing to drop when the model is under pressure. A dedicated vision pass
+  // keeps the barcode even when the copy call failed outright.
+  let barcode = String(copy?.barcode || '').trim();
+  if (!barcode) {
+    try {
+      barcode = await detectProductBarcode(realBuffers.slice(0, 4));
+      if (barcode) console.log(`Barcode recovered by dedicated pass: ${barcode}`);
+    } catch (e) {
+      console.warn('Barcode detection skipped:', e.message);
+    }
+  }
+
   try {
     if (!isOpenRouterConfigured()) {
       console.warn('OPENROUTER_API_KEY missing — skipping professional AI image generation');
     } else {
       const aiBuffers = await generateProductImages({
         imageBuffer: realBuffer,
-        imageBuffers: realBuffers.slice(0, 3),
+        // Every photo the seller sent informs the studio renders; photo 1 is
+        // still the only one that reaches the gallery (as the last image).
+        imageBuffers: realBuffers.slice(0, 4),
         titleFr: copy?.french_title || displayName,
         price,
         // Without Amazon URL: always craft studio images from the seller photos.
@@ -271,7 +295,7 @@ export async function enrichProduct({
   };
 
   let sheetResult = null;
-  if (isSheetWebhookConfigured()) {
+  if (syncSheet && isSheetWebhookConfigured()) {
     try {
       sheetResult = await appendProductToSheet(productForSheet);
     } catch (e) {
@@ -279,7 +303,10 @@ export async function enrichProduct({
       sheetResult = { error: e.message };
     }
   } else {
-    sheetResult = { skipped: true, reason: 'no_webhook' };
+    sheetResult = {
+      skipped: true,
+      reason: syncSheet ? 'no_webhook' : 'destination_choice',
+    };
   }
 
   return {
@@ -288,6 +315,7 @@ export async function enrichProduct({
     amazonUrl: amazonUrl || amazonMeta?.url || '',
     skippedAi: !copy,
     copy,
+    barcode,
     nocoImages: finalImages,
     imageUrls,
     sheet: sheetResult,
@@ -309,6 +337,9 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
     POSTEBL: 'POSTEBL',
     description_arabic: copy.description_arabic || '',
   };
+
+  const barcode = String(enrichment.barcode || copy.barcode || '').trim();
+  if (barcode) record.Barcode = barcode;
 
   if (copy.description_french) record.description_french = copy.description_french;
   if (copy.short_description_ar) record.short_description_ar = copy.short_description_ar;

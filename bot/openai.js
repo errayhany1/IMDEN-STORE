@@ -44,6 +44,7 @@ function extractJson(text) {
  */
 export async function generateLandingPageCopy({
   imageBuffer,
+  imageBuffers,
   name,
   price,
   ref,
@@ -64,7 +65,7 @@ Données Amazon (source produit):
     : '';
 
   const prompt = `Tu es un expert e-commerce grossiste au Maroc (Errayhany / Jumia / WhatsApp).
-Analyse ${amazonMeta ? 'les données Amazon + ' : ''}la photo produit et rédige le contenu d'une PAGE D'ATTERRISSAGE de conversion (AR + FR).
+Analyse ${amazonMeta ? 'les données Amazon + ' : ''}toutes les photos produit et rédige le contenu d'une PAGE D'ATTERRISSAGE de conversion (AR + FR).
 
 Données vendeur:
 - Nom: ${name}
@@ -86,6 +87,7 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "hero_line_ar": "سطر بطولي عربي max 90",
   "brand": "marque détectée ou Generic",
   "color": "couleur principale ou Multicolore",
+  "barcode": "code-barres exact visible sur une photo, sinon chaîne vide",
   "faq_fr": [{"q":"...","a":"..."},{"q":"...","a":"..."},{"q":"...","a":"..."}],
   "faq_ar": [{"q":"...","a":"..."},{"q":"...","a":"..."},{"q":"...","a":"..."}]
 }
@@ -93,16 +95,20 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
 Règles:
 - Ton grossiste Maroc, clair, vendeur, sans claims médicaux.
 - Titres FR/AR: AUCUN chiffre (ni dimensions).
+- Examine toutes les photos. Recopie le code-barres caractère par caractère seulement s'il est clairement lisible; ne l'invente jamais.
 - FAQ: paiement COD, délai livraison 24-72h, commande en gros WhatsApp.
 - Contenu brand-neutral (pas de marque Amazon).
 - Pas de markdown hors JSON. Pas de texte hors JSON.`;
 
   const content = [{ type: 'text', text: prompt }];
-  if (imageBuffer) {
+  const refs = (imageBuffers?.length ? imageBuffers : [imageBuffer])
+    .filter(Boolean)
+    .slice(0, 4);
+  for (const buffer of refs) {
     content.push({
       type: 'image_url',
       image_url: {
-        url: `data:image/jpeg;base64,${imageBuffer.toString('base64')}`,
+        url: `data:image/jpeg;base64,${buffer.toString('base64')}`,
       },
     });
   }
