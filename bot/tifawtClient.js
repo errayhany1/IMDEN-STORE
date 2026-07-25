@@ -11,32 +11,41 @@ export const API_BASE = (
 
 export const BUSINESS_ID = Number(process.env.TIFAWT_BUSINESS_ID || 1);
 
-const EMAIL = (process.env.TIFAWT_EMAIL || '').trim();
-const PASSWORD = process.env.TIFAWT_PASSWORD || '';
-/** Optional short-lived token (from browser session) — used if password login unavailable. */
-const STATIC_TOKEN = (process.env.TIFAWT_ACCESS_TOKEN || '').trim();
+/** Read on each call so dotenv / EasyPanel env is visible after module load. */
+function tifawtEmail() {
+  return (process.env.TIFAWT_EMAIL || '').trim();
+}
+function tifawtPassword() {
+  return process.env.TIFAWT_PASSWORD || '';
+}
+function tifawtStaticToken() {
+  return (process.env.TIFAWT_ACCESS_TOKEN || '').trim();
+}
 
-let cachedToken = STATIC_TOKEN;
-let tokenFetchedAt = STATIC_TOKEN ? Date.now() : 0;
+let cachedToken = '';
+let tokenFetchedAt = 0;
 /** Soft TTL — re-login after 6h or on 401. */
 const TOKEN_TTL_MS = Number(process.env.TIFAWT_TOKEN_TTL_MS || 6 * 60 * 60 * 1000);
 
 export function isTifawtApiConfigured() {
-  return Boolean((EMAIL && PASSWORD) || STATIC_TOKEN || cachedToken);
+  return Boolean((tifawtEmail() && tifawtPassword()) || tifawtStaticToken() || cachedToken);
 }
 
 async function login() {
-  if (!EMAIL || !PASSWORD) {
-    if (STATIC_TOKEN) {
-      cachedToken = STATIC_TOKEN;
+  const email = tifawtEmail();
+  const password = tifawtPassword();
+  const staticToken = tifawtStaticToken();
+  if (!email || !password) {
+    if (staticToken) {
+      cachedToken = staticToken;
       tokenFetchedAt = Date.now();
-      return STATIC_TOKEN;
+      return staticToken;
     }
     throw new Error('TIFAWT_EMAIL / TIFAWT_PASSWORD missing');
   }
   const { data } = await axios.post(
     `${API_BASE}/auth/login`,
-    { email: EMAIL, password: PASSWORD },
+    { email, password },
     { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
   );
   const token = data?.accessToken;
@@ -47,6 +56,10 @@ async function login() {
 }
 
 export async function getTifawtToken({ force = false } = {}) {
+  if (!cachedToken && tifawtStaticToken()) {
+    cachedToken = tifawtStaticToken();
+    tokenFetchedAt = Date.now();
+  }
   const fresh = cachedToken
     && !force
     && (Date.now() - tokenFetchedAt) < TOKEN_TTL_MS;

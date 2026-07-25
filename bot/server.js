@@ -437,6 +437,45 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     return;
   }
 
+  // Tifawt must never wait on AI. For "both", push the original seller
+  // payload immediately so a slow/failed enrichment cannot drop Tifawt.
+  let earlyTifawtBarcode = '';
+  const tifawtPromise = (destination === 'both' && isTifawtProductSyncConfigured())
+    ? (async () => {
+      try {
+        try {
+          earlyTifawtBarcode = await detectProductBarcode(originalBuffers);
+        } catch (e) {
+          console.warn('Early barcode detection skipped:', e.message);
+        }
+        let result = await createTifawtProduct({
+          name,
+          sku: tifawtSku,
+          price,
+          barcode: earlyTifawtBarcode,
+          imageBuffers: originalBuffers,
+          imageFileName: `${tifawtSku}-1.jpg`,
+        });
+        if (!result?.ok && !result?.skipped) {
+          console.warn('Tifawt first attempt failed, retrying once:', result?.error);
+          await delay(1500);
+          result = await createTifawtProduct({
+            name,
+            sku: tifawtSku,
+            price,
+            barcode: earlyTifawtBarcode,
+            imageBuffers: originalBuffers,
+            imageFileName: `${tifawtSku}-1.jpg`,
+          });
+        }
+        return result;
+      } catch (e) {
+        console.error('Early Tifawt sync error:', e.message);
+        return { ok: false, error: e.message };
+      }
+    })()
+    : null;
+
   // Tifawt-only: exact seller payload — caption name/SKU + original photos in order.
   if (destination === 'tifawt') {
     let barcode = '';
@@ -462,6 +501,10 @@ async function processProduct(chatId, files, caption, destination = 'both') {
       await sendMessage(chatId, `❌ تعذر إنشاء المنتج في Tifawt:\n${result?.error || result?.reason || 'خطأ غير معروف'}`);
     }
     return;
+  }
+
+  if (destination === 'both') {
+    await sendMessage(chatId, `🛒 بدأت مزامنة Tifawt بالأصل بالتوازي مع توليد الموقع...`);
   }
 
   const enrichTimeout = amazonUrl
@@ -581,24 +624,19 @@ async function processProduct(chatId, files, caption, destination = 'both') {
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
-  const barcode = String(enrichment.barcode || enrichment.copy?.barcode || '').trim();
+  const barcode = String(
+    enrichment.barcode || enrichment.copy?.barcode || earlyTifawtBarcode || ''
+  ).trim();
   let tifawtNote = '';
-  if (destination === 'both' && isTifawtProductSyncConfigured()) {
+  if (destination === 'both' && tifawtPromise) {
     try {
-      // Tifawt always gets the seller original — never AI title/images/ERY SKU.
-      const tifawtResult = await createTifawtProduct({
-        name,
-        sku: tifawtSku,
-        price,
-        barcode,
-        imageBuffers: originalBuffers,
-        imageFileName: `${tifawtSku}-1.jpg`,
-      });
+      const tifawtResult = await tifawtPromise;
       if (tifawtResult?.skipped) {
         tifawtNote = '\n🛒 Tifawt: لم يُضبط (TIFAWT_EMAIL/PASSWORD)';
       } else if (tifawtResult?.ok) {
-        tifawtNote = `\n🛒 Tifawt: تم إضافة الأصل (${tifawtResult.imageCount || originalBuffers.length} صور)`;
-        console.log('✅ Tifawt product created:', tifawtSku, tifawtResult.data?.id || '');
+        const modeAr = tifawtResult.mode === 'updated' ? 'تم تحديث الأصل' : 'تم إضافة الأصل';
+        tifawtNote = `\n🛒 Tifawt: ${modeAr} (${tifawtResult.imageCount || originalBuffers.length} صور)`;
+        console.log('✅ Tifawt product', tifawtResult.mode || 'created', tifawtSku, tifawtResult.data?.id || tifawtResult.existingId || '');
       } else {
         tifawtNote = `\n🛒 Tifawt خطأ: ${tifawtResult?.error || 'فشل الإنشاء'}`;
       }
