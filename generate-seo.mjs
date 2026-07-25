@@ -313,7 +313,12 @@ async function generate() {
             isAvailable: true,
             originalData: {
                 Arabic_Title: product.Arabic_Title || '',
-                description_arabic: product.description_arabic || ''
+                description_arabic: product.description_arabic || '',
+                // Cards render the French copy, so it must survive in the snapshot.
+                French_Title: product.French_Title || '',
+                Woo_Title: product.Woo_Title || '',
+                short_description_fr: product.short_description_fr || '',
+                description_french: product.description_french || ''
             }
         };
     });

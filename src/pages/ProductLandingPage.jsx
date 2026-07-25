@@ -27,6 +27,7 @@ import CartSidebar from '../components/CartSidebar';
 import WishlistSidebar from '../components/WishlistSidebar';
 import AuthModal from '../components/AuthModal';
 import ImageModal from '../components/ImageModal';
+import ProductRatingStars from '../components/ProductRatingStars';
 
 const WA_NUMBER = '212664630566';
 const SITE_URL = 'https://errayhany.com';
@@ -535,6 +536,13 @@ const ProductLandingPage = ({ sku: skuProp }) => {
               </p>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${available ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
                 {available ? copy.stock : copy.out}
+              </span>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <ProductRatingStars product={product} size={20} emptyHint={null} />
+              <span className="text-xs font-semibold text-slate-500">
+                {isFr ? 'Votre avis' : 'قيّم هذا المنتج'}
               </span>
             </div>
 

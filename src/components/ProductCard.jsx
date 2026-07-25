@@ -3,6 +3,7 @@ import { ShoppingCart, Check, Heart, Bell, BellRing, Eye } from 'lucide-react';
 import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
 import ProductRatingStars from './ProductRatingStars';
+import { frenchProductTitle, isRtlText } from '../utils/productText';
 import './ProductCard.css';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
@@ -22,6 +23,9 @@ const ProductCard = ({ product, priority = false }) => {
 
     const isWishlisted = wishlist.some((item) => item.id === product.id);
     const isCatalog = browseMode === 'catalog';
+    // Cards always show the French copy, trimmed to a single line.
+    const cardTitle = frenchProductTitle(product);
+    const cardTitleRtl = isRtlText(cardTitle);
     const productHref = `/p/${encodeURIComponent(product.ref || product.id)}`;
 
     const dm = darkMode;
@@ -180,37 +184,30 @@ const ProductCard = ({ product, priority = false }) => {
                     className={`p-3 flex flex-col gap-3 ${isOutOfStock ? 'opacity-80' : ''} ${!isCatalog ? 'cursor-pointer' : ''}`}
                     onClick={!isCatalog ? openProductPage : undefined}
                 >
-                    {/* Price and Ref Row */}
-                    <div className="flex items-center justify-between flex-row-reverse gap-1">
+                    {/* Price and rating row */}
+                    <div className="flex items-center justify-between flex-row-reverse gap-2">
                         <div className="text-right flex-shrink-0">
                             <span className={`text-lg font-bold text-primary`}>{product.price} DH</span>
                         </div>
-                        <div className="text-left min-w-0 flex-1 flex items-center gap-0.5">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(product.ref); }}
-                                className={`shrink-0 p-0.5 rounded opacity-30 hover:opacity-100 transition-opacity ${dm ? 'text-gray-400 hover:text-white' : 'text-slate-400 hover:text-slate-700'}`}
-                                title="نسخ المرجع"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                            </button>
-                            <span
-                                className={`font-mono px-1.5 py-0.5 rounded whitespace-nowrap overflow-hidden text-ellipsis block max-w-full
-                                    ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-500'}`}
-                                style={{ fontSize: singleCol ? '0.75rem' : 'clamp(7px, 1.8vw, 10px)' }}
-                            >REF: {product.ref}</span>
-                        </div>
+                        <ProductRatingStars
+                            product={product}
+                            darkMode={dm}
+                            readOnly
+                            size={singleCol ? 15 : 13}
+                            onRequestRate={handleMediaClick}
+                            className="flex-1"
+                        />
                     </div>
 
-                    {product.name && product.name.trim() !== '' && product.name !== 'Unnamed Product' && (
-                        <div 
-                            className={`text-right text-xs font-medium line-clamp-2 leading-relaxed ${dm ? 'text-gray-300' : 'text-slate-600'}`} 
-                            title={product.name}
+                    {cardTitle && cardTitle !== 'Unnamed Product' && (
+                        <div
+                            className={`text-xs font-medium truncate leading-relaxed ${cardTitleRtl ? 'text-right' : 'text-left'} ${dm ? 'text-gray-300' : 'text-slate-600'}`}
+                            dir={cardTitleRtl ? 'rtl' : 'ltr'}
+                            title={cardTitle}
                         >
-                            {product.name}
+                            {cardTitle}
                         </div>
                     )}
-
-                    <ProductRatingStars product={product} darkMode={dm} />
 
                     <div className="flex gap-2 flex-row-reverse" onClick={(e) => e.stopPropagation()}>
                         <button

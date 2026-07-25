@@ -1,13 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
 import useStore from '../store/useStore';
-import { fetchProductRating, submitProductRating } from '../services/productRatings';
+import {
+  fetchProductRating,
+  fetchProductRatingSummary,
+  submitProductRating,
+} from '../services/productRatings';
 
 /**
- * Interactive 1–5 star rating for a product card.
- * Shows average + vote count; click a star to submit/update your rating.
+ * 1–5 star rating for a product.
+ * `readOnly` shows the average only — rating is reserved for the detail views
+ * (quick view / product page) so a card tap never records a vote by accident.
  */
-const ProductRatingStars = ({ product, darkMode = false }) => {
+const ProductRatingStars = ({
+  product,
+  darkMode = false,
+  readOnly = false,
+  onRequestRate,
+  size = 14,
+  className = '',
+  emptyHint = 'أضف تقييمك',
+}) => {
   const user = useStore((state) => state.user);
   const [avg, setAvg] = useState(0);
   const [count, setCount] = useState(0);
@@ -19,7 +32,10 @@ const ProductRatingStars = ({ product, darkMode = false }) => {
 
   useEffect(() => {
     let cancelled = false;
-    fetchProductRating(product, user).then((data) => {
+    const load = readOnly
+      ? fetchProductRatingSummary(product)
+      : fetchProductRating(product, user);
+    load.then((data) => {
       if (cancelled) return;
       setAvg(data.avg || 0);
       setCount(data.count || 0);
@@ -28,9 +44,53 @@ const ProductRatingStars = ({ product, darkMode = false }) => {
     return () => {
       cancelled = true;
     };
-  }, [product?.id, product?.ref, user?.uid]);
+  }, [product?.id, product?.ref, user?.uid, readOnly]);
 
-  const displayValue = hover || myRating || Math.round(avg) || 0;
+  const displayValue = readOnly
+    ? Math.round(avg)
+    : (hover || myRating || Math.round(avg) || 0);
+
+  const starClass = (filled) => (filled
+    ? 'text-amber-400 fill-amber-400'
+    : darkMode ? 'text-gray-600' : 'text-slate-300');
+
+  const scoreLabel = count > 0
+    ? (
+      <span className={`text-[10px] tabular-nums leading-none ${darkMode ? 'text-gray-400' : 'text-slate-400'}`}>
+        {avg.toFixed(1)}
+        <span className="opacity-70"> ({count})</span>
+      </span>
+    )
+    : null;
+
+  if (readOnly) {
+    const Wrapper = onRequestRate ? 'button' : 'div';
+    return (
+      <Wrapper
+        {...(onRequestRate
+          ? {
+            type: 'button',
+            onClick: (e) => { e.stopPropagation(); onRequestRate(); },
+            title: 'افتح المنتج لإضافة تقييم',
+            'aria-label': 'افتح المنتج لإضافة تقييم',
+          }
+          : {})}
+        className={`flex items-center gap-1.5 flex-row-reverse min-w-0 ${onRequestRate ? 'cursor-pointer' : ''} ${className}`}
+      >
+        <div className="flex items-center gap-0.5 flex-row-reverse shrink-0" dir="ltr" aria-hidden="true">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={size}
+              strokeWidth={1.75}
+              className={starClass(star <= displayValue)}
+            />
+          ))}
+        </div>
+        {scoreLabel}
+      </Wrapper>
+    );
+  }
 
   const handleRate = async (stars, event) => {
     event.preventDefault();
@@ -57,7 +117,7 @@ const ProductRatingStars = ({ product, darkMode = false }) => {
 
   return (
     <div
-      className="flex flex-col items-end gap-0.5"
+      className={`flex flex-col items-end gap-0.5 ${className}`}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
       role="group"
@@ -65,57 +125,35 @@ const ProductRatingStars = ({ product, darkMode = false }) => {
     >
       <div className="flex items-center gap-1.5 flex-row-reverse">
         <div className="flex items-center gap-0.5 flex-row-reverse" dir="ltr">
-          {[1, 2, 3, 4, 5].map((star) => {
-            const filled = star <= displayValue;
-            return (
-              <button
-                key={star}
-                type="button"
-                disabled={busy}
-                onMouseEnter={() => setHover(star)}
-                onMouseLeave={() => setHover(0)}
-                onFocus={() => setHover(star)}
-                onBlur={() => setHover(0)}
-                onClick={(e) => handleRate(star, e)}
-                className={`p-0.5 rounded transition-transform active:scale-90 disabled:opacity-60
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              disabled={busy}
+              onMouseEnter={() => setHover(star)}
+              onMouseLeave={() => setHover(0)}
+              onFocus={() => setHover(star)}
+              onBlur={() => setHover(0)}
+              onClick={(e) => handleRate(star, e)}
+              className={`p-0.5 rounded transition-transform active:scale-90 disabled:opacity-60
                   ${busy ? 'cursor-wait' : 'cursor-pointer hover:scale-110'}`}
-                title={`تقييم ${star} من 5`}
-                aria-label={`تقييم ${star} نجوم`}
-                aria-pressed={myRating === star}
-              >
-                <Star
-                  size={14}
-                  strokeWidth={1.75}
-                  className={
-                    filled
-                      ? 'text-amber-400 fill-amber-400'
-                      : darkMode
-                        ? 'text-gray-600'
-                        : 'text-slate-300'
-                  }
-                />
-              </button>
-            );
-          })}
+              title={`تقييم ${star} من 5`}
+              aria-label={`تقييم ${star} نجوم`}
+              aria-pressed={myRating === star}
+            >
+              <Star
+                size={size}
+                strokeWidth={1.75}
+                className={starClass(star <= displayValue)}
+              />
+            </button>
+          ))}
         </div>
-        {count > 0 ? (
-          <span
-            className={`text-[10px] tabular-nums leading-none ${
-              darkMode ? 'text-gray-400' : 'text-slate-400'
-            }`}
-          >
-            {avg.toFixed(1)}
-            <span className="opacity-70"> ({count})</span>
+        {scoreLabel || (emptyHint && (
+          <span className={`text-[10px] leading-none ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>
+            {emptyHint}
           </span>
-        ) : (
-          <span
-            className={`text-[10px] leading-none ${
-              darkMode ? 'text-gray-500' : 'text-slate-400'
-            }`}
-          >
-            قيّم
-          </span>
-        )}
+        ))}
       </div>
       {(justRated || error) && (
         <span

@@ -80,7 +80,8 @@ const ProductGrid = () => {
                     const arabicCategory = categoryTranslation[p.category] || "";
                     const arabicTitle = p.originalData?.Arabic_Title || "";
                     const arabicDesc = p.originalData?.description_arabic || "";
-                    const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${arabicTitle} ${arabicDesc}`.toLowerCase();
+                    const frenchTitle = `${p.originalData?.French_Title || ""} ${p.originalData?.Woo_Title || ""}`;
+                    const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${arabicTitle} ${arabicDesc} ${frenchTitle}`.toLowerCase();
                     matchesSearch = terms.every(term => searchableText.includes(term));
                 }
 

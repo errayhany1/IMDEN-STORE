@@ -3,6 +3,14 @@ import { X, ChevronLeft, ChevronRight, ShoppingCart, Copy, Check, Minus, Plus, H
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 import RelatedProducts from './RelatedProducts';
+import ProductRatingStars from './ProductRatingStars';
+import {
+    frenchProductTitle,
+    isRtlText,
+    listItemsFromHtml,
+    productDescriptionHtml,
+    stripHtml,
+} from '../utils/productText';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
@@ -92,6 +100,15 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     }, [selectedProduct]);
 
     if (!viewedProduct) return null;
+
+    // The card only shows one truncated line, so the modal spells out the full
+    // title plus the description details.
+    const fullTitle = frenchProductTitle(viewedProduct);
+    const titleRtl = isRtlText(fullTitle);
+    const arabicTitle = String(viewedProduct.originalData?.Arabic_Title || '').trim();
+    const descriptionHtml = productDescriptionHtml(viewedProduct);
+    const descriptionBullets = listItemsFromHtml(descriptionHtml);
+    const descriptionText = descriptionBullets.length ? '' : stripHtml(descriptionHtml);
 
     return (
         <AnimatePresence>
@@ -204,11 +221,57 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                 </div>
                             </div>
 
-                            {/* Product Name */}
-                            {viewedProduct.name && viewedProduct.name.trim() !== '' && viewedProduct.name !== 'Unnamed Product' && (
-                                <h3 className={`text-base font-bold leading-relaxed ${dm ? 'text-white' : 'text-slate-800'}`}>
-                                    {viewedProduct.name}
+                            {/* Full product name (no truncation here) */}
+                            {fullTitle && fullTitle !== 'Unnamed Product' && (
+                                <h3
+                                    className={`text-base font-bold leading-relaxed ${titleRtl ? 'text-right' : 'text-left'} ${dm ? 'text-white' : 'text-slate-800'}`}
+                                    dir={titleRtl ? 'rtl' : 'ltr'}
+                                >
+                                    {fullTitle}
                                 </h3>
+                            )}
+
+                            {arabicTitle && arabicTitle !== fullTitle && (
+                                <p className={`text-xs leading-relaxed text-right ${dm ? 'text-gray-400' : 'text-slate-500'}`} dir="rtl">
+                                    {arabicTitle}
+                                </p>
+                            )}
+
+                            {/* Rating display only — voting happens on the product page */}
+                            <div className={`flex items-center justify-between gap-3 py-2 px-3 rounded-xl ${dm ? 'bg-gray-800/60' : 'bg-slate-50'}`}>
+                                <span className={`text-xs font-bold ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
+                                    التقييم
+                                </span>
+                                <ProductRatingStars
+                                    product={viewedProduct}
+                                    darkMode={dm}
+                                    size={18}
+                                    readOnly
+                                    onRequestRate={() => {
+                                        onClose?.();
+                                        window.location.assign(`/p/${encodeURIComponent(viewedProduct.ref || viewedProduct.id)}`);
+                                    }}
+                                />
+                            </div>
+
+                            {/* Description details */}
+                            {(descriptionBullets.length > 0 || descriptionText) && (
+                                <div className="space-y-2">
+                                    <p className={`text-[11px] font-bold ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
+                                        التفاصيل
+                                    </p>
+                                    {descriptionBullets.length > 0 ? (
+                                        <ul className={`space-y-1.5 text-xs leading-relaxed list-disc ps-4 ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
+                                            {descriptionBullets.map((item, idx) => (
+                                                <li key={idx}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className={`text-xs leading-relaxed ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
+                                            {descriptionText}
+                                        </p>
+                                    )}
+                                </div>
                             )}
 
                             {/* Category */}

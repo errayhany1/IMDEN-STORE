@@ -43,6 +43,33 @@ const clampStars = (value) => {
 const emptySummary = () => ({ avg: 0, count: 0, myRating: 0 });
 
 /**
+ * Average only — used by the grid cards, which never vote. Cached per session
+ * so a page full of cards costs one read per product at most.
+ */
+export async function fetchProductRatingSummary(product) {
+  const key = productRatingKey(product);
+  if (!key) return emptySummary();
+
+  const cached = memoryCache.get(key);
+  if (cached) return cached;
+
+  try {
+    const snap = await getDoc(doc(db, SUMMARY_COL, key));
+    const data = snap.exists() ? snap.data() : {};
+    const result = {
+      avg: Number(data.avg) || 0,
+      count: Number(data.count) || 0,
+      myRating: 0,
+    };
+    memoryCache.set(key, result);
+    return result;
+  } catch (err) {
+    console.warn('fetchProductRatingSummary failed:', err?.message || err);
+    return emptySummary();
+  }
+}
+
+/**
  * Load rating summary + current visitor vote for a product.
  */
 export async function fetchProductRating(product, user = null) {
