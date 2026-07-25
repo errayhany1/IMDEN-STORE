@@ -19,12 +19,21 @@ import {
   enrichProduct,
   buildNocoRecordFromEnrichment,
   buildSellerSku,
+  cleanReference,
 } from './productEnrichment.js';
 import { detectProductBarcode } from './openrouter.js';
 import {
   createTifawtProduct,
   isTifawtProductSyncConfigured,
 } from './tifawtProducts.js';
+import {
+  REGULAR_TEMPLATES,
+  SALE_TEMPLATES,
+  loadTemplateSelection,
+  toggleTemplateInSelection,
+  renderTemplatePreview,
+  getTemplateById,
+} from './imageTemplates.js';
 import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
 import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
@@ -98,6 +107,7 @@ const MAIN_KEYBOARD = {
   keyboard: [
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
+    [{ text: '🎨 قوالب الصور' }, { text: '🔥 قوالب التخفيض' }],
     [{ text: '🔄 إعادة تشغيل البوت' }],
   ],
   resize_keyboard: true,
@@ -166,6 +176,22 @@ async function sendMessage(chatId, text, replyMarkup = null) {
   );
 }
 
+async function sendPhotoBuffer(chatId, buffer, caption, replyMarkup = null) {
+  const form = new FormData();
+  form.append('chat_id', String(chatId));
+  form.append('photo', buffer, { filename: 'template.jpg', contentType: 'image/jpeg' });
+  if (caption) form.append('caption', caption);
+  if (replyMarkup) form.append('reply_markup', JSON.stringify(replyMarkup));
+  await withRetry(
+    () => axios.post(`${TG_API}/sendPhoto`, form, {
+      headers: form.getHeaders(),
+      timeout: 60000,
+      maxBodyLength: Infinity,
+    }),
+    { retries: 3, baseMs: 1200, label: 'sendPhoto' }
+  );
+}
+
 async function editMessage(chatId, messageId, text) {
   await axios.post(`${TG_API}/editMessageText`, {
     chat_id: chatId,
@@ -229,13 +255,43 @@ function parseCaption(caption) {
     }
   }
 
-  const priceMatch = (contentLines[0] || '0').match(/(\d+[.,]?\d*)/);
-  const price = priceMatch ? parseFloat(priceMatch[0].replace(',', '.')) : 0;
-  const name = contentLines[1] || 'منتج غير محدد';
-  // Skip SKU line if it looks like a leftover URL fragment
-  let sku = contentLines[2] || contentLines[1] || 'REF-000';
-  if (/^https?:\/\//i.test(sku)) sku = contentLines[1] || 'REF-000';
-  return { price, name, sku, amazonUrl };
+  // Price line supports discounts: "120/200" or "120 ~ 200" (sale / old).
+  const priceLine = contentLines[0] || '0';
+  const duo = priceLine.match(/(\d+[.,]?\d*)\s*[\/~\-–]\s*(\d+[.,]?\d*)/);
+  let price = 0;
+  let oldPrice = 0;
+  let nameIdx = 1;
+  if (duo) {
+    price = parseFloat(duo[1].replace(',', '.'));
+    oldPrice = parseFloat(duo[2].replace(',', '.'));
+    if (oldPrice <= price) {
+      // If user wrote old/new instead of new/old, swap.
+      const tmp = price;
+      price = oldPrice;
+      oldPrice = tmp;
+    }
+  } else {
+    const priceMatch = priceLine.match(/(\d+[.,]?\d*)/);
+    price = priceMatch ? parseFloat(priceMatch[0].replace(',', '.')) : 0;
+    // Optional second numeric line before the name = old price.
+    const maybeOld = (contentLines[1] || '').match(/^(\d+[.,]?\d*)$/);
+    if (maybeOld) {
+      oldPrice = parseFloat(maybeOld[1].replace(',', '.'));
+      nameIdx = 2;
+      if (oldPrice <= price) oldPrice = 0;
+    }
+  }
+
+  const name = contentLines[nameIdx] || 'منتج غير محدد';
+  let sku = contentLines[nameIdx + 1] || contentLines[nameIdx] || 'REF-000';
+  if (/^https?:\/\//i.test(sku)) sku = contentLines[nameIdx] || 'REF-000';
+  return { price, oldPrice, name, sku, amazonUrl };
+}
+
+/** SKU exactly as the seller typed it (for Tifawt). Soft-clean only. */
+function tifawtSkuFromCaption(rawSku) {
+  const cleaned = cleanReference(rawSku);
+  return cleaned || String(rawSku || 'REF').trim() || 'REF';
 }
 
 function skuCandidates(rawSku) {
@@ -329,9 +385,12 @@ async function requestProductDestination(chatId, files, caption) {
   const imageNote = files.length >= 2 && files.length <= 4
     ? `${files.length} صور`
     : `${files.length} صورة (يفضّل إرسال 2 إلى 4)`;
+  const saleNote = parsed.oldPrice
+    ? `\n🔥 تخفيض: ${parsed.oldPrice} → ${parsed.price} DH`
+    : '';
   await sendMessage(
     chatId,
-    `📍 أين تريد حفظ هذا المنتج؟\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH\n📋 ${buildSellerSku(parsed.sku)}\n🖼️ ${imageNote}\n\n• Tifawt فقط: حفظ مباشر بالصورة الأولى، بدون إنشاء وصف أو صور.\n• NocoDB أو كلاهما: إنشاء عنوان ووصف وصور مختلفة، ووضع الصورة الأولى كآخر صورة في الموقع.`,
+    `📍 أين تريد حفظ هذا المنتج؟\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH${saleNote}\n📋 ${parsed.sku}\n🖼️ ${imageNote}\n\n• Tifawt: الاسم والمرجع والصور الأصلية كما أرسلتها (بنفس الترتيب).\n• NocoDB أو كلاهما: صور وعناوين مولّدة للموقع/الشيت، وTifawt يبقى بالأصل فقط.`,
     destinationKeyboard(token)
   );
 }
@@ -344,19 +403,20 @@ function enqueueProduct(task) {
 }
 
 async function processProduct(chatId, files, caption, destination = 'both') {
-  const { price, name, sku, amazonUrl } = parseCaption(caption);
+  const { price, oldPrice, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
+  const tifawtSku = tifawtSkuFromCaption(sku);
   console.log(
-    `📦 Processing product: "${name}" | ${price} DH | ${files.length} images | SKU ${sellerSku} | destination=${destination}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
+    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destination=${destination}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
   );
 
   await sendMessage(
     chatId,
     destination === 'tifawt'
-      ? `⏳ جاري إرسال المنتج مباشرة إلى Tifawt...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+      ? `⏳ جاري إرسال المنتج مباشرة إلى Tifawt (أصل بدون تعديل)...\n📦 ${name}\n💰 ${price} DH\n📋 ${tifawtSku}\n🖼️ ${files.length} صورة`
       : amazonUrl
         ? `⏳ جاري كشط أمازون وتوليد النصوص/الصور...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}\n🔗 Amazon`
-        : `⏳ جاري تحليل جميع الصور وإنشاء صور وعناوين وأوصاف مختلفة...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}`
+        : `⏳ جاري تحليل جميع الصور وإنشاء صور وعناوين وأوصاف مختلفة...\n📦 ${name}\n💰 ${price} DH${oldPrice ? ` ← كان ${oldPrice}` : ''}\n📋 ${sellerSku}`
   );
 
   const downloaded = await Promise.all(
@@ -375,8 +435,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     return;
   }
 
-  // Tifawt-only is intentionally direct: no NocoDB upload, copy generation,
-  // or studio images. A lightweight vision pass only reads a visible barcode.
+  // Tifawt-only: exact seller payload — caption name/SKU + original photos in order.
   if (destination === 'tifawt') {
     let barcode = '';
     try {
@@ -386,16 +445,16 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     }
     const result = await createTifawtProduct({
       name,
-      sku: sellerSku,
+      sku: tifawtSku,
       price,
       barcode,
-      imageBuffer: originalBuffers[0],
-      imageFileName: `${sellerSku}.jpg`,
+      imageBuffers: originalBuffers,
+      imageFileName: `${tifawtSku}-1.jpg`,
     });
     if (result?.ok) {
       await sendMessage(
         chatId,
-        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${barcode ? `\n🏷️ الباركود: ${barcode}` : '\n🏷️ لم يظهر باركود مقروء'}`
+        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${tifawtSku}\n🖼️ ${result.imageCount || originalBuffers.length} صورة أصلية${barcode ? `\n🏷️ الباركود: ${barcode}` : '\n🏷️ لم يظهر باركود مقروء'}`
       );
     } else {
       await sendMessage(chatId, `❌ تعذر إنشاء المنتج في Tifawt:\n${result?.error || result?.reason || 'خطأ غير معروف'}`);
@@ -414,6 +473,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
         originalBuffers,
         name,
         price,
+        oldPrice,
         ref: sku,
         amazonUrl,
         uploadToNocoDB,
@@ -506,6 +566,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
   const aiNote = !enrichment.amazonUrl && (enrichment.nocoImages || []).length > 1
     ? '\n✨ تم إنشاء صور استوديو احترافية من صور المنتج'
     : '';
+  const saleNote = oldPrice ? `\n🔥 تخفيض من ${oldPrice} إلى ${price} DH` : '';
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
@@ -513,24 +574,20 @@ async function processProduct(chatId, files, caption, destination = 'both') {
   let tifawtNote = '';
   if (destination === 'both' && isTifawtProductSyncConfigured()) {
     try {
-      const tifawtName = enrichment.copy?.arabic_title
-        || enrichment.copy?.french_title
-        || enrichment.copy?.woo_title
-        || name;
-      const tifawtImage = originalBuffers[0];
+      // Tifawt always gets the seller original — never AI title/images/ERY SKU.
       const tifawtResult = await createTifawtProduct({
-        name: tifawtName,
-        sku: sellerSku,
+        name,
+        sku: tifawtSku,
         price,
         barcode,
-        imageBuffer: tifawtImage,
-        imageFileName: `${sellerSku}.jpg`,
+        imageBuffers: originalBuffers,
+        imageFileName: `${tifawtSku}-1.jpg`,
       });
       if (tifawtResult?.skipped) {
         tifawtNote = '\n🛒 Tifawt: لم يُضبط (TIFAWT_EMAIL/PASSWORD)';
       } else if (tifawtResult?.ok) {
-        tifawtNote = '\n🛒 Tifawt: تم إضافة المنتج';
-        console.log('✅ Tifawt product created:', sellerSku, tifawtResult.data?.id || '');
+        tifawtNote = `\n🛒 Tifawt: تم إضافة الأصل (${tifawtResult.imageCount || originalBuffers.length} صور)`;
+        console.log('✅ Tifawt product created:', tifawtSku, tifawtResult.data?.id || '');
       } else {
         tifawtNote = `\n🛒 Tifawt خطأ: ${tifawtResult?.error || 'فشل الإنشاء'}`;
       }
@@ -547,7 +604,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }
@@ -558,6 +615,59 @@ function isRestartCommand(text) {
     || text === '🔄 إعادة تشغيل البوت'
     || text === 'اعادة تشغيل البوت'
     || text === 'إعادة تشغيل البوت';
+}
+
+function isTemplatesCommand(text) {
+  const t = String(text || '').trim().toLowerCase();
+  return t === '/templates'
+    || t === '/template'
+    || t === 'قوالب'
+    || t === '🎨 قوالب الصور';
+}
+
+function isSaleTemplatesCommand(text) {
+  const t = String(text || '').trim().toLowerCase();
+  return t === '/templates_sale'
+    || t === '/templatesale'
+    || t === '/sale_templates'
+    || t === 'قوالب التخفيض'
+    || t === '🔥 قوالب التخفيض';
+}
+
+async function sendTemplateGallery(chatId, kind = 'regular') {
+  const pool = kind === 'sale' ? SALE_TEMPLATES : REGULAR_TEMPLATES;
+  const sel = loadTemplateSelection();
+  const active = new Set(sel[kind] || []);
+
+  await sendMessage(
+    chatId,
+    kind === 'sale'
+      ? '🔥 قوالب التخفيض\nاضغط ✅ لتفعيل القالب أو إلغائه.\nيُستعمل تلقائياً عندما يكون للكابشن سعر قديم (مثال: 120/200).'
+      : '🎨 قوالب المنتجات العادية\nاضغط ✅ لتفعيل القالب أو إلغائه.\nالقوالب المفعّلة تُستخدم دائماً عند توليد صور NocoDB/Sheets.'
+  );
+
+  for (const tpl of pool) {
+    const on = active.has(tpl.id);
+    const preview = await renderTemplatePreview(tpl);
+    await sendPhotoBuffer(
+      chatId,
+      preview,
+      `${on ? '✅ مفعّل' : '⬜ غير مفعّل'}\n${tpl.nameAr}\n${tpl.blurbAr}\n🆔 ${tpl.id}`,
+      {
+        inline_keyboard: [[
+          {
+            text: on ? '✅ مفعّل — اضغط للإيقاف' : '⬜ تفعيل هذا القالب',
+            callback_data: `tpl:${kind}:${tpl.id}`,
+          },
+        ]],
+      }
+    );
+  }
+
+  const activeNames = [...active]
+    .map((id) => getTemplateById(id)?.nameAr || id)
+    .join(' · ') || '—';
+  await sendMessage(chatId, `📌 القوالب المفعّلة الآن:\n${activeNames}`);
 }
 
 function isStopCommand(text) {
@@ -594,9 +704,19 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n💡 عند الضغط على أي زر، سيبقى فعالاً حتى تضغط على "إعادة تشغيل البوت".',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: اكتب السعر هكذا 120/200 (الجديد/القديم)\n\n🎨 قوالب الصور: /templates\n🔥 قوالب التخفيض: /templates_sale\n\n💡 عند الضغط على أي زر، سيبقى فعالاً حتى تضغط على "إعادة تشغيل البوت".',
         MAIN_KEYBOARD
       );
+      return;
+    }
+
+    if (isTemplatesCommand(text)) {
+      await sendTemplateGallery(chatId, 'regular');
+      return;
+    }
+
+    if (isSaleTemplatesCommand(text)) {
+      await sendTemplateGallery(chatId, 'sale');
       return;
     }
 
@@ -732,6 +852,40 @@ async function handleUpdate(update) {
     const chatId = cb.message.chat.id;
     const msgId = cb.message.message_id;
     const data = cb.data;
+
+    if (data.startsWith('tpl:')) {
+      const [, kind, templateId] = data.split(':');
+      if ((kind !== 'regular' && kind !== 'sale') || !getTemplateById(templateId)) {
+        await answerCallback(cb.id, 'قالب غير معروف');
+        return;
+      }
+      const result = toggleTemplateInSelection(kind, templateId);
+      if (!result.ok) {
+        await answerCallback(cb.id, 'يجب الإبقاء على قالب واحد على الأقل');
+        return;
+      }
+      const on = (result.selection[kind] || []).includes(templateId);
+      const tpl = getTemplateById(templateId);
+      await answerCallback(cb.id, on ? `تم تفعيل: ${tpl.nameAr}` : `تم إيقاف: ${tpl.nameAr}`);
+      try {
+        await axios.post(`${TG_API}/editMessageCaption`, {
+          chat_id: chatId,
+          message_id: msgId,
+          caption: `${on ? '✅ مفعّل' : '⬜ غير مفعّل'}\n${tpl.nameAr}\n${tpl.blurbAr}\n🆔 ${tpl.id}`,
+          reply_markup: {
+            inline_keyboard: [[
+              {
+                text: on ? '✅ مفعّل — اضغط للإيقاف' : '⬜ تفعيل هذا القالب',
+                callback_data: `tpl:${kind}:${templateId}`,
+              },
+            ]],
+          },
+        }, { timeout: 30000 });
+      } catch (e) {
+        console.warn('editMessageCaption failed:', e.message);
+      }
+      return;
+    }
 
     if (data.startsWith('dest:')) {
       const [, destination, token] = data.split(':');

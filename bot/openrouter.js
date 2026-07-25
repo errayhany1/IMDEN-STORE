@@ -2,6 +2,8 @@
  * OpenRouter helpers for product text + image generation.
  */
 import axios from 'axios';
+import { normalizeCatalogImages } from './imageNormalize.js';
+import { getActiveTemplatesForProduct } from './imageTemplates.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || 'google/gemini-2.5-flash';
@@ -199,16 +201,24 @@ async function generateOneImage({ imageBuffers, prompt }) {
 }
 
 /**
- * Returns AI product images from seller reference photo(s).
- * Caller keeps the real photo separately as the last gallery image.
+ * Returns AI product images from seller reference photo(s), using the
+ * active catalog templates, then normalized to a fixed square size.
  *
- * @param {{ imageBuffer?: Buffer, imageBuffers?: Buffer[], titleFr?: string, price?: number|string, mode?: 'amazon'|'photo' }} opts
+ * @param {{
+ *   imageBuffer?: Buffer,
+ *   imageBuffers?: Buffer[],
+ *   titleFr?: string,
+ *   price?: number|string,
+ *   oldPrice?: number|string,
+ *   mode?: 'amazon'|'photo',
+ * }} opts
  */
 export async function generateProductImages({
   imageBuffer,
   imageBuffers,
   titleFr,
   price,
+  oldPrice,
   mode = 'photo',
 }) {
   if (!isOpenRouterConfigured()) {
@@ -223,48 +233,29 @@ export async function generateProductImages({
   }
 
   const productLabel = titleFr || 'Produit';
+  const templates = getActiveTemplatesForProduct({ oldPrice });
   const base = `You are a professional ecommerce product photographer for a Moroccan wholesale catalog (Errayhany).
 Use the product shown in the reference photo(s) as the ONLY product.
 Keep the same product identity: shape, color, ports, proportions, branding marks.
 Do NOT invent a different product. Do NOT add unrelated objects.
-Output a square high-end marketplace photo, sharp focus, soft studio lighting.`;
+Output MUST be a square 1:1 high-end marketplace photo, sharp focus, soft studio lighting.
+Exact framing: product centered, consistent margins on all sides.`;
 
-  const prompts = mode === 'amazon'
-    ? [
-      `${base}
-Create IMAGE 1 — CLEAN STUDIO:
-- Pure white / very light seamless background
-- Product centered, premium catalog look
-- No text, no badges, no watermarks, no logos added`,
-      `${base}
-Create IMAGE 2 — WHOLESALE PROMO:
-- Same product, clean studio base
-- Subtle elegant badges only: "جملة" and "${price} DH"
-- Not cluttered, marketplace-ready`,
-    ]
-    : [
-      `${base}
-Create IMAGE 1 — PROFESSIONAL STUDIO HERO (mandatory):
-- Clean white seamless background
-- Centered hero product shot, commercial catalog quality
-- Remove messy background / hands / clutter from the reference if present
-- Keep realistic materials and true colors
-- No text, no price tags, no watermarks`,
-      `${base}
-Create IMAGE 2 — ANGLE / DETAIL:
-- Same product, slight alternate angle or useful detail view
-- Same studio lighting and white background
-- No text overlays`,
-      `${base}
-Create IMAGE 3 — WHOLESALE CARD:
-- Same product on clean studio background
-- Small elegant offer accents: "جملة" + "${price} DH"
-- Title hint for "${productLabel}" only if it stays readable and minimal`,
-    ];
+  // Prefer selected templates; fall back to classic prompts if none loaded.
+  const prompts = templates.length
+    ? templates.map((tpl) => `${base}\n${tpl.prompt({ title: productLabel, price, oldPrice })}`)
+    : mode === 'amazon'
+      ? [
+        `${base}\nCLEAN STUDIO white background, no text.`,
+        `${base}\nWHOLESALE PROMO with جملة and ${price} DH.`,
+      ]
+      : [
+        `${base}\nPROFESSIONAL STUDIO HERO, white background, no text.`,
+        `${base}\nANGLE / DETAIL, same studio look, no text.`,
+      ];
 
-  // Photo-only path needs at least 1 professional image; keep count modest for bot stability.
-  const defaultCount = mode === 'amazon' ? 2 : 2;
-  const limited = prompts.slice(0, Number(process.env.AI_IMAGE_COUNT || defaultCount));
+  const defaultCount = Math.min(prompts.length, Number(process.env.AI_IMAGE_COUNT || 2));
+  const limited = prompts.slice(0, defaultCount);
   const results = [];
   for (const prompt of limited) {
     try {
@@ -276,8 +267,7 @@ Create IMAGE 3 — WHOLESALE CARD:
     }
   }
 
-  // Ensure at least one successful image when possible: one retry on the hero prompt.
-  if (!results.some(Boolean)) {
+  if (!results.some(Boolean) && prompts[0]) {
     try {
       const buf = await generateOneImage({ imageBuffers: refs, prompt: prompts[0] });
       results[0] = buf;
@@ -286,7 +276,8 @@ Create IMAGE 3 — WHOLESALE CARD:
     }
   }
 
-  return results.filter(Boolean);
+  const raw = results.filter(Boolean);
+  return normalizeCatalogImages(raw);
 }
 
 export function isOpenRouterConfigured() {

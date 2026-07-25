@@ -1,7 +1,9 @@
 /**
  * Create products in Tifawt ERP from the Telegram bot.
- * Sends: image + name + selling price + SKU (reference).
- * Auth: email/password login → Bearer accessToken (cached in memory).
+ * Tifawt always receives the seller's ORIGINAL payload:
+ * - caption name (not AI title)
+ * - caption SKU/reference as typed (not ERY- rewritten)
+ * - original photos in the same order they were sent
  */
 import axios from 'axios';
 import FormData from 'form-data';
@@ -17,13 +19,13 @@ export function isTifawtProductSyncConfigured() {
 }
 
 /**
- * Create a product in Tifawt.
  * @param {{
  *   name: string,
  *   sku: string,
  *   price: number,
  *   barcode?: string,
  *   imageBuffer?: Buffer,
+ *   imageBuffers?: Buffer[],
  *   imageFileName?: string,
  * }} product
  */
@@ -39,6 +41,12 @@ export async function createTifawtProduct(product) {
     throw new Error('Tifawt product requires name, sku, and numeric price');
   }
 
+  const imageBuffers = (
+    product.imageBuffers?.length
+      ? product.imageBuffers
+      : (product.imageBuffer ? [product.imageBuffer] : [])
+  ).filter((b) => b?.length);
+
   const attempt = async (token) => {
     const form = new FormData();
     form.append('name', name);
@@ -50,12 +58,17 @@ export async function createTifawtProduct(product) {
     if (Number.isFinite(BUSINESS_ID) && BUSINESS_ID > 0) {
       form.append('businessId', String(BUSINESS_ID));
     }
-    if (product.imageBuffer?.length) {
-      form.append('image', product.imageBuffer, {
-        filename: product.imageFileName || `${sku}.jpg`,
-        contentType: 'image/jpeg',
-      });
-    }
+
+    // Keep seller order: first photo is primary `image`, then extras as images[].
+    imageBuffers.forEach((buf, index) => {
+      const filename = index === 0
+        ? (product.imageFileName || `${sku}-1.jpg`)
+        : `${sku}-${index + 1}.jpg`;
+      if (index === 0) {
+        form.append('image', buf, { filename, contentType: 'image/jpeg' });
+      }
+      form.append('images[]', buf, { filename, contentType: 'image/jpeg' });
+    });
 
     const { data, status } = await axios.post(
       `${API_BASE}/products`,
@@ -70,7 +83,7 @@ export async function createTifawtProduct(product) {
         maxContentLength: Infinity,
       }
     );
-    return { ok: true, status, data };
+    return { ok: true, status, data, imageCount: imageBuffers.length };
   };
 
   try {

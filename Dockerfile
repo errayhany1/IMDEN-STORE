@@ -28,7 +28,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Tracking API deps (axios/express/dotenv/form-data)
+# Tracking API deps (axios/express/dotenv/form-data/sharp)
 FROM node:22-alpine AS tracking-deps
 WORKDIR /tracking
 COPY bot/package.json ./
@@ -43,6 +43,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY --from=tracking-deps /tracking/node_modules /tracking/node_modules
 COPY bot/package.json /tracking/package.json
 COPY bot/*.js /tracking/
+COPY bot/template-selection.json /tracking/template-selection.json
 
 # Install our SPA + /bot-api config directly. Do not use
 # /etc/nginx/templates + envsubst: a skipped/failed render leaves the stock

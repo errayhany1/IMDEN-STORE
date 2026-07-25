@@ -12,6 +12,7 @@ RUN npm install --omit=dev && npm cache clean --force
 # Copy every bot module (tifawt*, firebase*, enrichment, ...) so new files
 # never get left out of the image.
 COPY *.js ./
+COPY template-selection.json ./
 
 EXPOSE 3000
 

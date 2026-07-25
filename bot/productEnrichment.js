@@ -72,6 +72,7 @@ export async function enrichProduct({
   originalBuffers,
   name,
   price,
+  oldPrice = 0,
   ref,
   amazonUrl = '',
   uploadToNocoDB,
@@ -248,6 +249,7 @@ export async function enrichProduct({
         imageBuffers: realBuffers.slice(0, 4),
         titleFr: copy?.french_title || displayName,
         price,
+        oldPrice,
         // Without Amazon URL: always craft studio images from the seller photos.
         mode: amazonUrl ? 'amazon' : 'photo',
       });
