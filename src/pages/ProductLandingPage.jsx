@@ -2,13 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   ShoppingCart,
-  MessageCircle,
   ChevronLeft,
   ChevronRight,
   Truck,
   ShieldCheck,
   BadgeCheck,
   ChevronDown,
+  Heart,
+  Home,
+  Globe2,
+  Copy,
+  Check,
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import {
@@ -30,6 +34,7 @@ import {
 } from '../utils/productText';
 
 const WA_NUMBER = '212664630566';
+const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
 const SITE_URL = 'https://errayhany.com';
 const BRAND = 'Errayhany';
 
@@ -96,7 +101,13 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const setProducts = useStore((s) => s.setProducts);
   const appendProducts = useStore((s) => s.appendProducts);
   const toggleCart = useStore((s) => s.toggleCart);
+  const toggleWishlistSidebar = useStore((s) => s.toggleWishlistSidebar);
+  const cart = useStore((s) => s.cart);
+  const wishlist = useStore((s) => s.wishlist);
   const darkMode = useStore((s) => s.darkMode);
+
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const wishlistCount = wishlist.length;
 
   const [lang, setLang] = useState(getLang);
   const [activeImg, setActiveImg] = useState(0);
@@ -106,6 +117,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const [zoomOpen, setZoomOpen] = useState(false);
   const [addedFlash, setAddedFlash] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
+  const [refCopied, setRefCopied] = useState(false);
   const touchX = useRef(null);
 
   const sku = useMemo(() => {
@@ -214,6 +226,38 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     return match?.[1] || '';
   }, [images, descHtml]);
 
+  // Photos for the illustrated blurb (exclude the specs card).
+  const galleryPhotos = useMemo(
+    () => images.filter((src) => src && src !== specsImage && !/specs-/i.test(src)).slice(0, 4),
+    [images, specsImage]
+  );
+
+  const shortBlurb = useMemo(() => {
+    const fromShort = stripHtml(shortHtml);
+    if (fromShort) return fromShort.length > 260 ? `${fromShort.slice(0, 260)}…` : fromShort;
+    const cleaned = plainDesc
+      .replace(/بطاقة المواصفات|Fiche technique/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!cleaned) return '';
+    return cleaned.length > 260 ? `${cleaned.slice(0, 260)}…` : cleaned;
+  }, [shortHtml, plainDesc]);
+
+  const specRows = useMemo(() => {
+    const rows = [];
+    if (product?.ref) rows.push({ label: 'SKU', value: product.ref });
+    if (od.brand || od.Brand) rows.push({ label: isFr ? 'Marque' : 'العلامة', value: od.brand || od.Brand });
+    if (od.color || od.Color) rows.push({ label: isFr ? 'Couleur' : 'اللون', value: od.color || od.Color });
+    if (product?.baseCategory || (product?.category && product.category !== 'Out of Stock')) {
+      rows.push({
+        label: isFr ? 'Catégorie' : 'الفئة',
+        value: product.baseCategory || product.category,
+      });
+    }
+    if (product?.price != null) rows.push({ label: isFr ? 'Prix' : 'الثمن', value: `${product.price} DH` });
+    return rows;
+  }, [product, od, isFr]);
+
   const available = product?.isAvailable !== false;
   const dm = darkMode;
 
@@ -310,7 +354,9 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       zoom: 'Agrandir',
       highlights: 'Points clés',
       description: 'Description',
+      shortDesc: 'Description courte',
       specs: 'Fiche technique',
+      illustrated: 'Aperçu en images',
       faq: 'Questions fréquentes',
       delivery: 'Livraison & paiement',
       deliveryBody: 'Paiement à la livraison (COD). Expédition sous 24–72h selon la ville. Commandes gros via WhatsApp.',
@@ -332,7 +378,9 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       zoom: 'تكبير',
       highlights: 'أبرز المميزات',
       description: 'الوصف',
-      specs: 'بطاقة المواصفات',
+      shortDesc: 'وصف قصير',
+      specs: 'المواصفات',
+      illustrated: 'نظرة سريعة بالصور',
       faq: 'أسئلة شائعة',
       delivery: 'التوصيل والدفع',
       deliveryBody: 'الدفع عند الاستلام. الشحن خلال 24–72 ساعة حسب المدينة. طلبات الجملة عبر واتساب.',
@@ -381,23 +429,96 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       className={`min-h-screen ${shell} pb-28 md:pb-16`}
       dir={isFr ? 'ltr' : 'rtl'}
     >
-      <header className={`sticky top-0 z-30 border-b ${line} ${panel}/95 backdrop-blur-md`}>
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <a href={backHref} className="flex items-center gap-2 min-w-0">
-            <ArrowRight size={18} className={`shrink-0 ${muted} ${isFr ? 'rotate-180' : ''}`} />
-            <span className="text-lg font-bold text-primary truncate">{BRAND}</span>
-          </a>
-          <button
-            type="button"
-            onClick={() => {
-              const next = isFr ? 'ar' : 'fr';
-              localStorage.setItem('site_lang', next);
-              setLang(next);
-            }}
-            className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${line} ${dm ? 'hover:bg-gray-800' : 'hover:bg-slate-50'}`}
+      <header className={`sticky top-0 z-40 pt-[env(safe-area-inset-top)] ${dm ? 'bg-gray-950' : 'bg-background-light'}`}>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2">
+          <div
+            className={`flex items-center gap-2 sm:gap-3 h-14 sm:h-[58px] px-2.5 sm:px-4 rounded-2xl border shadow-[0_4px_18px_rgba(15,23,42,0.07)]
+              ${dm ? 'bg-[#142038] border-white/5 shadow-black/30' : 'bg-white border-slate-100'}`}
           >
-            {isFr ? 'العربية' : 'FR'}
-          </button>
+            {/* Back */}
+            <a
+              href={backHref}
+              className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors
+                ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100'}`}
+              aria-label={t.back}
+              title={t.back}
+            >
+              <ArrowRight size={18} className={isFr ? 'rotate-180' : ''} />
+            </a>
+
+            {/* Brand */}
+            <a href={backHref} className="flex items-center min-w-0 flex-1 gap-2.5">
+              <img
+                src={dm ? '/logo-dark.png' : '/logo.png'}
+                alt={BRAND}
+                className="h-8 sm:h-9 w-auto object-contain"
+                style={{ maxWidth: '140px' }}
+              />
+              <span className={`hidden sm:inline text-[11px] font-semibold truncate ${muted}`}>
+                {isFr ? 'Grossiste électronique' : 'إلكترونيات بالجملة'}
+              </span>
+            </a>
+
+            {/* Actions */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = isFr ? 'ar' : 'fr';
+                  localStorage.setItem('site_lang', next);
+                  setLang(next);
+                }}
+                className={`inline-flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[11px] font-bold border transition-colors
+                  ${dm
+                    ? 'border-white/10 text-gray-200 hover:bg-white/10'
+                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                aria-label={isFr ? 'العربية' : 'Français'}
+              >
+                <Globe2 size={14} />
+                {isFr ? 'AR' : 'FR'}
+              </button>
+
+              <a
+                href={backHref}
+                className={`hidden sm:inline-flex w-10 h-10 rounded-xl items-center justify-center transition-colors
+                  ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100'}`}
+                aria-label={isFr ? 'Boutique' : 'المتجر'}
+                title={isFr ? 'Boutique' : 'المتجر'}
+              >
+                <Home size={18} />
+              </a>
+
+              <button
+                type="button"
+                onClick={toggleWishlistSidebar}
+                className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors
+                  ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:text-red-500 hover:bg-slate-100'}`}
+                aria-label={isFr ? 'Favoris' : 'المفضلة'}
+              >
+                <Heart size={18} />
+                {wishlistCount > 0 && (
+                  <span className="absolute top-1 end-1 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleCart}
+                className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors
+                  ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:text-primary hover:bg-slate-100'}`}
+                aria-label={isFr ? 'Panier' : 'السلة'}
+              >
+                <ShoppingCart size={18} />
+                {cartCount > 0 && (
+                  <span className="absolute top-1 end-1 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -488,17 +609,31 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           <section className="mt-5 md:mt-0 space-y-5">
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span
-                  className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                    available
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {available ? t.stock : t.out}
-                </span>
+                {!available && (
+                  <span
+                    className={`text-[11px] font-bold px-2 py-0.5 rounded ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-200 text-slate-600'}`}
+                  >
+                    {t.out}
+                  </span>
+                )}
                 {product.ref && (
-                  <span className={`text-[11px] font-mono ${muted}`}>{product.ref}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(product.ref);
+                      setRefCopied(true);
+                      setTimeout(() => setRefCopied(false), 1500);
+                    }}
+                    className={`inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-md border transition-colors
+                      ${refCopied
+                        ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
+                        : dm ? 'border-white/10 text-gray-400 hover:bg-white/10' : 'border-slate-200 text-slate-500 hover:bg-slate-100'}`}
+                    title={isFr ? 'Copier la référence' : 'نسخ المرجع'}
+                    aria-label={isFr ? 'Copier la référence' : 'نسخ المرجع'}
+                  >
+                    {refCopied ? <Check size={12} /> : <Copy size={12} />}
+                    {product.ref}
+                  </button>
                 )}
               </div>
               <h1 className="text-xl sm:text-2xl md:text-[1.85rem] font-bold leading-snug">
@@ -538,7 +673,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 rel="noopener noreferrer"
                 className="flex-1 min-h-12 bg-whatsapp text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:brightness-110"
               >
-                <MessageCircle size={18} />
+                <img src={WA_ICON} alt="" aria-hidden="true" className="w-6 h-6 drop-shadow-md" />
                 {t.wa}
               </a>
             </div>
@@ -576,45 +711,6 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             </div>
           </section>
         </div>
-
-        {/* Description + specs */}
-        {(safeDescHtml || specsImage) && (
-          <section className={`mt-10 pt-8 border-t ${line} space-y-6`}>
-            <div>
-              <h2 className="text-lg font-bold mb-3">{t.description}</h2>
-              {safeDescHtml ? (
-                <div
-                  className={`product-desc prose prose-sm max-w-none leading-relaxed ${soft} ${dm ? 'prose-invert' : ''}`}
-                  dangerouslySetInnerHTML={{ __html: safeDescHtml }}
-                />
-              ) : (
-                <p className={`text-sm leading-relaxed ${soft}`}>{plainDesc}</p>
-              )}
-            </div>
-
-            {specsImage && (
-              <div>
-                <h2 className="text-lg font-bold mb-3">{t.specs}</h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const idx = images.findIndex((src) => src === specsImage);
-                    if (idx >= 0) setActiveImg(idx);
-                    setZoomOpen(true);
-                  }}
-                  className={`block w-full max-w-xl overflow-hidden rounded-2xl border ${line} ${panel}`}
-                >
-                  <img
-                    src={specsImage}
-                    alt={t.specs}
-                    className="w-full h-auto object-contain"
-                    loading="lazy"
-                  />
-                </button>
-              </div>
-            )}
-          </section>
-        )}
 
         {/* Delivery */}
         <section className={`mt-8 pt-6 border-t ${line}`}>
@@ -655,7 +751,64 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           </section>
         )}
 
-        {/* Related */}
+        {/* Short description + specs — above the related strip */}
+        {(shortBlurb || bullets.length > 0 || specRows.length > 0 || specsImage) && (
+          <section className={`mt-10 pt-8 border-t ${line} space-y-6`}>
+            {shortBlurb && (
+              <div>
+                <h2 className="text-lg font-bold mb-2">{t.shortDesc}</h2>
+                <p className={`text-sm leading-relaxed max-w-3xl ${soft}`}>{shortBlurb}</p>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-6 items-start">
+              <div>
+                <h2 className="text-lg font-bold mb-3">{t.specs}</h2>
+                {specRows.length > 0 && (
+                  <dl className={`rounded-2xl border overflow-hidden ${line} ${panel}`}>
+                    {specRows.map((row) => (
+                      <div
+                        key={row.label}
+                        className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm border-b last:border-b-0 ${line}`}
+                      >
+                        <dt className={`font-semibold shrink-0 ${muted}`}>{row.label}</dt>
+                        <dd className={`font-medium text-end ${soft}`}>{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {bullets.length > 0 && (
+                  <ul className={`mt-4 space-y-2 text-sm leading-relaxed list-disc ps-5 ${soft}`}>
+                    {bullets.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {specsImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = images.findIndex((src) => src === specsImage);
+                    if (idx >= 0) setActiveImg(idx);
+                    setZoomOpen(true);
+                  }}
+                  className={`block w-full overflow-hidden rounded-2xl border ${line} ${panel}`}
+                >
+                  <img
+                    src={specsImage}
+                    alt={t.specs}
+                    className="w-full h-auto object-contain"
+                    loading="lazy"
+                  />
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Related strip */}
         <div className={`mt-10 pt-8 border-t ${line}`}>
           <RelatedProducts
             product={product}
@@ -667,6 +820,47 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             }}
           />
         </div>
+
+        {/* Brief illustrated description — below the related strip */}
+        {(shortBlurb || galleryPhotos.length > 0 || safeDescHtml) && (
+          <section className={`mt-10 pt-8 border-t ${line} space-y-5`}>
+            <div>
+              <h2 className="text-lg font-bold mb-2">{t.illustrated}</h2>
+              {shortBlurb ? (
+                <p className={`text-sm leading-relaxed max-w-3xl ${soft}`}>{shortBlurb}</p>
+              ) : safeDescHtml ? (
+                <div
+                  className={`product-desc prose prose-sm max-w-none leading-relaxed ${soft} ${dm ? 'prose-invert' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: safeDescHtml }}
+                />
+              ) : null}
+            </div>
+
+            {galleryPhotos.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {galleryPhotos.map((src, idx) => (
+                  <button
+                    key={src + idx}
+                    type="button"
+                    onClick={() => {
+                      const i = images.indexOf(src);
+                      if (i >= 0) setActiveImg(i);
+                      setZoomOpen(true);
+                    }}
+                    className={`aspect-square overflow-hidden rounded-2xl border ${line} ${panel}`}
+                  >
+                    <img
+                      src={src}
+                      alt={`${title} ${idx + 1}`}
+                      className="w-full h-full object-contain p-2"
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       {/* Sticky mobile buy bar */}
@@ -680,10 +874,10 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             href={`https://wa.me/${WA_NUMBER}?text=${waText}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 w-11 h-11 rounded-xl bg-whatsapp text-white flex items-center justify-center"
+            className="shrink-0 w-11 h-11 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center"
             aria-label={t.wa}
           >
-            <MessageCircle size={20} />
+            <img src={WA_ICON} alt="WhatsApp" className="w-8 h-8 drop-shadow-md" />
           </a>
           <button
             type="button"

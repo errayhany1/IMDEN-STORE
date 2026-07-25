@@ -52,6 +52,7 @@ function App() {
   } = useStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showCatalogToast, setShowCatalogToast] = useState(false);
   // AuthModal sets this flag right before signInWithRedirect. Show a
   // full-screen overlay until Google sends the user back so the site
   // doesn't flash as "logged out" while the redirect is still resolving.
@@ -64,6 +65,17 @@ function App() {
       console.warn('Native shell init failed:', error);
     });
   }, []);
+
+  // Brief tip when entering catalog mode — auto-hides so it never stays on screen.
+  useEffect(() => {
+    if (browseMode !== 'catalog') {
+      setShowCatalogToast(false);
+      return undefined;
+    }
+    setShowCatalogToast(true);
+    const timer = setTimeout(() => setShowCatalogToast(false), 4500);
+    return () => clearTimeout(timer);
+  }, [browseMode]);
 
   // Sync shop/catalog + /family/:id URLs with store
   useEffect(() => {
@@ -356,17 +368,6 @@ function App() {
       {/* Main Content — extra bottom padding clears the mobile bottom nav */}
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 pt-3 pb-28 md:pb-6">
 
-        {browseMode === 'catalog' && (
-          <div
-            className={`mb-3 rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold flex items-center justify-between gap-2
-              ${darkMode ? 'bg-violet-500/10 border-violet-500/30 text-violet-200' : 'bg-violet-50 border-violet-200 text-violet-800'}`}
-            style={{ direction: 'rtl' }}
-          >
-            <span>وضع الكتالوج — اضغط العين لفتح صفحة المنتج، أو على الصورة للمعاينة السريعة</span>
-            <a href="/" className="shrink-0 underline underline-offset-2 opacity-80 hover:opacity-100">المتجر</a>
-          </div>
-        )}
-
         {/* Family hero slider — click opens the family catalog */}
         <FamilyHeroSlider />
 
@@ -402,6 +403,38 @@ function App() {
         >
           <ChevronUp size={20} />
         </button>
+      )}
+
+      {/* Catalog mode tip — temporary toast */}
+      {showCatalogToast && (
+        <div
+          className={`fixed top-20 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50
+            rounded-2xl shadow-2xl border px-4 py-3 flex items-start gap-3
+            ${darkMode ? 'bg-gray-900 border-violet-500/40 text-violet-100' : 'bg-white border-violet-200 text-violet-900'}`}
+          style={{ direction: 'rtl', animation: 'slideUp 0.35s ease-out' }}
+          role="status"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold">وضع الكتالوج</p>
+            <p className={`text-xs mt-0.5 leading-relaxed ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+              اضغط العين لفتح صفحة المنتج، أو على الصورة للمعاينة السريعة
+            </p>
+            <a
+              href="/"
+              className="inline-block mt-1.5 text-xs font-bold underline underline-offset-2 text-primary"
+            >
+              العودة للمتجر
+            </a>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCatalogToast(false)}
+            className={`shrink-0 p-1 rounded-lg ${darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-100 text-slate-400'}`}
+            aria-label="إغلاق"
+          >
+            <X size={16} />
+          </button>
+        </div>
       )}
 
       {/* Login Toast Notification */}

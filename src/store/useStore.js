@@ -196,6 +196,15 @@ const useStore = create(
                 }));
             },
 
+            setCartQuantity: (productId, quantity) => {
+                const next = Math.min(9999, Math.max(1, Number(quantity) || 1));
+                set((state) => ({
+                    cart: state.cart.map((item) =>
+                        item.id === productId ? { ...item, quantity: next } : item
+                    ),
+                }));
+            },
+
             clearCart: () => set({ cart: [] }),
 
             // ── Wishlist ──

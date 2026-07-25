@@ -2,68 +2,66 @@ import React, { useMemo } from 'react';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import useStore from '../store/useStore';
 import { frenchProductTitle, isRtlText } from '../utils/productText';
-import { findRelatedProducts } from '../utils/relatedProducts';
+import { findRelatedProductTiers } from '../utils/relatedProducts';
 
-/**
- * Horizontal strip of closely related products.
- * Ranking prefers complementary use-cases (charger → mouse/cooling)
- * over dumping more items from the same category.
- */
-const RelatedProducts = ({
-  product,
+/** Only swap to the original photo when it exists and differs from the studio image. */
+const hasHoverImage = (item) =>
+  Boolean(item?.originalImage) && item.originalImage !== item.image;
+
+function RelatedStrip({
+  items,
   onSelect,
-  limit = 8,
-  titleAr = 'قد يعجبك أيضاً',
-  titleFr = 'Vous aimerez aussi',
-  lang = 'ar',
-}) => {
-  const products = useStore((state) => state.products);
-  const addToCart = useStore((state) => state.addToCart);
-  const darkMode = useStore((state) => state.darkMode);
-
-  const related = useMemo(
-    () => findRelatedProducts(product, products, { limit, minScore: 4 }),
-    [product, products, limit]
-  );
-
-  if (related.length === 0) return null;
-
-  const isFr = lang === 'fr';
-  const heading = isFr ? titleFr : titleAr;
+  addToCart,
+  darkMode,
+  isFr,
+  heading,
+  badge,
+}) {
+  if (!items?.length) return null;
 
   return (
-    <section className="space-y-2.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <h4 className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
           {heading}
         </h4>
         <span className={`text-[10px] ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>
-          {isFr ? 'Complémentaires' : 'منتجات مرتبطة'}
+          {badge}
         </span>
       </div>
 
       <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar snap-x">
-        {related.map((item) => {
+        {items.map((item) => {
           const label = frenchProductTitle(item) || item.name || item.ref;
           const rtl = isRtlText(label);
           return (
             <article
               key={item.id || item.ref}
-              className={`shrink-0 w-36 rounded-xl border overflow-hidden snap-start transition-all hover:-translate-y-0.5 hover:shadow-md
+              className={`group shrink-0 w-36 rounded-xl border overflow-hidden snap-start transition-all hover:-translate-y-0.5 hover:shadow-md
                 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}
             >
               <button
                 type="button"
                 onClick={() => onSelect?.(item)}
-                className={`block w-full aspect-square overflow-hidden ${darkMode ? 'bg-gray-950' : 'bg-slate-50'}`}
+                className={`relative block w-full aspect-square overflow-hidden ${darkMode ? 'bg-gray-950' : 'bg-slate-50'}`}
               >
                 {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={label}
-                    className="w-full h-full object-contain p-1.5"
-                    loading="lazy"
-                  />
+                  <>
+                    <img
+                      src={item.image}
+                      alt={label}
+                      className={`w-full h-full object-contain p-1.5 transition-opacity duration-300 ${hasHoverImage(item) ? 'group-hover:opacity-0' : ''}`}
+                      loading="lazy"
+                    />
+                    {hasHoverImage(item) && (
+                      <img
+                        src={item.originalImage}
+                        alt={label}
+                        className="absolute inset-0 w-full h-full object-contain p-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        loading="lazy"
+                      />
+                    )}
+                  </>
                 ) : (
                   <span className="h-full flex items-center justify-center text-[10px] text-slate-400">
                     {isFr ? 'Sans image' : 'بدون صورة'}
@@ -105,6 +103,60 @@ const RelatedProducts = ({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Two horizontal strips:
+ * 1) closest complementary products
+ * 2) looser / exploratory related products
+ */
+const RelatedProducts = ({
+  product,
+  onSelect,
+  limit = 8,
+  secondaryLimit = 8,
+  titleAr = 'قد يعجبك أيضاً',
+  titleFr = 'Vous aimerez aussi',
+  lang = 'ar',
+}) => {
+  const products = useStore((state) => state.products);
+  const addToCart = useStore((state) => state.addToCart);
+  const darkMode = useStore((state) => state.darkMode);
+
+  const { primary, secondary } = useMemo(
+    () => findRelatedProductTiers(product, products, {
+      primaryLimit: limit,
+      secondaryLimit,
+    }),
+    [product, products, limit, secondaryLimit]
+  );
+
+  if (!primary.length && !secondary.length) return null;
+
+  const isFr = lang === 'fr';
+
+  return (
+    <section className="space-y-5">
+      <RelatedStrip
+        items={primary}
+        onSelect={onSelect}
+        addToCart={addToCart}
+        darkMode={darkMode}
+        isFr={isFr}
+        heading={isFr ? titleFr : titleAr}
+        badge={isFr ? 'Plus proches' : 'الأكثر صلة'}
+      />
+      <RelatedStrip
+        items={secondary}
+        onSelect={onSelect}
+        addToCart={addToCart}
+        darkMode={darkMode}
+        isFr={isFr}
+        heading={isFr ? 'Aussi intéressants' : 'قد يهمك أيضاً'}
+        badge={isFr ? 'Moins proches' : 'أقل صلة'}
+      />
     </section>
   );
 };

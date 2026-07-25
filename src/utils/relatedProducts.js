@@ -372,3 +372,34 @@ export function findRelatedProducts(product, catalog = [], options = {}) {
 
   return picked;
 }
+
+/**
+ * Two related strips: strong matches first, then looser / exploratory matches.
+ * Secondary never repeats primary items.
+ */
+export function findRelatedProductTiers(product, catalog = [], options = {}) {
+  const primaryLimit = options.primaryLimit ?? options.limit ?? 8;
+  const secondaryLimit = options.secondaryLimit ?? 8;
+  const primaryMin = options.primaryMinScore ?? 6;
+  const secondaryMin = options.secondaryMinScore ?? 2.5;
+
+  const primary = findRelatedProducts(product, catalog, {
+    limit: primaryLimit,
+    minScore: primaryMin,
+    maxSameCategory: options.maxSameCategory ?? 1,
+  });
+
+  const primaryIds = new Set(primary.map((p) => String(p.id || p.ref)));
+  const remainder = (catalog || []).filter(
+    (p) => !primaryIds.has(String(p.id || p.ref))
+  );
+
+  const secondary = findRelatedProducts(product, remainder, {
+    limit: secondaryLimit,
+    minScore: secondaryMin,
+    // Allow a bit more same-category variety in the looser row.
+    maxSameCategory: options.secondaryMaxSameCategory ?? 3,
+  });
+
+  return { primary, secondary };
+}

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, ShoppingCart, Copy, Check, Minus, Plus, Heart, Bell, BellRing } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShoppingCart, Copy, Check, Minus, Plus, Heart, Bell, BellRing } from 'lucide-react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 import RelatedProducts from './RelatedProducts';
 import ProductRatingStars from './ProductRatingStars';
+import ImageModal from './ImageModal';
 import {
     frenchProductTitle,
     isRtlText,
@@ -28,6 +29,29 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     const [addedToCart, setAddedToCart] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
+    // Small scroll helper for the details pane (long descriptions + related strip).
+    const infoRef = useRef(null);
+    const [infoScrollable, setInfoScrollable] = useState(false);
+    const [infoAtBottom, setInfoAtBottom] = useState(false);
+
+    const syncInfoScroll = useCallback(() => {
+        const el = infoRef.current;
+        if (!el) return;
+        const overflow = el.scrollHeight - el.clientHeight;
+        setInfoScrollable(overflow > 24);
+        setInfoAtBottom(el.scrollTop >= overflow - 24);
+    }, []);
+
+    const scrollInfo = () => {
+        const el = infoRef.current;
+        if (!el) return;
+        el.scrollTo({
+            top: infoAtBottom ? 0 : el.scrollTop + el.clientHeight * 0.8,
+            behavior: 'smooth',
+        });
+    };
 
     const viewedProduct = selectedProduct || product;
     const allImages = viewedProduct?.images && viewedProduct.images.length > 0
@@ -70,7 +94,9 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
 
     const handleAddToCart = () => {
         if (!isOutOfStock) {
-            addToCart(viewedProduct, quantity);
+            const qty = Math.max(1, Number(quantity) || 1);
+            setQuantity(qty);
+            addToCart(viewedProduct, qty);
             setAddedToCart(true);
             setTimeout(() => {
                 setAddedToCart(false);
@@ -79,7 +105,21 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     };
 
     const updateQty = (delta) => {
-        setQuantity(prev => Math.max(1, prev + delta));
+        setQuantity((prev) => Math.max(1, prev + delta));
+    };
+
+    const handleQtyInput = (value) => {
+        const digits = String(value).replace(/\D/g, '');
+        if (digits === '') {
+            setQuantity(0); // temporary while typing; clamped on blur / add
+            return;
+        }
+        const next = Math.min(9999, parseInt(digits, 10));
+        if (Number.isFinite(next)) setQuantity(next);
+    };
+
+    const commitQty = () => {
+        setQuantity((prev) => Math.max(1, Number(prev) || 1));
     };
 
     // Reset state when modal opens
@@ -90,6 +130,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
             setAddedToCart(false);
             setQuantity(1);
             setSelectedProduct(null);
+            setLightboxOpen(false);
         }
     }, [isOpen]);
 
@@ -98,6 +139,18 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
         setQuantity(1);
         setAddedToCart(false);
     }, [selectedProduct]);
+
+    // Related products and descriptions load late, so watch the pane for size changes.
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        const el = infoRef.current;
+        if (!el) return undefined;
+        syncInfoScroll();
+        const observer = new ResizeObserver(syncInfoScroll);
+        observer.observe(el);
+        [...el.children].forEach((child) => observer.observe(child));
+        return () => observer.disconnect();
+    }, [isOpen, selectedProduct, syncInfoScroll]);
 
     if (!viewedProduct) return null;
 
@@ -111,6 +164,7 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     const descriptionText = descriptionBullets.length ? '' : stripHtml(descriptionHtml);
 
     return (
+        <>
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -153,11 +207,20 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                         {/* Image Gallery */}
                         <div className={`relative w-full aspect-square sm:aspect-[4/3] overflow-hidden ${dm ? 'bg-gray-950' : 'bg-slate-50'}`}>
                             {allImages.length > 0 ? (
-                                <img
-                                    src={allImages[currentIndex]}
-                                    alt={`${viewedProduct.name || viewedProduct.ref} - إلكترونيات بالجملة Errayhany Store`}
-                                    className="w-full h-full object-contain p-4"
-                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setLightboxOpen(true)}
+                                    className="block w-full h-full cursor-zoom-in"
+                                    aria-label="تكبير الصورة"
+                                    title="اضغط للتكبير"
+                                >
+                                    <img
+                                        src={allImages[currentIndex]}
+                                        alt={`${viewedProduct.name || viewedProduct.ref} - إلكترونيات بالجملة Errayhany Store`}
+                                        className="w-full h-full object-contain p-4 pointer-events-none"
+                                        draggable={false}
+                                    />
+                                </button>
                             ) : (
                                 <div className={`w-full h-full flex items-center justify-center text-sm ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
                                     لا توجد صورة
@@ -168,32 +231,47 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                             {allImages.length > 1 && (
                                 <>
                                     <button onClick={handlePrev}
-                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all backdrop-blur-sm">
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all backdrop-blur-sm z-10">
                                         <ChevronLeft size={20} />
                                     </button>
                                     <button onClick={handleNext}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all backdrop-blur-sm">
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all backdrop-blur-sm z-10">
                                         <ChevronRight size={20} />
                                     </button>
                                 </>
                             )}
 
-                            {/* Image Dots */}
+                            {/* Small thumbs on the image card — same pattern as ProductCard */}
                             {allImages.length > 1 && (
-                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                                    {allImages.map((_, idx) => (
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 px-2">
+                                    {allImages.slice(0, 4).map((img, idx) => (
                                         <button
                                             key={idx}
-                                            onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                                            className={`w-2 h-2 rounded-full transition-all ${currentIndex === idx ? 'bg-white w-5 shadow-lg' : 'bg-white/50 hover:bg-white/80'}`}
-                                        />
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setCurrentIndex(idx);
+                                            }}
+                                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md border-2 overflow-hidden transition-all hover:scale-110 shadow-sm
+                                                ${currentIndex === idx
+                                                    ? 'border-primary shadow-md scale-105'
+                                                    : dm ? 'border-gray-600 bg-gray-800/90' : 'border-white bg-white/95'}`}
+                                            aria-label={`صورة ${idx + 1}`}
+                                        >
+                                            <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                        </button>
                                     ))}
                                 </div>
                             )}
                         </div>
 
                         {/* Product Info */}
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+                        <div className="relative flex-1 min-h-0 flex flex-col">
+                        <div
+                            ref={infoRef}
+                            onScroll={syncInfoScroll}
+                            className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4"
+                        >
                             {/* Price and Ref */}
                             <div className="flex items-center justify-between gap-3">
                                 <div>
@@ -281,28 +359,27 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                 </span>
                             )}
 
-                            {/* Thumbnail Strip */}
-                            {allImages.length > 1 && (
-                                <div className="flex gap-2 overflow-x-auto pb-1">
-                                    {allImages.map((img, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={() => setCurrentIndex(idx)}
-                                            className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all
-                                                ${currentIndex === idx 
-                                                    ? 'border-primary shadow-lg scale-105' 
-                                                    : dm ? 'border-gray-700 opacity-60 hover:opacity-100' : 'border-slate-200 opacity-60 hover:opacity-100'}`}
-                                        >
-                                            <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
                             <RelatedProducts
                                 product={viewedProduct}
                                 onSelect={setSelectedProduct}
                             />
+                        </div>
+
+                        {infoScrollable && (
+                            <button
+                                type="button"
+                                onClick={scrollInfo}
+                                className={`absolute bottom-2.5 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center
+                                    shadow-lg border backdrop-blur-sm transition-all active:scale-90
+                                    ${dm
+                                        ? 'bg-gray-800/90 border-gray-700 text-gray-300 hover:text-white'
+                                        : 'bg-white/90 border-slate-200 text-slate-500 hover:text-primary'}`}
+                                title={infoAtBottom ? 'الرجوع للأعلى' : 'تمرير للأسفل'}
+                                aria-label={infoAtBottom ? 'الرجوع للأعلى' : 'تمرير للأسفل'}
+                            >
+                                {infoAtBottom ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                        )}
                         </div>
 
                         {/* Action Buttons */}
@@ -320,10 +397,19 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                             ${dm ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}>
                                         <Minus size={16} />
                                     </button>
-                                    <div className={`w-14 h-10 flex items-center justify-center rounded-xl text-lg font-extrabold
-                                        ${dm ? 'bg-gray-800 text-white border border-gray-700' : 'bg-slate-50 text-slate-900 border border-slate-200'}`}>
-                                        {quantity}
-                                    </div>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        value={quantity === 0 ? '' : quantity}
+                                        onChange={(e) => handleQtyInput(e.target.value)}
+                                        onBlur={commitQty}
+                                        onFocus={(e) => e.target.select()}
+                                        aria-label="الكمية"
+                                        className={`w-14 h-10 rounded-xl text-lg font-extrabold text-center outline-none
+                                            focus:ring-2 focus:ring-primary/40
+                                            ${dm ? 'bg-gray-800 text-white border border-gray-700' : 'bg-slate-50 text-slate-900 border border-slate-200'}`}
+                                    />
                                     <button onClick={() => updateQty(1)}
                                         className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90
                                             ${dm ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}>
@@ -377,6 +463,18 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                 </div>
             )}
         </AnimatePresence>
+
+        <ImageModal
+            isOpen={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            images={allImages}
+            initialIndex={currentIndex}
+            onIndexChange={setCurrentIndex}
+            alt={fullTitle || viewedProduct.name || viewedProduct.ref}
+            productRef={viewedProduct.ref}
+            zIndexClass="z-[120]"
+        />
+    </>
     );
 };
 

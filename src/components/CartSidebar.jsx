@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { X, Minus, Plus, Trash2, Share2, Download } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Share2, Download, ShoppingBag } from 'lucide-react';
 import useStore from '../store/useStore';
 import { generatePDF } from '../utils/pdfGenerator';
 import { sendToTelegram } from '../utils/telegramApi';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import SocialButton from './SocialButton';
 import CheckoutModal from './CheckoutModal';
+
+const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
 
 const generateAndSendSilentTelegram = async (cart, actionName) => {
     try {
@@ -30,16 +31,18 @@ const generateAndSendSilentTelegram = async (cart, actionName) => {
 };
 
 const CartSidebar = () => {
-    const { cart, isCartOpen, toggleCart, updateQuantity, removeFromCart, darkMode, clearCart, products } = useStore();
+    const { cart, isCartOpen, toggleCart, updateQuantity, setCartQuantity, removeFromCart, darkMode, clearCart, products } = useStore();
     const dm = darkMode;
     const [confirmClear, setConfirmClear] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [qtyDrafts, setQtyDrafts] = useState({});
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const [currentLang, setCurrentLang] = useState('ar');
 
     const openProduct = (item) => {
-        const ref = item.ref || item.id;
+        const live = products.find((p) => p.id === item.id);
+        const ref = live?.ref || item.ref || item.id;
         if (!ref) return;
         try {
             const mode = useStore.getState().browseMode === 'catalog' ? 'catalog' : 'shop';
@@ -49,6 +52,25 @@ const CartSidebar = () => {
         }
         toggleCart();
         window.location.assign(`/p/${encodeURIComponent(ref)}`);
+    };
+
+    const handleQtyInput = (itemId, value) => {
+        const digits = String(value).replace(/\D/g, '');
+        setQtyDrafts((prev) => ({ ...prev, [itemId]: digits }));
+        if (digits === '') return;
+        const next = Math.min(9999, parseInt(digits, 10));
+        if (Number.isFinite(next) && next >= 1) setCartQuantity(itemId, next);
+    };
+
+    const commitQty = (item) => {
+        const draft = qtyDrafts[item.id];
+        const next = Math.max(1, parseInt(draft, 10) || item.quantity || 1);
+        setCartQuantity(item.id, next);
+        setQtyDrafts((prev) => {
+            const copy = { ...prev };
+            delete copy[item.id];
+            return copy;
+        });
     };
 
     React.useEffect(() => {
@@ -168,16 +190,18 @@ const CartSidebar = () => {
                                         return (
                                             <div key={item.id} className={`group flex gap-3 flex-row-reverse pb-3 border-b border-dashed last:border-b-0 ${dm ? 'border-gray-700' : 'border-slate-200'}`}>
                                                 {/* Thumbnail — click to open the product page */}
-                                                <div
-                                                    className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden bg-slate-100 border border-slate-100 cursor-pointer"
+                                                <button
+                                                    type="button"
+                                                    className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden bg-slate-100 border border-slate-100 cursor-pointer p-0"
                                                     onClick={() => openProduct(item)}
+                                                    aria-label={`فتح صفحة ${item.name}`}
                                                 >
                                                     {displayImage ? (
                                                         <img src={displayImage} alt={item.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-[10px] sm:text-xs text-slate-400">بدون صورة</div>
                                                     )}
-                                                </div>
+                                                </button>
 
                                                 <div className="flex-1 flex flex-col justify-between py-0 text-right">
                                                     <div>
@@ -208,7 +232,22 @@ const CartSidebar = () => {
                                                             >
                                                                 <Minus size={16} />
                                                             </button>
-                                                            <span className={`w-10 text-center text-sm font-medium ${dm ? 'text-white' : 'text-slate-900'}`}>{item.quantity}</span>
+                                                            <input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                pattern="[0-9]*"
+                                                                value={qtyDrafts[item.id] !== undefined ? qtyDrafts[item.id] : item.quantity}
+                                                                onChange={(e) => handleQtyInput(item.id, e.target.value)}
+                                                                onBlur={() => commitQty(item)}
+                                                                onFocus={(e) => e.target.select()}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') e.currentTarget.blur();
+                                                                }}
+                                                                aria-label="الكمية"
+                                                                className={`w-10 h-8 text-center text-sm font-medium outline-none bg-transparent
+                                                                    focus:ring-2 focus:ring-primary/40 rounded
+                                                                    ${dm ? 'text-white' : 'text-slate-900'}`}
+                                                            />
                                                             {/* +1 */}
                                                             <button
                                                                 onClick={() => updateQuantity(item.id, 1)}
@@ -236,46 +275,69 @@ const CartSidebar = () => {
                             </div>
 
                             {/* Footer */}
-                            <div className={`border-t p-4 space-y-3 ${dm ? 'border-gray-700 bg-gray-900' : 'border-slate-200 bg-slate-50'}`}>
-                                <div className="flex justify-between items-end flex-row-reverse">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">المجموع الكلي</span>
-                                    <span className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>{subtotal.toFixed(2)} DH</span>
-                                </div>
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={() => setIsCheckoutOpen(true)}
-                                        disabled={cart.length === 0}
-                                        className={`w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
-                                    >
-                                        <span className="text-lg">إتمام الطلب الآن</span>
-                                    </button>
-
-                                    <div className="flex gap-2">
-                                        <SocialButton
-                                            type="whatsapp"
-                                            onClick={cart.length > 0 ? handleShare : undefined}
-                                            label="واتساب"
-                                            size="sm"
-                                            className={`flex-1 py-2 rounded-lg text-xs shadow-sm font-semibold justify-center ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
-                                        />
-                                        <button
-                                            onClick={() => handlePDF()}
-                                            disabled={cart.length === 0}
-                                            className="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                                        >
-                                            <Download size={14} />
-                                            <span>PDF</span>
-                                        </button>
-                                        <button
-                                            onClick={handleNativeShare}
-                                            disabled={cart.length === 0}
-                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded-lg shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs overflow-hidden relative"
-                                        >
-                                            <Share2 size={14} className="animate-pulse" />
-                                            <span>مشاركة</span>
-                                            <span className="absolute inset-0 bg-white/20 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-0 rounded-lg"></span>
-                                        </button>
+                            <div className={`border-t px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3.5 ${dm ? 'border-gray-700 bg-gray-900' : 'border-slate-200 bg-white'}`}>
+                                <div className={`rounded-2xl px-4 py-3 flex items-center justify-between gap-3 flex-row-reverse ${dm ? 'bg-gray-800/80' : 'bg-slate-50 border border-slate-100'}`}>
+                                    <div className="text-right">
+                                        <p className="text-[11px] font-medium text-slate-500">المجموع الكلي</p>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                            {cart.length} {cart.length === 1 ? 'منتج' : 'منتجات'}
+                                        </p>
                                     </div>
+                                    <div className="text-left">
+                                        <p className={`text-2xl font-extrabold tracking-tight tabular-nums ${dm ? 'text-white' : 'text-slate-900'}`}>
+                                            {subtotal.toFixed(2)}
+                                            <span className="text-sm font-bold text-slate-400 ms-1">DH</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCheckoutOpen(true)}
+                                    disabled={cart.length === 0}
+                                    className={`w-full min-h-12 bg-primary hover:bg-primary/90 text-white font-bold text-base px-4 rounded-2xl shadow-[0_8px_20px_-6px_rgba(37,99,235,0.55)] hover:shadow-[0_10px_24px_-6px_rgba(37,99,235,0.65)] active:scale-[0.985] transition-all flex items-center justify-center gap-2.5 disabled:opacity-45 disabled:pointer-events-none disabled:shadow-none`}
+                                >
+                                    <ShoppingBag size={18} strokeWidth={2.25} />
+                                    إتمام الطلب الآن
+                                </button>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleShare}
+                                        disabled={cart.length === 0}
+                                        className={`min-h-11 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none
+                                            ${dm
+                                                ? 'bg-gray-800 border border-gray-700 text-white hover:bg-gray-700'
+                                                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm'}`}
+                                    >
+                                        <img src={WA_ICON} alt="" aria-hidden="true" className="w-5 h-5 drop-shadow-sm" />
+                                        واتساب
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePDF()}
+                                        disabled={cart.length === 0}
+                                        className={`min-h-11 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none
+                                            ${dm
+                                                ? 'bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700'
+                                                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm'}`}
+                                    >
+                                        <Download size={15} className="text-slate-500" />
+                                        PDF
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleNativeShare}
+                                        disabled={cart.length === 0}
+                                        className={`min-h-11 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none
+                                            ${dm
+                                                ? 'bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700'
+                                                : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm'}`}
+                                    >
+                                        <Share2 size={15} className="text-slate-500" />
+                                        مشاركة
+                                    </button>
                                 </div>
                             </div>
                         </motion.aside>
