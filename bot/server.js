@@ -624,6 +624,71 @@ async function processProduct(chatId, files, caption, destination = 'both') {
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
+  // If AI timed out / failed on the first pass, keep the raw product but
+  // retry enrichment in the background and PATCH when ready. Prevents
+  // "saved without studio images/description" from becoming permanent.
+  const needsAiRetry = Boolean(rowId)
+    && originalBuffers.length > 0
+    && (!enrichment.hasAiImages || enrichment.skippedAi);
+  if (needsAiRetry) {
+    const retryBuffers = originalBuffers.slice();
+    const retryMeta = { chatId, rowId, name, price, oldPrice, sku, amazonUrl, sellerSku };
+    setImmediate(() => {
+      (async () => {
+        try {
+          console.log(`🔁 Background AI retry for #${retryMeta.rowId} ${retryMeta.sellerSku}`);
+          await sendMessage(
+            retryMeta.chatId,
+            `⏳ جاري إعادة توليد الوصف والصور الاحترافية للمنتج #${retryMeta.rowId} في الخلفية...`
+          );
+          const retry = await enrichProduct({
+            originalBuffers: retryBuffers,
+            name: retryMeta.name,
+            price: retryMeta.price,
+            oldPrice: retryMeta.oldPrice,
+            ref: retryMeta.sku,
+            amazonUrl: retryMeta.amazonUrl,
+            uploadToNocoDB,
+            nocodbUrl: NOCODB_URL,
+            syncSheet: false,
+          });
+          if (!retry?.copy && !retry?.hasAiImages) {
+            await sendMessage(
+              retryMeta.chatId,
+              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}. أعد إرسال المنتج أو شغّل سكربت الإصلاح.`
+            );
+            return;
+          }
+          const patch = buildNocoRecordFromEnrichment({
+            price: retryMeta.price,
+            name: retryMeta.name,
+            enrichment: retry,
+          });
+          patch.Id = retryMeta.rowId;
+          await http.patch(recordUrl, patch, {
+            headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+          });
+          const retryImgs = retry.nocoImages?.length || 0;
+          await sendMessage(
+            retryMeta.chatId,
+            `✨ تم تحديث المنتج #${retryMeta.rowId} بالوصف والصور الاحترافية (${retryImgs} صور)\n🔗 ${SITE_URL}/p/${encodeURIComponent(retryMeta.sellerSku)}`
+          );
+          console.log(`✅ Background AI retry OK for #${retryMeta.rowId}`);
+        } catch (e) {
+          console.error(`Background AI retry failed for #${retryMeta.rowId}:`, e.message);
+          try {
+            await sendMessage(
+              retryMeta.chatId,
+              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}: ${e.message}`
+            );
+          } catch {
+            /* ignore */
+          }
+        }
+      })();
+    });
+  }
+
   const barcode = String(
     enrichment.barcode || enrichment.copy?.barcode || earlyTifawtBarcode || ''
   ).trim();

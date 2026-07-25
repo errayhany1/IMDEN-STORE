@@ -85,8 +85,15 @@ if (!sourceFiles.length) {
   process.exit(1);
 }
 
+// Prefer original seller photos (real-*) as AI input; fall back to everything else.
+const realFirst = [
+  ...sourceFiles.filter((f) => /real[-_]/i.test(String(f.title || f.name || f.url || ''))),
+  ...sourceFiles.filter((f) => !/real[-_]|ai[-_]|specs[-_]/i.test(String(f.title || f.name || f.url || ''))),
+];
+const preferredSources = realFirst.length ? realFirst : sourceFiles;
+
 const originalBuffers = [];
-for (const file of sourceFiles.slice(0, 4)) {
+for (const file of preferredSources.slice(0, 4)) {
   const url = imageUrl(file);
   if (!url) continue;
   console.log('Downloading', file.title || file.name || url.slice(0, 80));
