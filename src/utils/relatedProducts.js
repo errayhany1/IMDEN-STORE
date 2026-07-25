@@ -334,7 +334,7 @@ export function scoreRelatedProduct(product, candidate) {
 export function findRelatedProducts(product, catalog = [], options = {}) {
   const limit = options.limit ?? 8;
   const minScore = options.minScore ?? 4;
-  const maxSameCategory = options.maxSameCategory ?? 2;
+  const maxSameCategory = options.maxSameCategory ?? 1;
 
   if (!product || !Array.isArray(catalog) || !catalog.length) return [];
 
