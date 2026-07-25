@@ -3,7 +3,10 @@
  */
 import axios from 'axios';
 import { normalizeCatalogImages } from './imageNormalize.js';
-import { getActiveTemplatesForProduct } from './imageTemplates.js';
+import {
+  getActiveTemplatesForProduct,
+  compositeProductOnBackground,
+} from './imageTemplates.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || 'google/gemini-2.5-flash';
@@ -201,8 +204,9 @@ async function generateOneImage({ imageBuffers, prompt }) {
 }
 
 /**
- * Returns AI product images from seller reference photo(s), using the
- * active catalog templates, then normalized to a fixed square size.
+ * Returns website-ready product images:
+ * 1) AI cleans the product onto a plain studio plate
+ * 2) We composite it onto the seller-selected BACKGROUND templates (fixed 1080²)
  *
  * @param {{
  *   imageBuffer?: Buffer,
@@ -232,52 +236,63 @@ export async function generateProductImages({
     throw new Error('No reference photo for AI image generation');
   }
 
-  const productLabel = titleFr || 'Produit';
-  const templates = getActiveTemplatesForProduct({ oldPrice });
-  const base = `You are a professional ecommerce product photographer for a Moroccan wholesale catalog (Errayhany).
-Use the product shown in the reference photo(s) as the ONLY product.
-Keep the same product identity: shape, color, ports, proportions, branding marks.
-Do NOT invent a different product. Do NOT add unrelated objects.
-Output MUST be a square 1:1 high-end marketplace photo, sharp focus, soft studio lighting.
-Exact framing: product centered, consistent margins on all sides.`;
+  const backgrounds = getActiveTemplatesForProduct({ oldPrice });
+  const cutoutCount = Math.min(
+    Math.max(backgrounds.length, 1),
+    Number(process.env.AI_IMAGE_COUNT || 2)
+  );
 
-  // Prefer selected templates; fall back to classic prompts if none loaded.
-  const prompts = templates.length
-    ? templates.map((tpl) => `${base}\n${tpl.prompt({ title: productLabel, price, oldPrice })}`)
-    : mode === 'amazon'
-      ? [
-        `${base}\nCLEAN STUDIO white background, no text.`,
-        `${base}\nWHOLESALE PROMO with جملة and ${price} DH.`,
-      ]
-      : [
-        `${base}\nPROFESSIONAL STUDIO HERO, white background, no text.`,
-        `${base}\nANGLE / DETAIL, same studio look, no text.`,
-      ];
+  const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
+Use the product in the reference photo(s) as the ONLY product.
+Keep exact identity: shape, color, ports, branding marks. Do NOT invent a different product.
+Output a square 1:1 photo of the product alone on a PLAIN seamless WHITE background.
+Centered, soft studio lighting, no text, no badges, no props, no hands, no clutter.
+Leave clean margins so the product can later be placed on another background.`;
 
-  const defaultCount = Math.min(prompts.length, Number(process.env.AI_IMAGE_COUNT || 2));
-  const limited = prompts.slice(0, defaultCount);
-  const results = [];
-  for (const prompt of limited) {
+  const angleHints = [
+    'Front / hero angle.',
+    'Slight 3/4 alternate angle or useful detail view, same white background.',
+  ];
+
+  const cutouts = [];
+  for (let i = 0; i < cutoutCount; i++) {
+    const prompt = `${base}\n${angleHints[i % angleHints.length]}`;
     try {
       const buf = await generateOneImage({ imageBuffers: refs, prompt });
-      results.push(buf);
+      if (buf) cutouts.push(buf);
     } catch (e) {
-      console.error('Image gen failed:', e.message);
-      results.push(null);
+      console.error('Cutout image gen failed:', e.message);
     }
   }
 
-  if (!results.some(Boolean) && prompts[0]) {
+  if (!cutouts.length) {
     try {
-      const buf = await generateOneImage({ imageBuffers: refs, prompt: prompts[0] });
-      results[0] = buf;
+      const buf = await generateOneImage({ imageBuffers: refs, prompt: `${base}\nFront hero.` });
+      if (buf) cutouts.push(buf);
     } catch (e) {
-      console.error('Hero image retry failed:', e.message);
+      console.error('Cutout retry failed:', e.message);
     }
   }
 
-  const raw = results.filter(Boolean);
-  return normalizeCatalogImages(raw);
+  if (!cutouts.length) return [];
+
+  // Normalize cutouts, then place each onto an active background template.
+  const clean = await normalizeCatalogImages(cutouts);
+  const sale = { price, oldPrice };
+  const composed = [];
+  for (let i = 0; i < backgrounds.length; i++) {
+    const cutout = clean[i % clean.length];
+    const tpl = backgrounds[i];
+    try {
+      composed.push(await compositeProductOnBackground(cutout, tpl, sale));
+    } catch (e) {
+      console.error(`Background composite failed (${tpl.id}):`, e.message);
+      composed.push(cutout);
+    }
+  }
+
+  // If somehow no backgrounds selected, still return normalized cutouts.
+  return composed.length ? composed : clean;
 }
 
 export function isOpenRouterConfigured() {

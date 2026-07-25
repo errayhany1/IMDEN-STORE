@@ -1,5 +1,5 @@
 {
-  "regular": ["studio-white", "wholesale-badge"],
-  "sale": ["sale-red-tag", "sale-banner"],
+  "regular": ["bg-pure-white", "bg-soft-gray"],
+  "sale": ["sale-bg-white", "sale-bg-blue"],
   "updatedAt": null
 }
