@@ -9,6 +9,7 @@ import {
     upsertCustomerProfile,
 } from '../services/customerAccount';
 import { saveCloudAccount } from '../services/cloudAccount';
+import { syncOrderSideEffects } from '../services/tifawt';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user, setAuthModalOpen } = useStore();
@@ -245,6 +246,17 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                         console.error('Customer profile update failed:', profileError);
                     }
                 }
+
+                // Push order to Tifawt ERP (stock is deducted there, not on the site).
+                syncOrderSideEffects({
+                    name: formData.name,
+                    phone: formData.phone,
+                    address: formData.address,
+                    city: 'المغرب',
+                    items: orderMetadata,
+                }).catch((syncErr) => {
+                    console.error('Tifawt sync failed:', syncErr);
+                });
             } catch (dbError) {
                 console.error("Error saving to database:", dbError);
                 throw new Error('تعذر تسجيل الطلب. يرجى المحاولة مرة أخرى.');

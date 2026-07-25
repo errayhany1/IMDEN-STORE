@@ -9,6 +9,7 @@ import SuppliersTab from './admin/SuppliersTab';
 import WalletsTab from './admin/WalletsTab';
 import ProfitDashboardTab from './admin/ProfitDashboardTab';
 import ReportsTab from './admin/ReportsTab';
+import { syncOrderSideEffects } from '../services/tifawt';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
@@ -408,6 +409,14 @@ const AdminDashboard = () => {
             } else {
                 fetchOrders(true);
             }
+
+            syncOrderSideEffects({
+                name: newOrderData.name,
+                phone: newOrderData.phone,
+                address: newOrderData.address,
+                city: 'المغرب',
+                items: orderMetaData,
+            }).catch((err) => console.error('Tifawt sync failed:', err));
             
             setCreateOrderModal(false);
             setNewOrderData({ name: '', phone: '', address: '', notes: '', items: [] });
@@ -443,6 +452,14 @@ const AdminDashboard = () => {
         } else {
             fetchOrders(true);
         }
+
+        syncOrderSideEffects({
+            name: saleData.name || 'بيع مباشر',
+            phone: saleData.phone || '',
+            address: saleData.address || 'المحل',
+            city: 'المغرب',
+            items: orderMetaData,
+        }).catch((err) => console.error('Tifawt sync failed:', err));
     };
 
     // Update order status with optional notes (used by ReturnsTab)

@@ -14,6 +14,7 @@ import {
   scrapeAmazonProduct,
   downloadImageBuffers,
   isApifyConfigured,
+  normalizeAmazonUrl,
 } from './amazonScrape.js';
 
 export function buildSellerSku(ref) {
@@ -104,8 +105,9 @@ export async function enrichProduct({
       console.warn('Amazon URL provided but APIFY_TOKEN missing — skipping scrape');
     } else {
       try {
-        amazonMeta = await scrapeAmazonProduct(amazonUrl);
-        console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || amazonUrl}`);
+        const cleanAmazonUrl = normalizeAmazonUrl(amazonUrl);
+        amazonMeta = await scrapeAmazonProduct(cleanAmazonUrl);
+        console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || cleanAmazonUrl}`);
         const amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 4 });
         if (amazonBuffers.length) {
           amazonUploads = await uploadBuffers(

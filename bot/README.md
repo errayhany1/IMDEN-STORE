@@ -59,6 +59,11 @@ PRODUCT_SHEET_ID=1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4
 # أعد إنشاء أي توكن ظهر في Git/JSON، ثم أضفه في EasyPanel → imden-bot → Env → Rebuild
 APIFY_TOKEN=
 APIFY_AMAZON_ACT=junglee~free-amazon-product-scraper
+TIFAWT_LEAD_URL=https://errayhany.tifawt.ma/api/v1/lead-sources/api/0a4e5144-86c1-4fdf-b276-5b2f5bbcf149
+TIFAWT_API_BASE=https://errayhany.tifawt.ma/api/v1
+TIFAWT_EMAIL=admin@errayhany.ma
+TIFAWT_PASSWORD=
+TIFAWT_BUSINESS_ID=1
 
 # بدون WEBHOOK → long-polling تلقائياً (موصى به)
 # TELEGRAM_MODE=polling
@@ -81,7 +86,8 @@ https://www.amazon.com/dp/...
 
 - بدون رابط أمازون: إنشاء صور استوديو احترافية من صور التيليجرام عبر OpenRouter (`ai-…`) ثم الصورة الحقيقية في الآخر.
 - مع رابط: كشط Apify → نصوص OpenAI من بيانات أمازون → معرض = AI ثم Amazon ثم **الصورة الحقيقية آخر صورة**.
-- يُرسل أيضاً إلى Google Sheet عبر `PRODUCT_SHEET_WEBHOOK_URL`.
+- يُحفظ في NocoDB، ويُرسل أيضاً إلى Google Sheet عبر `PRODUCT_SHEET_WEBHOOK_URL`.
+- إن وُجدت `TIFAWT_EMAIL` + `TIFAWT_PASSWORD`: يُنشأ نفس المنتج في Tifawt (صورة + اسم + سعر + SKU).
 
 ## تشغيل محلي
 

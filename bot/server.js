@@ -20,6 +20,11 @@ import {
   buildNocoRecordFromEnrichment,
   buildSellerSku,
 } from './productEnrichment.js';
+import {
+  createTifawtProduct,
+  isTifawtProductSyncConfigured,
+} from './tifawtProducts.js';
+import { normalizeAmazonUrl } from './amazonScrape.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -193,7 +198,7 @@ function parseCaption(caption) {
   for (const line of lines) {
     const urlMatch = line.match(/https?:\/\/\S+/i);
     if (urlMatch) {
-      amazonUrl = urlMatch[0].replace(/[)\]>,.'"]+$/g, '');
+      amazonUrl = normalizeAmazonUrl(urlMatch[0]);
       const rest = line.replace(urlMatch[0], '').trim();
       if (rest) contentLines.push(rest);
     } else {
@@ -398,10 +403,41 @@ async function processProduct(chatId, files, caption) {
 
   console.log(`✅ NocoDB row created: #${rowId}`);
 
+  let tifawtNote = '';
+  if (isTifawtProductSyncConfigured()) {
+    try {
+      const tifawtName = enrichment.copy?.arabic_title
+        || enrichment.copy?.french_title
+        || enrichment.copy?.woo_title
+        || name;
+      const tifawtImage = originalBuffers[0];
+      const tifawtResult = await createTifawtProduct({
+        name: tifawtName,
+        sku: sellerSku,
+        price,
+        imageBuffer: tifawtImage,
+        imageFileName: `${sellerSku}.jpg`,
+      });
+      if (tifawtResult?.skipped) {
+        tifawtNote = '\n🛒 Tifawt: لم يُضبط (TIFAWT_EMAIL/PASSWORD)';
+      } else if (tifawtResult?.ok) {
+        tifawtNote = '\n🛒 Tifawt: تم إضافة المنتج';
+        console.log('✅ Tifawt product created:', sellerSku, tifawtResult.data?.id || '');
+      } else {
+        tifawtNote = `\n🛒 Tifawt خطأ: ${tifawtResult?.error || 'فشل الإنشاء'}`;
+      }
+    } catch (e) {
+      console.error('Tifawt product sync error:', e.message);
+      tifawtNote = `\n🛒 Tifawt خطأ: ${e.message}`;
+    }
+  } else {
+    tifawtNote = '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD';
+  }
+
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 }
@@ -614,7 +650,11 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-const TIFAWT_LEAD_URL = 'https://errayhany.tifawt.ma/api/v1/lead-sources/api/d391c7ce-7c39-4ae0-8ce4-9d45057b36ac';
+const TIFAWT_LEAD_URL = (
+  process.env.TIFAWT_LEAD_URL
+  || process.env.VITE_TIFAWT_LEAD_URL
+  || 'https://errayhany.tifawt.ma/api/v1/lead-sources/api/0a4e5144-86c1-4fdf-b276-5b2f5bbcf149'
+).trim();
 
 app.post('/webhook/order', async (req, res) => {
   res.sendStatus(200);
@@ -697,6 +737,8 @@ app.get('/health', async (req, res) => {
     ai: Boolean(process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY),
     openai: Boolean(process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY),
     apify: Boolean(process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN),
+    tifawt: Boolean(process.env.TIFAWT_LEAD_URL || process.env.VITE_TIFAWT_LEAD_URL),
+    tifawtProducts: Boolean(process.env.TIFAWT_EMAIL && process.env.TIFAWT_PASSWORD),
     webhookUrlEnv: Boolean(TELEGRAM_WEBHOOK_URL),
     telegramWebhook: webhook,
   });
