@@ -22,6 +22,49 @@ function headers() {
   };
 }
 
+/**
+ * Turn an axios error into a human-readable reason that names the real cause
+ * (invalid key, insufficient credits, rate limit, model error…) instead of the
+ * opaque "Request failed with status code 401".
+ */
+function describeApiError(e) {
+  const status = e?.response?.status;
+  const body = e?.response?.data;
+  const providerMsg =
+    body?.error?.message ||
+    (typeof body?.error === 'string' ? body.error : '') ||
+    body?.message ||
+    (typeof body === 'string' ? body : '');
+  if (status && providerMsg) return `OpenRouter ${status}: ${String(providerMsg).slice(0, 220)}`;
+  if (status) return `OpenRouter ${status}: ${JSON.stringify(body || {}).slice(0, 220)}`;
+  if (e?.code === 'ECONNABORTED') return `OpenRouter timeout: ${e.message}`;
+  return e?.message || 'unknown OpenRouter error';
+}
+
+/**
+ * Single entry point for OpenRouter chat calls. Surfaces the real failure
+ * reason and also catches the case where OpenRouter answers HTTP 200 but the
+ * body carries an { error } object (provider outages, moderation, no credits) —
+ * previously this slipped through and later blew up as "invalid JSON" / "image
+ * empty", hiding the true cause.
+ */
+async function callOpenRouter(payload, { timeout = 45000 } = {}) {
+  if (!isOpenRouterConfigured()) {
+    throw new Error('OPENROUTER_API_KEY missing');
+  }
+  let data;
+  try {
+    ({ data } = await axios.post(OPENROUTER_URL, payload, { headers: headers(), timeout }));
+  } catch (e) {
+    throw new Error(describeApiError(e));
+  }
+  if (data?.error) {
+    const msg = data.error.message || (typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+    throw new Error(`OpenRouter error: ${String(msg).slice(0, 220)}`);
+  }
+  return data;
+}
+
 function extractJson(text) {
   if (!text) return null;
   const cleaned = String(text).replace(/```json|```/g, '').trim();
@@ -116,14 +159,13 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
     });
   }
 
-  const { data } = await axios.post(
-    OPENROUTER_URL,
+  const data = await callOpenRouter(
     {
       model: TEXT_MODEL,
       messages: [{ role: 'user', content }],
       temperature: 0.4,
     },
-    { headers: headers(), timeout: 45000 }
+    { timeout: 45000 }
   );
 
   const text = data?.choices?.[0]?.message?.content;
@@ -154,14 +196,13 @@ Copy every visible character exactly. Never guess. If no barcode is clearly read
     });
   }
 
-  const { data } = await axios.post(
-    OPENROUTER_URL,
+  const data = await callOpenRouter(
     {
       model: TEXT_MODEL,
       messages: [{ role: 'user', content }],
       temperature: 0,
     },
-    { headers: headers(), timeout: 45000 }
+    { timeout: 45000 }
   );
   const text = data?.choices?.[0]?.message?.content;
   const parsed = extractJson(typeof text === 'string' ? text : JSON.stringify(text));
@@ -182,14 +223,13 @@ async function generateOneImage({ imageBuffers, prompt }) {
     });
   }
 
-  const { data } = await axios.post(
-    OPENROUTER_URL,
+  const data = await callOpenRouter(
     {
       model: IMAGE_MODEL,
       messages: [{ role: 'user', content }],
       modalities: ['image', 'text'],
     },
-    { headers: headers(), timeout: 60000 }
+    { timeout: 60000 }
   );
 
   const message = data?.choices?.[0]?.message;
@@ -252,12 +292,14 @@ No text, no badges, no props, no hands, no clutter, no colored backdrop.`;
   ];
 
   const cutouts = [];
+  let lastError = null;
   for (let i = 0; i < cutoutCount; i++) {
     const prompt = `${base}\n${angleHints[i % angleHints.length]}${titleFr ? `\nProduct: ${titleFr}` : ''}\nMode hint: ${mode}.`;
     try {
       const buf = await generateOneImage({ imageBuffers: refs, prompt });
       if (buf) cutouts.push(buf);
     } catch (e) {
+      lastError = e;
       console.error('Cutout image gen failed:', e.message);
     }
   }
@@ -267,11 +309,16 @@ No text, no badges, no props, no hands, no clutter, no colored backdrop.`;
       const buf = await generateOneImage({ imageBuffers: refs, prompt: `${base}\nFront hero, fill the frame.` });
       if (buf) cutouts.push(buf);
     } catch (e) {
+      lastError = e;
       console.error('Cutout retry failed:', e.message);
     }
   }
 
-  if (!cutouts.length) return [];
+  // Surface the real reason (auth, credits, rate limit, moderation…) instead of
+  // silently returning an empty gallery, so the caller can report it to the user.
+  if (!cutouts.length) {
+    throw new Error(lastError ? lastError.message : 'OpenRouter returned no product image');
+  }
 
   const clean = await normalizeCatalogImages(cutouts);
   const finished = [];

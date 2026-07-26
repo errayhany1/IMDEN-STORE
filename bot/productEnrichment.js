@@ -196,7 +196,7 @@ export async function enrichProduct({
       imageUrls,
       sheet: sheetResult,
       productForSheet,
-      aiFailures: ['ai_disabled_or_unconfigured'],
+      aiFailures: ['AI disabled or OPENROUTER_API_KEY / OpenAI key not configured'],
       hasAiImages: false,
     };
   }

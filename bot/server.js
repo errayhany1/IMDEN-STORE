@@ -644,21 +644,27 @@ async function processProduct(chatId, files, caption, destination = 'both') {
             retryMeta.chatId,
             `⏳ جاري إعادة توليد الوصف والصور الاحترافية للمنتج #${retryMeta.rowId} في الخلفية...`
           );
-          const retry = await enrichProduct({
-            originalBuffers: retryBuffers,
-            name: retryMeta.name,
-            price: retryMeta.price,
-            oldPrice: retryMeta.oldPrice,
-            ref: retryMeta.sku,
-            amazonUrl: retryMeta.amazonUrl,
-            uploadToNocoDB,
-            nocodbUrl: NOCODB_URL,
-            syncSheet: false,
-          });
+          const retry = await withTimeout(
+            enrichProduct({
+              originalBuffers: retryBuffers,
+              name: retryMeta.name,
+              price: retryMeta.price,
+              oldPrice: retryMeta.oldPrice,
+              ref: retryMeta.sku,
+              amazonUrl: retryMeta.amazonUrl,
+              uploadToNocoDB,
+              nocodbUrl: NOCODB_URL,
+              syncSheet: false,
+            }),
+            enrichTimeout,
+            'AI enrichment retry'
+          );
           if (!retry?.copy && !retry?.hasAiImages) {
+            const reason = (retry?.aiFailures || []).slice(0, 2).join(' | ')
+              || 'الذكاء الاصطناعي لم يُرجع أي محتوى (تحقّق من OPENROUTER_API_KEY والرصيد)';
             await sendMessage(
               retryMeta.chatId,
-              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}. أعد إرسال المنتج أو شغّل سكربت الإصلاح.`
+              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}.\n🛠️ السبب: ${reason}\nℹ️ المنتج محفوظ بصوره الأصلية. أعد إرسال المنتج بعد إصلاح السبب أعلاه.`
             );
             return;
           }
