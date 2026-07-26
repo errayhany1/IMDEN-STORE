@@ -358,6 +358,167 @@ async function findProductBySku(rawSku) {
   }
 }
 
+function attachmentUrl(fileObj) {
+  const raw = fileObj?.signedUrl || fileObj?.url || fileObj?.path || '';
+  if (!raw) return '';
+  return raw.startsWith('http') ? raw : `${NOCODB_URL}/${raw}`;
+}
+
+/**
+ * Collect the seller's ORIGINAL product photos from a saved NocoDB record so a
+ * failed product can be regenerated without re-sending it on Telegram.
+ * Uploads are tagged with a "real-" filename, so prefer those; otherwise fall
+ * back to the last gallery slot (always the real photo) then the first image.
+ */
+async function fetchSellerImageBuffers(record) {
+  const attachments = [];
+  for (const col of ['Image1', 'Image2', 'Image3', 'Image4', 'Image5']) {
+    const val = record[col];
+    if (Array.isArray(val)) attachments.push(...val);
+    else if (val && typeof val === 'object') attachments.push(val);
+  }
+  if (!attachments.length) return [];
+
+  const real = attachments.filter((a) =>
+    String(a?.title || '').toLowerCase().startsWith('real-')
+  );
+  let chosen = real.length ? real : attachments.slice(-1);
+  if (!chosen.length) chosen = attachments.slice(0, 1);
+
+  const buffers = [];
+  for (const att of chosen.slice(0, 4)) {
+    const url = attachmentUrl(att);
+    if (!url) continue;
+    try {
+      const resp = await http.get(url, { responseType: 'arraybuffer', timeout: 60000 });
+      buffers.push(Buffer.from(resp.data));
+    } catch (e) {
+      console.warn('Fix: image download failed:', e.message);
+    }
+  }
+  return buffers;
+}
+
+function parseFixCommand(text) {
+  const m = String(text || '')
+    .trim()
+    .match(/^(?:\/(?:fix|repair|reprocess)|إصلاح|أصلح)\s+(.+)$/i);
+  return m ? m[1].trim() : null;
+}
+
+function isBareFixCommand(text) {
+  const t = String(text || '').trim().toLowerCase();
+  return t === '/fix' || t === '/repair' || t === '/reprocess' || t === 'إصلاح' || t === 'أصلح';
+}
+
+/**
+ * Re-run AI enrichment for a product already saved in NocoDB. This is the
+ * "repair script" the failure message refers to: it pulls the stored original
+ * photo(s), regenerates the description + studio images, and PATCHes the row —
+ * preserving the SKU, category and stock status.
+ */
+async function reprocessProduct(chatId, target) {
+  let record = null;
+  const asId = String(target).trim();
+  if (/^#?\d+$/.test(asId)) {
+    const id = asId.replace('#', '');
+    try {
+      const { data } = await http.get(
+        `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records/${id}`,
+        { headers: { 'xc-token': NOCODB_TOKEN } }
+      );
+      if (data && (data.Id || data.id)) record = data;
+    } catch (e) {
+      console.warn('Fix: fetch by Id failed:', e.message);
+    }
+  }
+  if (!record) record = await findProductBySku(target);
+  if (!record) {
+    await sendMessage(
+      chatId,
+      `❌ لم أجد المنتج (${target}).\nأرسل: /fix <رقم المنتج>  مثال: /fix 1665\nأو: /fix <المرجع>  مثال: /fix ERY-DESKTOP-F-700A`
+    );
+    return;
+  }
+
+  const rowId = record.Id || record.id;
+  const sellerSku = record.SKU || buildSellerSku(target);
+  const name = record.Arabic_Title || record.Title || record.French_Title || sellerSku;
+  const price = Number(record.price) || 0;
+  const amazonUrl = record.Amazon_URL || '';
+
+  // Progress ping is best-effort — a transient Telegram hiccup here must not
+  // abort the actual reprocessing work.
+  try {
+    await sendMessage(
+      chatId,
+      `⏳ جاري إعادة معالجة المنتج #${rowId} (${sellerSku})...\n📥 تحميل الصور الأصلية ثم توليد الوصف والصور الاحترافية.`
+    );
+  } catch (e) {
+    console.warn('Fix: progress ping failed:', e.message);
+  }
+
+  const buffers = await fetchSellerImageBuffers(record);
+  if (!buffers.length) {
+    await sendMessage(
+      chatId,
+      `❌ تعذّر تحميل صور المنتج #${rowId} من قاعدة البيانات. أعد إرسال المنتج بصورة جديدة.`
+    );
+    return;
+  }
+
+  const enrichTimeout = amazonUrl
+    ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_TIMEOUT_MS, 180000))
+    : AI_ENRICH_TIMEOUT_MS;
+
+  let enrichment;
+  try {
+    enrichment = await withTimeout(
+      enrichProduct({
+        originalBuffers: buffers,
+        name,
+        price,
+        oldPrice: 0,
+        ref: sellerSku,
+        amazonUrl,
+        uploadToNocoDB,
+        nocodbUrl: NOCODB_URL,
+        syncSheet: false,
+      }),
+      enrichTimeout,
+      'AI reprocess'
+    );
+  } catch (e) {
+    await sendMessage(chatId, `⚠️ فشلت إعادة معالجة المنتج #${rowId}.\n🛠️ السبب: ${e.message}`);
+    return;
+  }
+
+  if (!enrichment?.copy && !enrichment?.hasAiImages) {
+    const reason = (enrichment?.aiFailures || []).slice(0, 2).join(' | ')
+      || 'الذكاء الاصطناعي لم يُرجع أي محتوى (تحقّق من OPENROUTER_API_KEY والرصيد)';
+    await sendMessage(chatId, `⚠️ فشلت إعادة معالجة المنتج #${rowId}.\n🛠️ السبب: ${reason}`);
+    return;
+  }
+
+  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
+  const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
+  patch.Id = rowId;
+  // Keep the product's existing identity/state — do not reset SKU, category or stock.
+  patch.SKU = sellerSku;
+  if (record.Category_ID != null) patch.Category_ID = record.Category_ID;
+  if (record.POSTEBL) patch.POSTEBL = record.POSTEBL;
+
+  await http.patch(recordUrl, patch, {
+    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+  });
+
+  const imgs = enrichment.nocoImages?.length || 0;
+  await sendMessage(
+    chatId,
+    `✨ تم تحديث المنتج #${rowId} بالوصف والصور الاحترافية (${imgs} صور)\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
+  );
+}
+
 // ─── ALBUM BUFFER ──────────────────────────────────────────────────────────
 const albumBuffer = {};
 const userState = {};
@@ -644,21 +805,27 @@ async function processProduct(chatId, files, caption, destination = 'both') {
             retryMeta.chatId,
             `⏳ جاري إعادة توليد الوصف والصور الاحترافية للمنتج #${retryMeta.rowId} في الخلفية...`
           );
-          const retry = await enrichProduct({
-            originalBuffers: retryBuffers,
-            name: retryMeta.name,
-            price: retryMeta.price,
-            oldPrice: retryMeta.oldPrice,
-            ref: retryMeta.sku,
-            amazonUrl: retryMeta.amazonUrl,
-            uploadToNocoDB,
-            nocodbUrl: NOCODB_URL,
-            syncSheet: false,
-          });
+          const retry = await withTimeout(
+            enrichProduct({
+              originalBuffers: retryBuffers,
+              name: retryMeta.name,
+              price: retryMeta.price,
+              oldPrice: retryMeta.oldPrice,
+              ref: retryMeta.sku,
+              amazonUrl: retryMeta.amazonUrl,
+              uploadToNocoDB,
+              nocodbUrl: NOCODB_URL,
+              syncSheet: false,
+            }),
+            enrichTimeout,
+            'AI enrichment retry'
+          );
           if (!retry?.copy && !retry?.hasAiImages) {
+            const reason = (retry?.aiFailures || []).slice(0, 2).join(' | ')
+              || 'الذكاء الاصطناعي لم يُرجع أي محتوى (تحقّق من OPENROUTER_API_KEY والرصيد)';
             await sendMessage(
               retryMeta.chatId,
-              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}. أعد إرسال المنتج أو شغّل سكربت الإصلاح.`
+              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}.\n🛠️ السبب: ${reason}\nℹ️ المنتج محفوظ بصوره الأصلية. بعد إصلاح السبب أعلاه أرسل: /fix ${retryMeta.rowId}`
             );
             return;
           }
@@ -682,7 +849,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
           try {
             await sendMessage(
               retryMeta.chatId,
-              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}: ${e.message}`
+              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}: ${e.message}\nℹ️ بعد إصلاح السبب أرسل: /fix ${retryMeta.rowId}`
             );
           } catch {
             /* ignore */
@@ -827,6 +994,19 @@ async function handleUpdate(update) {
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
           : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: خلفية بيضاء + ظل + بطاقة مواصفات\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.',
         MAIN_KEYBOARD
+      );
+      return;
+    }
+
+    const fixTarget = parseFixCommand(text);
+    if (fixTarget) {
+      enqueueProduct(() => reprocessProduct(chatId, fixTarget));
+      return;
+    }
+    if (isBareFixCommand(text)) {
+      await sendMessage(
+        chatId,
+        'ℹ️ إعادة معالجة منتج محفوظ (توليد الوصف والصور من جديد):\n\n/fix <رقم المنتج>\nمثال: /fix 1665\n\nأو بالمرجع:\n/fix ERY-DESKTOP-F-700A'
       );
       return;
     }
