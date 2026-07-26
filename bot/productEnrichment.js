@@ -9,7 +9,11 @@ import {
   generateProductImages,
   isOpenRouterConfigured,
 } from './openrouter.js';
-import { generateLandingPageCopy, isOpenAIConfigured } from './openai.js';
+import {
+  generateLandingPageCopy,
+  isOpenAIConfigured,
+  generateProductImages as generateProductImagesOpenAI,
+} from './openai.js';
 import { appendProductToSheet, isSheetWebhookConfigured } from './sheetsAppend.js';
 import {
   scrapeAmazonProduct,
@@ -233,17 +237,23 @@ export async function enrichProduct({
   }
 
   async function runImagesOnce(titleFr) {
-    if (!isOpenRouterConfigured()) {
-      throw new Error('OPENROUTER_API_KEY missing');
-    }
-    return generateProductImages({
+    const opts = {
       imageBuffer: visionPrimary,
       imageBuffers: visionBuffers,
       titleFr: titleFr || displayName,
       price,
       oldPrice,
       mode: amazonUrl ? 'amazon' : 'photo',
-    });
+    };
+    // Provider selection: honour an explicit IMAGE_PROVIDER, otherwise prefer
+    // OpenRouter (Gemini) when available and fall back to OpenAI (gpt-image-1)
+    // so owners who only use OpenAI still get studio images.
+    const forced = String(process.env.IMAGE_PROVIDER || '').toLowerCase();
+    if (forced === 'openai' && isOpenAIConfigured()) return generateProductImagesOpenAI(opts);
+    if (forced === 'openrouter' && isOpenRouterConfigured()) return generateProductImages(opts);
+    if (isOpenRouterConfigured()) return generateProductImages(opts);
+    if (isOpenAIConfigured()) return generateProductImagesOpenAI(opts);
+    throw new Error('No image provider configured (set OPENROUTER_API_KEY or OPENAI_API_KEY)');
   }
 
   // Copy and studio images can run in parallel — images only need a display
