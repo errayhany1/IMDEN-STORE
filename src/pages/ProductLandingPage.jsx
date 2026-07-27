@@ -14,6 +14,8 @@ import {
   Copy,
   Check,
   Search,
+  Share2,
+  Link2,
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import {
@@ -82,17 +84,25 @@ function parseFaq(raw) {
   }
 }
 
-/** Keep only safe tags from NocoDB HTML descriptions (incl. specs <img>). */
+/** Keep only safe tags from NocoDB HTML descriptions. */
 function sanitizeProductHtml(html) {
   if (!html) return '';
   if (typeof document === 'undefined') {
     return String(html)
       .replace(/<(script|iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi, '')
-      .replace(/\son\w+="[^"]*"/gi, '');
+      .replace(/\son\w+="[^"]*"/gi, '')
+      // Drop legacy specs JPEG/SVG cards (Arabic often renders as □□□ on Alpine).
+      .replace(/<figure[^>]*class=["'][^"']*specs-card[^"']*["'][^>]*>[\s\S]*?<\/figure>/gi, '')
+      .replace(/<img\b[^>]*specs-[^>]*>/gi, '');
   }
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   tmp.querySelectorAll('script,iframe,object,embed').forEach((n) => n.remove());
+  tmp.querySelectorAll('figure.specs-card').forEach((n) => n.remove());
+  tmp.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src') || '';
+    if (/specs-/i.test(src)) img.remove();
+  });
   tmp.querySelectorAll('*').forEach((el) => {
     [...el.attributes].forEach((attr) => {
       if (/^on/i.test(attr.name) || attr.name === 'srcdoc') el.removeAttribute(attr.name);
@@ -126,6 +136,8 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const [addedFlash, setAddedFlash] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
   const [refCopied, setRefCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [shareFlash, setShareFlash] = useState(false);
   const touchX = useRef(null);
 
   const sku = useMemo(() => {
@@ -381,6 +393,44 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     if (!useStore.getState().isCartOpen) toggleCart();
   };
 
+  const productUrl = useMemo(() => {
+    const path = product?.ref
+      ? `${SITE_URL}/p/${encodeURIComponent(product.ref)}`
+      : (typeof window !== 'undefined' ? window.location.href : SITE_URL);
+    return path;
+  }, [product?.ref]);
+
+  const copyProductLink = async () => {
+    try {
+      await navigator.clipboard?.writeText(productUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1800);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const shareProduct = async () => {
+    const shareData = {
+      title: title || BRAND,
+      text: isFr
+        ? `${title} — ${product?.price} DH | ${BRAND}`
+        : `${title} — ${product?.price} DH | ${BRAND}`,
+      url: productUrl,
+    };
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share(shareData);
+        setShareFlash(true);
+        setTimeout(() => setShareFlash(false), 1500);
+        return;
+      }
+    } catch (e) {
+      if (e?.name === 'AbortError') return;
+    }
+    await copyProductLink();
+  };
+
   const waText = encodeURIComponent(
     isFr
       ? `Bonjour, je suis intéressé par:\n${title}\nSKU: ${product?.ref}\nPrix: ${product?.price} DH\n${window.location.href}`
@@ -424,6 +474,10 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       added: 'Ajouté',
       rate: 'Noter ce produit',
       related: 'Produits complémentaires',
+      share: 'Partager',
+      shareDone: 'Partagé',
+      copyLink: 'Copier le lien',
+      linkCopied: 'Lien copié',
     }
     : {
       buy: 'أضف إلى السلة',
@@ -448,6 +502,10 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       added: 'تمت الإضافة',
       rate: 'قيّم هذا المنتج',
       related: 'منتجات مكملة',
+      share: 'مشاركة',
+      shareDone: 'تمت المشاركة',
+      copyLink: 'نسخ الرابط',
+      linkCopied: 'تم نسخ الرابط',
     };
 
   const shell = dm ? 'bg-background-dark text-white' : 'bg-background-light text-slate-900';
@@ -743,15 +801,43 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 {product.price}
                 <span className="text-base font-bold ms-1 opacity-80">DH</span>
               </p>
-              <button
-                type="button"
-                onClick={handleAdd}
-                disabled={!available}
-                className="shrink-0 min-h-11 px-4 sm:px-5 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-45 hover:bg-primary-dark active:scale-[0.99] transition text-sm sm:text-base"
-              >
-                <ShoppingCart size={18} />
-                {addedFlash ? t.added : t.buy}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={shareProduct}
+                  className={`shrink-0 min-h-11 px-3 rounded-xl border flex items-center justify-center gap-1.5 text-sm font-semibold transition-colors
+                    ${shareFlash
+                      ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
+                      : dm ? 'border-white/10 text-gray-200 hover:bg-white/10' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                  aria-label={t.share}
+                  title={t.share}
+                >
+                  {shareFlash ? <Check size={16} /> : <Share2 size={16} />}
+                  <span className="hidden sm:inline">{shareFlash ? t.shareDone : t.share}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={copyProductLink}
+                  className={`shrink-0 min-h-11 px-3 rounded-xl border flex items-center justify-center gap-1.5 text-sm font-semibold transition-colors
+                    ${linkCopied
+                      ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
+                      : dm ? 'border-white/10 text-gray-200 hover:bg-white/10' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                  aria-label={t.copyLink}
+                  title={t.copyLink}
+                >
+                  {linkCopied ? <Check size={16} /> : <Link2 size={16} />}
+                  <span className="hidden sm:inline">{linkCopied ? t.linkCopied : t.copyLink}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAdd}
+                  disabled={!available}
+                  className="shrink-0 min-h-11 px-4 sm:px-5 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-45 hover:bg-primary-dark active:scale-[0.99] transition text-sm sm:text-base"
+                >
+                  <ShoppingCart size={18} />
+                  {addedFlash ? t.added : t.buy}
+                </button>
+              </div>
             </div>
 
             <div className="hidden md:flex">
@@ -881,9 +967,15 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                   [&_p]:mb-4 [&_ul]:mb-4 [&_li]:mb-1
                   [&_figure]:my-6 [&_figure]:mx-0
                   [&_img]:w-full [&_img]:h-auto [&_img]:rounded-2xl [&_img]:border [&_img]:object-contain
+                  [&_.specs-card-html]:my-6 [&_.specs-card-html]:rounded-2xl [&_.specs-card-html]:overflow-hidden [&_.specs-card-html]:border
+                  [&_.specs-card-head]:bg-slate-900 [&_.specs-card-head]:text-white [&_.specs-card-head]:font-bold [&_.specs-card-head]:text-center [&_.specs-card-head]:px-4 [&_.specs-card-head]:py-3
+                  [&_.specs-card-body]:px-4 [&_.specs-card-body]:py-4 [&_.specs-card-body]:space-y-3
+                  [&_.specs-card-title]:font-semibold [&_.specs-card-title]:text-base [&_.specs-card-title]:m-0
+                  [&_.specs-card-list]:list-disc [&_.specs-card-list]:ps-5 [&_.specs-card-list]:space-y-2 [&_.specs-card-list]:my-0
+                  [&_.specs-card-meta]:text-xs [&_.specs-card-meta]:rounded-xl [&_.specs-card-meta]:px-3 [&_.specs-card-meta]:py-2 [&_.specs-card-meta]:m-0
                   ${dm
-                    ? 'prose-invert [&_img]:border-gray-700 [&_img]:bg-gray-900/40 [&_figcaption]:text-gray-400'
-                    : '[&_img]:border-slate-200 [&_img]:bg-white [&_figcaption]:text-slate-500'}
+                    ? 'prose-invert [&_img]:border-gray-700 [&_img]:bg-gray-900/40 [&_figcaption]:text-gray-400 [&_.specs-card-html]:border-gray-700 [&_.specs-card-html]:bg-gray-900/50 [&_.specs-card-meta]:bg-gray-800 [&_.specs-card-meta]:text-gray-300'
+                    : '[&_img]:border-slate-200 [&_img]:bg-white [&_figcaption]:text-slate-500 [&_.specs-card-html]:border-slate-200 [&_.specs-card-html]:bg-white [&_.specs-card-meta]:bg-slate-100 [&_.specs-card-meta]:text-slate-600'}
                   ${soft}`}
                 dangerouslySetInnerHTML={{ __html: descriptionForAplus }}
               />
@@ -930,6 +1022,14 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           >
             <img src={WA_ICON} alt="WhatsApp" className="w-8 h-8 drop-shadow-md" />
           </a>
+          <button
+            type="button"
+            onClick={shareProduct}
+            className="shrink-0 w-11 h-11 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700"
+            aria-label={t.share}
+          >
+            {shareFlash || linkCopied ? <Check size={18} className="text-emerald-600" /> : <Share2 size={18} />}
+          </button>
           <button
             type="button"
             onClick={handleAdd}

@@ -9,7 +9,7 @@ import {
     upsertCustomerProfile,
 } from '../services/customerAccount';
 import { saveCloudAccount } from '../services/cloudAccount';
-import { syncOrderSideEffects } from '../services/tifawt';
+import { createStoreOrderId, syncOrderSideEffects } from '../services/tifawt';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, darkMode, clearCart, customerInfo, setCustomerInfo, user, setAuthModalOpen } = useStore();
@@ -138,7 +138,12 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 notesContent += `- ${item.name} (Ref: ${item.ref}) | الكمية: ${item.quantity} | السعر: ${item.price} DH\n`;
             });
 
+            // One immutable id travels with the NocoDB order and every ERP
+            // submission.  It makes a double click, network retry, or NocoDB
+            // webhook replay harmless.
+            const storeOrderId = createStoreOrderId();
             const orderMetadata = cart.map(item => ({
+                storeOrderId,
                 id: item.id || item.Id,
                 name: item.name || item.Title,
                 ref: item.ref || item.SKU,
@@ -249,6 +254,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
                 // Push order to Tifawt ERP (stock is deducted there, not on the site).
                 syncOrderSideEffects({
+                    orderId: storeOrderId,
                     name: formData.name,
                     phone: formData.phone,
                     address: formData.address,
@@ -262,8 +268,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 throw new Error('تعذر تسجيل الطلب. يرجى المحاولة مرة أخرى.');
             }
 
-            // 3. Generate PDF file and send via Telegram
-            const pdfFile = await generatePDF(cart, false);
+            // The order is already durable at this point. A PDF or Telegram
+            // outage must never make the buyer retry and duplicate it.
+            try {
+                const pdfFile = await generatePDF(cart, false);
 
             const caption = `🚨 **طلبية جديدة (Errayhany Store)** 🚨\n\n` +
                 `👤 **الاسم:** ${formData.name}\n` +
@@ -283,6 +291,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     transferProof,
                     `🏦 إثبات تحويل بنكي\n👤 ${formData.name}\n📞 ${formData.phone}\n🔖 المرجع: ${transferReference.trim()}\n💰 المبلغ: ${subtotal.toFixed(2)} DH`
                 );
+            }
+
+            } catch (notificationError) {
+                console.error('Post-order notification failed:', notificationError);
             }
 
             setSuccessMessage(

@@ -19,7 +19,6 @@ import {
 import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   bulletsFromHtml,
-  renderSpecsCard,
 } from './studioImage.js';
 
 export function buildSellerSku(ref) {
@@ -76,12 +75,73 @@ function orderGalleryUploads({
   return [...firstAi, ...real, ...extraAi, ...amazonUploads.filter(Boolean)].slice(0, 5);
 }
 
-function injectSpecsIntoDescription(html, specsUrl, lang = 'fr') {
-  if (!specsUrl) return html || '';
-  const label = lang === 'ar' ? 'بطاقة المواصفات' : 'Fiche technique';
-  const block = `<figure class="specs-card"><img src="${specsUrl}" alt="${label}" loading="lazy"/><figcaption>${label}</figcaption></figure>`;
-  const base = String(html || '').trim();
-  return base ? `${base}\n${block}` : block;
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function hasArabic(text) {
+  return /[\u0600-\u06FF]/.test(String(text || ''));
+}
+
+/**
+ * Specs block inside the description as HTML (not a rendered image).
+ * Avoids missing Arabic glyphs on Linux/Alpine SVG fonts.
+ */
+function buildHtmlSpecsCard({
+  title = '',
+  bullets = [],
+  brand = '',
+  color = '',
+  sku = '',
+  price = '',
+  lang = 'fr',
+} = {}) {
+  const isAr = lang === 'ar' || hasArabic(title) || bullets.some((b) => hasArabic(b));
+  const heading = isAr ? 'المواصفات التقنية' : 'Fiche technique';
+  const dir = isAr ? 'rtl' : 'ltr';
+  const cleanBullets = (bullets || [])
+    .map((b) => String(b || '').replace(/<[^>]*>/g, '').trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  const metaBits = [
+    brand && brand !== 'Generic' ? `${isAr ? 'العلامة' : 'Marque'}: ${escapeHtml(brand)}` : '',
+    color ? `${isAr ? 'اللون' : 'Couleur'}: ${escapeHtml(color)}` : '',
+    sku ? `SKU: ${escapeHtml(sku)}` : '',
+    price ? `${escapeHtml(price)} DH` : '',
+  ].filter(Boolean);
+
+  const list = cleanBullets.length
+    ? `<ul class="specs-card-list">${cleanBullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>`
+    : '';
+  const titleHtml = title
+    ? `<p class="specs-card-title">${escapeHtml(title)}</p>`
+    : '';
+  const metaHtml = metaBits.length
+    ? `<p class="specs-card-meta">${metaBits.join(' · ')}</p>`
+    : '';
+
+  return `<aside class="specs-card-html" dir="${dir}" lang="${isAr ? 'ar' : 'fr'}">
+  <div class="specs-card-head">${escapeHtml(heading)}</div>
+  <div class="specs-card-body">
+    ${titleHtml}
+    ${list}
+    ${metaHtml}
+  </div>
+</aside>`;
+}
+
+function injectSpecsIntoDescription(html, specsBlock) {
+  if (!specsBlock) return html || '';
+  const base = String(html || '')
+    // Drop legacy broken SVG/JPEG specs images from previous enrichments.
+    .replace(/<figure[^>]*class=["'][^"']*specs-card[^"']*["'][^>]*>[\s\S]*?<\/figure>/gi, '')
+    .replace(/<img\b[^>]*specs-[^>]*>/gi, '')
+    .trim();
+  return base ? `${base}\n${specsBlock}` : specsBlock;
 }
 
 /**
@@ -196,7 +256,11 @@ export async function enrichProduct({
       imageUrls,
       sheet: sheetResult,
       productForSheet,
-      aiFailures: ['ai_disabled_or_unconfigured'],
+      aiFailures: [
+        !enabled
+          ? 'PRODUCT_AI_ENRICHMENT=false'
+          : 'ai_disabled_or_unconfigured: set OPENROUTER_API_KEY (images) and optionally OPENAI_API_KEY (copy)',
+      ],
       hasAiImages: false,
     };
   }
@@ -326,8 +390,8 @@ export async function enrichProduct({
   // No barcode reading — skip entirely.
   const barcode = '';
 
-  // Specs card → description HTML only (never Image1…Image5 gallery).
-  let specsUrl = '';
+  // Specs card → HTML inside description only (never gallery Image1…Image5).
+  // Avoid SVG/JPEG cards: Alpine servers lack Arabic fonts → tofu boxes.
   let hasSpecsImage = false;
   if (copy) {
     try {
@@ -339,7 +403,16 @@ export async function enrichProduct({
         copy.short_description_ar || copy.description_arabic || '',
         6
       );
-      const specsBuf = await renderSpecsCard({
+      const arBlock = buildHtmlSpecsCard({
+        title: copy.arabic_title || displayName,
+        bullets: bulletsAr.length ? bulletsAr : bulletsFr,
+        brand: copy.brand,
+        color: copy.color,
+        sku: sellerSku,
+        price,
+        lang: 'ar',
+      });
+      const frBlock = buildHtmlSpecsCard({
         title: copy.french_title || displayName,
         bullets: bulletsFr.length ? bulletsFr : bulletsAr,
         brand: copy.brand,
@@ -348,29 +421,14 @@ export async function enrichProduct({
         price,
         lang: 'fr',
       });
-      const specsUploads = await uploadBuffers(uploadToNocoDB, [specsBuf], `specs-${sellerSku}`);
-      if (specsUploads[0]) {
-        specsUrl = publicUrlFromNoco(specsUploads[0], nocodbUrl);
-        hasSpecsImage = true;
-        console.log('Specs card uploaded (description only)');
-      }
+      copy.description_arabic = injectSpecsIntoDescription(copy.description_arabic, arBlock);
+      copy.description_french = injectSpecsIntoDescription(copy.description_french, frBlock);
+      hasSpecsImage = true;
+      console.log('HTML specs card injected into description');
     } catch (e) {
       console.error('Specs card failed:', e.message);
       aiFailures.push(`specs:${e.message}`);
     }
-  }
-
-  if (copy && specsUrl) {
-    copy.description_french = injectSpecsIntoDescription(
-      copy.description_french,
-      specsUrl,
-      'fr'
-    );
-    copy.description_arabic = injectSpecsIntoDescription(
-      copy.description_arabic,
-      specsUrl,
-      'ar'
-    );
   }
 
   const nocoImages = orderGalleryUploads({

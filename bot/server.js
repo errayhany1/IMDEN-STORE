@@ -620,10 +620,14 @@ async function executeAiPolish({
   }
 
   if (!enrichment?.copy && !enrichment?.hasAiImages) {
-    const detail = (enrichment?.aiFailures || []).slice(0, 2).join(' | ');
+    const failures = enrichment?.aiFailures || [];
+    const detail = failures.slice(0, 2).join(' | ');
+    const missingKeys = failures.some((f) => String(f).includes('ai_disabled_or_unconfigured') || String(f).includes('PRODUCT_AI_ENRICHMENT=false'))
+      ? '\n⚙️ السبب: مفاتيح الذكاء الاصطناعي غير مضبوطة على سيرفر البوت.\nأضف في EasyPanel (خدمة البوت):\n• OPENROUTER_API_KEY (إلزامي للصور)\n• OPENAI_API_KEY (اختياري للنصوص)\n• PRODUCT_AI_ENRICHMENT=true\nثم أعد تشغيل الخدمة وأعد المحاولة.'
+      : (detail ? `\n🛠️ ${detail}` : '');
     await sendMessage(
       chatId,
-      `⚠️ لم يكتمل التوليد للمنتج #${rowId} (${sellerSku}).${detail ? `\n🛠️ ${detail}` : ''}`
+      `⚠️ لم يكتمل التوليد للمنتج #${rowId} (${sellerSku}).${missingKeys}`
     );
     return;
   }
@@ -1305,9 +1309,121 @@ const TIFAWT_LEAD_URL = (
   || 'https://errayhany.tifawt.ma/api/v1/lead-sources/api/0a4e5144-86c1-4fdf-b276-5b2f5bbcf149'
 ).trim();
 
-app.post('/webhook/order', async (req, res) => {
-  res.sendStatus(200);
+// A lead-source call has no documented idempotency contract.  Coalesce every
+// browser retry and NocoDB webhook replay in this service before it reaches
+// Tifawt.  Successful keys live for 24h; failed calls are never cached so a
+// webhook or the storefront can retry them safely.
+const ORDER_SYNC_TTL_MS = 24 * 60 * 60 * 1000;
+const syncedStoreOrders = new Map();
+const inFlightStoreOrders = new Map();
 
+function cleanupOrderSyncCache() {
+  const cutoff = Date.now() - ORDER_SYNC_TTL_MS;
+  for (const [key, value] of syncedStoreOrders) {
+    if (value.completedAt < cutoff) syncedStoreOrders.delete(key);
+  }
+}
+
+function normalizeOrderItems(items) {
+  if (!Array.isArray(items) || !items.length) return [];
+  return items.map((item) => ({
+    sku: String(item?.ref || item?.sku || item?.SKU || item?.id || 'UNKNOWN').trim(),
+    quantity: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1) || 1),
+    unitPrice: Math.max(0, Number(item?.price ?? item?.unitPrice ?? 0) || 0),
+  })).filter((item) => item.sku && item.sku !== 'UNKNOWN');
+}
+
+function readStoreOrderId(orderRow, items, fallback = '') {
+  return String(
+    fallback
+    || orderRow?.['Store Order ID']
+    || orderRow?.storeOrderId
+    || items?.[0]?.storeOrderId
+    || orderRow?.Id
+    || orderRow?.id
+    || ''
+  ).trim();
+}
+
+function isTransientTifawtError(error) {
+  const status = error?.response?.status;
+  return !status || status === 408 || status === 429 || status >= 500;
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function postOrderToTifawt({ orderId, name, phone, address, city, items }) {
+  const tifawtProducts = normalizeOrderItems(items);
+  if (!orderId || !name || !phone || !tifawtProducts.length) {
+    const error = new Error('invalid_order_payload');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  cleanupOrderSyncCache();
+  if (syncedStoreOrders.has(orderId)) {
+    return { ok: true, duplicate: true, orderId };
+  }
+  if (inFlightStoreOrders.has(orderId)) return inFlightStoreOrders.get(orderId);
+
+  const task = (async () => {
+    const tifawtPayload = {
+      customerName: String(name).trim(),
+      customerPhone: String(phone).trim(),
+      customerAddress: String(address || '').trim(),
+      city: String(city || 'المغرب').trim(),
+      products: tifawtProducts,
+    };
+
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const result = await axios.post(TIFAWT_LEAD_URL, tifawtPayload, {
+          headers: { 'Content-Type': 'application/json', 'X-Store-Order-Id': orderId },
+          timeout: 30000,
+        });
+        syncedStoreOrders.set(orderId, { completedAt: Date.now() });
+        console.log(`✅ Tifawt sync ${orderId} (${result.status})`);
+        return { ok: true, orderId, status: result.status };
+      } catch (error) {
+        lastError = error;
+        if (!isTransientTifawtError(error) || attempt === 3) break;
+        await wait(500 * (2 ** (attempt - 1)));
+      }
+    }
+    console.error(`❌ Tifawt sync failed ${orderId}:`, lastError?.response?.data || lastError?.message);
+    throw lastError || new Error('tifawt_sync_failed');
+  })();
+
+  inFlightStoreOrders.set(orderId, task);
+  try {
+    return await task;
+  } finally {
+    inFlightStoreOrders.delete(orderId);
+  }
+}
+
+/** Storefront-only endpoint. ERP credentials remain on this server. */
+app.post('/api/orders/sync', async (req, res) => {
+  try {
+    const result = await postOrderToTifawt({
+      orderId: req.get('X-Store-Order-Id') || req.body?.orderId,
+      name: req.body?.name,
+      phone: req.body?.phone,
+      address: req.body?.address,
+      city: req.body?.city,
+      items: req.body?.items,
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(error?.statusCode || 502).json({
+      ok: false,
+      error: error?.statusCode ? error.message : 'tifawt_sync_failed',
+    });
+  }
+});
+
+app.post('/webhook/order', async (req, res) => {
   try {
     const payload = req.body;
     let orderRow = null;
@@ -1331,28 +1447,21 @@ app.post('/webhook/order', async (req, res) => {
       console.log('No valid Order Metadata found');
     }
 
-    const tifawtProducts = items.map((i) => ({
-      sku: i.ref || i.sku || i.id || 'UNKNOWN',
-      quantity: i.qty || i.quantity || 1,
-      unitPrice: i.price || 0,
-    }));
-
-    const tifawtPayload = {
-      customerName: orderRow['Customer Name'] || 'بدون اسم',
-      customerPhone: orderRow['Customer Phone'] || '',
-      customerAddress: orderRow['Delivery Address'] || '',
-      city: orderRow['City'] || 'المغرب',
-      products: tifawtProducts,
-    };
-
-    console.log(`🚀 Sending Order to Tifawt ERP: ${tifawtPayload.customerName}`);
-    await axios.post(TIFAWT_LEAD_URL, tifawtPayload, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 30000,
+    const orderId = readStoreOrderId(orderRow, items);
+    const result = await postOrderToTifawt({
+      orderId,
+      name: orderRow['Customer Name'],
+      phone: orderRow['Customer Phone'],
+      address: orderRow['Delivery Address'],
+      city: orderRow['City'],
+      items,
     });
-    console.log('✅ Order successfully synced to Tifawt ERP');
+    return res.status(200).json(result);
   } catch (err) {
     console.error('❌ Error syncing to Tifawt ERP:', err?.response?.data || err.message);
+    // Do not acknowledge a failed ERP sync.  NocoDB can then retry its webhook
+    // according to its configured retry policy instead of silently losing it.
+    return res.status(502).json({ ok: false, error: 'tifawt_sync_failed' });
   }
 });
 
