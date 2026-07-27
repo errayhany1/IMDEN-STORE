@@ -4,7 +4,6 @@
  * With Amazon URL: scrape Apify → AI copy from Amazon data → gallery = AI + Amazon + real last.
  */
 import {
-  detectProductBarcode,
   generateProductCopy,
   generateProductImages,
   isOpenRouterConfigured,
@@ -305,19 +304,9 @@ export async function enrichProduct({
     }
   })();
 
-  const barcodePromise = (async () => {
-    try {
-      return await detectProductBarcode(visionBuffers);
-    } catch (e) {
-      console.warn('Barcode detection skipped:', e.message);
-      return '';
-    }
-  })();
-
-  const [copyResult, imageUploads, barcodeDetected] = await Promise.all([
+  const [copyResult, imageUploads] = await Promise.all([
     copyPromise,
     imagesPromise,
-    barcodePromise,
   ]);
 
   copy = copyResult;
@@ -333,8 +322,8 @@ export async function enrichProduct({
     }
   }
 
-  let barcode = String(copy?.barcode || barcodeDetected || '').trim();
-  if (barcode) console.log(`Barcode: ${barcode}`);
+  // Barcode scanning disabled — keep the hot path fast.
+  const barcode = '';
 
   // Professional specs card from the generated bullets — shown in gallery + description.
   let specsUploads = [];

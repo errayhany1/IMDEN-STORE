@@ -21,8 +21,6 @@ import {
   buildSellerSku,
   cleanReference,
 } from './productEnrichment.js';
-import { detectProductBarcode } from './openrouter.js';
-import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   createTifawtProduct,
   isTifawtProductSyncConfigured,
@@ -77,7 +75,7 @@ const TELEGRAM_WEBHOOK_URL = (process.env.TELEGRAM_WEBHOOK_URL || '').replace(/\
 const TELEGRAM_MODE = (process.env.TELEGRAM_MODE || '').toLowerCase()
   || (TELEGRAM_WEBHOOK_URL ? 'webhook' : 'polling');
 /** Soft timeout so AI cannot hang the whole bot forever.
- *  Copy + barcode + 2 studio cutouts + background composites routinely
+ *  Copy + studio cutouts + background composites routinely
  *  exceed 90s on large Telegram photos, so the default is 5 minutes. */
 const AI_ENRICH_TIMEOUT_MS = Number(process.env.AI_ENRICH_TIMEOUT_MS || 300000);
 /** Background polish after the product is already saved (must be bounded). */
@@ -238,19 +236,6 @@ async function downloadTelegramFileData(fileId, extName) {
     ? filePath.split('/').pop()
     : `image.${extName}`;
   return { buffer, fileName };
-}
-
-/** Downscale before barcode vision — full Telegram photos used to OOM / hang. */
-async function safeDetectBarcode(buffers = []) {
-  if (!buffers.length) return '';
-  try {
-    const vision = await prepareVisionBuffers(buffers.slice(0, 3), { maxEdge: 1024, quality: 78 });
-    if (!vision.length) return '';
-    return await withTimeout(detectProductBarcode(vision), 45000, 'barcode detection');
-  } catch (e) {
-    console.warn('Barcode detection skipped:', e.message);
-    return '';
-  }
 }
 
 async function uploadToNocoDB(buffer, fileName) {
@@ -625,53 +610,20 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     return;
   }
 
-  let earlyTifawtBarcode = '';
-  const tifawtPromise = (destination === 'both' && isTifawtProductSyncConfigured())
-    ? (async () => {
-      try {
-        earlyTifawtBarcode = await safeDetectBarcode(originalBuffers);
-        let result = await createTifawtProduct({
-          name,
-          sku: tifawtSku,
-          price,
-          barcode: earlyTifawtBarcode,
-          imageBuffers: originalBuffers,
-          imageFileName: `${tifawtSku}-1.jpg`,
-        });
-        if (!result?.ok && !result?.skipped) {
-          console.warn('Tifawt first attempt failed, retrying once:', result?.error);
-          await delay(1500);
-          result = await createTifawtProduct({
-            name,
-            sku: tifawtSku,
-            price,
-            barcode: earlyTifawtBarcode,
-            imageBuffers: originalBuffers,
-            imageFileName: `${tifawtSku}-1.jpg`,
-          });
-        }
-        return result;
-      } catch (e) {
-        console.error('Early Tifawt sync error:', e.message);
-        return { ok: false, error: e.message };
-      }
-    })()
-    : null;
-
+  // Send originals immediately (no barcode scan — that only slowed us down).
+  // Tifawt + NocoDB get the seller payload first; AI polish patches later.
   if (destination === 'tifawt') {
-    const barcode = await safeDetectBarcode(originalBuffers);
     const result = await createTifawtProduct({
       name,
       sku: tifawtSku,
       price,
-      barcode,
       imageBuffers: originalBuffers,
       imageFileName: `${tifawtSku}-1.jpg`,
     });
     if (result?.ok) {
       await sendMessage(
         chatId,
-        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${tifawtSku}\n🖼️ ${result.imageCount || originalBuffers.length} صورة أصلية${barcode ? `\n🏷️ الباركود: ${barcode}` : '\n🏷️ لم يظهر باركود مقروء'}`
+        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${tifawtSku}\n🖼️ ${result.imageCount || originalBuffers.length} صورة أصلية`
       );
     } else {
       await sendMessage(chatId, `❌ تعذر إنشاء المنتج في Tifawt:\n${result?.error || result?.reason || 'خطأ غير معروف'}`);
@@ -679,8 +631,46 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     return;
   }
 
-  if (destination === 'both') {
-    await sendMessage(chatId, '🛒 بدأت مزامنة Tifawt بالأصل...');
+  // Fire Tifawt in parallel — do not block NocoDB save on it.
+  if (destination === 'both' && isTifawtProductSyncConfigured()) {
+    (async () => {
+      try {
+        let result = await createTifawtProduct({
+          name,
+          sku: tifawtSku,
+          price,
+          imageBuffers: originalBuffers,
+          imageFileName: `${tifawtSku}-1.jpg`,
+        });
+        if (!result?.ok && !result?.skipped) {
+          await delay(1500);
+          result = await createTifawtProduct({
+            name,
+            sku: tifawtSku,
+            price,
+            imageBuffers: originalBuffers,
+            imageFileName: `${tifawtSku}-1.jpg`,
+          });
+        }
+        if (result?.ok) {
+          const modeAr = result.mode === 'updated' ? 'تم تحديث الأصل' : 'تم إضافة الأصل';
+          await sendMessage(
+            chatId,
+            `🛒 Tifawt: ${modeAr}\n📦 ${name}\n📋 ${tifawtSku}\n🖼️ ${result.imageCount || originalBuffers.length} صور أصلية`
+          );
+          console.log('✅ Tifawt product', result.mode || 'created', tifawtSku, result.data?.id || result.existingId || '');
+        } else if (!result?.skipped) {
+          await sendMessage(chatId, `🛒 Tifawt خطأ: ${result?.error || 'فشل الإنشاء'}`);
+        }
+      } catch (e) {
+        console.error('Early Tifawt sync error:', e.message);
+        try {
+          await sendMessage(chatId, `🛒 Tifawt خطأ: ${e.message}`);
+        } catch {
+          /* ignore */
+        }
+      }
+    })();
   }
 
   // CRITICAL PATH: save originals fast so the product queue is not blocked by AI.
@@ -695,7 +685,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     amazonUrl: amazonUrl || '',
     skippedAi: true,
     copy: null,
-    barcode: earlyTifawtBarcode || '',
+    barcode: '',
     nocoImages: uploadedFiles,
     sheet: { skipped: true, reason: 'destination_choice' },
     aiFailures: [],
@@ -716,37 +706,18 @@ async function processProduct(chatId, files, caption, destination = 'both') {
   const recordUrl = created.recordUrl;
   const landing = `${SITE_URL}/p/${encodeURIComponent(sellerSku)}`;
   const saleNote = oldPrice ? `\n🔥 تخفيض من ${oldPrice} إلى ${price} DH` : '';
+  const tifawtNote = destination === 'both'
+    ? (isTifawtProductSyncConfigured()
+      ? `\n🛒 Tifawt: يُرسل الأصل الآن بالمرجع ${tifawtSku}`
+      : '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD')
+    : '\n🌐 تم الحفظ في NocoDB فقط';
 
   console.log(`✅ NocoDB row created fast: #${rowId}`);
 
-  let tifawtNote = '';
-  if (destination === 'both' && tifawtPromise) {
-    try {
-      const tifawtResult = await withTimeout(tifawtPromise, 45000, 'Tifawt sync');
-      if (tifawtResult?.skipped) {
-        tifawtNote = '\n🛒 Tifawt: لم يُضبط (TIFAWT_EMAIL/PASSWORD)';
-      } else if (tifawtResult?.ok) {
-        const modeAr = tifawtResult.mode === 'updated' ? 'تم تحديث الأصل' : 'تم إضافة الأصل';
-        tifawtNote = `\n🛒 Tifawt: ${modeAr} (${tifawtResult.imageCount || originalBuffers.length} صور) | 📋 ${tifawtSku}`;
-        console.log('✅ Tifawt product', tifawtResult.mode || 'created', tifawtSku, tifawtResult.data?.id || tifawtResult.existingId || '');
-      } else {
-        tifawtNote = `\n🛒 Tifawt خطأ: ${tifawtResult?.error || 'فشل الإنشاء'}`;
-      }
-    } catch (e) {
-      console.error('Tifawt wait error:', e.message);
-      tifawtNote = `\n🛒 Tifawt: ما زال يعمل في الخلفية (${e.message})`;
-    }
-  } else if (destination === 'both') {
-    tifawtNote = '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD';
-  } else {
-    tifawtNote = '\n🌐 تم الحفظ في NocoDB فقط';
-  }
-
-  const barcode = String(earlyTifawtBarcode || '').trim();
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} بسرعة (${uploadedFiles.length} صور أصلية)!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${tifawtNote}\n\n✨ الوصف والصور الاحترافية تُجهَّز الآن في الخلفية.\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج الأصلي #${rowId} (${uploadedFiles.length} صور)!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}\n🔗 صفحة الهبوط: ${landing}${tifawtNote}\n\n✨ سيتم تعديل العنوان/الوصف/الصور الاحترافية تلقائياً بعد لحظات.\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 
