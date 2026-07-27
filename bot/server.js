@@ -22,6 +22,7 @@ import {
   cleanReference,
 } from './productEnrichment.js';
 import { detectProductBarcode } from './openrouter.js';
+import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   createTifawtProduct,
   isTifawtProductSyncConfigured,
@@ -79,6 +80,10 @@ const TELEGRAM_MODE = (process.env.TELEGRAM_MODE || '').toLowerCase()
  *  Copy + barcode + 2 studio cutouts + background composites routinely
  *  exceed 90s on large Telegram photos, so the default is 5 minutes. */
 const AI_ENRICH_TIMEOUT_MS = Number(process.env.AI_ENRICH_TIMEOUT_MS || 300000);
+/** Background polish after the product is already saved (must be bounded). */
+const AI_ENRICH_BG_TIMEOUT_MS = Number(process.env.AI_ENRICH_BG_TIMEOUT_MS || 360000);
+/** Reject oversized Telegram downloads before they OOM the process. */
+const MAX_TELEGRAM_IMAGE_BYTES = Number(process.env.MAX_TELEGRAM_IMAGE_BYTES || 12 * 1024 * 1024);
 
 function assertBotConfig() {
   const missing = [];
@@ -211,25 +216,53 @@ async function answerCallback(callbackQueryId, text) {
   }, { timeout: 15000 });
 }
 
-const http = axios.create({ timeout: 120000 });
+const http = axios.create({
+  timeout: 120000,
+  maxContentLength: MAX_TELEGRAM_IMAGE_BYTES,
+  maxBodyLength: MAX_TELEGRAM_IMAGE_BYTES,
+});
 
 async function downloadTelegramFileData(fileId, extName) {
   const { data } = await http.get(`${TG_API}/getFile`, { params: { file_id: fileId } });
   const filePath = data.result.file_path;
-  const response = await http.get(`${TG_FILE_API}/${filePath}`, { responseType: 'arraybuffer' });
+  const response = await http.get(`${TG_FILE_API}/${filePath}`, {
+    responseType: 'arraybuffer',
+    maxContentLength: MAX_TELEGRAM_IMAGE_BYTES,
+    maxBodyLength: MAX_TELEGRAM_IMAGE_BYTES,
+  });
   const buffer = Buffer.from(response.data);
+  if (buffer.length > MAX_TELEGRAM_IMAGE_BYTES) {
+    throw new Error(`Image too large (${Math.round(buffer.length / 1024 / 1024)}MB)`);
+  }
   const fileName = filePath.split('/').pop().includes('.')
     ? filePath.split('/').pop()
     : `image.${extName}`;
   return { buffer, fileName };
 }
 
+/** Downscale before barcode vision — full Telegram photos used to OOM / hang. */
+async function safeDetectBarcode(buffers = []) {
+  if (!buffers.length) return '';
+  try {
+    const vision = await prepareVisionBuffers(buffers.slice(0, 3), { maxEdge: 1024, quality: 78 });
+    if (!vision.length) return '';
+    return await withTimeout(detectProductBarcode(vision), 45000, 'barcode detection');
+  } catch (e) {
+    console.warn('Barcode detection skipped:', e.message);
+    return '';
+  }
+}
+
 async function uploadToNocoDB(buffer, fileName) {
   const uploadUrl = `${NOCODB_URL}/api/v2/storage/upload`;
   const form = new FormData();
   form.append('file', buffer, { filename: fileName, contentType: 'image/jpeg' });
-  const uploadRes = await http.post(uploadUrl, form, {
+  // Dedicated axios call — do not inherit Telegram download size caps.
+  const uploadRes = await axios.post(uploadUrl, form, {
     headers: { 'xc-token': NOCODB_TOKEN, ...form.getHeaders() },
+    timeout: 120000,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
   });
   return uploadRes.data[0];
 }
@@ -363,6 +396,10 @@ const albumBuffer = {};
 const userState = {};
 const pendingDestinations = new Map();
 let productQueue = Promise.resolve();
+/** Serial AI polish queue — never blocks product create, max 1 enrich at a time. */
+let aiPolishQueue = Promise.resolve();
+let aiPolishInFlight = 0;
+let aiPolishPending = 0;
 
 function destinationKeyboard(token) {
   return {
@@ -407,6 +444,156 @@ function enqueueProduct(task) {
   return productQueue;
 }
 
+function enqueueAiPolish(task) {
+  aiPolishPending += 1;
+  aiPolishQueue = aiPolishQueue
+    .then(async () => {
+      aiPolishPending = Math.max(0, aiPolishPending - 1);
+      aiPolishInFlight += 1;
+      try {
+        await task();
+      } finally {
+        aiPolishInFlight = Math.max(0, aiPolishInFlight - 1);
+      }
+    })
+    .catch((err) => {
+      console.error('AI polish queue error:', err?.message || err);
+    });
+  return aiPolishQueue;
+}
+
+async function uploadOriginalsSafely(buffers, sellerSku) {
+  const uploaded = [];
+  for (let idx = 0; idx < buffers.length; idx++) {
+    try {
+      const file = await uploadToNocoDB(buffers[idx], `real-${sellerSku}-${idx + 1}.jpg`);
+      if (file) uploaded.push(file);
+    } catch (e) {
+      console.error(`Original upload ${idx + 1} failed:`, e.message);
+    }
+  }
+  return uploaded;
+}
+
+async function createNocoProductRecord(recordData, { name, sellerSku, price }) {
+  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
+  try {
+    const { data } = await http.post(recordUrl, recordData, {
+      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+    });
+    return { data, recordUrl };
+  } catch (e) {
+    console.error('NocoDB create failed, retrying minimal fields:', e?.response?.data || e.message);
+    const minimal = {
+      Title: recordData.Title || name,
+      Arabic_Title: recordData.Arabic_Title || name,
+      French_Title: recordData.French_Title || name,
+      SKU: sellerSku,
+      price,
+      Category_ID: 12,
+      POSTEBL: 'POSTEBL',
+      description_arabic: recordData.description_arabic || '',
+      Image1: recordData.Image1,
+      Image2: recordData.Image2,
+      Image3: recordData.Image3,
+      Image4: recordData.Image4,
+      Image5: recordData.Image5,
+    };
+    if (recordData.Amazon_URL) minimal.Amazon_URL = recordData.Amazon_URL;
+    if (recordData.Barcode) minimal.Barcode = recordData.Barcode;
+    try {
+      const { data } = await http.post(recordUrl, minimal, {
+        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+      });
+      return { data, recordUrl };
+    } catch (minimalError) {
+      if (!minimal.Barcode) throw minimalError;
+      console.warn('NocoDB Barcode column unavailable; retrying without it');
+      delete minimal.Barcode;
+      const { data } = await http.post(recordUrl, minimal, {
+        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+      });
+      return { data, recordUrl };
+    }
+  }
+}
+
+/**
+ * After the product row exists, polish title/description/studio images in the
+ * background. Bounded timeout + serial queue so stacked enrichments cannot
+ * OOM or stall the next product create.
+ */
+function scheduleAiPolish({
+  chatId,
+  rowId,
+  recordUrl,
+  originalBuffers,
+  name,
+  price,
+  oldPrice,
+  sku,
+  amazonUrl,
+  sellerSku,
+}) {
+  enqueueAiPolish(async () => {
+    console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
+    await sendMessage(
+      chatId,
+      `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...`
+    );
+    const enrichTimeout = amazonUrl
+      ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_BG_TIMEOUT_MS, 240000))
+      : AI_ENRICH_BG_TIMEOUT_MS;
+
+    let enrichment;
+    try {
+      enrichment = await withTimeout(
+        enrichProduct({
+          originalBuffers,
+          name,
+          price,
+          oldPrice,
+          ref: sku,
+          amazonUrl,
+          uploadToNocoDB,
+          nocodbUrl: NOCODB_URL,
+          syncSheet: false,
+        }),
+        enrichTimeout,
+        'AI polish'
+      );
+    } catch (e) {
+      console.error(`AI polish timed out/failed #${rowId}:`, e.message);
+      await sendMessage(
+        chatId,
+        `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId}. المنتج محفوظ بالصور الأصلية.\n${e.message}`
+      );
+      return;
+    }
+
+    if (!enrichment?.copy && !enrichment?.hasAiImages) {
+      const detail = (enrichment?.aiFailures || []).slice(0, 2).join(' | ');
+      await sendMessage(
+        chatId,
+        `⚠️ لم يكتمل التوليد للمنتج #${rowId}.${detail ? `\n🛠️ ${detail}` : ''}`
+      );
+      return;
+    }
+
+    const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
+    patch.Id = rowId;
+    await http.patch(recordUrl, patch, {
+      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+    });
+    const imgCount = enrichment.nocoImages?.length || 0;
+    await sendMessage(
+      chatId,
+      `✨ تم تحديث المنتج #${rowId} بالوصف والصور الاحترافية (${imgCount} صور)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
+    );
+    console.log(`✅ AI polish OK #${rowId}`);
+  });
+}
+
 async function processProduct(chatId, files, caption, destination = 'both') {
   const { price, oldPrice, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
@@ -419,9 +606,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     chatId,
     destination === 'tifawt'
       ? `⏳ جاري إرسال المنتج مباشرة إلى Tifawt (أصل بدون تعديل)...\n📦 ${name}\n💰 ${price} DH\n📋 ${tifawtSku}\n🖼️ ${files.length} صورة`
-      : amazonUrl
-        ? `⏳ جاري كشط أمازون وتوليد النصوص/الصور...\n📦 ${name}\n💰 ${price} DH\n📋 ${sellerSku}\n🔗 Amazon`
-        : `⏳ جاري تحليل جميع الصور وإنشاء صور وعناوين وأوصاف مختلفة...\n📦 ${name}\n💰 ${price} DH${oldPrice ? ` ← كان ${oldPrice}` : ''}\n📋 ${sellerSku}`
+      : `⏳ جاري حفظ المنتج بسرعة ثم توليد الوصف والصور في الخلفية...\n📦 ${name}\n💰 ${price} DH${oldPrice ? ` ← كان ${oldPrice}` : ''}\n📋 ${sellerSku}`
   );
 
   const downloaded = await Promise.all(
@@ -440,17 +625,11 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     return;
   }
 
-  // Tifawt must never wait on AI. For "both", push the original seller
-  // payload immediately so a slow/failed enrichment cannot drop Tifawt.
   let earlyTifawtBarcode = '';
   const tifawtPromise = (destination === 'both' && isTifawtProductSyncConfigured())
     ? (async () => {
       try {
-        try {
-          earlyTifawtBarcode = await detectProductBarcode(originalBuffers);
-        } catch (e) {
-          console.warn('Early barcode detection skipped:', e.message);
-        }
+        earlyTifawtBarcode = await safeDetectBarcode(originalBuffers);
         let result = await createTifawtProduct({
           name,
           sku: tifawtSku,
@@ -479,14 +658,8 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     })()
     : null;
 
-  // Tifawt-only: exact seller payload — caption name/SKU + original photos in order.
   if (destination === 'tifawt') {
-    let barcode = '';
-    try {
-      barcode = await detectProductBarcode(originalBuffers);
-    } catch (e) {
-      console.warn('Barcode detection skipped:', e.message);
-    }
+    const barcode = await safeDetectBarcode(originalBuffers);
     const result = await createTifawtProduct({
       name,
       sku: tifawtSku,
@@ -507,210 +680,61 @@ async function processProduct(chatId, files, caption, destination = 'both') {
   }
 
   if (destination === 'both') {
-    await sendMessage(chatId, `🛒 بدأت مزامنة Tifawt بالأصل بالتوازي مع توليد الموقع...`);
+    await sendMessage(chatId, '🛒 بدأت مزامنة Tifawt بالأصل...');
   }
 
-  const enrichTimeout = amazonUrl
-    ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_TIMEOUT_MS, 180000))
-    : AI_ENRICH_TIMEOUT_MS;
-
-  let enrichment;
-  try {
-    enrichment = await withTimeout(
-      enrichProduct({
-        originalBuffers,
-        name,
-        price,
-        oldPrice,
-        ref: sku,
-        amazonUrl,
-        uploadToNocoDB,
-        nocodbUrl: NOCODB_URL,
-        // Destination choices are explicit: NocoDB, Tifawt, or both.
-        syncSheet: false,
-      }),
-      enrichTimeout,
-      'AI enrichment'
-    );
-  } catch (e) {
-    console.error('AI enrichment failed, falling back to raw upload:', e.message);
-    await sendMessage(chatId, `⚠️ فشل التوليد بالذكاء الاصطناعي، سيتم الحفظ بالصور الأصلية فقط.\n${e.message}`);
-    const uploadedFiles = [];
-    for (const d of downloaded.filter(Boolean)) {
-      uploadedFiles.push(await uploadToNocoDB(d.buffer, `real-${sellerSku}-${uploadedFiles.length + 1}.jpg`));
-    }
-    enrichment = {
-      sellerSku,
-      amazonUrl: amazonUrl || '',
-      skippedAi: true,
-      copy: null,
-      nocoImages: uploadedFiles,
-      sheet: { skipped: true },
-      aiFailures: [`timeout_or_error:${e.message}`],
-      hasAiImages: false,
-    };
-  }
-
-  if (!enrichment?.nocoImages?.length) {
+  // CRITICAL PATH: save originals fast so the product queue is not blocked by AI.
+  const uploadedFiles = await uploadOriginalsSafely(originalBuffers, sellerSku);
+  if (!uploadedFiles.length) {
     await sendMessage(chatId, '❌ فشل رفع الصور إلى NocoDB. أعد إرسال المنتج.');
     return;
   }
 
-  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
-  let recordData = buildNocoRecordFromEnrichment({ price, name, enrichment });
+  const enrichment = {
+    sellerSku,
+    amazonUrl: amazonUrl || '',
+    skippedAi: true,
+    copy: null,
+    barcode: earlyTifawtBarcode || '',
+    nocoImages: uploadedFiles,
+    sheet: { skipped: true, reason: 'destination_choice' },
+    aiFailures: [],
+    hasAiImages: false,
+  };
+  const recordData = buildNocoRecordFromEnrichment({ price, name, enrichment });
 
-  let data;
+  let created;
   try {
-    ({ data } = await http.post(recordUrl, recordData, {
-      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
-    }));
+    created = await createNocoProductRecord(recordData, { name, sellerSku, price });
   } catch (e) {
-    console.error('NocoDB create failed, retrying minimal fields:', e?.response?.data || e.message);
-    const minimal = {
-      Title: recordData.Title || name,
-      Arabic_Title: recordData.Arabic_Title,
-      French_Title: recordData.French_Title,
-      SKU: sellerSku,
-      price,
-      Category_ID: 12,
-      POSTEBL: 'POSTEBL',
-      description_arabic: recordData.description_arabic || '',
-      Image1: recordData.Image1,
-      Image2: recordData.Image2,
-      Image3: recordData.Image3,
-      Image4: recordData.Image4,
-      Image5: recordData.Image5,
-    };
-    if (recordData.Amazon_URL) minimal.Amazon_URL = recordData.Amazon_URL;
-    if (recordData.Barcode) minimal.Barcode = recordData.Barcode;
-    try {
-      ({ data } = await http.post(recordUrl, minimal, {
-        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
-      }));
-    } catch (minimalError) {
-      // Older Products tables may not have a Barcode column yet. Product
-      // creation must still succeed; the completion message makes this clear.
-      if (!minimal.Barcode) throw minimalError;
-      console.warn('NocoDB Barcode column unavailable; retrying without it');
-      minimal.Description = [minimal.Description, `Barcode: ${minimal.Barcode}`]
-        .filter(Boolean)
-        .join('\n');
-      delete minimal.Barcode;
-      ({ data } = await http.post(recordUrl, minimal, {
-        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
-      }));
-    }
+    console.error('NocoDB create aborted:', e?.response?.data || e.message);
+    await sendMessage(chatId, `❌ فشل حفظ المنتج في NocoDB:\n${e?.response?.data?.message || e.message}`);
+    return;
   }
 
-  const rowId = data.Id || data.id;
+  const rowId = created.data.Id || created.data.id;
+  const recordUrl = created.recordUrl;
   const landing = `${SITE_URL}/p/${encodeURIComponent(sellerSku)}`;
-  const imgCount = enrichment.nocoImages?.length || 0;
-  const sheetNote = enrichment.sheet?.reason === 'destination_choice'
-    ? ''
-    : enrichment.sheet?.skipped
-      ? '\n📄 Sheet: لم يُربط بعد (أضف PRODUCT_SHEET_WEBHOOK_URL)'
-    : enrichment.sheet?.error
-      ? `\n📄 Sheet خطأ: ${enrichment.sheet.error}`
-      : '\n📄 Sheet: تم الإرسال';
-  const amazonNote = enrichment.amazonUrl ? '\n🛒 تم دمج بيانات أمازون' : '';
-  const aiNote = enrichment.hasAiImages
-    ? `\n✨ صور استوديو بيضاء مع ظل${enrichment.hasSpecsImage ? ' + بطاقة مواصفات' : ''}`
-    : enrichment.skippedAi
-      ? '\n⚠️ لم يُنشأ عنوان/وصف بالذكاء الاصطناعي — تم الحفظ بالاسم الأصلي'
-      : !enrichment.amazonUrl
-        ? '\n⚠️ لم تُنشأ صور استوديو — تم الحفظ بالصورة الأصلية فقط'
-        : '';
-  const failNote = (enrichment.aiFailures || []).length
-    ? `\n🛠️ تفاصيل: ${enrichment.aiFailures.slice(0, 2).join(' | ')}`
-    : '';
   const saleNote = oldPrice ? `\n🔥 تخفيض من ${oldPrice} إلى ${price} DH` : '';
 
-  console.log(`✅ NocoDB row created: #${rowId}`);
+  console.log(`✅ NocoDB row created fast: #${rowId}`);
 
-  // If AI timed out / failed on the first pass, keep the raw product but
-  // retry enrichment in the background and PATCH when ready. Prevents
-  // "saved without studio images/description" from becoming permanent.
-  const needsAiRetry = Boolean(rowId)
-    && originalBuffers.length > 0
-    && (!enrichment.hasAiImages || enrichment.skippedAi);
-  if (needsAiRetry) {
-    const retryBuffers = originalBuffers.slice();
-    const retryMeta = { chatId, rowId, name, price, oldPrice, sku, amazonUrl, sellerSku };
-    setImmediate(() => {
-      (async () => {
-        try {
-          console.log(`🔁 Background AI retry for #${retryMeta.rowId} ${retryMeta.sellerSku}`);
-          await sendMessage(
-            retryMeta.chatId,
-            `⏳ جاري إعادة توليد الوصف والصور الاحترافية للمنتج #${retryMeta.rowId} في الخلفية...`
-          );
-          const retry = await enrichProduct({
-            originalBuffers: retryBuffers,
-            name: retryMeta.name,
-            price: retryMeta.price,
-            oldPrice: retryMeta.oldPrice,
-            ref: retryMeta.sku,
-            amazonUrl: retryMeta.amazonUrl,
-            uploadToNocoDB,
-            nocodbUrl: NOCODB_URL,
-            syncSheet: false,
-          });
-          if (!retry?.copy && !retry?.hasAiImages) {
-            await sendMessage(
-              retryMeta.chatId,
-              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}. أعد إرسال المنتج أو شغّل سكربت الإصلاح.`
-            );
-            return;
-          }
-          const patch = buildNocoRecordFromEnrichment({
-            price: retryMeta.price,
-            name: retryMeta.name,
-            enrichment: retry,
-          });
-          patch.Id = retryMeta.rowId;
-          await http.patch(recordUrl, patch, {
-            headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
-          });
-          const retryImgs = retry.nocoImages?.length || 0;
-          await sendMessage(
-            retryMeta.chatId,
-            `✨ تم تحديث المنتج #${retryMeta.rowId} بالوصف والصور الاحترافية (${retryImgs} صور)\n🔗 ${SITE_URL}/p/${encodeURIComponent(retryMeta.sellerSku)}`
-          );
-          console.log(`✅ Background AI retry OK for #${retryMeta.rowId}`);
-        } catch (e) {
-          console.error(`Background AI retry failed for #${retryMeta.rowId}:`, e.message);
-          try {
-            await sendMessage(
-              retryMeta.chatId,
-              `⚠️ فشلت إعادة التوليد للمنتج #${retryMeta.rowId}: ${e.message}`
-            );
-          } catch {
-            /* ignore */
-          }
-        }
-      })();
-    });
-  }
-
-  const barcode = String(
-    enrichment.barcode || enrichment.copy?.barcode || earlyTifawtBarcode || ''
-  ).trim();
   let tifawtNote = '';
   if (destination === 'both' && tifawtPromise) {
     try {
-      const tifawtResult = await tifawtPromise;
+      const tifawtResult = await withTimeout(tifawtPromise, 45000, 'Tifawt sync');
       if (tifawtResult?.skipped) {
         tifawtNote = '\n🛒 Tifawt: لم يُضبط (TIFAWT_EMAIL/PASSWORD)';
       } else if (tifawtResult?.ok) {
         const modeAr = tifawtResult.mode === 'updated' ? 'تم تحديث الأصل' : 'تم إضافة الأصل';
-        tifawtNote = `\n🛒 Tifawt: ${modeAr} (${tifawtResult.imageCount || originalBuffers.length} صور)`;
+        tifawtNote = `\n🛒 Tifawt: ${modeAr} (${tifawtResult.imageCount || originalBuffers.length} صور) | 📋 ${tifawtSku}`;
         console.log('✅ Tifawt product', tifawtResult.mode || 'created', tifawtSku, tifawtResult.data?.id || tifawtResult.existingId || '');
       } else {
         tifawtNote = `\n🛒 Tifawt خطأ: ${tifawtResult?.error || 'فشل الإنشاء'}`;
       }
     } catch (e) {
-      console.error('Tifawt product sync error:', e.message);
-      tifawtNote = `\n🛒 Tifawt خطأ: ${e.message}`;
+      console.error('Tifawt wait error:', e.message);
+      tifawtNote = `\n🛒 Tifawt: ما زال يعمل في الخلفية (${e.message})`;
     }
   } else if (destination === 'both') {
     tifawtNote = '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD';
@@ -718,12 +742,26 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     tifawtNote = '\n🌐 تم الحفظ في NocoDB فقط';
   }
 
+  const barcode = String(earlyTifawtBarcode || '').trim();
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} مع (${imgCount}) صور!\n\n📦 ${recordData.Title || name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${sheetNote}${amazonNote}${aiNote}${failNote}${tifawtNote}\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} بسرعة (${uploadedFiles.length} صور أصلية)!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${barcode ? `\n🏷️ الباركود: ${barcode}` : ''}\n🔗 صفحة الهبوط: ${landing}${tifawtNote}\n\n✨ الوصف والصور الاحترافية تُجهَّز الآن في الخلفية.\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
+
+  scheduleAiPolish({
+    chatId,
+    rowId,
+    recordUrl,
+    originalBuffers: originalBuffers.slice(),
+    name,
+    price,
+    oldPrice,
+    sku,
+    amazonUrl,
+    sellerSku,
+  });
 }
 
 function isRestartCommand(text) {
@@ -1260,6 +1298,11 @@ app.get('/health', async (req, res) => {
     tifawtProducts: Boolean(process.env.TIFAWT_EMAIL && process.env.TIFAWT_PASSWORD),
     webhookUrlEnv: Boolean(TELEGRAM_WEBHOOK_URL),
     telegramWebhook: webhook,
+    queues: {
+      aiPolishInFlight,
+      aiPolishPending,
+    },
+    memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
   });
 });
 
@@ -1320,8 +1363,17 @@ async function startPolling() {
   }
 }
 
+function startPollingSupervised() {
+  startPolling().catch((err) => {
+    console.error('Polling crashed, restarting in 3s:', err?.message || err);
+    setTimeout(startPollingSupervised, 3000);
+  });
+}
+
 process.on('uncaughtException', (err) => {
   console.error('uncaughtException:', err);
+  // Exit so EasyPanel/Docker restarts a healthy process instead of a half-dead one.
+  setTimeout(() => process.exit(1), 250);
 });
 process.on('unhandledRejection', (err) => {
   console.error('unhandledRejection:', err);
@@ -1355,12 +1407,11 @@ app.listen(PORT, '0.0.0.0', async () => {
     if (TELEGRAM_MODE === 'webhook') {
       await setupWebhook();
     } else {
-      // Run polling in background; Express stays up for /health + order webhook
-      startPolling().catch((err) => console.error('Polling crashed:', err));
+      startPollingSupervised();
     }
   } catch (err) {
     console.error('❌ Failed to start Telegram transport:', err.message);
     console.error('Falling back to polling…');
-    startPolling().catch((e) => console.error('Polling crashed:', e));
+    startPollingSupervised();
   }
 });

@@ -75,8 +75,7 @@ export async function prepareVisionBuffers(buffers = [], opts = {}) {
           .toBuffer()
       );
     } catch (e) {
-      console.warn('prepareVisionBuffers failed, keeping original:', e.message);
-      out.push(buf);
+      console.warn('prepareVisionBuffers failed, skipping frame:', e.message);
     }
   }
   return out;
