@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart, Settings, ChevronDown, Globe2 } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
@@ -14,12 +14,26 @@ const Header = () => {
     const [currentLang, setCurrentLang] = useState('ar');
     const [langDropdownOpen, setLangDropdownOpen] = useState(false);
     const [additionalSettingsOpen, setAdditionalSettingsOpen] = useState(false);
+    const searchInputRef = useRef(null);
 
     React.useEffect(() => {
         const match = document.cookie.match(/googtrans=\/ar\/([a-z]{2})/);
         if (match && match[1]) {
             setCurrentLang(match[1]);
         }
+    }, []);
+
+    useEffect(() => {
+        try {
+            if (sessionStorage.getItem('focusHeaderSearch') === '1') {
+                sessionStorage.removeItem('focusHeaderSearch');
+                const t = setTimeout(() => searchInputRef.current?.focus(), 120);
+                return () => clearTimeout(t);
+            }
+        } catch {
+            /* ignore */
+        }
+        return undefined;
     }, []);
 
     const isRtl = currentLang === 'ar';
@@ -102,6 +116,7 @@ const Header = () => {
                                 <Search className={dm ? 'text-slate-400' : 'text-slate-400'} size={16} strokeWidth={2} />
                             </span>
                             <input
+                                ref={searchInputRef}
                                 type="search"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}

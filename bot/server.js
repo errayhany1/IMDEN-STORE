@@ -112,9 +112,17 @@ const MAIN_KEYBOARD = {
   keyboard: [
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
+    [{ text: '✨ إعادة توليد الوصف والصور' }],
     [{ text: '🎨 خلفيات الموقع' }, { text: '🔥 خلفيات التخفيض' }],
-    [{ text: '🔄 إعادة تشغيل البوت' }],
+    [{ text: '🔄 إعادة تشغيل البوت' }, { text: '🔽 إخفاء القائمة' }],
   ],
+  resize_keyboard: true,
+  is_persistent: true,
+};
+
+/** Minimal keyboard shown after the full admin menu is hidden. */
+const SHOW_KEYBOARD = {
+  keyboard: [[{ text: '🔼 إظهار القائمة' }]],
   resize_keyboard: true,
   is_persistent: true,
 };
@@ -376,6 +384,31 @@ async function findProductBySku(rawSku) {
   }
 }
 
+function nocoImageUrl(file) {
+  if (!file) return '';
+  return file.signedUrl || (file.url?.startsWith('http') ? file.url : `${NOCODB_URL}/${file.url || ''}`);
+}
+
+async function downloadNocoImageBuffer(url) {
+  const { data } = await http.get(url, { responseType: 'arraybuffer' });
+  return Buffer.from(data);
+}
+
+function collectSourceImagesFromRow(row) {
+  return [row.Image1, row.Image2, row.Image3, row.Image4, row.Image5]
+    .flatMap((slot) => (Array.isArray(slot) ? slot : slot ? [slot] : []))
+    .filter(Boolean);
+}
+
+function pickReenrichSourceFiles(sourceFiles) {
+  const label = (f) => String(f.title || f.name || f.url || '');
+  const realFirst = [
+    ...sourceFiles.filter((f) => /real[-_]/i.test(label(f))),
+    ...sourceFiles.filter((f) => !/real[-_]|ai[-_]|specs[-_]/i.test(label(f))),
+  ];
+  return (realFirst.length ? realFirst : sourceFiles).slice(0, 4);
+}
+
 // ─── ALBUM BUFFER ──────────────────────────────────────────────────────────
 const albumBuffer = {};
 const userState = {};
@@ -504,6 +537,80 @@ async function createNocoProductRecord(recordData, { name, sellerSku, price }) {
 }
 
 /**
+ * Run AI enrichment and PATCH an existing NocoDB row.
+ * Used for new products (background polish) and manual re-enrich by REF.
+ */
+async function executeAiPolish({
+  chatId,
+  rowId,
+  recordUrl,
+  originalBuffers,
+  name,
+  price,
+  oldPrice,
+  ref,
+  amazonUrl,
+  sellerSku,
+  startMessage,
+}) {
+  console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
+  await sendMessage(
+    chatId,
+    startMessage || `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId}...`
+  );
+  const enrichTimeout = amazonUrl
+    ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_BG_TIMEOUT_MS, 240000))
+    : AI_ENRICH_BG_TIMEOUT_MS;
+
+  let enrichment;
+  try {
+    enrichment = await withTimeout(
+      enrichProduct({
+        originalBuffers,
+        name,
+        price,
+        oldPrice,
+        ref,
+        amazonUrl,
+        uploadToNocoDB,
+        nocodbUrl: NOCODB_URL,
+        syncSheet: false,
+      }),
+      enrichTimeout,
+      'AI polish'
+    );
+  } catch (e) {
+    console.error(`AI polish timed out/failed #${rowId}:`, e.message);
+    await sendMessage(
+      chatId,
+      `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId} (${sellerSku}).\n${e.message}`
+    );
+    return;
+  }
+
+  if (!enrichment?.copy && !enrichment?.hasAiImages) {
+    const detail = (enrichment?.aiFailures || []).slice(0, 2).join(' | ');
+    await sendMessage(
+      chatId,
+      `⚠️ لم يكتمل التوليد للمنتج #${rowId} (${sellerSku}).${detail ? `\n🛠️ ${detail}` : ''}`
+    );
+    return;
+  }
+
+  const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
+  patch.Id = rowId;
+  await http.patch(recordUrl, patch, {
+    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+  });
+  const imgCount = enrichment.nocoImages?.length || 0;
+  await sendMessage(
+    chatId,
+    `✨ تم تحديث المنتج #${rowId} بالوصف والصور الاحترافية (${imgCount} صور)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
+  );
+  console.log(`✅ AI polish OK #${rowId}`);
+}
+
+/**
  * After the product row exists, polish title/description/studio images in the
  * background. Bounded timeout + serial queue so stacked enrichments cannot
  * OOM or stall the next product create.
@@ -520,63 +627,77 @@ function scheduleAiPolish({
   amazonUrl,
   sellerSku,
 }) {
+  enqueueAiPolish(() => executeAiPolish({
+    chatId,
+    rowId,
+    recordUrl,
+    originalBuffers,
+    name,
+    price,
+    oldPrice,
+    ref: sku,
+    amazonUrl,
+    sellerSku,
+    startMessage: `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...`,
+  }));
+}
+
+/** Re-run AI enrichment for an existing product found by REF/SKU. */
+async function scheduleReenrichByRef(chatId, record, rawRef) {
+  const rowId = record.Id || record.id;
+  const sellerSku = buildSellerSku(record.SKU || rawRef);
+  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
+  const sourceFiles = collectSourceImagesFromRow(record);
+
+  if (!sourceFiles.length) {
+    await sendMessage(
+      chatId,
+      `❌ المنتج (${sellerSku}) لا يحتوي على صور لإعادة التوليد.\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`
+    );
+    return;
+  }
+
   enqueueAiPolish(async () => {
-    console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
-    await sendMessage(
+    const preferred = pickReenrichSourceFiles(sourceFiles);
+    const originalBuffers = [];
+    for (const file of preferred) {
+      const url = nocoImageUrl(file);
+      if (!url) continue;
+      try {
+        originalBuffers.push(await downloadNocoImageBuffer(url));
+      } catch (e) {
+        console.warn(`Reenrich download failed (${sellerSku}):`, e.message);
+      }
+    }
+    if (!originalBuffers.length) {
+      await sendMessage(
+        chatId,
+        `❌ تعذر تحميل صور المنتج #${rowId} (${sellerSku}) لإعادة التوليد.`
+      );
+      return;
+    }
+    await executeAiPolish({
       chatId,
-      `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...`
-    );
-    const enrichTimeout = amazonUrl
-      ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_BG_TIMEOUT_MS, 240000))
-      : AI_ENRICH_BG_TIMEOUT_MS;
-
-    let enrichment;
-    try {
-      enrichment = await withTimeout(
-        enrichProduct({
-          originalBuffers,
-          name,
-          price,
-          oldPrice,
-          ref: sku,
-          amazonUrl,
-          uploadToNocoDB,
-          nocodbUrl: NOCODB_URL,
-          syncSheet: false,
-        }),
-        enrichTimeout,
-        'AI polish'
-      );
-    } catch (e) {
-      console.error(`AI polish timed out/failed #${rowId}:`, e.message);
-      await sendMessage(
-        chatId,
-        `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId}. المنتج محفوظ بالصور الأصلية.\n${e.message}`
-      );
-      return;
-    }
-
-    if (!enrichment?.copy && !enrichment?.hasAiImages) {
-      const detail = (enrichment?.aiFailures || []).slice(0, 2).join(' | ');
-      await sendMessage(
-        chatId,
-        `⚠️ لم يكتمل التوليد للمنتج #${rowId}.${detail ? `\n🛠️ ${detail}` : ''}`
-      );
-      return;
-    }
-
-    const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
-    patch.Id = rowId;
-    await http.patch(recordUrl, patch, {
-      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+      rowId,
+      recordUrl,
+      originalBuffers,
+      name: record.Title || record.Arabic_Title || record.French_Title || sellerSku,
+      price: Number(record.price) || 0,
+      oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
+      ref: cleanReference(record.SKU || rawRef),
+      amazonUrl: record.Amazon_URL || '',
+      sellerSku,
+      startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...`,
     });
-    const imgCount = enrichment.nocoImages?.length || 0;
-    await sendMessage(
-      chatId,
-      `✨ تم تحديث المنتج #${rowId} بالوصف والصور الاحترافية (${imgCount} صور)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
-    );
-    console.log(`✅ AI polish OK #${rowId}`);
   });
+
+  const queueNote = aiPolishPending > 1
+    ? `\n📋 هناك ${aiPolishPending} مهام توليد في الانتظار.`
+    : '';
+  await sendMessage(
+    chatId,
+    `✅ تم إدراج (${sellerSku}) في قائمة التوليد.${queueNote}\n⏳ سأرسل لك رسالة عند الانتهاء.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
+  );
 }
 
 async function processProduct(chatId, files, caption, destination = 'both') {
@@ -743,6 +864,19 @@ function isRestartCommand(text) {
     || text === 'إعادة تشغيل البوت';
 }
 
+function isHideKeyboardCommand(text) {
+  return text === '🔽 إخفاء القائمة'
+    || text === '/hide'
+    || text === '/hide_menu';
+}
+
+function isShowKeyboardCommand(text) {
+  return text === '🔼 إظهار القائمة'
+    || text === '/menu'
+    || text === '/show'
+    || text === '/show_menu';
+}
+
 function isTemplatesCommand(text) {
   const t = String(text || '').trim().toLowerCase();
   return t === '/templates'
@@ -821,6 +955,11 @@ function isPriceCommand(text) {
     || text.startsWith('/price');
 }
 
+function isReenrichCommand(text) {
+  return text === '✨ إعادة توليد الوصف والصور'
+    || text.startsWith('/reenrich');
+}
+
 async function handleUpdate(update) {
   const msg = update.message;
 
@@ -834,9 +973,23 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: خلفية بيضاء + ظل + بطاقة مواصفات\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: خلفية بيضاء + ظل + بطاقة مواصفات\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.',
         MAIN_KEYBOARD
       );
+      return;
+    }
+
+    if (isHideKeyboardCommand(text)) {
+      await sendMessage(
+        chatId,
+        '🔽 تم إخفاء القائمة.\nاضغط «🔼 إظهار القائمة» أو أرسل /menu لإعادتها.',
+        SHOW_KEYBOARD
+      );
+      return;
+    }
+
+    if (isShowKeyboardCommand(text)) {
+      await sendMessage(chatId, '🔼 تم إظهار القائمة.', MAIN_KEYBOARD);
       return;
     }
 
@@ -871,6 +1024,15 @@ async function handleUpdate(update) {
     if (isPriceCommand(text)) {
       userState[chatId] = 'AWAITING_REF_PRICE';
       await sendMessage(chatId, '⚙️ تم تفعيل وضع تغيير السعر.\n\nأرسل المرجع (REF) للمنتج الذي تريد تغيير سعره.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت');
+      return;
+    }
+
+    if (isReenrichCommand(text)) {
+      userState[chatId] = 'AWAITING_REF_REENRICH';
+      await sendMessage(
+        chatId,
+        '⚙️ تم تفعيل وضع إعادة التوليد.\n\nأرسل مرجع المنتج (REF أو SKU) لإعادة إنشاء الوصف والصور الاحترافية.\nمثال: AQ10 أو ERY-AQ10\n\nللخروج اضغط: 🔄 إعادة تشغيل البوت'
+      );
       return;
     }
 
@@ -931,6 +1093,8 @@ async function handleUpdate(update) {
         } else if (state === 'AWAITING_REF_PRICE') {
           userState[chatId] = `AWAITING_NEW_PRICE_${sku}`;
           await sendMessage(chatId, `✅ تم العثور على المنتج (${sku}).\n💰 سعره الحالي: ${record.price || 0} DH\n\n⬇️ يرجى إرسال السعر الجديد الآن (أرقام فقط):`);
+        } else if (state === 'AWAITING_REF_REENRICH') {
+          await scheduleReenrichByRef(chatId, record, sku);
         }
       } else {
         await sendMessage(chatId, `❌ لم أجد منتج بمرجع: ${sku}\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`);

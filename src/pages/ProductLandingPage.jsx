@@ -13,6 +13,7 @@ import {
   Globe2,
   Copy,
   Check,
+  Search,
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import {
@@ -31,6 +32,11 @@ import {
   listItemsFromHtml,
   productDescriptionHtml,
   stripHtml,
+  textsOverlap,
+  imagesFromHtml,
+  normalizeImagePath,
+  isProductShotPath,
+  isContentInfoImagePath,
 } from '../utils/productText';
 
 const WA_NUMBER = '212664630566';
@@ -115,6 +121,8 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const [directProduct, setDirectProduct] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomImages, setZoomImages] = useState([]);
+  const [zoomIndex, setZoomIndex] = useState(0);
   const [addedFlash, setAddedFlash] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
   const [refCopied, setRefCopied] = useState(false);
@@ -197,15 +205,20 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const bullets = useMemo(() => {
     const fromShort = listItemsFromHtml(shortHtml, 6);
     if (fromShort.length) return fromShort;
-    const fromList = listItemsFromHtml(descHtml, 6);
-    if (fromList.length) return fromList;
-    if (!plainDesc) return [];
-    return plainDesc
-      .split(/[\n•●]/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 10 && !/^fiche technique|بطاقة المواصفات/i.test(s))
-      .slice(0, 6);
-  }, [shortHtml, descHtml, plainDesc]);
+    return listItemsFromHtml(descHtml, 6);
+  }, [shortHtml, descHtml]);
+
+  const showHeroLine = useMemo(() => {
+    if (!heroLine?.trim()) return false;
+    return !textsOverlap(heroLine, title);
+  }, [heroLine, title]);
+
+  const showHighlights = useMemo(() => {
+    if (!bullets.length) return false;
+    const joined = bullets.join(' ');
+    if (showHeroLine && textsOverlap(joined, heroLine)) return false;
+    return !textsOverlap(joined, title);
+  }, [bullets, showHeroLine, heroLine, title]);
 
   const faq = useMemo(
     () => parseFaq(isFr ? (od.Landing_FAQ_FR || od.faq_fr) : (od.Landing_FAQ_AR || od.faq_ar)),
@@ -219,6 +232,12 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     return Array.from(new Set((list || []).filter(Boolean)));
   }, [product]);
 
+  /** Product shots only — specs / A+ cards stay in the description section. */
+  const carouselImages = useMemo(
+    () => images.filter((src) => !isContentInfoImagePath(src)),
+    [images]
+  );
+
   const specsImage = useMemo(() => {
     const fromGallery = images.find((src) => /specs-/i.test(src));
     if (fromGallery) return fromGallery;
@@ -226,22 +245,59 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     return match?.[1] || '';
   }, [images, descHtml]);
 
-  // Photos for the illustrated blurb (exclude the specs card).
-  const galleryPhotos = useMemo(
-    () => images.filter((src) => src && src !== specsImage && !/specs-/i.test(src)).slice(0, 4),
-    [images, specsImage]
+  const heroImagePaths = useMemo(
+    () => new Set(carouselImages.map((src) => normalizeImagePath(src, SITE_URL))),
+    [carouselImages]
   );
 
-  const shortBlurb = useMemo(() => {
-    const fromShort = stripHtml(shortHtml);
-    if (fromShort) return fromShort.length > 260 ? `${fromShort.slice(0, 260)}…` : fromShort;
-    const cleaned = plainDesc
-      .replace(/بطاقة المواصفات|Fiche technique/gi, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (!cleaned) return '';
-    return cleaned.length > 260 ? `${cleaned.slice(0, 260)}…` : cleaned;
-  }, [shortHtml, plainDesc]);
+  /** Amazon A+ body: keep copy + info images (specs/amazon), drop hero product shots. */
+  const descriptionForAplus = useMemo(() => {
+    if (!safeDescHtml) return '';
+    return safeDescHtml.replace(/<img\b[^>]*>/gi, (tag) => {
+      const m = tag.match(/src=["']([^"']+)["']/i);
+      if (!m) return tag;
+      const path = normalizeImagePath(m[1], SITE_URL);
+      if (heroImagePaths.has(path) && isProductShotPath(m[1])) return '';
+      return tag;
+    });
+  }, [safeDescHtml, heroImagePaths]);
+
+  const inlineContentImages = useMemo(
+    () => imagesFromHtml(descriptionForAplus).filter((src) => !isProductShotPath(src)),
+    [descriptionForAplus]
+  );
+
+  const inlineContentPaths = useMemo(
+    () => new Set(inlineContentImages.map((src) => normalizeImagePath(src, SITE_URL))),
+    [inlineContentImages]
+  );
+
+  /** Info/lifestyle images stored in gallery but not shown in the top carousel. */
+  const extraContentImages = useMemo(
+    () => images.filter((src) => {
+      if (!isContentInfoImagePath(src)) return false;
+      const path = normalizeImagePath(src, SITE_URL);
+      return !inlineContentPaths.has(path);
+    }),
+    [images, inlineContentPaths]
+  );
+
+  const aplusPlain = useMemo(() => stripHtml(descriptionForAplus), [descriptionForAplus]);
+
+  const showAplusSection = useMemo(() => {
+    if (aplusPlain.length >= 40) return true;
+    if (inlineContentImages.length > 0) return true;
+    if (extraContentImages.length > 0) return true;
+    return false;
+  }, [aplusPlain, inlineContentImages, extraContentImages]);
+
+  const showFullDescription = useMemo(() => {
+    if (!aplusPlain || aplusPlain.length < 60) return false;
+    if (textsOverlap(aplusPlain, title)) return false;
+    if (showHeroLine && textsOverlap(aplusPlain, heroLine)) return false;
+    if (showHighlights && textsOverlap(aplusPlain, bullets.join(' '))) return false;
+    return true;
+  }, [aplusPlain, title, showHeroLine, heroLine, showHighlights, bullets]);
 
   const specRows = useMemo(() => {
     const rows = [];
@@ -337,11 +393,11 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const onTouchEnd = (e) => {
     const start = touchX.current;
     touchX.current = null;
-    if (start == null || images.length < 2) return;
+    if (start == null || carouselImages.length < 2) return;
     const delta = e.changedTouches[0].clientX - start;
     if (Math.abs(delta) < 40) return;
     const dir = isFr ? (delta > 0 ? -1 : 1) : (delta > 0 ? 1 : -1);
-    setActiveImg((i) => (i + dir + images.length) % images.length);
+    setActiveImg((i) => (i + dir + carouselImages.length) % carouselImages.length);
   };
 
   const t = isFr
@@ -424,6 +480,19 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     );
   }
 
+  const openCatalogSearch = () => {
+    try {
+      sessionStorage.setItem('focusHeaderSearch', '1');
+    } catch {
+      /* ignore */
+    }
+    window.location.assign(backHref);
+  };
+
+  const navBtnClass = dm
+    ? 'bg-[#142038] border-white/10 text-gray-200 hover:bg-white/10'
+    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm';
+
   return (
     <div
       className={`min-h-screen ${shell} pb-28 md:pb-16`}
@@ -461,6 +530,17 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
             {/* Actions */}
             <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={openCatalogSearch}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors
+                  ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:text-primary hover:bg-slate-100'}`}
+                aria-label={isFr ? 'Rechercher' : 'بحث'}
+                title={isFr ? 'Rechercher' : 'بحث'}
+              >
+                <Search size={18} />
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -526,68 +606,73 @@ const ProductLandingPage = ({ sku: skuProp }) => {
         <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
           {/* Gallery */}
           <section className="md:sticky md:top-20">
-            <button
-              type="button"
-              onClick={() => images.length && setZoomOpen(true)}
-              onTouchStart={onTouchStart}
-              onTouchEnd={onTouchEnd}
-              className={`relative block w-full aspect-square overflow-hidden rounded-2xl ${panel} ${dm ? '' : 'ring-1 ring-slate-200/80 shadow-sm'}`}
-              aria-label={t.zoom}
-            >
-              {images[activeImg] ? (
-                <img
-                  key={images[activeImg]}
-                  src={images[activeImg]}
-                  alt={title}
-                  className="w-full h-full object-contain"
-                  loading="eager"
-                  decoding="async"
-                  onError={(e) => {
-                    if (product.originalImage && e.currentTarget.src !== product.originalImage) {
-                      e.currentTarget.src = product.originalImage;
-                    }
-                  }}
-                />
-              ) : (
-                <div className={`w-full h-full flex items-center justify-center ${muted}`}>—</div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {carouselImages.length > 1 && (
+                <button
+                  type="button"
+                  aria-label={isFr ? 'Image précédente' : 'الصورة السابقة'}
+                  className={`shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-colors ${navBtnClass}`}
+                  onClick={() => setActiveImg((i) => (i - 1 + carouselImages.length) % carouselImages.length)}
+                >
+                  <ChevronLeft size={18} />
+                </button>
               )}
 
-              {images.length > 1 && (
-                <>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!carouselImages.length) return;
+                  setZoomImages(carouselImages);
+                  setZoomIndex(activeImg);
+                  setZoomOpen(true);
+                }}
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
+                className={`relative flex-1 min-w-0 aspect-square overflow-hidden rounded-2xl ${panel} ${dm ? '' : 'ring-1 ring-slate-200/80 shadow-sm'}`}
+                aria-label={t.zoom}
+              >
+                {carouselImages[activeImg] ? (
+                  <img
+                    key={carouselImages[activeImg]}
+                    src={carouselImages[activeImg]}
+                    alt={title}
+                    className="w-full h-full object-contain"
+                    loading="eager"
+                    decoding="async"
+                    onError={(e) => {
+                      if (product.originalImage && e.currentTarget.src !== product.originalImage) {
+                        e.currentTarget.src = product.originalImage;
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center ${muted}`}>—</div>
+                )}
+
+                {carouselImages.length > 1 && (
                   <span
                     className={`absolute top-3 inset-inline-end-3 text-[11px] font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-black/50 text-white' : 'bg-white/90 text-slate-600'}`}
                   >
-                    {activeImg + 1}/{images.length}
+                    {activeImg + 1}/{carouselImages.length}
                   </span>
-                  <button
-                    type="button"
-                    aria-label="prev"
-                    className={`absolute top-1/2 -translate-y-1/2 inset-inline-start-2 p-2 rounded-full ${dm ? 'bg-black/40 text-white' : 'bg-white/90 text-slate-700 shadow-sm'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveImg((i) => (i - 1 + images.length) % images.length);
-                    }}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="next"
-                    className={`absolute top-1/2 -translate-y-1/2 inset-inline-end-2 p-2 rounded-full ${dm ? 'bg-black/40 text-white' : 'bg-white/90 text-slate-700 shadow-sm'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveImg((i) => (i + 1) % images.length);
-                    }}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </>
-              )}
-            </button>
+                )}
+              </button>
 
-            {images.length > 1 && (
+              {carouselImages.length > 1 && (
+                <button
+                  type="button"
+                  aria-label={isFr ? 'Image suivante' : 'الصورة التالية'}
+                  className={`shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-colors ${navBtnClass}`}
+                  onClick={() => setActiveImg((i) => (i + 1) % carouselImages.length)}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              )}
+            </div>
+
+            {carouselImages.length > 1 && (
               <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                {images.map((src, i) => (
+                {carouselImages.map((src, i) => (
                   <button
                     key={src + i}
                     type="button"
@@ -635,38 +720,41 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                     {product.ref}
                   </button>
                 )}
+                <ProductRatingStars
+                  product={product}
+                  size={16}
+                  emptyHint={null}
+                  darkMode={dm}
+                  className="!flex-row !items-center gap-1"
+                />
               </div>
               <h1 className="text-xl sm:text-2xl md:text-[1.85rem] font-bold leading-snug">
                 {title}
               </h1>
-              {heroLine && (
+              {showHeroLine && (
                 <p className={`mt-2 text-sm md:text-base leading-relaxed ${soft}`}>
                   {heroLine}
                 </p>
               )}
             </div>
 
-            <div className="flex items-end justify-between gap-3 flex-wrap">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-3xl md:text-4xl font-extrabold text-primary leading-none">
                 {product.price}
                 <span className="text-base font-bold ms-1 opacity-80">DH</span>
               </p>
-              <div className="flex items-center gap-2">
-                <ProductRatingStars product={product} size={18} emptyHint={null} darkMode={dm} />
-                <span className={`text-xs font-semibold ${muted}`}>{t.rate}</span>
-              </div>
-            </div>
-
-            <div className="hidden md:flex gap-2.5">
               <button
                 type="button"
                 onClick={handleAdd}
                 disabled={!available}
-                className="flex-1 min-h-12 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-45 hover:bg-primary-dark active:scale-[0.99] transition"
+                className="shrink-0 min-h-11 px-4 sm:px-5 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-45 hover:bg-primary-dark active:scale-[0.99] transition text-sm sm:text-base"
               >
                 <ShoppingCart size={18} />
                 {addedFlash ? t.added : t.buy}
               </button>
+            </div>
+
+            <div className="hidden md:flex">
               <a
                 href={`https://wa.me/${WA_NUMBER}?text=${waText}`}
                 target="_blank"
@@ -678,7 +766,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
               </a>
             </div>
 
-            {bullets.length > 0 && (
+            {showHighlights && (
               <div className={`pt-1 border-t ${line}`}>
                 <p className={`text-[11px] font-bold uppercase tracking-wide mb-2.5 ${muted}`}>
                   {t.highlights}
@@ -751,60 +839,21 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           </section>
         )}
 
-        {/* Short description + specs — above the related strip */}
-        {(shortBlurb || bullets.length > 0 || specRows.length > 0 || specsImage) && (
-          <section className={`mt-10 pt-8 border-t ${line} space-y-6`}>
-            {shortBlurb && (
-              <div>
-                <h2 className="text-lg font-bold mb-2">{t.shortDesc}</h2>
-                <p className={`text-sm leading-relaxed max-w-3xl ${soft}`}>{shortBlurb}</p>
-              </div>
-            )}
-
-            <div className="grid md:grid-cols-2 gap-6 items-start">
-              <div>
-                <h2 className="text-lg font-bold mb-3">{t.specs}</h2>
-                {specRows.length > 0 && (
-                  <dl className={`rounded-2xl border overflow-hidden ${line} ${panel}`}>
-                    {specRows.map((row) => (
-                      <div
-                        key={row.label}
-                        className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm border-b last:border-b-0 ${line}`}
-                      >
-                        <dt className={`font-semibold shrink-0 ${muted}`}>{row.label}</dt>
-                        <dd className={`font-medium text-end ${soft}`}>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-                {bullets.length > 0 && (
-                  <ul className={`mt-4 space-y-2 text-sm leading-relaxed list-disc ps-5 ${soft}`}>
-                    {bullets.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {specsImage && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const idx = images.findIndex((src) => src === specsImage);
-                    if (idx >= 0) setActiveImg(idx);
-                    setZoomOpen(true);
-                  }}
-                  className={`block w-full overflow-hidden rounded-2xl border ${line} ${panel}`}
+        {/* Specs table — info images live in the A+ description below */}
+        {specRows.length > 0 && (
+          <section className={`mt-10 pt-8 border-t ${line}`}>
+            <h2 className="text-lg font-bold mb-3">{t.specs}</h2>
+            <dl className={`rounded-2xl border overflow-hidden max-w-xl ${line} ${panel}`}>
+              {specRows.map((row) => (
+                <div
+                  key={row.label}
+                  className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm border-b last:border-b-0 ${line}`}
                 >
-                  <img
-                    src={specsImage}
-                    alt={t.specs}
-                    className="w-full h-auto object-contain"
-                    loading="lazy"
-                  />
-                </button>
-              )}
-            </div>
+                  <dt className={`font-semibold shrink-0 ${muted}`}>{row.label}</dt>
+                  <dd className={`font-medium text-end ${soft}`}>{row.value}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
         )}
 
@@ -821,44 +870,46 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           />
         </div>
 
-        {/* Brief illustrated description — below the related strip */}
-        {(shortBlurb || galleryPhotos.length > 0 || safeDescHtml) && (
-          <section className={`mt-10 pt-8 border-t ${line} space-y-5`}>
-            <div>
-              <h2 className="text-lg font-bold mb-2">{t.illustrated}</h2>
-              {shortBlurb ? (
-                <p className={`text-sm leading-relaxed max-w-3xl ${soft}`}>{shortBlurb}</p>
-              ) : safeDescHtml ? (
-                <div
-                  className={`product-desc prose prose-sm max-w-none leading-relaxed ${soft} ${dm ? 'prose-invert' : ''}`}
-                  dangerouslySetInnerHTML={{ __html: safeDescHtml }}
-                />
-              ) : null}
-            </div>
+        {/* Amazon-style A+ description — text + info images only (no hero gallery repeats) */}
+        {showAplusSection && (
+          <section className={`mt-10 pt-8 border-t ${line} space-y-6`}>
+            <h2 className="text-lg font-bold">{t.description}</h2>
 
-            {galleryPhotos.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {galleryPhotos.map((src, idx) => (
-                  <button
-                    key={src + idx}
-                    type="button"
-                    onClick={() => {
-                      const i = images.indexOf(src);
-                      if (i >= 0) setActiveImg(i);
-                      setZoomOpen(true);
-                    }}
-                    className={`aspect-square overflow-hidden rounded-2xl border ${line} ${panel}`}
-                  >
-                    <img
-                      src={src}
-                      alt={`${title} ${idx + 1}`}
-                      className="w-full h-full object-contain p-2"
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
-              </div>
+            {showFullDescription && (
+              <div
+                className={`product-desc amazon-aplus prose prose-sm md:prose-base max-w-none leading-relaxed
+                  [&_p]:mb-4 [&_ul]:mb-4 [&_li]:mb-1
+                  [&_figure]:my-6 [&_figure]:mx-0
+                  [&_img]:w-full [&_img]:h-auto [&_img]:rounded-2xl [&_img]:border [&_img]:object-contain
+                  ${dm
+                    ? 'prose-invert [&_img]:border-gray-700 [&_img]:bg-gray-900/40 [&_figcaption]:text-gray-400'
+                    : '[&_img]:border-slate-200 [&_img]:bg-white [&_figcaption]:text-slate-500'}
+                  ${soft}`}
+                dangerouslySetInnerHTML={{ __html: descriptionForAplus }}
+              />
             )}
+
+            {extraContentImages.map((src) => (
+              <figure key={src} className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = images.indexOf(src);
+                    setZoomImages(images);
+                    setZoomIndex(idx >= 0 ? idx : 0);
+                    setZoomOpen(true);
+                  }}
+                  className={`block w-full overflow-hidden rounded-2xl border ${line} ${panel}`}
+                >
+                  <img
+                    src={src}
+                    alt={t.illustrated}
+                    className="w-full h-auto object-contain"
+                    loading="lazy"
+                  />
+                </button>
+              </figure>
+            ))}
           </section>
         )}
       </main>
@@ -894,8 +945,9 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       <ImageModal
         isOpen={zoomOpen}
         onClose={() => setZoomOpen(false)}
-        images={images}
-        image={images[activeImg] || specsImage}
+        images={zoomImages.length ? zoomImages : carouselImages}
+        image={zoomImages[zoomIndex] || carouselImages[activeImg] || specsImage}
+        initialIndex={zoomIndex}
         alt={title}
         productRef={product.ref}
       />

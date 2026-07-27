@@ -52,3 +52,50 @@ export const productDescriptionHtml = (product) => {
 };
 
 export const isRtlText = (text) => ARABIC_RANGE.test(String(text || ''));
+
+/** Compare two text blobs for near-duplicate marketing copy. */
+export const normalizeComparableText = (text) =>
+    stripHtml(text)
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+export const textsOverlap = (a, b, minLen = 48) => {
+    const left = normalizeComparableText(a);
+    const right = normalizeComparableText(b);
+    if (!left || !right) return false;
+    if (left === right) return true;
+    const probe = Math.min(minLen, left.length, right.length);
+    if (probe < 24) return left === right;
+    const slice = left.slice(0, probe);
+    return right.includes(slice) || left.includes(right.slice(0, probe));
+};
+
+/** Extract image URLs embedded in product description HTML. */
+export const imagesFromHtml = (html) => {
+    if (!html) return [];
+    const urls = [];
+    const re = /<img[^>]+src=["']([^"']+)["']/gi;
+    let match = re.exec(html);
+    while (match) {
+        urls.push(match[1]);
+        match = re.exec(html);
+    }
+    return urls;
+};
+
+export const normalizeImagePath = (src, siteOrigin = '') => {
+    const raw = String(src || '').trim();
+    if (!raw) return '';
+    try {
+        const base = siteOrigin || (typeof window !== 'undefined' ? window.location.origin : 'https://errayhany.com');
+        return new URL(raw, base).pathname;
+    } catch {
+        return raw.split('?')[0];
+    }
+};
+
+export const isProductShotPath = (src) => /(?:^|\/)(ai-|real-)/i.test(normalizeImagePath(src));
+
+export const isContentInfoImagePath = (src) => /(?:^|\/)(specs-|amazon-)/i.test(normalizeImagePath(src));
