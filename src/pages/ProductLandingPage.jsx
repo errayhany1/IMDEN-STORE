@@ -162,6 +162,27 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       setLoadError('');
       setDirectProduct(null);
       setActiveImg(0);
+
+      let loaded = false;
+      try {
+        const single = await fetchProductBySku(sku);
+        if (!cancelled && single) {
+          loaded = true;
+          setDirectProduct(single);
+          const list = useStore.getState().products || [];
+          const idx = list.findIndex((p) => skusMatch(p.ref, single.ref) || skusMatch(p.id, single.id));
+          if (idx >= 0) {
+            const next = [...list];
+            next[idx] = { ...next[idx], ...single };
+            setProducts(next);
+          } else {
+            appendProducts([single]);
+          }
+        }
+      } catch (error) {
+        console.error('Direct SKU fetch failed:', error);
+      }
+
       try {
         await fetchProducts((chunk, _cats, meta = {}) => {
           if (cancelled || !chunk?.length) return;
@@ -171,22 +192,12 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       } catch (error) {
         console.error('Landing catalog fetch failed:', error);
       }
-      if (cancelled) return;
-      const latest = useStore.getState().products || [];
-      const found = latest.find((p) => skusMatch(p.ref, sku))
-        || latest.find((p) => skusMatch(p.id, sku));
-      if (!found) {
-        try {
-          const single = await fetchProductBySku(sku);
-          if (!cancelled && single) {
-            setDirectProduct(single);
-            const exists = (useStore.getState().products || []).some((p) => skusMatch(p.ref, single.ref));
-            if (!exists) appendProducts([single]);
-          }
-        } catch (error) {
-          console.error('Direct SKU fetch failed:', error);
-          if (!cancelled) setLoadError('تعذر تحميل المنتج حالياً.');
-        }
+
+      if (!cancelled && !loaded) {
+        const stillMissing = !(useStore.getState().products || []).some(
+          (p) => skusMatch(p.ref, sku) || skusMatch(p.id, sku)
+        );
+        if (stillMissing) setLoadError('تعذر تحميل المنتج حالياً.');
       }
       if (!cancelled) setLoading(false);
     };

@@ -97,6 +97,22 @@ export const classifyAttachmentSource = (img) => {
     return 'unknown';
 };
 
+/** Stable key so build-time optimized images are used only when they still match NocoDB. */
+export const normalizeAttachmentKey = (src) => {
+    const raw = String(src || '').split('?')[0].trim();
+    if (!raw) return '';
+    try {
+        const file = decodeURIComponent(new URL(raw, 'https://errayhany.com').pathname.split('/').pop() || '');
+        // NocoDB adds a short suffix: ai-SKU-1_YV1Qk.jpg → ai-sku-1
+        return file
+            .replace(/_[A-Za-z0-9-]{3,12}(?=\.[A-Za-z0-9]+$)/, '')
+            .replace(/\.[A-Za-z0-9]+$/, '')
+            .toLowerCase();
+    } catch {
+        return raw.toLowerCase();
+    }
+};
+
 /**
  * Build tagged image source lists from Image1…Image5 attachments.
  * Fallback for legacy products: treat Image1 as ai, last filled as original.
@@ -110,8 +126,16 @@ export const buildImageSourcesFromRecord = (record, localOptimized = []) => {
         asAttachmentList(record[col]).forEach((img) => {
             const originalUrl = resolveAttachmentUrl(img);
             if (!originalUrl) return;
-            const url = localOptimized[imageIndex]?.full || originalUrl;
-            const thumb = localOptimized[imageIndex]?.thumbnail || url;
+            const opt = localOptimized[imageIndex];
+            const optMatches = Boolean(
+                opt?.full
+                && opt?.original
+                && normalizeAttachmentKey(opt.original) === normalizeAttachmentKey(originalUrl)
+            );
+            // Prefer optimized CDN only when it is still the same file as NocoDB.
+            // After Telegram re-enrich, slots change (ai-/real-) and must not keep stale webps.
+            const url = optMatches ? opt.full : originalUrl;
+            const thumb = optMatches ? (opt.thumbnail || opt.full) : url;
             imageIndex += 1;
             const kind = classifyAttachmentSource(img);
             sources[kind].push({ url, thumbnail: thumb });
