@@ -316,12 +316,15 @@ function parseCaption(caption) {
   return { price, oldPrice, name, sku, amazonUrl };
 }
 
-/** Tifawt SKU: uppercase A–Z / 0–9 only (no spaces, dashes, or punctuation). */
+/** Tifawt SKU: uppercase A–Z / 0–9 with hyphens between words (e.g. CABLE-RADIO-CODY). */
 function tifawtSkuFromCaption(rawSku) {
   const cleaned = String(rawSku || '')
     .trim()
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '');
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^A-Z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
   return cleaned || 'REF';
 }
 
