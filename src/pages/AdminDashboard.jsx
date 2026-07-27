@@ -10,6 +10,7 @@ import WalletsTab from './admin/WalletsTab';
 import ProfitDashboardTab from './admin/ProfitDashboardTab';
 import ReportsTab from './admin/ReportsTab';
 import { syncOrderSideEffects } from '../services/tifawt';
+import { initTelegramWebApp, adminTabFromQuery } from '../utils/telegramWebApp';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
@@ -57,7 +58,7 @@ const AdminDashboard = () => {
     const [statusFilter, setStatusFilter] = useState('الكل');
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState(() => adminTabFromQuery() || 'dashboard');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(false);
@@ -82,6 +83,12 @@ const AdminDashboard = () => {
     const [ozonCities, setOzonCities] = useState([]);
     const [ozonFormData, setOzonFormData] = useState({ city: '', address: '', name: '', phone: '', price: '', note: '' });
     const [ozonLoading, setOzonLoading] = useState(false);
+
+    useEffect(() => {
+        initTelegramWebApp();
+        const tab = adminTabFromQuery();
+        if (tab) setActiveTab(tab);
+    }, []);
 
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');

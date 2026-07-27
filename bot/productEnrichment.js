@@ -58,21 +58,22 @@ async function uploadBuffers(uploadToNocoDB, buffers, prefix) {
 }
 
 /**
- * Build Image1…Image5 order: AI hero → specs card → Amazon → real last (max 5).
- * Real photo is always the final slot when present.
+ * Build Image1…Image5 order:
+ * Image1 = AI studio (hero)
+ * Image2 = original front photo (real)
+ * then more AI / Amazon if any
+ * Specs/description card is NOT in the gallery — only inside the HTML description.
  */
 function orderGalleryUploads({
   aiUploads = [],
-  specsUploads = [],
   amazonUploads = [],
   realUploads = [],
 }) {
-  const realLast = realUploads[0] ? [realUploads[0]] : [];
-  const slotsLeft = Math.max(0, 5 - realLast.length);
-  const front = [...aiUploads, ...specsUploads, ...amazonUploads]
-    .filter(Boolean)
-    .slice(0, slotsLeft);
-  return [...front, ...realLast].slice(0, 5);
+  const hero = aiUploads.filter(Boolean);
+  const real = realUploads[0] ? [realUploads[0]] : [];
+  const extraAi = hero.slice(1);
+  const firstAi = hero[0] ? [hero[0]] : [];
+  return [...firstAi, ...real, ...extraAi, ...amazonUploads.filter(Boolean)].slice(0, 5);
 }
 
 function injectSpecsIntoDescription(html, specsUrl, lang = 'fr') {
@@ -280,7 +281,7 @@ export async function enrichProduct({
   const imagesPromise = (async () => {
     try {
       const aiBuffers = await runImagesOnce(displayName);
-      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, amazonUrl ? 2 : 3);
+      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
       if (!aiOnly.length) {
         throw new Error('No AI studio image produced from seller photos');
       }
@@ -291,7 +292,7 @@ export async function enrichProduct({
       console.error('AI images failed, retrying once:', e.message);
       try {
         const aiBuffers = await runImagesOnce(displayName);
-        const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, amazonUrl ? 2 : 3);
+        const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
         if (!aiOnly.length) throw new Error('No AI studio image on retry');
         const uploaded = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
         console.log(`AI studio images uploaded on retry: ${uploaded.length}`);
@@ -322,12 +323,12 @@ export async function enrichProduct({
     }
   }
 
-  // Barcode scanning disabled — keep the hot path fast.
+  // No barcode reading — skip entirely.
   const barcode = '';
 
-  // Professional specs card from the generated bullets — shown in gallery + description.
-  let specsUploads = [];
+  // Specs card → description HTML only (never Image1…Image5 gallery).
   let specsUrl = '';
+  let hasSpecsImage = false;
   if (copy) {
     try {
       const bulletsFr = bulletsFromHtml(
@@ -347,10 +348,11 @@ export async function enrichProduct({
         price,
         lang: 'fr',
       });
-      specsUploads = await uploadBuffers(uploadToNocoDB, [specsBuf], `specs-${sellerSku}`);
+      const specsUploads = await uploadBuffers(uploadToNocoDB, [specsBuf], `specs-${sellerSku}`);
       if (specsUploads[0]) {
         specsUrl = publicUrlFromNoco(specsUploads[0], nocodbUrl);
-        console.log('Specs card uploaded');
+        hasSpecsImage = true;
+        console.log('Specs card uploaded (description only)');
       }
     } catch (e) {
       console.error('Specs card failed:', e.message);
@@ -373,7 +375,6 @@ export async function enrichProduct({
 
   const nocoImages = orderGalleryUploads({
     aiUploads,
-    specsUploads,
     amazonUploads,
     realUploads: originalUploads,
   });
@@ -430,7 +431,7 @@ export async function enrichProduct({
     productForSheet,
     aiFailures,
     hasAiImages: aiUploads.length > 0,
-    hasSpecsImage: specsUploads.length > 0,
+    hasSpecsImage,
   };
 }
 
@@ -449,9 +450,7 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
     description_arabic: copy.description_arabic || '',
   };
 
-  const barcode = String(enrichment.barcode || copy.barcode || '').trim();
-  if (barcode) record.Barcode = barcode;
-
+  // Never write barcode from enrichment.
   if (copy.description_french) record.description_french = copy.description_french;
   if (copy.short_description_ar) record.short_description_ar = copy.short_description_ar;
   if (copy.short_description_fr) record.short_description_fr = copy.short_description_fr;

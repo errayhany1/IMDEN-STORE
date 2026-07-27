@@ -74,6 +74,11 @@ const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://errayhany.com';
 const TELEGRAM_WEBHOOK_URL = (process.env.TELEGRAM_WEBHOOK_URL || '').replace(/\/$/, '');
 const TELEGRAM_MODE = (process.env.TELEGRAM_MODE || '').toLowerCase()
   || (TELEGRAM_WEBHOOK_URL ? 'webhook' : 'polling');
+/** Mini App / OPEN button URL (must be HTTPS and allowed in BotFather). */
+const TELEGRAM_WEBAPP_URL = (
+  process.env.TELEGRAM_WEBAPP_URL
+  || `${SITE_URL.replace(/\/$/, '')}/admin?from=tg&tab=products`
+).trim();
 /** Soft timeout so AI cannot hang the whole bot forever.
  *  Copy + studio cutouts + background composites routinely
  *  exceed 90s on large Telegram photos, so the default is 5 minutes. */
@@ -110,6 +115,7 @@ const CATEGORIES = {
 
 const MAIN_KEYBOARD = {
   keyboard: [
+    [{ text: 'OPEN 🌐', web_app: { url: TELEGRAM_WEBAPP_URL } }],
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
     [{ text: '✨ إعادة توليد الوصف والصور' }],
@@ -122,7 +128,10 @@ const MAIN_KEYBOARD = {
 
 /** Minimal keyboard shown after the full admin menu is hidden. */
 const SHOW_KEYBOARD = {
-  keyboard: [[{ text: '🔼 إظهار القائمة' }]],
+  keyboard: [
+    [{ text: 'OPEN 🌐', web_app: { url: TELEGRAM_WEBAPP_URL } }],
+    [{ text: '🔼 إظهار القائمة' }],
+  ],
   resize_keyboard: true,
   is_persistent: true,
 };
@@ -220,6 +229,23 @@ async function answerCallback(callbackQueryId, text) {
     text,
     show_alert: false,
   }, { timeout: 15000 });
+}
+
+/** Menu button next to the message field (like Fader bots "OPEN"). */
+async function setupTelegramWebAppMenu() {
+  if (!BOT_TOKEN || !TELEGRAM_WEBAPP_URL) return;
+  try {
+    await axios.post(`${TG_API}/setChatMenuButton`, {
+      menu_button: {
+        type: 'web_app',
+        text: 'OPEN',
+        web_app: { url: TELEGRAM_WEBAPP_URL },
+      },
+    }, { timeout: 15000 });
+    console.log(`🌐 Telegram OPEN menu → ${TELEGRAM_WEBAPP_URL}`);
+  } catch (e) {
+    console.warn('setChatMenuButton failed:', e?.response?.data || e.message);
+  }
 }
 
 const http = axios.create({
@@ -404,12 +430,14 @@ function collectSourceImagesFromRow(row) {
 }
 
 function pickReenrichSourceFiles(sourceFiles) {
-  const label = (f) => String(f.title || f.name || f.url || '');
-  const realFirst = [
-    ...sourceFiles.filter((f) => /real[-_]/i.test(label(f))),
-    ...sourceFiles.filter((f) => !/real[-_]|ai[-_]|specs[-_]/i.test(label(f))),
-  ];
-  return (realFirst.length ? realFirst : sourceFiles).slice(0, 4);
+  const label = (f) => String(f.title || f.name || f.url || f.path || '');
+  const real = sourceFiles.filter((f) => /real[-_]/i.test(label(f)));
+  const plain = sourceFiles.filter(
+    (f) => !/ai[-_]|specs[-_]|amazon[-_]/i.test(label(f))
+  );
+  // Prefer seller originals; fall back to any non-AI slot (Image1 front photo).
+  const preferred = real.length ? real : (plain.length ? plain : sourceFiles);
+  return preferred.slice(0, 4);
 }
 
 // ─── ALBUM BUFFER ──────────────────────────────────────────────────────────
@@ -608,7 +636,7 @@ async function executeAiPolish({
   const imgCount = enrichment.nocoImages?.length || 0;
   await sendMessage(
     chatId,
-    `✨ تم تحديث المنتج #${rowId} بالوصف والصور الاحترافية (${imgCount} صور)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
+    `✨ تم تحديث المنتج #${rowId}\n🎨 الصورة 1: احترافية\n📷 الصورة 2: الأصلية\n📝 بطاقة الوصف داخل قسم الوصف فقط (${imgCount} صور في المعرض)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
   );
   console.log(`✅ AI polish OK #${rowId}`);
 }
@@ -663,7 +691,8 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
   enqueueAiPolish(async () => {
     const preferred = pickReenrichSourceFiles(sourceFiles);
     const originalBuffers = [];
-    for (const file of preferred) {
+    const tried = preferred.length ? preferred : sourceFiles.slice(0, 4);
+    for (const file of tried) {
       const url = nocoImageUrl(file);
       if (!url) continue;
       try {
@@ -672,10 +701,24 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
         console.warn(`Reenrich download failed (${sellerSku}):`, e.message);
       }
     }
+    // Last resort: try remaining gallery slots if preferred downloads failed.
+    if (!originalBuffers.length) {
+      for (const file of sourceFiles) {
+        if (tried.includes(file)) continue;
+        const url = nocoImageUrl(file);
+        if (!url) continue;
+        try {
+          originalBuffers.push(await downloadNocoImageBuffer(url));
+          if (originalBuffers.length >= 2) break;
+        } catch (e) {
+          console.warn(`Reenrich fallback download failed (${sellerSku}):`, e.message);
+        }
+      }
+    }
     if (!originalBuffers.length) {
       await sendMessage(
         chatId,
-        `❌ تعذر تحميل صور المنتج #${rowId} (${sellerSku}) لإعادة التوليد.`
+        `❌ تعذر تحميل صور المنتج #${rowId} (${sellerSku}) لإعادة التوليد.\nتأكد أن المنتج يحتوي على صورة أصلية ثم أعد المحاولة.`
       );
       return;
     }
@@ -690,7 +733,7 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
       ref: cleanReference(record.SKU || rawRef),
       amazonUrl: record.Amazon_URL || '',
       sellerSku,
-      startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...`,
+      startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.`,
     });
   });
 
@@ -976,7 +1019,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: خلفية بيضاء + ظل + بطاقة مواصفات\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: خلفية بيضاء + ظل + بطاقة مواصفات\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.',
         MAIN_KEYBOARD
       );
       return;
@@ -1540,6 +1583,8 @@ app.listen(PORT, '0.0.0.0', async () => {
   } catch (e) {
     console.warn('Telegram getMe/getWebhookInfo failed:', e.message);
   }
+
+  await setupTelegramWebAppMenu();
 
   try {
     if (TELEGRAM_MODE === 'webhook') {

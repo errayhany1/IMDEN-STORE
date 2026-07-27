@@ -234,8 +234,8 @@ export async function generateProductImages({
   }
 
   const cutoutCount = Math.min(
-    Number(process.env.AI_IMAGE_COUNT || 2),
-    3
+    Number(process.env.AI_IMAGE_COUNT || 1),
+    2
   );
 
   const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
