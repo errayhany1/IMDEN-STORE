@@ -27,6 +27,7 @@ import {
 import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   bulletsFromHtml,
+  renderSpecsCard,
 } from './studioImage.js';
 
 export function buildSellerSku(ref) {
@@ -66,21 +67,31 @@ async function uploadBuffers(uploadToNocoDB, buffers, prefix) {
 
 /**
  * Build Image1…Image5 order:
- * Image1 = AI studio (hero)
- * Image2 = original front photo (real)
- * then more AI / Amazon if any
- * Specs/description card is NOT in the gallery — only inside the HTML description.
+ * Image1 = AI studio hero (white packshot)
+ * Image2 = AI alternate angle (if any)
+ * Image3 = original front photo (real)
+ * then packaging specs card / Amazon extras
  */
 function orderGalleryUploads({
   aiUploads = [],
+  specsUploads = [],
   amazonUploads = [],
   realUploads = [],
 }) {
   const hero = aiUploads.filter(Boolean);
-  const real = realUploads[0] ? [realUploads[0]] : [];
-  const extraAi = hero.slice(1);
   const firstAi = hero[0] ? [hero[0]] : [];
-  return [...firstAi, ...real, ...extraAi, ...amazonUploads.filter(Boolean)].slice(0, 5);
+  const secondAi = hero[1] ? [hero[1]] : [];
+  const extraAi = hero.slice(2);
+  const real = realUploads[0] ? [realUploads[0]] : [];
+  const specs = specsUploads.filter(Boolean).slice(0, 1);
+  return [
+    ...firstAi,
+    ...secondAi,
+    ...real,
+    ...specs,
+    ...extraAi,
+    ...amazonUploads.filter(Boolean),
+  ].slice(0, 5);
 }
 
 function escapeHtml(value) {
@@ -401,7 +412,7 @@ export async function enrichProduct({
   const imagesPromise = (async () => {
     try {
       const aiBuffers = await runImagesOnce(displayName);
-      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
+      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 2);
       if (!aiOnly.length) {
         throw new Error('No AI studio image produced from seller photos');
       }
@@ -412,7 +423,7 @@ export async function enrichProduct({
       console.error('AI images failed, retrying once:', e.message);
       try {
         const aiBuffers = await runImagesOnce(displayName);
-        const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
+        const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 2);
         if (!aiOnly.length) throw new Error('No AI studio image on retry');
         const uploaded = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
         console.log(`AI studio images uploaded on retry: ${uploaded.length}`);
@@ -446,15 +457,21 @@ export async function enrichProduct({
   // No barcode reading — skip entirely.
   const barcode = '';
 
-  // Specs card → HTML inside description only (never gallery Image1…Image5).
-  // Avoid SVG/JPEG cards: Alpine servers lack Arabic fonts → tofu boxes.
+  // Specs: HTML in description + one French gallery card from packaging text.
   let hasSpecsImage = false;
+  let specsUploads = [];
   if (copy) {
     try {
-      const bulletsFr = bulletsFromHtml(
-        copy.short_description_fr || copy.description_french || '',
-        6
-      );
+      const packagingSpecs = (Array.isArray(copy.packaging_specs) ? copy.packaging_specs : [])
+        .map((s) => String(s || '').replace(/<[^>]*>/g, '').trim())
+        .filter(Boolean)
+        .slice(0, 6);
+      const bulletsFr = packagingSpecs.length
+        ? packagingSpecs
+        : bulletsFromHtml(
+          copy.short_description_fr || copy.description_french || '',
+          6
+        );
       const bulletsAr = bulletsFromHtml(
         copy.short_description_ar || copy.description_arabic || '',
         6
@@ -479,8 +496,25 @@ export async function enrichProduct({
       });
       copy.description_arabic = injectSpecsIntoDescription(copy.description_arabic, arBlock);
       copy.description_french = injectSpecsIntoDescription(copy.description_french, frBlock);
-      hasSpecsImage = true;
-      console.log('HTML specs card injected into description');
+
+      // Gallery card uses Latin/French text so Alpine SVG fonts stay readable.
+      if (bulletsFr.length) {
+        const specsJpeg = await renderSpecsCard({
+          title: copy.french_title || displayName,
+          bullets: bulletsFr,
+          brand: copy.brand,
+          color: copy.color,
+          sku: sellerSku,
+          price,
+          lang: 'fr',
+        });
+        specsUploads = await uploadBuffers(uploadToNocoDB, [specsJpeg], `specs-${sellerSku}`);
+        hasSpecsImage = specsUploads.length > 0;
+        console.log(`Packaging specs gallery card uploaded: ${specsUploads.length}`);
+      } else {
+        hasSpecsImage = true;
+        console.log('HTML specs card injected into description (no gallery card)');
+      }
     } catch (e) {
       console.error('Specs card failed:', e.message);
       aiFailures.push(`specs:${e.message}`);
@@ -489,6 +523,7 @@ export async function enrichProduct({
 
   const nocoImages = orderGalleryUploads({
     aiUploads,
+    specsUploads,
     amazonUploads,
     realUploads: originalUploads,
   });

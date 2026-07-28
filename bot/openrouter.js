@@ -102,8 +102,14 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "woo_title": "titre court Woo FR",
   "brand": "marque si visible sinon Generic",
   "color": "couleur principale ou Multicolore",
-  "barcode": "code-barres exact visible sur une photo, sinon chaîne vide"
-}`;
+  "barcode": "code-barres exact visible sur une photo, sinon chaîne vide",
+  "packaging_specs": ["spec lue sur la boîte 1", "spec 2", "spec 3", "spec 4", "spec 5", "spec 6"]
+}
+Règles packaging_specs:
+- Lis le TEXTE visible sur l'emballage / la boîte / les étiquettes (modèle, RGB, USB-C, voltage, autonomie, dimensions, features…).
+- Français ou anglais court, max 6 lignes, factuelles uniquement.
+- Si peu de texte lisible, déduis 3-5 specs techniques évidentes du produit photographié.
+- N'invente pas de certifications ou chiffres absents de la photo.`;
 
   const content = [{ type: 'text', text: prompt }];
   const refs = (imageBuffers?.length ? imageBuffers : [imageBuffer])
@@ -234,21 +240,23 @@ export async function generateProductImages({
   }
 
   const cutoutCount = Math.min(
-    Number(process.env.AI_IMAGE_COUNT || 1),
-    2
+    Math.max(1, Number(process.env.AI_IMAGE_COUNT || 2) || 2),
+    3
   );
 
   const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
 Use the product in the reference photo(s) as the ONLY product.
-Keep exact identity: shape, color, ports, branding marks. Do NOT invent a different product.
+Keep exact identity: shape, color, ports, logos, button labels, branding marks. Do NOT invent a different product.
+If the reference shows PACKAGING / a cardboard BOX: recreate the REAL PRODUCT illustrated on the box (the device itself), NOT the box — clean packshot like premium Jumia listings (remotes, gadgets on pure white).
 Output a square 1:1 photo on a PLAIN seamless WHITE background (#FFFFFF only).
-CRITICAL framing: the product must FILL about 92–96% of the frame — tight crop, almost edge-to-edge, very little empty white margin.
-Center the product. Soft realistic studio lighting. A subtle soft shadow attached under the product only (no floating oval blob, no grey floor disc).
-No text, no badges, no props, no hands, no clutter, no colored backdrop.`;
+CRITICAL framing: the product must FILL about 88–94% of the frame — tight crop, little empty white margin.
+Center the product. Soft realistic studio lighting. Soft contact shadow under the product only (no floating oval blob, no grey floor disc, no table, no wood floor).
+No text overlays, no badges, no props, no hands, no clutter, no colored backdrop.`;
 
   const angleHints = [
-    'Front / hero angle, product filling the frame.',
-    'Slight 3/4 alternate angle or useful detail view, same white background, product still fills the frame.',
+    'Hero packshot: front / clearest catalog angle, product filling the frame on pure white.',
+    'Alternate pose: slight 3/4 angle OR useful detail (ports, clip, buttons) — same product, same white studio, still fills the frame.',
+    'Lifestyle-free detail: top-down or side profile on pure white, still the same product only.',
   ];
 
   const cutouts = [];

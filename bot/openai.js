@@ -88,6 +88,7 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "brand": "marque détectée ou Generic",
   "color": "couleur principale ou Multicolore",
   "barcode": "code-barres exact visible sur une photo, sinon chaîne vide",
+  "packaging_specs": ["spec lue sur la boîte 1", "spec 2", "spec 3", "spec 4", "spec 5", "spec 6"],
   "faq_fr": [{"q":"...","a":"..."},{"q":"...","a":"..."},{"q":"...","a":"..."}],
   "faq_ar": [{"q":"...","a":"..."},{"q":"...","a":"..."},{"q":"...","a":"..."}]
 }
@@ -96,6 +97,7 @@ Règles:
 - Ton grossiste Maroc, clair, vendeur, sans claims médicaux.
 - Titres FR/AR: AUCUN chiffre (ni dimensions).
 - Examine toutes les photos. Recopie le code-barres caractère par caractère seulement s'il est clairement lisible; ne l'invente jamais.
+- packaging_specs: lis le texte sur l'emballage (modèle, RGB, USB-C, voltage…) — FR/EN court, max 6, factuel; si peu de texte, 3-5 specs évidentes du produit.
 - FAQ: paiement COD, délai livraison 24-72h, commande en gros WhatsApp.
 - Contenu brand-neutral (pas de marque Amazon).
 - Pas de markdown hors JSON. Pas de texte hors JSON.`;

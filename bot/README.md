@@ -82,7 +82,7 @@ TIFAWT_BUSINESS_ID=1
 # TELEGRAM_WEBHOOK_URL=https://YOUR-BOT-PUBLIC-URL
 # AI_ENRICH_TIMEOUT_MS=90000
 # AI_ENRICH_TIMEOUT_MS_AMAZON=180000
-# AI_IMAGE_COUNT=2
+# AI_IMAGE_COUNT=2   # studio hero + alternate angle (default 2)
 ```
 
 ## صيغة رفع منتج (+ أمازون اختياري)
