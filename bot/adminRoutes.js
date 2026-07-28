@@ -88,6 +88,8 @@ function rowToJumiaPayload(row, nocodbUrl) {
     sellerSku: sku,
     referenceClean: String(row.SKU || row.Ref || '').replace(/^ERY[-_]?/i, ''),
     price: Number(row.price || row.Price || 0) || 0,
+    wholesalePrice: Number(row.price || row.Price || 0) || 0,
+    postebl: row.POSTEBL || row.Postebl || 'POSTEBL',
     frenchTitle: row.French_Title || row.Title || row.title || sku,
     arabicTitle: row.Arabic_Title || row.Title || row.title || sku,
     shortFr: row.Short_FR || row.short_fr || '',
@@ -101,7 +103,6 @@ function rowToJumiaPayload(row, nocodbUrl) {
     productWeight: row.Weight || 1,
     jumiaCategory: row.Jumia_Category || process.env.JUMIA_DEFAULT_CATEGORY || '1000040',
     imageUrls,
-    stock: Number(row.Stock || row.stock || 10) || 10,
   };
 }
 
@@ -212,8 +213,16 @@ export function registerAdminRoutes(app) {
       }
       return res.json({ ok: true, orders: mapped });
     } catch (error) {
+      const jumiaError = error?.response?.data?.error || error?.message || 'jumia_unavailable';
       console.error('[admin] jumia orders failed:', error?.response?.data || error.message);
-      return res.status(502).json({ ok: false, error: 'jumia_unavailable' });
+      // Use 503 (not 502): EasyPanel Traefik replaces upstream 502 bodies with its own HTML page.
+      return res.status(503).json({
+        ok: false,
+        error: jumiaError === 'invalid_grant' ? 'jumia_token_expired' : jumiaError,
+        hint: jumiaError === 'invalid_grant'
+          ? 'Refresh token منتهي — افتح Vendor Center → Applications → lock وأنشئ توكن جديد على imden'
+          : undefined,
+      });
     }
   });
 

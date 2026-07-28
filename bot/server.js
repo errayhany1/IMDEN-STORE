@@ -40,12 +40,14 @@ import { normalizeAmazonUrl } from './amazonScrape.js';
 import {
   isJumiaConfigured,
   setJumiaProductActive,
+  setJumiaProductStock,
   shipJumiaOrder,
   cancelJumiaOrder,
   printJumiaLabels,
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
+import { resolveJumiaStock } from './jumiaPricing.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -595,6 +597,7 @@ async function executeAiPolish({
   amazonUrl,
   sellerSku,
   startMessage,
+  postebl = 'POSTEBL',
 }) {
   console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
   await sendMessage(
@@ -621,6 +624,7 @@ async function executeAiPolish({
         syncSheet: true,
         // Always publish (create/update) on Jumia after AI description + images.
         syncJumia: true,
+        postebl,
       }),
       enrichTimeout,
       'AI polish'
@@ -669,11 +673,15 @@ async function executeAiPolish({
     }
   } else if (jumia?.error) {
     jumiaNote = `\n🛒 Jumia API خطأ: ${jumia.error}`;
-  } else if (jumia?.productSetSid) {
+  } else if (jumia?.productSetSid || jumia?.offer) {
     const st = jumia.countryStatuses?.[0]?.productStatus || '';
+    const offer = jumia.offer;
+    const priceNote = offer
+      ? `\n💰 Jumia: قائمة ${offer.listPrice} → تخفيض ${offer.salePrice} | مخزون ${offer.stock}`
+      : '';
     jumiaNote = st && /FAIL/i.test(st)
-      ? `\n🛒 Jumia API: أُنشئ (${jumia.sellerSku}) — حالة البلد: ${st}`
-      : `\n🛒 Jumia API: تم إنشاء المنتج (${jumia.sellerSku})`;
+      ? `\n🛒 Jumia API: أُنشئ (${jumia.sellerSku}) — حالة البلد: ${st}${priceNote}`
+      : `\n🛒 Jumia API: تم إنشاء المنتج (${jumia.sellerSku})${priceNote}`;
   }
   await sendMessage(
     chatId,
@@ -714,6 +722,7 @@ function scheduleAiPolish({
     ref: sku,
     amazonUrl,
     sellerSku,
+    postebl: 'POSTEBL',
     startMessage: `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...`,
   }));
 }
@@ -778,6 +787,7 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
       ref: cleanReference(record.SKU || rawRef),
       amazonUrl: record.Amazon_URL || '',
       sellerSku,
+      postebl: record.POSTEBL || record.Postebl || 'POSTEBL',
       startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
     });
   });
@@ -1082,7 +1092,18 @@ async function syncJumiaVisibility(sku, active) {
     if (tried.has(candidate.toLowerCase())) continue;
     tried.add(candidate.toLowerCase());
     try {
-      return await setJumiaProductActive(candidate, active);
+      const visibility = await setJumiaProductActive(candidate, active);
+      let stockResult = null;
+      try {
+        stockResult = await setJumiaProductStock(
+          candidate,
+          active ? resolveJumiaStock('POSTEBL') : resolveJumiaStock('NO POSTEBL'),
+        );
+      } catch (stockError) {
+        // Visibility can succeed while stock feed fails on incomplete country products.
+        stockResult = { error: stockError?.message || 'stock_failed' };
+      }
+      return { ...visibility, stock: stockResult };
     } catch (error) {
       lastError = error;
       if (error?.message !== 'jumia_product_not_found') break;

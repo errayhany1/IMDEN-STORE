@@ -5,6 +5,7 @@
  * Base: https://vendor-api.jumia.com
  */
 import axios from 'axios';
+import { buildJumiaOffer } from './jumiaPricing.js';
 
 const JUMIA_API_BASE = (
   process.env.JUMIA_API_BASE
@@ -86,16 +87,21 @@ async function getAccessToken() {
     {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       timeout: 30_000,
+      validateStatus: () => true,
     },
   );
 
-  tokenState.accessToken = data?.access_token;
+  if (!data?.access_token) {
+    const err = new Error(data?.error || 'jumia_token_missing');
+    err.statusCode = data?.error === 'invalid_grant' ? 503 : 502;
+    err.details = data;
+    throw err;
+  }
+
+  tokenState.accessToken = data.access_token;
   tokenState.expiresAt = now + (Number(data?.expires_in) || 3600) * 1000;
   if (data?.refresh_token) tokenState.refreshToken = data.refresh_token;
 
-  if (!tokenState.accessToken) {
-    throw new Error('jumia_token_missing');
-  }
   return tokenState.accessToken;
 }
 
@@ -325,8 +331,11 @@ function asHtml(value, fallback = '<p></p>') {
  * Create a product via Jumia PIM (same path Vendor Center uses).
  * OAuth Self Auth access token works with api-pim-services.
  *
+ * Pricing: NocoDB wholesale → tier profit + 5 DH + 15% Jumia gross-up.
+ * List price = sale + 50..100 (discount feel). Stock 100 / 0 if NO POSTEBL.
+ *
  * @param {object} product - same shape as sheet payload fields
- * @returns {{ productSetSid, productSids, sellerSku, countryStatuses }}
+ * @returns {{ productSetSid, productSids, sellerSku, countryStatuses, offer }}
  */
 export async function createJumiaProduct(product = {}) {
   if (!isJumiaConfigured()) {
@@ -362,8 +371,19 @@ export async function createJumiaProduct(product = {}) {
     return { skipped: true, reason: 'missing_images' };
   }
 
-  const price = Math.max(1, Number(product.price ?? product.Price_MAD ?? 0) || 1);
-  const stock = Math.max(0, Number(product.stock ?? 10) || 0);
+  const wholesale = Math.max(
+    0,
+    Number(product.wholesalePrice ?? product.price ?? product.Price_MAD ?? 0) || 0,
+  );
+  const postebl = pick(product.postebl, product.POSTEBL, product.stockStatus);
+  const offer = buildJumiaOffer({
+    wholesale,
+    postebl,
+    sku: sellerSku,
+  });
+  const listPrice = offer.listPrice;
+  const salePrice = offer.salePrice;
+  const stock = offer.stock;
   const color = pick(product.color, 'Multicolore') || 'Multicolore';
   const colorFamily = pick(product.colorFamily, color) || color;
   const variation = pick(product.variation, '...') || '...';
@@ -388,19 +408,19 @@ export async function createJumiaProduct(product = {}) {
     ],
     variations: [{
       sellerSKU: sellerSku,
-      price,
+      price: listPrice,
       stock,
       currency: 'MAD',
-      salePrice: null,
-      saleStartDate: null,
-      saleEndDate: null,
+      salePrice,
+      saleStartDate: offer.saleStartDate,
+      saleEndDate: offer.saleEndDate,
       variation,
       businessClients: [{
         countryCode,
-        price,
-        salePrice: null,
-        saleStartDate: null,
-        saleEndDate: null,
+        price: listPrice,
+        salePrice,
+        saleStartDate: offer.saleStartDate,
+        saleEndDate: offer.saleEndDate,
       }],
     }],
     newVariations: [],
@@ -466,6 +486,7 @@ export async function createJumiaProduct(product = {}) {
     productSids: asArray(data?.productSids),
     sellerSku,
     countryStatuses,
+    offer,
     errors: data?.errors || null,
   };
 }
@@ -616,6 +637,33 @@ export async function setJumiaProductActive(sellerSku, active = true) {
     productSid: found.id,
     status,
     summary: data?.summary || null,
+  };
+}
+
+/** Push stock via Vendor API feed (100 in stock / 0 when NO POSTEBL). */
+export async function setJumiaProductStock(sellerSku, stock = 100) {
+  const found = await findJumiaProductBySellerSku(sellerSku);
+  if (!found?.id) {
+    const error = new Error('jumia_product_not_found');
+    error.statusCode = 404;
+    throw error;
+  }
+  const qty = Math.max(0, Number(stock) || 0);
+  const data = await jumiaRequest('post', '/feeds/products/stock', {
+    body: {
+      products: [{
+        id: found.id,
+        sellerSku: found.sellerSku,
+        stock: qty,
+      }],
+    },
+  });
+  return {
+    ok: true,
+    sellerSku: found.sellerSku,
+    productSid: found.id,
+    stock: qty,
+    feedId: data?.feedId || null,
   };
 }
 

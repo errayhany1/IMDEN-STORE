@@ -206,6 +206,7 @@ export async function enrichProduct({
   nocodbUrl,
   syncSheet = true,
   syncJumia = true,
+  postebl = 'POSTEBL',
 }) {
   const enabled = String(process.env.PRODUCT_AI_ENRICHMENT || 'true').toLowerCase() !== 'false';
   const sellerSku = buildSellerSku(ref);
@@ -264,6 +265,8 @@ export async function enrichProduct({
       referenceClean,
       sellerSku,
       price,
+      wholesalePrice: price,
+      postebl,
       frenchTitle: amazonMeta?.title || name,
       arabicTitle: name,
       shortFr: '',
@@ -497,6 +500,8 @@ export async function enrichProduct({
     referenceClean,
     sellerSku,
     price,
+    wholesalePrice: price,
+    postebl,
     frenchTitle: copy?.french_title || displayName,
     arabicTitle: copy?.arabic_title || name,
     shortFr: copy?.short_description_fr || '',

@@ -7,6 +7,7 @@
  *   Sheet1: reference_clean, SellerSKU, Jumia_Price, Jumia_Category, ...
  */
 import axios from 'axios';
+import { buildJumiaOffer } from './jumiaPricing.js';
 
 const SHEET_ID = process.env.PRODUCT_SHEET_ID || '1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4';
 const WEBHOOK = process.env.PRODUCT_SHEET_WEBHOOK_URL || '';
@@ -22,7 +23,7 @@ export const JUMIA_SHEET_DEFAULTS = {
   colorFamily: 'Multicolore',
   variation: '...',
   productWeight: 1,
-  stock: 10,
+  stock: 100,
 };
 
 export function buildSheetPayload(product) {
@@ -30,16 +31,25 @@ export function buildSheetPayload(product) {
   const brand = product.brand || JUMIA_SHEET_DEFAULTS.brand;
   const category = product.jumiaCategory || JUMIA_SHEET_DEFAULTS.category;
   const color = product.color || JUMIA_SHEET_DEFAULTS.color;
-  const stock = product.stock ?? JUMIA_SHEET_DEFAULTS.stock;
   const weight = product.productWeight ?? JUMIA_SHEET_DEFAULTS.productWeight;
   const images = Array.isArray(product.imageUrls) ? product.imageUrls : [];
+  const wholesale = Number(product.wholesalePrice ?? product.price ?? 0) || 0;
+  const offer = buildJumiaOffer({
+    wholesale,
+    postebl: product.postebl || product.POSTEBL || 'POSTEBL',
+    sku: product.sellerSku || product.referenceClean || '',
+  });
+  const stock = offer.stock;
+  const listPrice = offer.listPrice;
+  const salePrice = offer.salePrice;
 
   return {
     sheetId: SHEET_ID,
     sheet1: {
       reference_clean: product.referenceClean,
       SellerSKU: product.sellerSku,
-      Jumia_Price: product.price,
+      Jumia_Price: salePrice,
+      Jumia_List_Price: listPrice,
       Jumia_Category: category,
       French_Title: product.frenchTitle,
       Arabic_Title: product.arabicTitle,
@@ -69,7 +79,10 @@ export function buildSheetPayload(product) {
       Description_AR: product.descriptionAr,
       short_description: product.shortFr,
       SellerSKU: product.sellerSku,
-      Price_MAD: product.price,
+      Price_MAD: listPrice,
+      SalePrice: salePrice,
+      SaleStartDate: offer.saleStartDate,
+      SaleEndDate: offer.saleEndDate,
       PrimaryCategory: category,
       Amazon_URL: product.amazonUrl || '',
       MainImage: images[0] || '',
