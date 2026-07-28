@@ -47,7 +47,7 @@ export function cleanReference(ref) {
     .replace(/[^a-zA-Z0-9/_-]/g, '');
 }
 
-function publicUrlFromNoco(fileObj, nocodbUrl) {
+export function publicUrlFromNoco(fileObj, nocodbUrl) {
   if (!fileObj) return '';
   const raw = fileObj.signedUrl || fileObj.url || '';
   if (!raw) return '';
@@ -63,6 +63,18 @@ async function uploadBuffers(uploadToNocoDB, buffers, prefix) {
     if (file) uploaded.push(file);
   }
   return uploaded;
+}
+
+/** Same as uploadBuffers but keeps the JPEG buffer for Telegram preview. */
+async function uploadBufferPairs(uploadToNocoDB, buffers, prefix) {
+  const pairs = [];
+  for (let i = 0; i < buffers.length; i++) {
+    const buf = buffers[i];
+    if (!buf) continue;
+    const file = await uploadToNocoDB(buf, `${prefix}-${i + 1}.jpg`);
+    if (file) pairs.push({ file, buffer: buf, index: i });
+  }
+  return pairs;
 }
 
 /**
@@ -235,12 +247,14 @@ export async function enrichProduct({
 
   // Upload at most one DISPLAY original for gallery Image2 — never packaging backs.
   let originalUploads = [];
+  let realPairs = [];
   if (publishRealOriginal && galleryRealBuffers[0]) {
-    originalUploads = await uploadBuffers(
+    realPairs = await uploadBufferPairs(
       uploadToNocoDB,
       galleryRealBuffers.slice(0, 1),
       `real-${sellerSku}`
     );
+    originalUploads = realPairs.map((p) => p.file);
   }
 
   let amazonMeta = null;
@@ -426,18 +440,18 @@ export async function enrichProduct({
       if (!aiOnly.length) {
         throw new Error('No AI studio image produced from seller photos');
       }
-      const uploaded = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
-      console.log(`AI studio images uploaded: ${uploaded.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
-      return uploaded;
+      const pairs = await uploadBufferPairs(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
+      console.log(`AI studio images uploaded: ${pairs.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
+      return pairs;
     } catch (e) {
       console.error('AI images failed, retrying once:', e.message);
       try {
         const aiBuffers = await runImagesOnce(displayName);
         const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 2);
         if (!aiOnly.length) throw new Error('No AI studio image on retry');
-        const uploaded = await uploadBuffers(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
-        console.log(`AI studio images uploaded on retry: ${uploaded.length}`);
-        return uploaded;
+        const pairs = await uploadBufferPairs(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
+        console.log(`AI studio images uploaded on retry: ${pairs.length}`);
+        return pairs;
       } catch (e2) {
         console.error('AI images retry failed:', e2.message);
         aiFailures.push(`images:${e2.message}`);
@@ -446,13 +460,14 @@ export async function enrichProduct({
     }
   })();
 
-  const [copyResult, imageUploads] = await Promise.all([
+  const [copyResult, imagePairs] = await Promise.all([
     copyPromise,
     imagesPromise,
   ]);
 
   copy = copyResult;
-  aiUploads = imageUploads || [];
+  const aiPairs = imagePairs || [];
+  aiUploads = aiPairs.map((p) => p.file);
 
   // If copy still empty, one more dedicated retry after images finished.
   if (!copy) {
@@ -470,6 +485,7 @@ export async function enrichProduct({
   // Specs: HTML in description + one French gallery card from packaging text.
   let hasSpecsImage = false;
   let specsUploads = [];
+  let specsPairs = [];
   if (copy) {
     try {
       const packagingSpecs = (Array.isArray(copy.packaging_specs) ? copy.packaging_specs : [])
@@ -518,7 +534,8 @@ export async function enrichProduct({
           price,
           lang: 'fr',
         });
-        specsUploads = await uploadBuffers(uploadToNocoDB, [specsJpeg], `specs-${sellerSku}`);
+        specsPairs = await uploadBufferPairs(uploadToNocoDB, [specsJpeg], `specs-${sellerSku}`);
+        specsUploads = specsPairs.map((p) => p.file);
         hasSpecsImage = specsUploads.length > 0;
         console.log(`Packaging specs gallery card uploaded: ${specsUploads.length}`);
       } else {
@@ -530,6 +547,33 @@ export async function enrichProduct({
       aiFailures.push(`specs:${e.message}`);
     }
   }
+
+  const galleryCandidates = [
+    ...aiPairs.map((p, i) => ({
+      id: `ai-${i + 1}`,
+      kind: 'ai',
+      label: `ستوديو ${i + 1}`,
+      file: p.file,
+      buffer: p.buffer,
+      selected: true,
+    })),
+    ...specsPairs.map((p) => ({
+      id: 'specs',
+      kind: 'specs',
+      label: 'بطاقة مواصفات',
+      file: p.file,
+      buffer: p.buffer,
+      selected: true,
+    })),
+    ...realPairs.map((p) => ({
+      id: 'real',
+      kind: 'real',
+      label: 'الأصل (عرض)',
+      file: p.file,
+      buffer: p.buffer,
+      selected: false,
+    })),
+  ];
 
   const nocoImages = orderGalleryUploads({
     aiUploads,
@@ -570,8 +614,15 @@ export async function enrichProduct({
     stock: JUMIA_SHEET_DEFAULTS.stock,
   };
 
-  const sheetResult = await maybeSyncSheet(productForSheet, syncSheet);
-  const jumiaResult = await maybeSyncJumia(productForSheet, syncJumia);
+  // Sheet/Jumia wait until the seller approves gallery images in Telegram
+  // (unless caller forces sync — e.g. tests). Default: defer.
+  const deferPublish = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
+  const sheetResult = deferPublish
+    ? { skipped: true, reason: 'awaiting_gallery_approval' }
+    : await maybeSyncSheet(productForSheet, syncSheet);
+  const jumiaResult = deferPublish
+    ? { skipped: true, reason: 'awaiting_gallery_approval' }
+    : await maybeSyncJumia(productForSheet, syncJumia);
 
   return {
     sellerSku,
@@ -585,6 +636,8 @@ export async function enrichProduct({
     sheet: sheetResult,
     jumia: jumiaResult,
     productForSheet,
+    galleryCandidates,
+    nocodbUrl,
     aiFailures,
     hasAiImages: aiUploads.length > 0,
     hasSpecsImage,

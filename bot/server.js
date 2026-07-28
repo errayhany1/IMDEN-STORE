@@ -20,6 +20,7 @@ import {
   buildNocoRecordFromEnrichment,
   buildSellerSku,
   cleanReference,
+  publicUrlFromNoco,
 } from './productEnrichment.js';
 import {
   createTifawtProduct,
@@ -38,6 +39,7 @@ import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
 import { normalizeAmazonUrl } from './amazonScrape.js';
 import {
+  createJumiaProduct,
   isJumiaConfigured,
   setJumiaProductActive,
   setJumiaProductStock,
@@ -46,6 +48,10 @@ import {
   printJumiaLabels,
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
+import {
+  appendProductToSheet,
+  isSheetWebhookConfigured,
+} from './sheetsAppend.js';
 import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
@@ -462,6 +468,8 @@ const userState = {};
 const pendingDestinations = new Map();
 /** After destination: classify each photo as display / description / both / skip. */
 const pendingImageRoles = new Map();
+/** After AI: seller picks which generated images go to the storefront gallery. */
+const pendingGalleryApprovals = new Map();
 let productQueue = Promise.resolve();
 /** Serial AI polish queue — never blocks product create, max 1 enrich at a time. */
 let aiPolishQueue = Promise.resolve();
@@ -533,6 +541,160 @@ async function requestImageRoles(chatId, files, caption, destination) {
     + `اضغط على كل صورة لتغيير دورها، ثم ✅ متابعة:\n\n`
     + imageRolesSummary(roles),
     imageRolesKeyboard(token, roles)
+  );
+}
+
+function galleryApprovalSummary(candidates) {
+  return candidates
+    .map((c, i) => `${c.selected ? '✅' : '⬜'} ${i + 1}) ${c.label}`)
+    .join('\n');
+}
+
+function galleryApprovalKeyboard(token, candidates) {
+  const rows = candidates.map((c, i) => ([
+    {
+      text: `${c.selected ? '✅' : '⬜'} ${i + 1}. ${c.label}`,
+      callback_data: `gal:${token}:${i}:t`,
+    },
+  ]));
+  rows.push([{ text: '✅ نشر المختارة على الواجهة', callback_data: `gal:${token}:go:x` }]);
+  rows.push([{ text: '✖️ إلغاء الصور (الإبقاء على النص فقط)', callback_data: `gal:${token}:cancel:x` }]);
+  return { inline_keyboard: rows };
+}
+
+async function requestGalleryApproval({
+  chatId,
+  rowId,
+  recordUrl,
+  name,
+  price,
+  sellerSku,
+  enrichment,
+}) {
+  const candidates = (enrichment.galleryCandidates || [])
+    .filter((c) => c?.file && c?.buffer)
+    .slice(0, 6);
+  if (!candidates.length) {
+    return false;
+  }
+
+  const now = Date.now();
+  for (const [key, pending] of pendingGalleryApprovals) {
+    if (pending.expiresAt < now) pendingGalleryApprovals.delete(key);
+  }
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  pendingGalleryApprovals.set(token, {
+    chatId,
+    rowId,
+    recordUrl,
+    name,
+    price,
+    sellerSku,
+    enrichment,
+    candidates,
+    expiresAt: now + (30 * 60 * 1000),
+  });
+
+  await sendMessage(
+    chatId,
+    `🖼️ صور مولّدة للمنتج #${rowId} (${sellerSku})\nاختر ما يظهر في واجهة الموقع، ثم اضغط نشر:\n\n${galleryApprovalSummary(candidates)}`
+  );
+
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    try {
+      await sendPhotoBuffer(
+        chatId,
+        c.buffer,
+        `${c.selected ? '✅' : '⬜'} ${i + 1}/${candidates.length} — ${c.label}\n#${rowId} ${sellerSku}`,
+      );
+    } catch (e) {
+      console.warn('send gallery candidate failed:', e.message);
+    }
+    // Free RAM after Telegram has the photo; selection only needs file refs.
+    c.buffer = null;
+  }
+
+  await sendMessage(
+    chatId,
+    `⬇️ فعّل/عطّل كل صورة ثم انشر:\n\n${galleryApprovalSummary(candidates)}`,
+    galleryApprovalKeyboard(token, candidates)
+  );
+  return true;
+}
+
+function orderSelectedGalleryFiles(candidates) {
+  const selected = candidates.filter((c) => c.selected && c.file);
+  const ai = selected.filter((c) => c.kind === 'ai').map((c) => c.file);
+  const specs = selected.filter((c) => c.kind === 'specs').map((c) => c.file);
+  const real = selected.filter((c) => c.kind === 'real').map((c) => c.file);
+  return [...ai, ...real, ...specs].slice(0, 5);
+}
+
+async function finalizeGalleryApproval(pending, { publishImages }) {
+  const {
+    chatId, rowId, recordUrl, name, price, sellerSku, enrichment, candidates,
+  } = pending;
+  const selectedFiles = publishImages ? orderSelectedGalleryFiles(candidates) : [];
+  enrichment.nocoImages = selectedFiles;
+  enrichment.imageUrls = selectedFiles.map((f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL));
+  if (enrichment.productForSheet) {
+    enrichment.productForSheet.imageUrls = enrichment.imageUrls;
+  }
+
+  const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
+  patch.Id = rowId;
+  // Clear unused image slots so old raw photos never linger.
+  for (const key of ['Image1', 'Image2', 'Image3', 'Image4', 'Image5', 'image2', 'image3', 'image4', 'image5']) {
+    if (!patch[key]) patch[key] = null;
+  }
+  await http.patch(recordUrl, patch, {
+    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+  });
+
+  let sheetNote = '';
+  let jumiaNote = '';
+  if (publishImages && selectedFiles.length && enrichment.productForSheet) {
+    if (isSheetWebhookConfigured()) {
+      try {
+        const sheet = await appendProductToSheet(enrichment.productForSheet);
+        sheetNote = sheet?.error
+          ? `\n📋 Jumia Sheet خطأ: ${sheet.error}`
+          : '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template';
+      } catch (e) {
+        sheetNote = `\n📋 Jumia Sheet خطأ: ${e.message}`;
+      }
+    }
+    if (isJumiaConfigured()) {
+      try {
+        const jumia = await createJumiaProduct(enrichment.productForSheet);
+        if (jumia?.skipped) {
+          if (jumia.reason === 'jumia_not_configured') {
+            jumiaNote = '\n🛒 Jumia API: غير مضبوط';
+          } else if (jumia.reason === 'images_not_public' || jumia.reason === 'missing_images') {
+            jumiaNote = `\n🛒 Jumia: ${jumia.reason}`;
+          }
+        } else if (jumia?.error) {
+          jumiaNote = `\n🛒 Jumia API خطأ: ${jumia.error}`;
+        } else if (jumia?.productSetSid || jumia?.offer) {
+          const offer = jumia.offer;
+          const priceNote = offer
+            ? `\n💰 Jumia: قائمة ${offer.listPrice} → تخفيض ${offer.salePrice}`
+            : '';
+          jumiaNote = `\n🛒 Jumia API: تم إنشاء/تحديث المنتج (${jumia.sellerSku})${priceNote}`;
+        }
+      } catch (e) {
+        jumiaNote = `\n🛒 Jumia API خطأ: ${e.message}`;
+      }
+    }
+  }
+
+  const imgCount = selectedFiles.length;
+  await sendMessage(
+    chatId,
+    publishImages
+      ? `✨ تم نشر ${imgCount} صورة على الواجهة للمنتج #${rowId}\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
+      : `📝 تم حفظ الوصف فقط للمنتج #${rowId} بدون صور واجهة.\nيمكنك إعادة التوليد لاحقاً.`
   );
 }
 
@@ -725,52 +887,77 @@ async function executeAiPolish({
     return;
   }
 
+  // Save title/description first (no gallery yet).
+  const textOnly = {
+    ...enrichment,
+    nocoImages: [],
+    imageUrls: [],
+  };
+  const textPatch = buildNocoRecordFromEnrichment({ price, name, enrichment: textOnly });
+  textPatch.Id = rowId;
+  await http.patch(recordUrl, textPatch, {
+    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+  });
+
+  const wantsApproval = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
+  if (wantsApproval && enrichment.hasAiImages && enrichment.galleryCandidates?.length) {
+    const asked = await requestGalleryApproval({
+      chatId,
+      rowId,
+      recordUrl,
+      name,
+      price,
+      sellerSku,
+      enrichment,
+    });
+    if (asked) {
+      console.log(`⏳ Gallery approval pending #${rowId} ${sellerSku}`);
+      return;
+    }
+  }
+
+  // Fallback: no candidates to approve — publish whatever we have.
   const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
   patch.Id = rowId;
   await http.patch(recordUrl, patch, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
   });
+  if (enrichment.productForSheet?.imageUrls?.length && isJumiaConfigured()) {
+    try {
+      enrichment.jumia = await createJumiaProduct(enrichment.productForSheet);
+    } catch (e) {
+      enrichment.jumia = { error: e.message };
+    }
+  }
+  if (enrichment.productForSheet?.imageUrls?.length && isSheetWebhookConfigured()) {
+    try {
+      enrichment.sheet = await appendProductToSheet(enrichment.productForSheet);
+    } catch (e) {
+      enrichment.sheet = { error: e.message };
+    }
+  }
   const imgCount = enrichment.nocoImages?.length || 0;
   const sheet = enrichment?.sheet;
   const sheetNote = sheet?.skipped
-    ? (sheet.reason === 'no_webhook'
-      ? '\n📋 Jumia Sheet: أضف PRODUCT_SHEET_WEBHOOK_URL'
-      : '')
+    ? ''
     : (sheet?.error
       ? `\n📋 Jumia Sheet خطأ: ${sheet.error}`
-      : '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template');
+      : (sheet ? '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template' : ''));
   const jumia = enrichment?.jumia;
   let jumiaNote = '';
-  if (jumia?.skipped) {
-    if (jumia.reason === 'jumia_not_configured') {
-      jumiaNote = '\n🛒 Jumia API: أضف JUMIA_CLIENT_ID + JUMIA_REFRESH_TOKEN على imden-bot';
-    }
-  } else if (jumia?.error) {
+  if (jumia?.error) {
     jumiaNote = `\n🛒 Jumia API خطأ: ${jumia.error}`;
   } else if (jumia?.productSetSid || jumia?.offer) {
-    const st = jumia.countryStatuses?.[0]?.productStatus || '';
-    const offer = jumia.offer;
-    const priceNote = offer
-      ? `\n💰 Jumia: قائمة ${offer.listPrice} → تخفيض ${offer.salePrice} | مخزون ${offer.stock}`
-      : '';
-    jumiaNote = st && /FAIL/i.test(st)
-      ? `\n🛒 Jumia API: أُنشئ (${jumia.sellerSku}) — حالة البلد: ${st}${priceNote}`
-      : `\n🛒 Jumia API: تم إنشاء المنتج (${jumia.sellerSku})${priceNote}`;
+    jumiaNote = `\n🛒 Jumia API: تم إنشاء المنتج (${jumia.sellerSku})`;
   }
   await sendMessage(
     chatId,
     `✨ تم تحديث المنتج #${rowId}\n`
-    + `🎨 صور ستوديو احترافية + زاوية إضافية عند التوفر\n`
-    + `📷 الأصل للعرض فقط إن وُجد (ليس ضهر العلبة)\n`
-    + `📝 بطاقة مواصفات من نص العلبة عند التوفر (${imgCount} في المعرض)\n`
+    + `🎨 ${imgCount} صور في المعرض\n`
     + `📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n`
     + `🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
   );
-  console.log(
-    `✅ AI polish OK #${rowId}`,
-    sheet?.skipped ? `sheet=${sheet.reason}` : 'sheet=ok',
-    jumia?.skipped ? `jumia=${jumia.reason}` : (jumia?.error ? `jumia=err` : 'jumia=ok'),
-  );
+  console.log(`✅ AI polish OK #${rowId} (no gallery approval UI)`);
 }
 
 /**
@@ -1601,6 +1788,69 @@ async function handleUpdate(update) {
         destination,
         pending.files.map(() => 'both'),
       ));
+      return;
+    }
+
+    if (data.startsWith('gal:')) {
+      const parts = data.split(':');
+      const token = parts[1];
+      const action = parts[2];
+      const pending = pendingGalleryApprovals.get(token);
+      if (!pending || pending.chatId !== chatId || pending.expiresAt < Date.now()) {
+        pendingGalleryApprovals.delete(token);
+        await answerCallback(cb.id, 'انتهت صلاحية الاختيار. أعد التوليد.');
+        await editMessage(chatId, msgId, '⌛ انتهت صلاحية اختيار الصور. أعد توليد المنتج.');
+        return;
+      }
+
+      if (action === 'cancel') {
+        pendingGalleryApprovals.delete(token);
+        await answerCallback(cb.id, 'تم الإبقاء على النص فقط');
+        await editMessage(chatId, msgId, '✖️ لم تُنشر صور الواجهة — الوصف محفوظ.');
+        await finalizeGalleryApproval(pending, { publishImages: false });
+        return;
+      }
+
+      if (action === 'go') {
+        const selected = pending.candidates.filter((c) => c.selected);
+        if (!selected.length) {
+          await answerCallback(cb.id, 'اختر صورة واحدة على الأقل');
+          return;
+        }
+        pendingGalleryApprovals.delete(token);
+        await answerCallback(cb.id, `نشر ${selected.length} صور`);
+        await editMessage(
+          chatId,
+          msgId,
+          `✅ جاري نشر ${selected.length} صورة على الواجهة...\n${galleryApprovalSummary(pending.candidates)}`
+        );
+        try {
+          await finalizeGalleryApproval(pending, { publishImages: true });
+        } catch (e) {
+          console.error('finalizeGalleryApproval failed:', e.message);
+          await sendMessage(chatId, `❌ فشل نشر الصور: ${e.message}`);
+        }
+        return;
+      }
+
+      const index = Number(action);
+      if (!Number.isInteger(index) || index < 0 || index >= pending.candidates.length || parts[3] !== 't') {
+        await answerCallback(cb.id, 'أمر غير صالح');
+        return;
+      }
+      pending.candidates[index].selected = !pending.candidates[index].selected;
+      const c = pending.candidates[index];
+      await answerCallback(cb.id, `${c.selected ? 'تم التفعيل' : 'تم الإلغاء'}: ${c.label}`);
+      try {
+        await axios.post(`${TG_API}/editMessageText`, {
+          chat_id: chatId,
+          message_id: msgId,
+          text: `⬇️ فعّل/عطّل كل صورة ثم انشر:\n\n${galleryApprovalSummary(pending.candidates)}`,
+          reply_markup: galleryApprovalKeyboard(token, pending.candidates),
+        }, { timeout: 30000 });
+      } catch (e) {
+        console.warn('editMessageText gal failed:', e.message);
+      }
       return;
     }
 
