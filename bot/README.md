@@ -64,6 +64,11 @@ TIFAWT_API_BASE=https://errayhany.tifawt.ma/api/v1
 TIFAWT_EMAIL=admin@errayhany.ma
 TIFAWT_PASSWORD=
 TIFAWT_BUSINESS_ID=1
+# Jumia → Tifawt (خدمة التتبع /bot-api) — انظر docs/JUMIA-TIFAWT-SYNC.md
+# JUMIA_CLIENT_ID=
+# JUMIA_REFRESH_TOKEN=
+# JUMIA_API_BASE=https://vendor-api.jumia.com
+# JUMIA_POLL_MS=120000
 
 # بدون WEBHOOK → long-polling تلقائياً (موصى به)
 # TELEGRAM_MODE=polling

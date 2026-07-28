@@ -9,6 +9,14 @@ import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
 import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
 import { isTifawtApiConfigured } from './tifawtClient.js';
+import {
+  fetchJumiaOrderForTifawt,
+  getRecentOrders,
+  isJumiaConfigured,
+  mapJumiaOrderToTifawt,
+  getOrderItems,
+  orderIdOf as jumiaOrderIdOf,
+} from './jumiaClient.js';
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -19,6 +27,7 @@ const TIFAWT_LEAD_URL = (
   || process.env.VITE_TIFAWT_LEAD_URL
   || ''
 ).trim();
+const JUMIA_POLL_MS = Math.max(0, Number(process.env.JUMIA_POLL_MS || 120_000) || 0);
 
 const trackingHits = new Map();
 const TRACKING_WINDOW_MS = 60_000;
@@ -153,11 +162,72 @@ function trackingRateLimited(key) {
   return hits.length > TRACKING_MAX_PER_WINDOW;
 }
 
+function extractJumiaOrderId(body = {}) {
+  return String(
+    body?.payload?.OrderId
+    ?? body?.payload?.orderId
+    ?? body?.OrderId
+    ?? body?.orderId
+    ?? body?.order_id
+    ?? body?.id
+    ?? '',
+  ).trim();
+}
+
+function isJumiaOrderCreatedEvent(body = {}) {
+  const event = String(body?.event || body?.Event || body?.type || '').toLowerCase();
+  if (!event) return Boolean(extractJumiaOrderId(body));
+  return /^(on)?order[._-]?created$/i.test(event)
+    || event === 'order.created'
+    || event === 'onordercreated';
+}
+
+async function syncJumiaOrderId(orderId) {
+  const payload = await fetchJumiaOrderForTifawt(orderId);
+  return syncOrderToTifawt(payload);
+}
+
+async function syncRecentJumiaOrders({ createdAfter } = {}) {
+  if (!isJumiaConfigured()) {
+    const error = new Error('jumia_not_configured');
+    error.statusCode = 503;
+    throw error;
+  }
+  if (!TIFAWT_LEAD_URL) {
+    const error = new Error('tifawt_not_configured');
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const orders = await getRecentOrders({ createdAfter });
+  const results = [];
+  for (const order of orders) {
+    const id = jumiaOrderIdOf(order);
+    if (!id) continue;
+    try {
+      const items = await getOrderItems(id);
+      const mapped = mapJumiaOrderToTifawt(order, items);
+      const result = await syncOrderToTifawt(mapped);
+      results.push({ orderId: mapped.orderId, ...result });
+    } catch (error) {
+      results.push({
+        orderId: `JUMIA-${id}`,
+        ok: false,
+        error: error?.message || 'sync_failed',
+      });
+    }
+  }
+  return { ok: true, count: results.length, results };
+}
+
 app.get('/health', (_req, res) => {
-  res.status(isTifawtApiConfigured() ? 200 : 503).json({
-    ok: isTifawtApiConfigured(),
+  const tifawtOk = isTifawtApiConfigured() || Boolean(TIFAWT_LEAD_URL);
+  res.status(tifawtOk ? 200 : 503).json({
+    ok: tifawtOk,
     service: 'imden-tracking',
-    tifawt: isTifawtApiConfigured(),
+    tifawt: tifawtOk,
+    jumia: isJumiaConfigured(),
+    jumiaPollMs: JUMIA_POLL_MS,
   });
 });
 
@@ -175,6 +245,54 @@ app.post('/api/orders/sync', async (req, res) => {
     return res.status(error?.statusCode || 502).json({
       ok: false,
       error: error?.statusCode ? error.message : 'tifawt_sync_failed',
+    });
+  }
+});
+
+/**
+ * Jumia webhook callback (Order Created).
+ * Payload example: { event: "onOrderCreated", payload: { OrderId: 190 } }
+ */
+app.post('/api/jumia/webhook', async (req, res) => {
+  try {
+    if (!isJumiaConfigured()) {
+      return res.status(503).json({ ok: false, error: 'jumia_not_configured' });
+    }
+
+    const body = req.body || {};
+    const orderId = extractJumiaOrderId(body);
+    if (!orderId) {
+      return res.status(400).json({ ok: false, error: 'missing_order_id' });
+    }
+
+    // StatusChanged etc. are acknowledged without creating a duplicate lead.
+    if (!isJumiaOrderCreatedEvent(body)) {
+      return res.status(200).json({ ok: true, ignored: true, orderId });
+    }
+
+    const result = await syncJumiaOrderId(orderId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[jumia] webhook sync failed:', error?.response?.data || error?.message);
+    return res.status(error?.statusCode || 502).json({
+      ok: false,
+      error: error?.statusCode ? error.message : 'jumia_webhook_failed',
+    });
+  }
+});
+
+/** Manual / scheduled sync of recent Jumia orders into Tifawt. */
+app.post('/api/jumia/sync', async (req, res) => {
+  try {
+    const createdAfter = req.body?.createdAfter
+      || new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const result = await syncRecentJumiaOrders({ createdAfter });
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[jumia] sync failed:', error?.response?.data || error?.message);
+    return res.status(error?.statusCode || 502).json({
+      ok: false,
+      error: error?.statusCode ? error.message : 'jumia_sync_failed',
     });
   }
 });
@@ -248,5 +366,23 @@ app.post('/api/orders/account', async (req, res) => {
 });
 
 app.listen(PORT, '127.0.0.1', () => {
-  console.log(`📦 Tracking API on 127.0.0.1:${PORT} (tifawt=${isTifawtApiConfigured()})`);
+  console.log(
+    `📦 Tracking API on 127.0.0.1:${PORT} (tifawt=${Boolean(TIFAWT_LEAD_URL)} jumia=${isJumiaConfigured()} poll=${JUMIA_POLL_MS}ms)`,
+  );
 });
+
+if (JUMIA_POLL_MS > 0 && isJumiaConfigured()) {
+  const poll = async () => {
+    try {
+      const createdAfter = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const result = await syncRecentJumiaOrders({ createdAfter });
+      if (result.count) {
+        console.log(`[jumia] poll synced ${result.count} order(s)`);
+      }
+    } catch (error) {
+      console.error('[jumia] poll failed:', error?.response?.data || error?.message);
+    }
+  };
+  setTimeout(poll, 15_000);
+  setInterval(poll, JUMIA_POLL_MS);
+}
