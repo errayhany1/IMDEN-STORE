@@ -5,12 +5,18 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import {
+  getOrdersForAccount,
+  isCustomerAccountsConfigured,
+  normalizeMoroccanPhone,
+} from './customerAccount';
+import { fetchAccountOrders } from './orderTracking';
 
 const SUMMARY_COL = 'productRatings';
 const VOTE_COL = 'productRatingVotes';
-const VOTER_KEY = 'ery_rating_voter_id';
 
 const memoryCache = new Map();
+const purchaseCache = new Map();
 
 export const productRatingKey = (product) => {
   const raw = String(product?.ref || product?.id || '').trim();
@@ -20,18 +26,10 @@ export const productRatingKey = (product) => {
     .slice(0, 120) || '';
 };
 
+/** Signed-in users only — anonymous localStorage votes are no longer accepted. */
 export const getVoterId = (user) => {
   if (user?.uid) return `uid_${user.uid}`;
-  try {
-    let id = localStorage.getItem(VOTER_KEY);
-    if (!id) {
-      id = `anon_${crypto.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`}`;
-      localStorage.setItem(VOTER_KEY, id);
-    }
-    return id;
-  } catch {
-    return `anon_session_${Date.now()}`;
-  }
+  return '';
 };
 
 const clampStars = (value) => {
@@ -41,6 +39,144 @@ const clampStars = (value) => {
 };
 
 const emptySummary = () => ({ avg: 0, count: 0, myRating: 0 });
+
+export const normalizeProductSku = (value = '') => String(value || '')
+  .trim()
+  .toUpperCase()
+  .replace(/\s+/g, '-')
+  .replace(/^ERY[-_]?/i, '');
+
+export const productSkuCandidates = (product) => {
+  const raw = [
+    product?.ref,
+    product?.SKU,
+    product?.sku,
+    product?.id,
+    product?.Id,
+    product?.SellerSKU,
+  ].map((v) => String(v || '').trim()).filter(Boolean);
+  const out = new Set();
+  for (const item of raw) {
+    out.add(item.toUpperCase());
+    const bare = normalizeProductSku(item);
+    if (bare) {
+      out.add(bare);
+      out.add(`ERY-${bare}`);
+    }
+  }
+  return [...out];
+};
+
+const isCancelledOrReturned = (status) => {
+  const s = String(status || '').trim().toLowerCase();
+  return (
+    s.includes('cancel')
+    || s.includes('ملغي')
+    || s.includes('return')
+    || s.includes('مرتجع')
+    || s.includes('refus')
+    || s.includes('reject')
+    || s === 'duplicate'
+  );
+};
+
+const parseOrderItems = (order) => {
+  if (Array.isArray(order?.products) && order.products.length) {
+    return order.products;
+  }
+  if (Array.isArray(order?.items) && order.items.length) {
+    return order.items;
+  }
+  const raw = order?.['Order Metadata'] || order?.orderMetadata || '[]';
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const orderContainsProduct = (order, candidates) => {
+  if (isCancelledOrReturned(order?.status || order?.Status || order?.statusLabel)) {
+    return false;
+  }
+  const wanted = new Set(candidates.map((c) => normalizeProductSku(c)).filter(Boolean));
+  if (!wanted.size) return false;
+
+  for (const item of parseOrderItems(order)) {
+    const keys = [
+      item?.ref,
+      item?.sku,
+      item?.SKU,
+      item?.id,
+      item?.Id,
+      item?.product?.sku,
+      item?.rawSku,
+    ];
+    for (const key of keys) {
+      const bare = normalizeProductSku(key);
+      if (bare && wanted.has(bare)) return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * True when the signed-in customer has a non-cancelled order that includes this product
+ * (site NocoDB orders and/or Tifawt account orders).
+ */
+export async function hasPurchasedProduct(product, user) {
+  if (!user?.uid || !product) return false;
+
+  const candidates = productSkuCandidates(product);
+  if (!candidates.length) return false;
+
+  const cacheKey = `${user.uid}::${candidates.sort().join('|')}`;
+  if (purchaseCache.has(cacheKey)) {
+    return purchaseCache.get(cacheKey);
+  }
+
+  let purchased = false;
+  try {
+    const tasks = [];
+
+    if (isCustomerAccountsConfigured) {
+      const phone = normalizeMoroccanPhone(user.phoneNumber || '');
+      tasks.push(
+        getOrdersForAccount({ uid: user.uid, phone }).catch(() => []),
+      );
+    }
+
+    if (typeof user.getIdToken === 'function') {
+      tasks.push(
+        (async () => {
+          try {
+            const idToken = await user.getIdToken();
+            const result = await fetchAccountOrders(idToken);
+            return Array.isArray(result?.orders) ? result.orders : [];
+          } catch {
+            return [];
+          }
+        })(),
+      );
+    }
+
+    const groups = await Promise.all(tasks);
+    purchased = groups.flat().some((order) => orderContainsProduct(order, candidates));
+  } catch (err) {
+    console.warn('hasPurchasedProduct failed:', err?.message || err);
+    purchased = false;
+  }
+
+  purchaseCache.set(cacheKey, purchased);
+  // Only keep positive hits — a fresh order should unlock rating without a hard refresh.
+  if (!purchased) purchaseCache.delete(cacheKey);
+  return purchased;
+}
 
 /**
  * Average only — used by the grid cards, which never vote. Cached per session
@@ -80,15 +216,16 @@ export async function fetchProductRating(product, user = null) {
   const voterId = getVoterId(user);
 
   try {
-    const [summarySnap, voteSnap] = await Promise.all([
-      getDoc(doc(db, SUMMARY_COL, key)),
-      getDoc(doc(db, VOTE_COL, `${key}__${voterId}`)),
-    ]);
+    const reads = [getDoc(doc(db, SUMMARY_COL, key))];
+    if (voterId) {
+      reads.push(getDoc(doc(db, VOTE_COL, `${key}__${voterId}`)));
+    }
+    const [summarySnap, voteSnap] = await Promise.all(reads);
 
     const summary = summarySnap.exists()
       ? summarySnap.data()
       : { avg: 0, count: 0, sum: 0 };
-    const myRating = voteSnap.exists()
+    const myRating = voteSnap?.exists?.()
       ? clampStars(voteSnap.data()?.rating)
       : 0;
 
@@ -107,7 +244,7 @@ export async function fetchProductRating(product, user = null) {
 
 /**
  * Submit / update a 1–5 star rating for a product.
- * One vote per visitor (local anon id or Firebase uid).
+ * Only signed-in customers who previously purchased the product may vote.
  */
 export async function submitProductRating(product, stars, user = null) {
   const key = productRatingKey(product);
@@ -115,8 +252,26 @@ export async function submitProductRating(product, stars, user = null) {
   if (!key || !rating) {
     throw new Error('تقييم غير صالح');
   }
+  if (!user?.uid) {
+    const err = new Error('يجب تسجيل الدخول لتقييم المنتج');
+    err.code = 'auth_required';
+    throw err;
+  }
+
+  const purchased = await hasPurchasedProduct(product, user);
+  if (!purchased) {
+    const err = new Error('التقييم متاح فقط بعد شراء هذا المنتج');
+    err.code = 'purchase_required';
+    throw err;
+  }
 
   const voterId = getVoterId(user);
+  if (!voterId) {
+    const err = new Error('يجب تسجيل الدخول لتقييم المنتج');
+    err.code = 'auth_required';
+    throw err;
+  }
+
   const summaryRef = doc(db, SUMMARY_COL, key);
   const voteRef = doc(db, VOTE_COL, `${key}__${voterId}`);
 
@@ -151,6 +306,7 @@ export async function submitProductRating(product, stars, user = null) {
     tx.set(voteRef, {
       productKey: key,
       voterId,
+      uid: user.uid,
       rating,
       updatedAt: serverTimestamp(),
     }, { merge: true });

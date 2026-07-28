@@ -4,6 +4,7 @@ import useStore from '../store/useStore';
 import {
   fetchProductRating,
   fetchProductRatingSummary,
+  hasPurchasedProduct,
   submitProductRating,
 } from '../services/productRatings';
 
@@ -11,6 +12,7 @@ import {
  * 1–5 star rating for a product.
  * `readOnly` shows the average only — rating is reserved for the detail views
  * (quick view / product page) so a card tap never records a vote by accident.
+ * Interactive rating requires sign-in + a prior purchase of this product.
  */
 const ProductRatingStars = ({
   product,
@@ -22,9 +24,12 @@ const ProductRatingStars = ({
   emptyHint = 'أضف تقييمك',
 }) => {
   const user = useStore((state) => state.user);
+  const setAuthModalOpen = useStore((state) => state.setAuthModalOpen);
   const [avg, setAvg] = useState(0);
   const [count, setCount] = useState(0);
   const [myRating, setMyRating] = useState(0);
+  const [canRate, setCanRate] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(!readOnly);
   const [hover, setHover] = useState(0);
   const [busy, setBusy] = useState(false);
   const [justRated, setJustRated] = useState(false);
@@ -45,6 +50,33 @@ const ProductRatingStars = ({
       cancelled = true;
     };
   }, [product?.id, product?.ref, user?.uid, readOnly]);
+
+  useEffect(() => {
+    if (readOnly) {
+      setCanRate(false);
+      setCheckingPurchase(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setCheckingPurchase(true);
+    if (!user?.uid) {
+      setCanRate(false);
+      setCheckingPurchase(false);
+      return undefined;
+    }
+    hasPurchasedProduct(product, user).then((ok) => {
+      if (cancelled) return;
+      setCanRate(Boolean(ok));
+      setCheckingPurchase(false);
+    }).catch(() => {
+      if (cancelled) return;
+      setCanRate(false);
+      setCheckingPurchase(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.id, product?.ref, user?.uid, user?.phoneNumber, readOnly]);
 
   const displayValue = readOnly
     ? Math.round(avg)
@@ -92,10 +124,29 @@ const ProductRatingStars = ({
     );
   }
 
+  const gateMessage = !user?.uid
+    ? 'سجّل الدخول بعد الشراء للتقييم'
+    : checkingPurchase
+      ? 'جاري التحقق…'
+      : (!canRate ? 'التقييم بعد شراء المنتج فقط' : '');
+
   const handleRate = async (stars, event) => {
     event.preventDefault();
     event.stopPropagation();
-    if (busy) return;
+    if (busy || checkingPurchase) return;
+
+    if (!user?.uid) {
+      setAuthModalOpen?.(true);
+      setError('سجّل الدخول لتقييم المنتج');
+      setTimeout(() => setError(''), 2500);
+      return;
+    }
+    if (!canRate) {
+      setError('التقييم متاح فقط بعد شراء هذا المنتج');
+      setTimeout(() => setError(''), 2500);
+      return;
+    }
+
     setBusy(true);
     setError('');
     try {
@@ -107,13 +158,23 @@ const ProductRatingStars = ({
       setTimeout(() => setJustRated(false), 1600);
     } catch (err) {
       console.warn('submitProductRating failed:', err?.message || err);
-      setError('تعذّر حفظ التقييم');
+      if (err?.code === 'auth_required') {
+        setAuthModalOpen?.(true);
+        setError('سجّل الدخول لتقييم المنتج');
+      } else if (err?.code === 'purchase_required') {
+        setCanRate(false);
+        setError('التقييم متاح فقط بعد شراء هذا المنتج');
+      } else {
+        setError('تعذّر حفظ التقييم');
+      }
       setTimeout(() => setError(''), 2500);
     } finally {
       setBusy(false);
       setHover(0);
     }
   };
+
+  const interactive = Boolean(user?.uid && canRate && !checkingPurchase);
 
   return (
     <div
@@ -129,17 +190,18 @@ const ProductRatingStars = ({
             <button
               key={star}
               type="button"
-              disabled={busy}
-              onMouseEnter={() => setHover(star)}
+              disabled={busy || checkingPurchase}
+              onMouseEnter={() => interactive && setHover(star)}
               onMouseLeave={() => setHover(0)}
-              onFocus={() => setHover(star)}
+              onFocus={() => interactive && setHover(star)}
               onBlur={() => setHover(0)}
               onClick={(e) => handleRate(star, e)}
               className={`p-0.5 rounded transition-transform active:scale-90 disabled:opacity-60
-                  ${busy ? 'cursor-wait' : 'cursor-pointer hover:scale-110'}`}
-              title={`تقييم ${star} من 5`}
+                  ${busy || checkingPurchase ? 'cursor-wait' : 'cursor-pointer hover:scale-110'}`}
+              title={interactive ? `تقييم ${star} من 5` : (gateMessage || `تقييم ${star} من 5`)}
               aria-label={`تقييم ${star} نجوم`}
               aria-pressed={myRating === star}
+              aria-disabled={!interactive}
             >
               <Star
                 size={size}
@@ -149,19 +211,23 @@ const ProductRatingStars = ({
             </button>
           ))}
         </div>
-        {scoreLabel || (emptyHint && (
+        {scoreLabel || ((interactive || myRating) && emptyHint ? (
           <span className={`text-[10px] leading-none ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>
             {emptyHint}
           </span>
-        ))}
+        ) : null)}
       </div>
-      {(justRated || error) && (
+      {(justRated || error || (!myRating && gateMessage && !checkingPurchase)) && (
         <span
           className={`text-[10px] leading-none ${
-            error ? 'text-red-500' : darkMode ? 'text-emerald-400' : 'text-emerald-600'
+            error
+              ? 'text-red-500'
+              : justRated
+                ? (darkMode ? 'text-emerald-400' : 'text-emerald-600')
+                : (darkMode ? 'text-gray-500' : 'text-slate-400')
           }`}
         >
-          {error || 'شكراً على تقييمك'}
+          {error || (justRated ? 'شكراً على تقييمك' : gateMessage)}
         </span>
       )}
     </div>

@@ -125,8 +125,9 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Public product ratings (anonymous visitors + signed-in users).
-    // One vote doc per (productKey, voterId); summary docs hold avg/count/sum.
+    // Product ratings: anyone can read averages.
+    // Only signed-in users may write votes (purchase check is enforced in the app;
+    // voterId must match the authenticated uid so anonymous spam is blocked).
     function isValidRatingSummary(data) {
       return data.keys().hasOnly([
           'productKey', 'ref', 'productId', 'sum', 'count', 'avg', 'updatedAt'
@@ -154,17 +155,18 @@ service cloud.firestore {
 
     function isValidRatingVote(data) {
       return data.keys().hasOnly([
-          'productKey', 'voterId', 'rating', 'updatedAt'
+          'productKey', 'voterId', 'uid', 'rating', 'updatedAt'
         ])
         && data.keys().hasAll([
-          'productKey', 'voterId', 'rating', 'updatedAt'
+          'productKey', 'voterId', 'uid', 'rating', 'updatedAt'
         ])
         && data.productKey is string
         && data.productKey.size() > 0
         && data.productKey.size() <= 120
         && data.voterId is string
-        && data.voterId.size() > 3
-        && data.voterId.size() <= 80
+        && data.voterId == 'uid_' + request.auth.uid
+        && data.uid is string
+        && data.uid == request.auth.uid
         && data.rating is number
         && data.rating >= 1
         && data.rating <= 5
@@ -174,14 +176,16 @@ service cloud.firestore {
 
     match /productRatings/{productKey} {
       allow read: if true;
-      allow create, update: if isValidRatingSummary(request.resource.data)
+      allow create, update: if isAuthenticated()
+        && isValidRatingSummary(request.resource.data)
         && request.resource.data.productKey == productKey;
       allow delete: if false;
     }
 
     match /productRatingVotes/{voteId} {
       allow read: if true;
-      allow create, update: if isValidRatingVote(request.resource.data)
+      allow create, update: if isAuthenticated()
+        && isValidRatingVote(request.resource.data)
         && voteId == request.resource.data.productKey + '__' + request.resource.data.voterId;
       allow delete: if false;
     }
