@@ -208,6 +208,7 @@ function injectSpecsIntoDescription(html, specsBlock) {
  */
 export async function enrichProduct({
   originalBuffers,
+  displayBuffers = null,
   name,
   price,
   oldPrice = 0,
@@ -218,26 +219,28 @@ export async function enrichProduct({
   syncSheet = true,
   syncJumia = true,
   postebl = 'POSTEBL',
+  /** When false, never put raw seller photos in Image1–5 (vision-only backs). */
+  publishRealOriginal = true,
 }) {
   const enabled = String(process.env.PRODUCT_AI_ENRICHMENT || 'true').toLowerCase() !== 'false';
   const sellerSku = buildSellerSku(ref);
   const referenceClean = cleanReference(ref);
   const realBuffers = (originalBuffers || []).filter(Boolean);
-  const realBuffer = realBuffers[0];
+  const galleryRealBuffers = (displayBuffers || realBuffers).filter(Boolean);
+  const realBuffer = realBuffers[0] || galleryRealBuffers[0];
 
   if (!realBuffer) {
     throw new Error('No original image buffers to upload');
   }
 
-  // Always upload original photos with real- prefix — never create a product without images.
-  const originalUploads = await uploadBuffers(
-    uploadToNocoDB,
-    realBuffers.slice(0, 1),
-    `real-${sellerSku}`
-  );
-
-  if (!originalUploads.length) {
-    throw new Error('Failed to upload original images to NocoDB storage');
+  // Upload at most one DISPLAY original for gallery Image2 — never packaging backs.
+  let originalUploads = [];
+  if (publishRealOriginal && galleryRealBuffers[0]) {
+    originalUploads = await uploadBuffers(
+      uploadToNocoDB,
+      galleryRealBuffers.slice(0, 1),
+      `real-${sellerSku}`
+    );
   }
 
   let amazonMeta = null;
@@ -267,6 +270,13 @@ export async function enrichProduct({
   }
 
   if (!enabled || (!isOpenAIConfigured() && !isOpenRouterConfigured())) {
+    if (!originalUploads.length && galleryRealBuffers[0]) {
+      originalUploads = await uploadBuffers(
+        uploadToNocoDB,
+        galleryRealBuffers.slice(0, 1),
+        `real-${sellerSku}`
+      );
+    }
     const nocoImages = orderGalleryUploads({
       amazonUploads,
       realUploads: originalUploads,
@@ -525,10 +535,13 @@ export async function enrichProduct({
     aiUploads,
     specsUploads,
     amazonUploads,
-    realUploads: originalUploads,
+    // Never put raw seller photos alone in the gallery if studio AI failed.
+    realUploads: aiUploads.length ? originalUploads : [],
   });
   // Fallback if ordering somehow empty
-  const finalImages = nocoImages.length ? nocoImages : originalUploads;
+  const finalImages = nocoImages.length
+    ? nocoImages
+    : (aiUploads.length ? aiUploads : (amazonUploads.length ? amazonUploads : []));
   const imageUrls = finalImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
 
   const productForSheet = {

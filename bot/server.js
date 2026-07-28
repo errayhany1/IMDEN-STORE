@@ -460,11 +460,81 @@ function pickReenrichSourceFiles(sourceFiles) {
 const albumBuffer = {};
 const userState = {};
 const pendingDestinations = new Map();
+/** After destination: classify each photo as display / description / both / skip. */
+const pendingImageRoles = new Map();
 let productQueue = Promise.resolve();
 /** Serial AI polish queue — never blocks product create, max 1 enrich at a time. */
 let aiPolishQueue = Promise.resolve();
 let aiPolishInFlight = 0;
 let aiPolishPending = 0;
+
+const IMAGE_ROLE_CYCLE = ['both', 'display', 'desc', 'skip'];
+
+function imageRoleLabel(role) {
+  return ({
+    both: '🔄 عرض+وصف',
+    display: '🎨 للعرض فقط',
+    desc: '📖 للوصف فقط',
+    skip: '✖️ تجاهل',
+  })[role] || role;
+}
+
+function cycleImageRole(role) {
+  const idx = IMAGE_ROLE_CYCLE.indexOf(role);
+  return IMAGE_ROLE_CYCLE[(idx + 1) % IMAGE_ROLE_CYCLE.length];
+}
+
+function defaultImageRoles(fileCount) {
+  // First photo = product front (gallery + vision). Extra shots default to
+  // description-only so packaging backs never publish if AI fails.
+  return Array.from({ length: fileCount }, (_, i) => (i === 0 ? 'both' : 'desc'));
+}
+
+function imageRolesKeyboard(token, roles) {
+  const rows = roles.map((role, i) => ([
+    {
+      text: `📷 ${i + 1}: ${imageRoleLabel(role)}`,
+      callback_data: `imgrole:${token}:${i}:cycle`,
+    },
+  ]));
+  rows.push([{ text: '✅ متابعة', callback_data: `imgrole:${token}:go:x` }]);
+  rows.push([{ text: '✖️ إلغاء', callback_data: `imgrole:${token}:cancel:x` }]);
+  return { inline_keyboard: rows };
+}
+
+function imageRolesSummary(roles) {
+  return roles
+    .map((role, i) => `${i + 1}) ${imageRoleLabel(role)}`)
+    .join('\n');
+}
+
+async function requestImageRoles(chatId, files, caption, destination) {
+  const now = Date.now();
+  for (const [key, pending] of pendingImageRoles) {
+    if (pending.expiresAt < now) pendingImageRoles.delete(key);
+  }
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  const roles = defaultImageRoles(files.length);
+  pendingImageRoles.set(token, {
+    chatId,
+    files,
+    caption,
+    destination,
+    roles,
+    expiresAt: now + (10 * 60 * 1000),
+  });
+  await sendMessage(
+    chatId,
+    `🖼️ صنّف صورك قبل الحفظ (${files.length}):\n\n`
+    + `• 🎨 للعرض فقط → قد تظهر في المعرض بعد التوليد الاحترافي\n`
+    + `• 📖 للوصف فقط → يقرأها الذكاء (ضهر العلبة/كاتالوج) ولن تُنشر خام\n`
+    + `• 🔄 عرض+وصف → الاثنان\n`
+    + `• ✖️ تجاهل → تُحذف من المعالجة\n\n`
+    + `اضغط على كل صورة لتغيير دورها، ثم ✅ متابعة:\n\n`
+    + imageRolesSummary(roles),
+    imageRolesKeyboard(token, roles)
+  );
+}
 
 function destinationKeyboard(token) {
   return {
@@ -558,12 +628,10 @@ async function createNocoProductRecord(recordData, { name, sellerSku, price }) {
       Category_ID: 12,
       POSTEBL: 'POSTEBL',
       description_arabic: recordData.description_arabic || '',
-      Image1: recordData.Image1,
-      Image2: recordData.Image2,
-      Image3: recordData.Image3,
-      Image4: recordData.Image4,
-      Image5: recordData.Image5,
     };
+    for (const key of ['Image1', 'Image2', 'Image3', 'Image4', 'Image5', 'image2', 'image3', 'image4', 'image5']) {
+      if (recordData[key]) minimal[key] = recordData[key];
+    }
     if (recordData.Amazon_URL) minimal.Amazon_URL = recordData.Amazon_URL;
     if (recordData.Barcode) minimal.Barcode = recordData.Barcode;
     try {
@@ -592,6 +660,7 @@ async function executeAiPolish({
   rowId,
   recordUrl,
   originalBuffers,
+  displayBuffers = null,
   name,
   price,
   oldPrice,
@@ -600,6 +669,7 @@ async function executeAiPolish({
   sellerSku,
   startMessage,
   postebl = 'POSTEBL',
+  publishRealOriginal = true,
 }) {
   console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
   await sendMessage(
@@ -615,6 +685,7 @@ async function executeAiPolish({
     enrichment = await withTimeout(
       enrichProduct({
         originalBuffers,
+        displayBuffers,
         name,
         price,
         oldPrice,
@@ -627,6 +698,7 @@ async function executeAiPolish({
         // Always publish (create/update) on Jumia after AI description + images.
         syncJumia: true,
         postebl,
+        publishRealOriginal,
       }),
       enrichTimeout,
       'AI polish'
@@ -635,7 +707,7 @@ async function executeAiPolish({
     console.error(`AI polish timed out/failed #${rowId}:`, e.message);
     await sendMessage(
       chatId,
-      `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId} (${sellerSku}).\n${e.message}`
+      `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId} (${sellerSku}).\n${e.message}\n📷 لم تُنشر صور خام غير مرغوبة على الموقع.`
     );
     return;
   }
@@ -648,7 +720,7 @@ async function executeAiPolish({
       : (detail ? `\n🛠️ ${detail}` : '');
     await sendMessage(
       chatId,
-      `⚠️ لم يكتمل التوليد للمنتج #${rowId} (${sellerSku}).${missingKeys}`
+      `⚠️ لم يكتمل التوليد للمنتج #${rowId} (${sellerSku}).${missingKeys}\n📷 لم تُنشر صور الوصف/الضهر الخام على الموقع.`
     );
     return;
   }
@@ -687,7 +759,12 @@ async function executeAiPolish({
   }
   await sendMessage(
     chatId,
-    `✨ تم تحديث المنتج #${rowId}\n🎨 الصورة 1: احترافية\n📷 الصورة 2: الأصلية\n📝 بطاقة الوصف داخل قسم الوصف فقط (${imgCount} صور في المعرض)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
+    `✨ تم تحديث المنتج #${rowId}\n`
+    + `🎨 صور ستوديو احترافية + زاوية إضافية عند التوفر\n`
+    + `📷 الأصل للعرض فقط إن وُجد (ليس ضهر العلبة)\n`
+    + `📝 بطاقة مواصفات من نص العلبة عند التوفر (${imgCount} في المعرض)\n`
+    + `📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n`
+    + `🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
   );
   console.log(
     `✅ AI polish OK #${rowId}`,
@@ -706,18 +783,21 @@ function scheduleAiPolish({
   rowId,
   recordUrl,
   originalBuffers,
+  displayBuffers = null,
   name,
   price,
   oldPrice,
   sku,
   amazonUrl,
   sellerSku,
+  publishRealOriginal = true,
 }) {
   enqueueAiPolish(() => executeAiPolish({
     chatId,
     rowId,
     recordUrl,
     originalBuffers,
+    displayBuffers,
     name,
     price,
     oldPrice,
@@ -725,7 +805,8 @@ function scheduleAiPolish({
     amazonUrl,
     sellerSku,
     postebl: 'POSTEBL',
-    startMessage: `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...`,
+    publishRealOriginal,
+    startMessage: `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...\n🎨 ستوديو أبيض + زاوية إضافية\n📖 صور الوصف تُستخدم للقراءة فقط ولن تُنشر خام`,
   }));
 }
 
@@ -803,12 +884,15 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
   );
 }
 
-async function processProduct(chatId, files, caption, destination = 'both') {
+async function processProduct(chatId, files, caption, destination = 'both', roles = null) {
   const { price, oldPrice, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
   const tifawtSku = tifawtSkuFromCaption(sku);
+  const effectiveRoles = Array.isArray(roles) && roles.length === files.length
+    ? roles
+    : files.map(() => 'both');
   console.log(
-    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destination=${destination}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
+    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | roles=${effectiveRoles.join(',')} | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destination=${destination}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
   );
 
   await sendMessage(
@@ -828,11 +912,29 @@ async function processProduct(chatId, files, caption, destination = 'both') {
       }
     })
   );
-  const originalBuffers = downloaded.filter(Boolean).map((d) => d.buffer);
+
+  const displayBuffers = [];
+  const visionBuffers = [];
+  for (let i = 0; i < downloaded.length; i++) {
+    const buf = downloaded[i]?.buffer;
+    if (!buf) continue;
+    const role = effectiveRoles[i] || 'both';
+    if (role === 'skip') continue;
+    if (role === 'display' || role === 'both') displayBuffers.push(buf);
+    if (role === 'desc' || role === 'both' || role === 'display') {
+      // Display photos also help vision identity; desc-only backs stay vision-only.
+      visionBuffers.push(buf);
+    }
+  }
+
+  // Vision needs at least one photo; fall back to display if user marked only display.
+  const originalBuffers = visionBuffers.length ? visionBuffers : displayBuffers.slice();
   if (!originalBuffers.length) {
-    await sendMessage(chatId, '❌ فشل تحميل الصور من تيليجرام. أعد الإرسال.');
+    await sendMessage(chatId, '❌ لا توجد صور صالحة بعد التصنيف. أعد الإرسال واختر دوراً واحداً على الأقل.');
     return;
   }
+
+  const tifawtBuffers = displayBuffers.length ? displayBuffers : originalBuffers;
 
   // Send originals immediately (no barcode scan — that only slowed us down).
   // Tifawt + NocoDB get the seller payload first; AI polish patches later.
@@ -841,13 +943,13 @@ async function processProduct(chatId, files, caption, destination = 'both') {
       name,
       sku: tifawtSku,
       price,
-      imageBuffers: originalBuffers,
+      imageBuffers: tifawtBuffers,
       imageFileName: `${tifawtSku}-1.jpg`,
     });
     if (result?.ok) {
       await sendMessage(
         chatId,
-        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${tifawtSku}\n🖼️ ${result.imageCount || originalBuffers.length} صورة أصلية`
+        `✅ تم إرسال المنتج إلى Tifawt فقط.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${tifawtSku}\n🖼️ ${result.imageCount || tifawtBuffers.length} صورة أصلية`
       );
     } else {
       await sendMessage(chatId, `❌ تعذر إنشاء المنتج في Tifawt:\n${result?.error || result?.reason || 'خطأ غير معروف'}`);
@@ -863,7 +965,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
           name,
           sku: tifawtSku,
           price,
-          imageBuffers: originalBuffers,
+          imageBuffers: tifawtBuffers,
           imageFileName: `${tifawtSku}-1.jpg`,
         });
         if (!result?.ok && !result?.skipped) {
@@ -872,7 +974,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
             name,
             sku: tifawtSku,
             price,
-            imageBuffers: originalBuffers,
+            imageBuffers: tifawtBuffers,
             imageFileName: `${tifawtSku}-1.jpg`,
           });
         }
@@ -880,7 +982,7 @@ async function processProduct(chatId, files, caption, destination = 'both') {
           const modeAr = result.mode === 'updated' ? 'تم تحديث الأصل' : 'تم إضافة الأصل';
           await sendMessage(
             chatId,
-            `🛒 Tifawt: ${modeAr}\n📦 ${name}\n📋 ${tifawtSku}\n🖼️ ${result.imageCount || originalBuffers.length} صور أصلية`
+            `🛒 Tifawt: ${modeAr}\n📦 ${name}\n📋 ${tifawtSku}\n🖼️ ${result.imageCount || tifawtBuffers.length} صور أصلية`
           );
           console.log('✅ Tifawt product', result.mode || 'created', tifawtSku, result.data?.id || result.existingId || '');
         } else if (!result?.skipped) {
@@ -897,20 +999,15 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     })();
   }
 
-  // CRITICAL PATH: save originals fast so the product queue is not blocked by AI.
-  const uploadedFiles = await uploadOriginalsSafely(originalBuffers, sellerSku);
-  if (!uploadedFiles.length) {
-    await sendMessage(chatId, '❌ فشل رفع الصور إلى NocoDB. أعد إرسال المنتج.');
-    return;
-  }
-
+  // Fast create WITHOUT publishing raw gallery images.
+  // AI polish patches Image1–5 only after studio generation succeeds.
   const enrichment = {
     sellerSku,
     amazonUrl: amazonUrl || '',
     skippedAi: true,
     copy: null,
     barcode: '',
-    nocoImages: uploadedFiles,
+    nocoImages: [],
     sheet: { skipped: true, reason: 'destination_choice' },
     aiFailures: [],
     hasAiImages: false,
@@ -935,13 +1032,14 @@ async function processProduct(chatId, files, caption, destination = 'both') {
       ? `\n🛒 Tifawt: يُرسل الأصل الآن بالمرجع ${tifawtSku}`
       : '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD')
     : '\n🌐 تم الحفظ في NocoDB فقط';
+  const roleNote = `\n🖼️ وصف: ${effectiveRoles.filter((r) => r === 'desc' || r === 'both').length} | عرض: ${effectiveRoles.filter((r) => r === 'display' || r === 'both').length}`;
 
-  console.log(`✅ NocoDB row created fast: #${rowId}`);
+  console.log(`✅ NocoDB row created fast (no raw gallery): #${rowId}`);
 
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج الأصلي #${rowId} (${uploadedFiles.length} صور)!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}\n🔗 صفحة الهبوط: ${landing}${tifawtNote}\n\n✨ سيتم تعديل العنوان/الوصف/الصور الاحترافية تلقائياً بعد لحظات.\n\n⬇️ اختر تصنيف المنتج:`,
+    `✅ تم حفظ المنتج #${rowId} بدون نشر صور خام!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}\n🔗 صفحة الهبوط: ${landing}${tifawtNote}\n\n✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.\n\n⬇️ اختر تصنيف المنتج:`,
     keyboard
   );
 
@@ -950,12 +1048,15 @@ async function processProduct(chatId, files, caption, destination = 'both') {
     rowId,
     recordUrl,
     originalBuffers: originalBuffers.slice(),
+    displayBuffers: displayBuffers.slice(),
     name,
     price,
     oldPrice,
     sku,
     amazonUrl,
     sellerSku,
+    // Include one display original as Image2 only after AI studio images exist.
+    publishRealOriginal: displayBuffers.length > 0,
   });
 }
 
@@ -1479,13 +1580,101 @@ async function handleUpdate(update) {
       }
 
       await answerCallback(cb.id, `تم اختيار ${labels[destination]}`);
-      await editMessage(chatId, msgId, `✅ الوجهة: ${labels[destination]}\nبدأت معالجة المنتج...`);
+      await editMessage(chatId, msgId, `✅ الوجهة: ${labels[destination]}`);
+
+      // Tifawt-only keeps all originals. Noco/both: classify photos when 2+.
+      if (destination !== 'tifawt' && pending.files.length >= 2) {
+        await requestImageRoles(
+          pending.chatId,
+          pending.files,
+          pending.caption,
+          destination
+        );
+        return;
+      }
+
+      await sendMessage(chatId, 'بدأت معالجة المنتج...');
       enqueueProduct(() => processProduct(
         pending.chatId,
         pending.files,
         pending.caption,
-        destination
+        destination,
+        pending.files.map(() => 'both'),
       ));
+      return;
+    }
+
+    if (data.startsWith('imgrole:')) {
+      const parts = data.split(':');
+      const token = parts[1];
+      const action = parts[2];
+      const pending = pendingImageRoles.get(token);
+      if (!pending || pending.chatId !== chatId || pending.expiresAt < Date.now()) {
+        pendingImageRoles.delete(token);
+        await answerCallback(cb.id, 'انتهت صلاحية التصنيف. أرسل المنتج مجدداً.');
+        await editMessage(chatId, msgId, '⌛ انتهت صلاحية تصنيف الصور. أرسل المنتج مجدداً.');
+        return;
+      }
+
+      if (action === 'cancel') {
+        pendingImageRoles.delete(token);
+        await answerCallback(cb.id, 'تم الإلغاء');
+        await editMessage(chatId, msgId, '✖️ تم إلغاء إضافة المنتج.');
+        return;
+      }
+
+      if (action === 'go') {
+        const usable = pending.roles.filter((r) => r !== 'skip');
+        if (!usable.length) {
+          await answerCallback(cb.id, 'اختر صورة واحدة على الأقل');
+          return;
+        }
+        if (!usable.some((r) => r === 'display' || r === 'both' || r === 'desc')) {
+          await answerCallback(cb.id, 'اختر دوراً صالحاً لصورة واحدة على الأقل');
+          return;
+        }
+        pendingImageRoles.delete(token);
+        await answerCallback(cb.id, 'تم التصنيف');
+        await editMessage(
+          chatId,
+          msgId,
+          `✅ تصنيف الصور:\n${imageRolesSummary(pending.roles)}\n\nبدأت المعالجة...`
+        );
+        enqueueProduct(() => processProduct(
+          pending.chatId,
+          pending.files,
+          pending.caption,
+          pending.destination,
+          pending.roles,
+        ));
+        return;
+      }
+
+      // imgrole:token:index:cycle
+      const index = Number(action);
+      if (!Number.isInteger(index) || index < 0 || index >= pending.roles.length || parts[3] !== 'cycle') {
+        await answerCallback(cb.id, 'أمر غير صالح');
+        return;
+      }
+      pending.roles[index] = cycleImageRole(pending.roles[index]);
+      await answerCallback(cb.id, `صورة ${index + 1}: ${imageRoleLabel(pending.roles[index])}`);
+      try {
+        await axios.post(`${TG_API}/editMessageText`, {
+          chat_id: chatId,
+          message_id: msgId,
+          text:
+            `🖼️ صنّف صورك قبل الحفظ (${pending.files.length}):\n\n`
+            + `• 🎨 للعرض فقط → قد تظهر في المعرض بعد التوليد الاحترافي\n`
+            + `• 📖 للوصف فقط → يقرأها الذكاء (ضهر العلبة/كاتالوج) ولن تُنشر خام\n`
+            + `• 🔄 عرض+وصف → الاثنان\n`
+            + `• ✖️ تجاهل → تُحذف من المعالجة\n\n`
+            + `اضغط على كل صورة لتغيير دورها، ثم ✅ متابعة:\n\n`
+            + imageRolesSummary(pending.roles),
+          reply_markup: imageRolesKeyboard(token, pending.roles),
+        }, { timeout: 30000 });
+      } catch (e) {
+        console.warn('editMessageText imgrole failed:', e.message);
+      }
       return;
     }
 
