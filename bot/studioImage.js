@@ -46,7 +46,8 @@ function wrapLines(text, maxChars = 42, maxLines = 3) {
 
 /**
  * Finish an AI (or seller) product photo as a white-studio catalog image:
- * trim empty margins → enlarge to fill ~90% of the square → soft shadow → white plate.
+ * trim empty margins → enlarge to fill the square → soft drop shadow only.
+ * No separate oval "floor" shadow (that looked like a floating grey blob on cards).
  *
  * @param {Buffer} productBuffer
  * @param {{ price?: number|string, oldPrice?: number|string, saleBadge?: boolean }} [opts]
@@ -54,13 +55,13 @@ function wrapLines(text, maxChars = 42, maxLines = 3) {
  */
 export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const size = CATALOG_IMAGE_SIZE;
-  const fill = Number(process.env.STUDIO_PRODUCT_FILL || 0.9);
+  const fill = Number(process.env.STUDIO_PRODUCT_FILL || 0.94);
 
   let cut = productBuffer;
   try {
     cut = await sharp(productBuffer)
       .rotate()
-      .trim({ threshold: 18 })
+      .trim({ threshold: 22 })
       .ensureAlpha()
       .png()
       .toBuffer();
@@ -82,9 +83,9 @@ export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const pw = meta.width || maxSide;
   const ph = meta.height || maxSide;
   const left = Math.round((size - pw) / 2);
-  const top = Math.round((size - ph) / 2) - Math.round(size * 0.01);
+  const top = Math.round((size - ph) / 2);
 
-  // Soft drop shadow: black silhouette with the product alpha, then blur.
+  // Soft drop shadow only — follows the product silhouette (no detached ellipse).
   const raw = await sharp(product)
     .ensureAlpha()
     .raw()
@@ -95,23 +96,14 @@ export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
     pixels[i] = 0;
     pixels[i + 1] = 0;
     pixels[i + 2] = 0;
-    pixels[i + 3] = Math.round(a * 0.38);
+    pixels[i + 3] = Math.round(a * 0.22);
   }
   const shadowCore = await sharp(pixels, {
     raw: { width: raw.info.width, height: raw.info.height, channels: 4 },
   })
-    .blur(24)
+    .blur(14)
     .png()
     .toBuffer();
-
-  // Contact ellipse under the product for a grounded studio look.
-  const ellipseW = Math.round(pw * 0.7);
-  const ellipseH = Math.max(20, Math.round(ph * 0.075));
-  const ellipseSvg = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${ellipseW}" height="${ellipseH}" xmlns="http://www.w3.org/2000/svg">
-  <ellipse cx="${ellipseW / 2}" cy="${ellipseH / 2}" rx="${ellipseW / 2}" ry="${ellipseH / 2}" fill="#000" opacity="0.2"/>
-</svg>`);
-  const contactShadow = await sharp(ellipseSvg).blur(7).png().toBuffer();
 
   const white = await sharp({
     create: {
@@ -125,13 +117,8 @@ export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const layers = [
     {
       input: shadowCore,
-      left: left + 6,
-      top: top + 16,
-    },
-    {
-      input: contactShadow,
-      left: Math.round(left + (pw - ellipseW) / 2),
-      top: Math.min(size - ellipseH - 8, top + ph - Math.round(ellipseH * 0.4)),
+      left: left + 2,
+      top: top + 8,
     },
     { input: product, left, top },
   ];

@@ -241,9 +241,9 @@ export async function generateProductImages({
   const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
 Use the product in the reference photo(s) as the ONLY product.
 Keep exact identity: shape, color, ports, branding marks. Do NOT invent a different product.
-Output a square 1:1 photo on a PLAIN seamless WHITE background.
-The product must FILL the frame (about 85–90% of the image) — large, centered, tight crop, minimal empty margins.
-Soft realistic studio lighting and a soft natural contact shadow under the product.
+Output a square 1:1 photo on a PLAIN seamless WHITE background (#FFFFFF only).
+CRITICAL framing: the product must FILL about 92–96% of the frame — tight crop, almost edge-to-edge, very little empty white margin.
+Center the product. Soft realistic studio lighting. A subtle soft shadow attached under the product only (no floating oval blob, no grey floor disc).
 No text, no badges, no props, no hands, no clutter, no colored backdrop.`;
 
   const angleHints = [
