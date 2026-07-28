@@ -22,8 +22,11 @@ import {
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
+import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 
 const app = express();
+// Public Jumia images: register before the small JSON body limit so uploads can be multi-MB.
+registerPublicImageRoutes(app);
 app.use(express.json({ limit: '256kb' }));
 registerAdminRoutes(app);
 

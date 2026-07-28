@@ -39,6 +39,9 @@ public/**/*.apk
 
 .env
 
+# Runtime Jumia image cache (served from /bot-api/public-images)
+data/jumia-public-images/
+
 # Local exports (customer CSVs for Brevo, etc.)
 tmp/
 

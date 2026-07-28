@@ -6,6 +6,7 @@
  */
 import axios from 'axios';
 import { buildJumiaOffer } from './jumiaPricing.js';
+import { ensurePublicImageUrls } from './jumiaPublicImages.js';
 
 const JUMIA_API_BASE = (
   process.env.JUMIA_API_BASE
@@ -364,11 +365,21 @@ export async function createJumiaProduct(product = {}) {
     pick(product.jumiaCategory, product.category, product.PrimaryCategory, process.env.JUMIA_DEFAULT_CATEGORY),
     '1000040',
   );
-  const images = asArray(product.imageUrls || product.images)
+  const rawImages = asArray(product.imageUrls || product.images)
     .map((url) => String(url || '').trim())
     .filter((url) => /^https?:\/\//i.test(url));
-  if (!images.length) {
+  if (!rawImages.length) {
     return { skipped: true, reason: 'missing_images' };
+  }
+
+  // Jumia must fetch permanent URLs; NocoDB signed S3 links expire → Not Live.
+  const images = await ensurePublicImageUrls(rawImages, { sku: sellerSku });
+  if (!images.length) {
+    return {
+      skipped: true,
+      reason: 'images_not_public',
+      detail: 'Could not host permanent public image URLs for Jumia',
+    };
   }
 
   const wholesale = Math.max(
@@ -487,6 +498,7 @@ export async function createJumiaProduct(product = {}) {
     sellerSku,
     countryStatuses,
     offer,
+    imageUrls: images,
     errors: data?.errors || null,
   };
 }
