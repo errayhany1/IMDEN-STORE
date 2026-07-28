@@ -78,7 +78,36 @@ Poll تلقائي كل `JUMIA_POLL_MS` (افتراضي دقيقتان) يجلب 
 يجب أن يطابق **Seller SKU** في Jumia نفس الـ SKU في Tifawt/NocoDB حتى تظهر
 المنتجات صحيحة داخل الـ lead.
 
-## 7) اختبار سريع
+## 7) إشعار تيليجرام لطلبات Jumia
+
+على خدمة **imden** (التتبع):
+
+```env
+TELEGRAM_NOTIFY_BOT_TOKEN=<bot-token>
+TELEGRAM_NOTIFY_CHAT_ID=-1003868832013
+```
+
+أو استخدم `VITE_TELEGRAM_BOT_TOKEN` / `VITE_TELEGRAM_CHAT_ID` إن كانت مضبوطة كمتغيرات تشغيل.
+
+عند مزامنة طلب جديد (غير مكرر) تُرسل رسالة للبوت/القناة.
+
+## 8) تحديث حالة الطلب على Jumia
+
+API على `/bot-api`:
+
+| Method | Path | الغرض |
+|--------|------|--------|
+| `POST` | `/api/jumia/orders/:orderId/ship` | تعبئة + Ready To Ship |
+| `POST` | `/api/jumia/orders/:orderId/cancel` | إلغاء عناصر الطلب |
+| `POST` | `/api/jumia/orders/:orderId/labels` | ملصق الشحن |
+
+من بوت التيليجرام (`imden-bot`): أزرار «تجهيز شحن Jumia» / «إلغاء طلب Jumia» / «ملصق شحن Jumia».
+
+## 9) إيقاف / تفعيل منتج على Jumia
+
+أزرار «إيقاف منتج» و«جعل المنتج متوفر» على البوت تحدّث NocoDB **و** حالة المنتج على Jumia (`ACTIVE` / `INACTIVE`) إن وُجد نفس الـ SKU.
+
+## 10) اختبار سريع
 
 بعد نشر env:
 

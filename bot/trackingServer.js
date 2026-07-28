@@ -16,6 +16,10 @@ import {
   mapJumiaOrderToTifawt,
   getOrderItems,
   orderIdOf as jumiaOrderIdOf,
+  shipJumiaOrder,
+  cancelJumiaOrder,
+  printJumiaLabels,
+  normalizeJumiaOrderId,
 } from './jumiaClient.js';
 
 const app = express();
@@ -28,6 +32,18 @@ const TIFAWT_LEAD_URL = (
   || ''
 ).trim();
 const JUMIA_POLL_MS = Math.max(0, Number(process.env.JUMIA_POLL_MS || 120_000) || 0);
+const TELEGRAM_NOTIFY_BOT_TOKEN = (
+  process.env.TELEGRAM_NOTIFY_BOT_TOKEN
+  || process.env.VITE_TELEGRAM_BOT_TOKEN
+  || process.env.TELEGRAM_BOT_TOKEN
+  || ''
+).trim();
+const TELEGRAM_NOTIFY_CHAT_ID = (
+  process.env.TELEGRAM_NOTIFY_CHAT_ID
+  || process.env.VITE_TELEGRAM_CHAT_ID
+  || process.env.TELEGRAM_CHAT_ID
+  || ''
+).trim();
 
 const trackingHits = new Map();
 const TRACKING_WINDOW_MS = 60_000;
@@ -135,7 +151,7 @@ async function syncOrderToTifawt({ orderId, name, phone, address, city, items })
         });
         syncedStoreOrders.set(orderId, { completedAt: Date.now() });
         console.log(`[orders] Tifawt synced ${orderId} (${result.status})`);
-        return { ok: true, orderId, status: result.status };
+        return { ok: true, orderId, status: result.status, duplicate: false };
       } catch (error) {
         lastError = error;
         if (!isTransient(error) || attempt === 3) break;
@@ -150,6 +166,36 @@ async function syncOrderToTifawt({ orderId, name, phone, address, city, items })
     return await task;
   } finally {
     inFlightStoreOrders.delete(orderId);
+  }
+}
+
+async function notifyTelegramJumiaOrder(mapped, syncResult) {
+  if (!TELEGRAM_NOTIFY_BOT_TOKEN || !TELEGRAM_NOTIFY_CHAT_ID) return;
+  if (syncResult?.duplicate) return;
+
+  const lines = (mapped.items || []).map((item) => (
+    `• ${item.sku} × ${item.quantity}${item.unitPrice ? ` (${item.unitPrice} DH)` : ''}`
+  ));
+  const text = [
+    '🛒 طلب جديد من Jumia',
+    `🆔 ${mapped.orderId}`,
+    `👤 ${mapped.name}`,
+    `📞 ${mapped.phone}`,
+    mapped.city ? `📍 ${mapped.city}` : '',
+    mapped.address ? `🏠 ${mapped.address}` : '',
+    lines.length ? `📦 المنتجات:\n${lines.join('\n')}` : '',
+    '',
+    'أوامر البوت: 📦 تجهيز شحن Jumia / ❌ إلغاء طلب Jumia',
+  ].filter(Boolean).join('\n');
+
+  try {
+    await axios.post(
+      `https://api.telegram.org/bot${TELEGRAM_NOTIFY_BOT_TOKEN}/sendMessage`,
+      { chat_id: TELEGRAM_NOTIFY_CHAT_ID, text },
+      { timeout: 15000 },
+    );
+  } catch (error) {
+    console.error('[jumia] telegram notify failed:', error?.response?.data || error?.message);
   }
 }
 
@@ -184,7 +230,9 @@ function isJumiaOrderCreatedEvent(body = {}) {
 
 async function syncJumiaOrderId(orderId) {
   const payload = await fetchJumiaOrderForTifawt(orderId);
-  return syncOrderToTifawt(payload);
+  const result = await syncOrderToTifawt(payload);
+  await notifyTelegramJumiaOrder(payload, result);
+  return result;
 }
 
 async function syncRecentJumiaOrders({ createdAfter } = {}) {
@@ -208,6 +256,7 @@ async function syncRecentJumiaOrders({ createdAfter } = {}) {
       const items = await getOrderItems(id);
       const mapped = mapJumiaOrderToTifawt(order, items);
       const result = await syncOrderToTifawt(mapped);
+      await notifyTelegramJumiaOrder(mapped, result);
       results.push({ orderId: mapped.orderId, ...result });
     } catch (error) {
       results.push({
@@ -297,6 +346,66 @@ app.post('/api/jumia/sync', async (req, res) => {
   }
 });
 
+/** Pack + Ready To Ship for a Jumia order. */
+app.post('/api/jumia/orders/:orderId/ship', async (req, res) => {
+  try {
+    if (!isJumiaConfigured()) {
+      return res.status(503).json({ ok: false, error: 'jumia_not_configured' });
+    }
+    const orderId = normalizeJumiaOrderId(req.params.orderId || req.body?.orderId);
+    if (!orderId) return res.status(400).json({ ok: false, error: 'missing_order_id' });
+    const result = await shipJumiaOrder(orderId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[jumia] ship failed:', error?.response?.data || error?.details || error?.message);
+    return res.status(error?.statusCode || 502).json({
+      ok: false,
+      error: error?.message || 'jumia_ship_failed',
+      details: error?.details || null,
+    });
+  }
+});
+
+/** Cancel all items of a Jumia order. */
+app.post('/api/jumia/orders/:orderId/cancel', async (req, res) => {
+  try {
+    if (!isJumiaConfigured()) {
+      return res.status(503).json({ ok: false, error: 'jumia_not_configured' });
+    }
+    const orderId = normalizeJumiaOrderId(req.params.orderId || req.body?.orderId);
+    if (!orderId) return res.status(400).json({ ok: false, error: 'missing_order_id' });
+    const result = await cancelJumiaOrder(orderId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[jumia] cancel failed:', error?.response?.data || error?.details || error?.message);
+    return res.status(error?.statusCode || 502).json({
+      ok: false,
+      error: error?.message || 'jumia_cancel_failed',
+      details: error?.details || null,
+    });
+  }
+});
+
+/** Print shipping labels (JSON/base64 from Jumia). */
+app.post('/api/jumia/orders/:orderId/labels', async (req, res) => {
+  try {
+    if (!isJumiaConfigured()) {
+      return res.status(503).json({ ok: false, error: 'jumia_not_configured' });
+    }
+    const orderId = normalizeJumiaOrderId(req.params.orderId || req.body?.orderId);
+    if (!orderId) return res.status(400).json({ ok: false, error: 'missing_order_id' });
+    const result = await printJumiaLabels(orderId);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[jumia] labels failed:', error?.response?.data || error?.details || error?.message);
+    return res.status(error?.statusCode || 502).json({
+      ok: false,
+      error: error?.message || 'jumia_labels_failed',
+      details: error?.details || null,
+    });
+  }
+});
+
 app.post('/api/orders/track', async (req, res) => {
   const clientKey = req.headers['x-forwarded-for'] || req.ip || 'unknown';
   if (trackingRateLimited(String(clientKey))) {
@@ -367,7 +476,7 @@ app.post('/api/orders/account', async (req, res) => {
 
 app.listen(PORT, '127.0.0.1', () => {
   console.log(
-    `📦 Tracking API on 127.0.0.1:${PORT} (tifawt=${Boolean(TIFAWT_LEAD_URL)} jumia=${isJumiaConfigured()} poll=${JUMIA_POLL_MS}ms)`,
+    `📦 Tracking API on 127.0.0.1:${PORT} (tifawt=${Boolean(TIFAWT_LEAD_URL)} jumia=${isJumiaConfigured()} poll=${JUMIA_POLL_MS}ms notify=${Boolean(TELEGRAM_NOTIFY_BOT_TOKEN && TELEGRAM_NOTIFY_CHAT_ID)})`,
   );
 });
 

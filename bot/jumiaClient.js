@@ -469,3 +469,238 @@ export async function createJumiaProduct(product = {}) {
     errors: data?.errors || null,
   };
 }
+
+async function jumiaRequest(method, path, { params, body } = {}) {
+  const token = await getAccessToken();
+  const { data, status } = await axios({
+    method,
+    url: `${JUMIA_API_BASE}${path}`,
+    params,
+    data: body,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    timeout: 60_000,
+    validateStatus: () => true,
+  });
+  if (status < 200 || status >= 300) {
+    const err = new Error(
+      data?.message || data?.error || `jumia_http_${status}`,
+    );
+    err.statusCode = status;
+    err.details = data;
+    throw err;
+  }
+  return data;
+}
+
+async function pimRequest(method, path, body) {
+  const token = await getAccessToken();
+  const { data, status } = await axios({
+    method,
+    url: `${JUMIA_PIM_API}${path}`,
+    data: body,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      X_MASTER_SHOP_SID: SHOP_ID,
+      X_SHOP_SID_LIST: SHOP_ID,
+    },
+    timeout: 60_000,
+    validateStatus: () => true,
+  });
+  if (status < 200 || status >= 300) {
+    const err = new Error(
+      data?.message || data?.error || `jumia_pim_http_${status}`,
+    );
+    err.statusCode = status;
+    err.details = data;
+    throw err;
+  }
+  return data;
+}
+
+export function normalizeJumiaOrderId(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^JUMIA[-_]/i, '');
+}
+
+export function orderItemIdOf(item) {
+  return pick(
+    item?.id,
+    item?.orderItemId,
+    item?.OrderItemId,
+    item?.order_item_id,
+    item?.itemId,
+  );
+}
+
+/** Find a catalog variation by Seller SKU. */
+export async function findJumiaProductBySellerSku(sellerSku) {
+  const sku = String(sellerSku || '').trim();
+  if (!sku) return null;
+
+  const data = await jumiaGet('/catalog/products', {
+    sellerSku: sku,
+    size: 20,
+  });
+  const products = asArray(data?.products || data);
+  for (const product of products) {
+    const variation = asArray(product?.variations).find((v) => {
+      const vSku = pick(v?.sellerSku, v?.SellerSku);
+      return vSku.toLowerCase() === sku.toLowerCase();
+    });
+    if (variation) {
+      return {
+        product,
+        variation,
+        id: variation.id,
+        sellerSku: pick(variation.sellerSku, sku),
+        status: variation.businessClients?.[0]?.status || '',
+        visible: variation.businessClients?.[0]?.visible,
+      };
+    }
+  }
+
+  // Fallback scan recent products if sellerSku filter is unsupported.
+  const recent = await jumiaGet('/catalog/products', { size: 50 });
+  for (const product of asArray(recent?.products || recent)) {
+    const variation = asArray(product?.variations).find((v) => {
+      const vSku = pick(v?.sellerSku, v?.SellerSku);
+      return vSku.toLowerCase() === sku.toLowerCase();
+    });
+    if (variation) {
+      return {
+        product,
+        variation,
+        id: variation.id,
+        sellerSku: pick(variation.sellerSku, sku),
+        status: variation.businessClients?.[0]?.status || '',
+        visible: variation.businessClients?.[0]?.visible,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Activate / deactivate a product on Jumia MA (PIM country status).
+ * active=true → ACTIVE, false → INACTIVE.
+ */
+export async function setJumiaProductActive(sellerSku, active = true) {
+  const found = await findJumiaProductBySellerSku(sellerSku);
+  if (!found?.id) {
+    const error = new Error('jumia_product_not_found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const status = active ? 'ACTIVE' : 'INACTIVE';
+  const data = await pimRequest(
+    'post',
+    '/api/products/country/bulk-update-status',
+    {
+      productSids: [found.id],
+      businessClientCode: BUSINESS_CLIENT,
+      status,
+    },
+  );
+
+  return {
+    ok: true,
+    sellerSku: found.sellerSku,
+    productSid: found.id,
+    status,
+    summary: data?.summary || null,
+  };
+}
+
+async function resolveOrderItemIds(orderId) {
+  const id = normalizeJumiaOrderId(orderId);
+  const items = await getOrderItems(id);
+  const ids = items.map(orderItemIdOf).filter(Boolean);
+  if (!ids.length) {
+    const error = new Error('jumia_order_items_empty');
+    error.statusCode = 404;
+    throw error;
+  }
+  return { orderId: id, items, itemIds: ids };
+}
+
+/** Pack Jumia order items with the first available shipment provider. */
+export async function packJumiaOrder(orderId) {
+  const { orderId: id, itemIds } = await resolveOrderItemIds(orderId);
+  const providers = await jumiaRequest('get', '/orders/shipment-providers', {
+    params: { order_item_ids: itemIds },
+  });
+  const list = asArray(
+    providers?.shipmentProviders
+    || providers?.providers
+    || providers?.data
+    || providers,
+  );
+  const providerId = pick(
+    list[0]?.id,
+    list[0]?.shipmentProviderId,
+    list[0]?.code,
+  );
+  if (!providerId) {
+    const error = new Error('jumia_no_shipment_provider');
+    error.statusCode = 422;
+    error.details = providers;
+    throw error;
+  }
+
+  const packed = await jumiaRequest('post', '/v2/orders/pack', {
+    body: {
+      packages: [{
+        orderItemIds: itemIds,
+        orderItems: itemIds,
+        shipmentProviderId: providerId,
+      }],
+    },
+  });
+
+  return { ok: true, orderId: id, itemIds, providerId, packed };
+}
+
+/** Mark packed items as Ready To Ship. */
+export async function readyToShipJumiaOrder(orderId) {
+  const { orderId: id, itemIds } = await resolveOrderItemIds(orderId);
+  const result = await jumiaRequest('post', '/orders/ready-to-ship', {
+    body: { orderItemIds: itemIds },
+  });
+  return { ok: true, orderId: id, itemIds, result };
+}
+
+/**
+ * Pack then Ready-To-Ship (common seller flow).
+ * Returns both steps; pack failure stops before RTS.
+ */
+export async function shipJumiaOrder(orderId) {
+  const packed = await packJumiaOrder(orderId);
+  const ready = await readyToShipJumiaOrder(orderId);
+  return { ok: true, orderId: packed.orderId, packed, ready };
+}
+
+/** Cancel all items of a Jumia order. */
+export async function cancelJumiaOrder(orderId) {
+  const { orderId: id, itemIds } = await resolveOrderItemIds(orderId);
+  const result = await jumiaRequest('put', '/orders/cancel', {
+    body: { orderItemIds: itemIds },
+  });
+  return { ok: true, orderId: id, itemIds, result };
+}
+
+/** Shipping labels (base64 PDF when API returns them). */
+export async function printJumiaLabels(orderId) {
+  const { orderId: id, itemIds } = await resolveOrderItemIds(orderId);
+  const result = await jumiaRequest('post', '/orders/print-labels', {
+    body: { orderItemIds: itemIds },
+  });
+  return { ok: true, orderId: id, itemIds, result };
+}

@@ -37,6 +37,14 @@ import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
 import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
 import { normalizeAmazonUrl } from './amazonScrape.js';
+import {
+  isJumiaConfigured,
+  setJumiaProductActive,
+  shipJumiaOrder,
+  cancelJumiaOrder,
+  printJumiaLabels,
+  normalizeJumiaOrderId,
+} from './jumiaClient.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -119,6 +127,8 @@ const MAIN_KEYBOARD = {
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
     [{ text: '✨ إعادة توليد الوصف والصور' }],
+    [{ text: '📦 تجهيز شحن Jumia' }, { text: '❌ إلغاء طلب Jumia' }],
+    [{ text: '🏷️ ملصق شحن Jumia' }],
     [{ text: '🎨 خلفيات الموقع' }, { text: '🔥 خلفيات التخفيض' }],
     [{ text: '🔄 إعادة تشغيل البوت' }, { text: '🔽 إخفاء القائمة' }],
   ],
@@ -1037,6 +1047,62 @@ function isReenrichCommand(text) {
     || text.startsWith('/reenrich');
 }
 
+function isJumiaShipCommand(text) {
+  return text === '📦 تجهيز شحن Jumia'
+    || text.startsWith('/jumia_ship')
+    || text.startsWith('/jumia_ready');
+}
+
+function isJumiaCancelCommand(text) {
+  return text === '❌ إلغاء طلب Jumia'
+    || text.startsWith('/jumia_cancel');
+}
+
+function isJumiaLabelCommand(text) {
+  return text === '🏷️ ملصق شحن Jumia'
+    || text.startsWith('/jumia_label');
+}
+
+async function syncJumiaVisibility(sku, active) {
+  if (!isJumiaConfigured()) {
+    return { skipped: true, reason: 'jumia_not_configured' };
+  }
+  const candidates = [
+    buildSellerSku(sku),
+    cleanReference(sku),
+    String(sku || '').trim(),
+  ].filter(Boolean);
+  const tried = new Set();
+  let lastError = null;
+  for (const candidate of candidates) {
+    if (tried.has(candidate.toLowerCase())) continue;
+    tried.add(candidate.toLowerCase());
+    try {
+      return await setJumiaProductActive(candidate, active);
+    } catch (error) {
+      lastError = error;
+      if (error?.message !== 'jumia_product_not_found') break;
+    }
+  }
+  return {
+    error: lastError?.message || 'jumia_visibility_failed',
+    details: lastError?.details || null,
+  };
+}
+
+function formatJumiaVisibilityNote(jumiaResult, active) {
+  if (!jumiaResult || jumiaResult.skipped) return '';
+  if (jumiaResult.error === 'jumia_product_not_found') {
+    return '\n🛒 Jumia: المنتج غير موجود على Jumia';
+  }
+  if (jumiaResult.error) {
+    return `\n🛒 Jumia خطأ: ${jumiaResult.error}`;
+  }
+  return active
+    ? '\n🛒 Jumia: تم تفعيل المنتج (ACTIVE)'
+    : '\n🛒 Jumia: تم إيقاف المنتج (INACTIVE)';
+}
+
 async function handleUpdate(update) {
   const msg = update.message;
 
@@ -1113,6 +1179,98 @@ async function handleUpdate(update) {
       return;
     }
 
+    if (isJumiaShipCommand(text)) {
+      if (!isJumiaConfigured()) {
+        await sendMessage(chatId, '⚠️ Jumia غير مضبوط على البوت.\nأضف JUMIA_CLIENT_ID و JUMIA_REFRESH_TOKEN ثم أعد النشر.');
+        return;
+      }
+      userState[chatId] = 'AWAITING_JUMIA_SHIP';
+      await sendMessage(chatId, '📦 تجهيز شحن Jumia\n\nأرسل رقم الطلب (مثال: 190 أو JUMIA-190)\nسيتم: تعبئة الطرد + Ready To Ship\nللخروج: 🔄 إعادة تشغيل البوت');
+      return;
+    }
+
+    if (isJumiaCancelCommand(text)) {
+      if (!isJumiaConfigured()) {
+        await sendMessage(chatId, '⚠️ Jumia غير مضبوط على البوت.\nأضف JUMIA_CLIENT_ID و JUMIA_REFRESH_TOKEN ثم أعد النشر.');
+        return;
+      }
+      userState[chatId] = 'AWAITING_JUMIA_CANCEL';
+      await sendMessage(chatId, '❌ إلغاء طلب Jumia\n\nأرسل رقم الطلب لإلغاء كل عناصره.\nمثال: 190 أو JUMIA-190\nللخروج: 🔄 إعادة تشغيل البوت');
+      return;
+    }
+
+    if (isJumiaLabelCommand(text)) {
+      if (!isJumiaConfigured()) {
+        await sendMessage(chatId, '⚠️ Jumia غير مضبوط على البوت.');
+        return;
+      }
+      userState[chatId] = 'AWAITING_JUMIA_LABEL';
+      await sendMessage(chatId, '🏷️ ملصق شحن Jumia\n\nأرسل رقم الطلب لجلب الملصق.\nمثال: 190 أو JUMIA-190');
+      return;
+    }
+
+    if (typeof userState[chatId] === 'string' && userState[chatId].startsWith('AWAITING_JUMIA_')) {
+      const state = userState[chatId];
+      const orderId = normalizeJumiaOrderId(text);
+      if (!orderId) {
+        await sendMessage(chatId, '❌ رقم الطلب غير صالح. أرسل مثل: 190');
+        return;
+      }
+      try {
+        if (state === 'AWAITING_JUMIA_SHIP') {
+          await sendMessage(chatId, `⏳ جاري تجهيز شحن الطلب ${orderId}...`);
+          const result = await shipJumiaOrder(orderId);
+          await sendMessage(
+            chatId,
+            `✅ تم تجهيز شحن Jumia ${result.orderId}\n📦 عناصر: ${result.ready?.itemIds?.length || result.packed?.itemIds?.length || 0}\n🚚 مزوّد: ${result.packed?.providerId || '—'}\n\n🔁 أرسل رقم طلب آخر أو 🔄 للخروج.`
+          );
+        } else if (state === 'AWAITING_JUMIA_CANCEL') {
+          await sendMessage(chatId, `⏳ جاري إلغاء الطلب ${orderId}...`);
+          const result = await cancelJumiaOrder(orderId);
+          await sendMessage(
+            chatId,
+            `✅ تم إلغاء طلب Jumia ${result.orderId}\n📦 عناصر ملغاة: ${result.itemIds?.length || 0}\n\n🔁 أرسل رقم طلب آخر أو 🔄 للخروج.`
+          );
+        } else if (state === 'AWAITING_JUMIA_LABEL') {
+          await sendMessage(chatId, `⏳ جاري جلب ملصق ${orderId}...`);
+          const result = await printJumiaLabels(orderId);
+          const labelData = result.result;
+          const b64 = labelData?.file
+            || labelData?.pdf
+            || labelData?.label
+            || labelData?.document
+            || labelData?.data;
+          if (typeof b64 === 'string' && b64.length > 100) {
+            const buffer = Buffer.from(b64.replace(/^data:application\/pdf;base64,/, ''), 'base64');
+            const form = new FormData();
+            form.append('chat_id', String(chatId));
+            form.append('document', buffer, {
+              filename: `jumia-label-${orderId}.pdf`,
+              contentType: 'application/pdf',
+            });
+            form.append('caption', `🏷️ ملصق شحن Jumia ${orderId}`);
+            await axios.post(`${TG_API}/sendDocument`, form, {
+              headers: form.getHeaders(),
+              timeout: 60000,
+              maxBodyLength: Infinity,
+            });
+          } else {
+            await sendMessage(
+              chatId,
+              `✅ استجابة ملصق Jumia ${orderId}:\n${JSON.stringify(labelData || {}).slice(0, 1500)}`
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Jumia order command failed:', error?.details || error?.message);
+        await sendMessage(
+          chatId,
+          `❌ فشل أمر Jumia للطلب ${orderId}:\n${error?.message || 'unknown'}`
+        );
+      }
+      return;
+    }
+
     if (typeof userState[chatId] === 'string' && userState[chatId].startsWith('AWAITING_NEW_PRICE_')) {
       const sku = userState[chatId].replace('AWAITING_NEW_PRICE_', '');
       const newPrice = parseFloat(text);
@@ -1156,14 +1314,22 @@ async function handleUpdate(update) {
             { Id: recordId, POSTEBL: 'NO POSTEBL' },
             { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }, timeout: 30000 }
           );
-          await sendMessage(chatId, `✅ تم إيقاف المنتج (${sku}) ← "نفد من المخزون"\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`);
+          const jumiaResult = await syncJumiaVisibility(record.SKU || sku, false);
+          await sendMessage(
+            chatId,
+            `✅ تم إيقاف المنتج (${sku}) ← "نفد من المخزون"${formatJumiaVisibilityNote(jumiaResult, false)}\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`
+          );
         } else if (state === 'AWAITING_REF_RESTOCK') {
           await axios.patch(
             `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`,
             { Id: recordId, POSTEBL: 'POSTEBL' },
             { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }, timeout: 30000 }
           );
-          await sendMessage(chatId, `✅ تم جعل المنتج (${sku}) "متوفراً"\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`);
+          const jumiaResult = await syncJumiaVisibility(record.SKU || sku, true);
+          await sendMessage(
+            chatId,
+            `✅ تم جعل المنتج (${sku}) "متوفراً"${formatJumiaVisibilityNote(jumiaResult, true)}\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`
+          );
         } else if (state === 'AWAITING_REF_CATEGORY') {
           const keyboard = buildCategoryKeyboard(recordId);
           await sendMessage(chatId, `⬇️ المنتج (${sku}) — اختر التصنيف:`, keyboard);
