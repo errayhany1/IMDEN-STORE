@@ -954,20 +954,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           </section>
         )}
 
-        {/* Related strip */}
-        <div className={`mt-10 pt-8 border-t ${line}`}>
-          <RelatedProducts
-            product={product}
-            lang={lang}
-            limit={8}
-            onSelect={(item) => {
-              const ref = encodeURIComponent(item.ref || item.id);
-              window.location.assign(`/p/${ref}`);
-            }}
-          />
-        </div>
-
-        {/* Amazon-style A+ description — text + info images only (no hero gallery repeats) */}
+        {/* Amazon-style A+ description — before related so desktop reads product copy first */}
         {showAplusSection && (
           <section className={`mt-10 pt-8 border-t ${line} space-y-6`}>
             <h2 className="text-lg font-bold">{t.description}</h2>
@@ -1015,6 +1002,19 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             ))}
           </section>
         )}
+
+        {/* Related strip — larger cards on desktop */}
+        <div className={`mt-10 pt-8 border-t ${line}`}>
+          <RelatedProducts
+            product={product}
+            lang={lang}
+            limit={8}
+            onSelect={(item) => {
+              const ref = encodeURIComponent(item.ref || item.id);
+              window.location.assign(`/p/${ref}`);
+            }}
+          />
+        </div>
       </main>
 
       {/* Sticky mobile buy bar */}

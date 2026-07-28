@@ -16,7 +16,15 @@ const JumiaOrdersTab = ({ dm }) => {
       if (!data?.ok) throw new Error(data?.error || 'load_failed');
       setOrders(data.orders || []);
     } catch (e) {
-      setError(e?.response?.data?.error || e.message || 'تعذر تحميل طلبات Jumia');
+      const payload = e?.response?.data;
+      const msg = payload?.hint
+        || (payload?.error === 'jumia_token_expired'
+          ? 'توكن Jumia منتهٍ — حدّث JUMIA_REFRESH_TOKEN على خدمة imden'
+          : null)
+        || payload?.error
+        || e.message
+        || 'تعذر تحميل طلبات Jumia';
+      setError(msg);
       setOrders([]);
     } finally {
       setLoading(false);

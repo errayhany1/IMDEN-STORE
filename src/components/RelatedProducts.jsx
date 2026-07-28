@@ -26,7 +26,6 @@ function RelatedStrip({
     if (!el) return;
     const max = el.scrollWidth - el.clientWidth;
     const left = el.scrollLeft;
-    // Support both LTR and RTL scrollLeft conventions
     setCanScrollPrev(left > 4 || left < -4);
     setCanScrollNext(Math.abs(left) < max - 4);
   };
@@ -46,46 +45,46 @@ function RelatedStrip({
   const scrollByCards = (direction) => {
     const el = scrollerRef.current;
     if (!el) return;
-    const amount = Math.max(160, Math.round(el.clientWidth * 0.7));
+    const amount = Math.max(220, Math.round(el.clientWidth * 0.75));
     el.scrollBy({ left: direction * amount, behavior: 'smooth' });
   };
 
   if (!items?.length) return null;
 
-  const showArrows = items.length > 2;
+  const showArrows = items.length > 3;
   const btnClass = darkMode
     ? 'border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800 disabled:opacity-30'
-    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30';
+    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 shadow-sm';
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+        <h4 className={`text-base md:text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
           {heading}
         </h4>
         <div className="flex items-center gap-2">
-          <span className={`text-[10px] ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>
+          <span className={`text-[10px] md:text-xs ${darkMode ? 'text-gray-500' : 'text-slate-400'}`}>
             {badge}
           </span>
           {showArrows && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 aria-label={isFr ? 'Précédent' : 'السابق'}
                 disabled={!canScrollPrev}
                 onClick={() => scrollByCards(isFr ? -1 : 1)}
-                className={`w-7 h-7 rounded-full border flex items-center justify-center transition-colors ${btnClass}`}
+                className={`w-8 h-8 md:w-9 md:h-9 rounded-full border flex items-center justify-center transition-colors ${btnClass}`}
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={16} />
               </button>
               <button
                 type="button"
                 aria-label={isFr ? 'Suivant' : 'التالي'}
                 disabled={!canScrollNext}
                 onClick={() => scrollByCards(isFr ? 1 : -1)}
-                className={`w-7 h-7 rounded-full border flex items-center justify-center transition-colors ${btnClass}`}
+                className={`w-8 h-8 md:w-9 md:h-9 rounded-full border flex items-center justify-center transition-colors ${btnClass}`}
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={16} />
               </button>
             </div>
           )}
@@ -95,7 +94,7 @@ function RelatedStrip({
       <div className="relative">
         <div
           ref={scrollerRef}
-          className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar snap-x"
+          className="flex gap-3 md:gap-4 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory"
         >
           {items.map((item) => {
             const label = frenchProductTitle(item) || item.name || item.ref;
@@ -103,66 +102,68 @@ function RelatedStrip({
             return (
               <article
                 key={item.id || item.ref}
-                className={`group shrink-0 w-36 rounded-xl border overflow-hidden snap-start transition-all hover:-translate-y-0.5 hover:shadow-md
+                className={`group shrink-0 w-[148px] sm:w-[168px] md:w-[200px] lg:w-[220px] rounded-2xl border overflow-hidden snap-start transition-all hover:-translate-y-0.5 hover:shadow-md
                   ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}
               >
                 <button
                   type="button"
                   onClick={() => onSelect?.(item)}
-                  className={`relative block w-full aspect-square overflow-hidden ${darkMode ? 'bg-gray-950' : 'bg-slate-50'}`}
+                  className={`relative block w-full aspect-square overflow-hidden ${darkMode ? 'bg-white' : 'bg-white'}`}
                 >
                   {item.image ? (
                     <>
                       <img
                         src={item.image}
                         alt={label}
-                        className={`w-full h-full object-contain p-1.5 transition-opacity duration-300 ${hasHoverImage(item) ? 'group-hover:opacity-0' : ''}`}
+                        className={`w-full h-full object-contain p-2 md:p-3 transition-opacity duration-300 ${hasHoverImage(item) ? 'group-hover:opacity-0' : ''}`}
                         loading="lazy"
                       />
                       {hasHoverImage(item) && (
                         <img
                           src={item.originalImage}
                           alt={label}
-                          className="absolute inset-0 w-full h-full object-contain p-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                          className="absolute inset-0 w-full h-full object-contain p-2 md:p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                           loading="lazy"
                         />
                       )}
                     </>
                   ) : (
-                    <span className="h-full flex items-center justify-center text-[10px] text-slate-400">
+                    <span className="h-full flex items-center justify-center text-xs text-slate-400">
                       {isFr ? 'Sans image' : 'بدون صورة'}
                     </span>
                   )}
                 </button>
 
-                <div className="p-2 space-y-2">
-                  <button type="button" onClick={() => onSelect?.(item)} className="w-full">
+                <div className="p-2.5 md:p-3 space-y-2.5">
+                  <button type="button" onClick={() => onSelect?.(item)} className="w-full text-start">
                     <p
-                      className={`text-[11px] font-semibold truncate ${rtl ? 'text-right' : 'text-left'} ${darkMode ? 'text-gray-200' : 'text-slate-700'}`}
+                      className={`text-xs md:text-sm font-semibold leading-snug line-clamp-2 min-h-[2.5rem] ${rtl ? 'text-right' : 'text-left'} ${darkMode ? 'text-gray-200' : 'text-slate-700'}`}
                       dir={rtl ? 'rtl' : 'ltr'}
                       title={label}
                     >
                       {label}
                     </p>
                   </button>
-                  <div className="flex items-center justify-between gap-1">
-                    <strong className="text-xs text-primary whitespace-nowrap">{item.price} DH</strong>
+                  <div className="flex items-center justify-between gap-2">
+                    <strong className="text-sm md:text-base text-primary whitespace-nowrap">
+                      {item.price} DH
+                    </strong>
                     <button
                       type="button"
                       onClick={() => addToCart(item)}
-                      className="w-7 h-7 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-colors"
+                      className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-colors"
                       aria-label={isFr ? 'Ajouter au panier' : 'إضافة للسلة'}
                     >
-                      <ShoppingCart size={13} />
+                      <ShoppingCart size={15} />
                     </button>
                   </div>
                   <button
                     type="button"
                     onClick={() => onSelect?.(item)}
-                    className={`w-full flex items-center justify-center gap-1 text-[10px] font-semibold py-1 rounded-lg
-                      ${darkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                    className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-1.5 rounded-xl
+                      ${darkMode ? 'text-gray-300 bg-gray-700/60 hover:bg-gray-700' : 'text-slate-600 bg-slate-50 hover:bg-slate-100'}`}
                   >
-                    {isFr ? 'Voir' : 'عرض'} <ArrowLeft size={11} />
+                    {isFr ? 'Voir' : 'عرض'} <ArrowLeft size={12} />
                   </button>
                 </div>
               </article>
@@ -205,7 +206,7 @@ const RelatedProducts = ({
   const isFr = lang === 'fr';
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-8">
       <RelatedStrip
         items={primary}
         onSelect={onSelect}
