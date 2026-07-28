@@ -328,6 +328,44 @@ function asHtml(value, fallback = '<p></p>') {
     .replace(/>/g, '&gt;')}</p>`;
 }
 
+function stripHtml(value = '') {
+  return String(value || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Jumia PIM rejects description under 50 chars (plain text length).
+ * Pad with title / short copy so create never fails on short AI/Noco text.
+ */
+function ensureJumiaDescriptionHtml({ description, shortDescription, name, min = 50, max = 9000 }) {
+  let html = asHtml(description, asHtml(name));
+  let plain = stripHtml(html);
+  if (plain.length < min) {
+    const extras = [
+      name,
+      stripHtml(shortDescription),
+      'Produit neuf, prêt à l’expédition au Maroc.',
+      'Qualité vérifiée — compatible usage quotidien.',
+      'Livraison Jumia. Contenu et accessoires selon fiche produit.',
+    ].filter(Boolean);
+    const parts = [plain, ...extras].filter(Boolean);
+    plain = parts.join(' ').replace(/\s+/g, ' ').trim();
+    while (plain.length < min) {
+      plain = `${plain} ${name || 'Produit'}`.trim();
+    }
+    html = asHtml(plain.slice(0, max));
+  } else if (plain.length > max) {
+    html = asHtml(plain.slice(0, max));
+  }
+  return html;
+}
+
 /**
  * Create a product via Jumia PIM (same path Vendor Center uses).
  * OAuth Self Auth access token works with api-pim-services.
@@ -349,14 +387,15 @@ export async function createJumiaProduct(product = {}) {
   }
 
   const name = pick(product.frenchTitle, product.name, product.Name, sellerSku);
-  const description = asHtml(
-    pick(product.descriptionFr, product.description, product.Description),
-    asHtml(name),
-  );
   const shortDescription = asHtml(
     pick(product.shortFr, product.short_description, product.shortDescription),
     asHtml(name),
   );
+  const description = ensureJumiaDescriptionHtml({
+    description: pick(product.descriptionFr, product.description, product.Description),
+    shortDescription,
+    name,
+  });
   const brandCode = parseJumiaCode(
     pick(product.brand, product.Brand, process.env.JUMIA_DEFAULT_BRAND),
     '1045133',

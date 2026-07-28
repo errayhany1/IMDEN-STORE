@@ -87,15 +87,15 @@ function rowToJumiaPayload(row, nocodbUrl) {
   return {
     sellerSku: sku,
     referenceClean: String(row.SKU || row.Ref || '').replace(/^ERY[-_]?/i, ''),
-    price: Number(row.price || row.Price || 0) || 0,
-    wholesalePrice: Number(row.price || row.Price || 0) || 0,
+    price: Number(row.price || row.Price || row.OldPrice || 0) || 0,
+    wholesalePrice: Number(row.price || row.Price || row.OldPrice || 0) || 0,
     postebl: row.POSTEBL || row.Postebl || 'POSTEBL',
     frenchTitle: row.French_Title || row.Title || row.title || sku,
     arabicTitle: row.Arabic_Title || row.Title || row.title || sku,
     shortFr: row.Short_FR || row.short_fr || '',
     shortAr: row.Short_AR || row.short_ar || '',
-    descriptionFr: row.Description_FR || row.French_Description || row.Description || '',
-    descriptionAr: row.Description_AR || row.Arabic_Description || '',
+    descriptionFr: row.description_french || row.Description_FR || row.French_Description || row.Description || '',
+    descriptionAr: row.description_arabic || row.Description_AR || row.Arabic_Description || '',
     brand: row.Brand || process.env.JUMIA_DEFAULT_BRAND || '1045133 - Generic',
     color: row.Color || 'Multicolore',
     colorFamily: row.Color_Family || row.Color || 'Multicolore',
@@ -296,10 +296,11 @@ export function registerAdminRoutes(app) {
       }
       return res.json({ ok: true, jumia: result, sellerSku: payload.sellerSku });
     } catch (error) {
-      console.error('[admin] publish jumia failed:', error?.response?.data || error.message);
+      console.error('[admin] publish jumia failed:', error?.response?.data || error.details || error.message);
       return res.status(error?.statusCode || 502).json({
         ok: false,
         error: error?.message || 'publish_failed',
+        details: error?.details || error?.response?.data || null,
       });
     }
   });

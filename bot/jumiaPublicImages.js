@@ -11,6 +11,7 @@ import path from 'path';
 import crypto from 'crypto';
 import express from 'express';
 import axios from 'axios';
+import sharp from 'sharp';
 
 const CACHE_DIR = (
   process.env.JUMIA_IMAGE_CACHE_DIR
@@ -59,6 +60,24 @@ async function ensureCacheDir() {
   await fs.mkdir(CACHE_DIR, { recursive: true });
 }
 
+/** Resize/compress so nginx (often ~1MB body limit) can accept the mirror upload. */
+async function optimizeForJumia(buffer) {
+  try {
+    return await sharp(buffer)
+      .rotate()
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 82, mozjpeg: true })
+      .toBuffer();
+  } catch {
+    return buffer;
+  }
+}
+
 /**
  * Persist a JPEG/PNG buffer locally and return its public URL.
  */
@@ -66,16 +85,17 @@ export async function persistPublicImage(buffer, { sku = 'img', index = 1 } = {}
   if (!buffer || !Buffer.isBuffer(buffer) || buffer.length < 500) {
     throw new Error('invalid_image_buffer');
   }
+  const optimized = await optimizeForJumia(buffer);
   await ensureCacheDir();
-  const hash = crypto.createHash('sha1').update(buffer).digest('hex').slice(0, 16);
+  const hash = crypto.createHash('sha1').update(optimized).digest('hex').slice(0, 16);
   const name = `${safeSkuPart(sku)}-${index}-${hash}.jpg`;
   const filePath = path.join(CACHE_DIR, name);
   try {
     await fs.access(filePath);
   } catch {
-    await fs.writeFile(filePath, buffer);
+    await fs.writeFile(filePath, optimized);
   }
-  return `${publicImageBaseUrl()}/${name}`;
+  return { url: `${publicImageBaseUrl()}/${name}`, buffer: optimized, fileName: name };
 }
 
 async function downloadImage(url) {
@@ -161,13 +181,13 @@ export async function ensurePublicImageUrls(urls = [], { sku = 'img' } = {}) {
     }
     try {
       const buf = await downloadImage(url);
-      const localUrl = await persistPublicImage(buf, { sku, index: i + 1 });
-      const mirrored = await mirrorToPublicHost(buf, {
+      const persisted = await persistPublicImage(buf, { sku, index: i + 1 });
+      const mirrored = await mirrorToPublicHost(persisted.buffer, {
         sku,
         index: i + 1,
-        fileName: path.basename(new URL(localUrl).pathname),
+        fileName: persisted.fileName,
       });
-      out.push(mirrored || localUrl);
+      out.push(mirrored || persisted.url);
     } catch (e) {
       console.warn(`[jumia-images] failed to materialize ${url.slice(0, 80)}…`, e.message);
       // Do not pass signed URLs to Jumia — they cause Not Live.
@@ -218,7 +238,7 @@ export function registerPublicImageRoutes(app) {
         await fs.writeFile(filePath, buffer);
         url = `${publicImageBaseUrl()}/${req.body.fileName}`;
       } else {
-        url = await persistPublicImage(buffer, { sku, index });
+        url = (await persistPublicImage(buffer, { sku, index })).url;
       }
       return res.json({ ok: true, url });
     } catch (e) {

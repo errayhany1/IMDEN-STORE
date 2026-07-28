@@ -84,8 +84,8 @@ export function resolveJumiaStock(postebl) {
 }
 
 function longSaleWindow() {
-  const start = new Date();
-  start.setUTCHours(0, 0, 0, 0);
+  // Jumia rejects saleStartDate <= now (midnight UTC is already past for most of the day).
+  const start = new Date(Date.now() + 60_000);
   const end = new Date(start);
   end.setUTCFullYear(end.getUTCFullYear() + 3);
   return {
