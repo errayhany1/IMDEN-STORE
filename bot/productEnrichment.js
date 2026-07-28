@@ -9,7 +9,11 @@ import {
   isOpenRouterConfigured,
 } from './openrouter.js';
 import { generateLandingPageCopy, isOpenAIConfigured } from './openai.js';
-import { appendProductToSheet, isSheetWebhookConfigured } from './sheetsAppend.js';
+import {
+  appendProductToSheet,
+  isSheetWebhookConfigured,
+  JUMIA_SHEET_DEFAULTS,
+} from './sheetsAppend.js';
 import {
   scrapeAmazonProduct,
   downloadImageBuffers,
@@ -225,12 +229,15 @@ export async function enrichProduct({
       metaTitle: amazonMeta?.title || name,
       metaDescription: '',
       wooTitle: amazonMeta?.title || name,
-      brand: 'Generic',
-      color: 'Multicolore',
-      jumiaCategory: '',
+      brand: JUMIA_SHEET_DEFAULTS.brand,
+      color: JUMIA_SHEET_DEFAULTS.color,
+      colorFamily: JUMIA_SHEET_DEFAULTS.colorFamily,
+      variation: JUMIA_SHEET_DEFAULTS.variation,
+      productWeight: JUMIA_SHEET_DEFAULTS.productWeight,
+      jumiaCategory: JUMIA_SHEET_DEFAULTS.category,
       amazonUrl: amazonUrl || amazonMeta?.url || '',
       imageUrls,
-      stock: 10,
+      stock: JUMIA_SHEET_DEFAULTS.stock,
     };
     let sheetResult = null;
     if (syncSheet && isSheetWebhookConfigured()) {
@@ -453,12 +460,15 @@ export async function enrichProduct({
     metaTitle: copy?.meta_title || copy?.french_title || displayName,
     metaDescription: copy?.meta_description || '',
     wooTitle: copy?.woo_title || copy?.french_title || displayName,
-    brand: copy?.brand || 'Generic',
-    color: copy?.color || 'Multicolore',
-    jumiaCategory: '',
+    brand: JUMIA_SHEET_DEFAULTS.brand,
+    color: copy?.color || JUMIA_SHEET_DEFAULTS.color,
+    colorFamily: JUMIA_SHEET_DEFAULTS.colorFamily,
+    variation: JUMIA_SHEET_DEFAULTS.variation,
+    productWeight: JUMIA_SHEET_DEFAULTS.productWeight,
+    jumiaCategory: JUMIA_SHEET_DEFAULTS.category,
     amazonUrl: amazonUrl || amazonMeta?.url || '',
     imageUrls,
-    stock: 10,
+    stock: JUMIA_SHEET_DEFAULTS.stock,
   };
 
   let sheetResult = null;

@@ -605,7 +605,8 @@ async function executeAiPolish({
         amazonUrl,
         uploadToNocoDB,
         nocodbUrl: NOCODB_URL,
-        syncSheet: false,
+        // Push to N8N AI1 / Jumia Upload Template when webhook is configured.
+        syncSheet: true,
       }),
       enrichTimeout,
       'AI polish'
@@ -638,11 +639,19 @@ async function executeAiPolish({
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
   });
   const imgCount = enrichment.nocoImages?.length || 0;
+  const sheet = enrichment?.sheet;
+  const sheetNote = sheet?.skipped
+    ? (sheet.reason === 'no_webhook'
+      ? '\n📋 Jumia Sheet: أضف PRODUCT_SHEET_WEBHOOK_URL'
+      : '')
+    : (sheet?.error
+      ? `\n📋 Jumia Sheet خطأ: ${sheet.error}`
+      : '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template');
   await sendMessage(
     chatId,
-    `✨ تم تحديث المنتج #${rowId}\n🎨 الصورة 1: احترافية\n📷 الصورة 2: الأصلية\n📝 بطاقة الوصف داخل قسم الوصف فقط (${imgCount} صور في المعرض)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`
+    `✨ تم تحديث المنتج #${rowId}\n🎨 الصورة 1: احترافية\n📷 الصورة 2: الأصلية\n📝 بطاقة الوصف داخل قسم الوصف فقط (${imgCount} صور في المعرض)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}`
   );
-  console.log(`✅ AI polish OK #${rowId}`);
+  console.log(`✅ AI polish OK #${rowId}`, sheet?.skipped ? `sheet=${sheet.reason}` : 'sheet=ok');
 }
 
 /**

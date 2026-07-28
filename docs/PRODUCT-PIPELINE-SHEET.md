@@ -35,6 +35,19 @@ PUBLIC_SITE_URL=https://errayhany.com
 
 للتفعيل Sheet: انشر `docs/sheets-webhook.gs` كـ Web App والصق الرابط في `PRODUCT_SHEET_WEBHOOK_URL`.
 
+بعد اكتمال توليد AI يُضاف الصف تلقائياً إلى:
+- **Sheet1** (أرشيف داخلي)
+- **Upload Template** (الصيغة التي يقبلها Jumia)
+
+القيم الافتراضية (من ملف N8N AI1 الناجح):
+
+```env
+JUMIA_DEFAULT_BRAND=1045133 - Generic
+JUMIA_DEFAULT_CATEGORY=1000040 - Electronics / Accessories / Gadgets
+```
+
+يمكن تغيير التصنيف لكل متجر عبر `JUMIA_DEFAULT_CATEGORY` بصيغة `CODE - Path`.
+
 ## الموديلات
 
 - نص: `google/gemini-2.5-flash`
