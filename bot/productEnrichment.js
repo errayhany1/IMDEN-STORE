@@ -27,7 +27,6 @@ import {
 import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   bulletsFromHtml,
-  renderSpecsCard,
 } from './studioImage.js';
 
 export function buildSellerSku(ref) {
@@ -82,11 +81,10 @@ async function uploadBufferPairs(uploadToNocoDB, buffers, prefix) {
  * Image1 = AI studio hero (white packshot)
  * Image2 = AI alternate angle (if any)
  * Image3 = original front photo (real)
- * then packaging specs card / Amazon extras
+ * then Amazon extras — never a rendered "specs card" JPEG (broken fonts on Alpine).
  */
 function orderGalleryUploads({
   aiUploads = [],
-  specsUploads = [],
   amazonUploads = [],
   realUploads = [],
 }) {
@@ -95,12 +93,10 @@ function orderGalleryUploads({
   const secondAi = hero[1] ? [hero[1]] : [];
   const extraAi = hero.slice(2);
   const real = realUploads[0] ? [realUploads[0]] : [];
-  const specs = specsUploads.filter(Boolean).slice(0, 1);
   return [
     ...firstAi,
     ...secondAi,
     ...real,
-    ...specs,
     ...extraAi,
     ...amazonUploads.filter(Boolean),
   ].slice(0, 5);
@@ -482,10 +478,9 @@ export async function enrichProduct({
   // No barcode reading — skip entirely.
   const barcode = '';
 
-  // Specs: HTML in description + one French gallery card from packaging text.
+  // Specs stay as HTML inside the description only — never a gallery JPEG
+  // (SVG/Arial glyphs break on Alpine → empty tofu boxes).
   let hasSpecsImage = false;
-  let specsUploads = [];
-  let specsPairs = [];
   if (copy) {
     try {
       const packagingSpecs = (Array.isArray(copy.packaging_specs) ? copy.packaging_specs : [])
@@ -522,28 +517,10 @@ export async function enrichProduct({
       });
       copy.description_arabic = injectSpecsIntoDescription(copy.description_arabic, arBlock);
       copy.description_french = injectSpecsIntoDescription(copy.description_french, frBlock);
-
-      // Gallery card uses Latin/French text so Alpine SVG fonts stay readable.
-      if (bulletsFr.length) {
-        const specsJpeg = await renderSpecsCard({
-          title: copy.french_title || displayName,
-          bullets: bulletsFr,
-          brand: copy.brand,
-          color: copy.color,
-          sku: sellerSku,
-          price,
-          lang: 'fr',
-        });
-        specsPairs = await uploadBufferPairs(uploadToNocoDB, [specsJpeg], `specs-${sellerSku}`);
-        specsUploads = specsPairs.map((p) => p.file);
-        hasSpecsImage = specsUploads.length > 0;
-        console.log(`Packaging specs gallery card uploaded: ${specsUploads.length}`);
-      } else {
-        hasSpecsImage = true;
-        console.log('HTML specs card injected into description (no gallery card)');
-      }
+      hasSpecsImage = true;
+      console.log('HTML specs injected into description (no gallery specs image)');
     } catch (e) {
-      console.error('Specs card failed:', e.message);
+      console.error('Specs HTML failed:', e.message);
       aiFailures.push(`specs:${e.message}`);
     }
   }
@@ -553,14 +530,6 @@ export async function enrichProduct({
       id: `ai-${i + 1}`,
       kind: 'ai',
       label: `ستوديو ${i + 1}`,
-      file: p.file,
-      buffer: p.buffer,
-      selected: true,
-    })),
-    ...specsPairs.map((p) => ({
-      id: 'specs',
-      kind: 'specs',
-      label: 'بطاقة مواصفات',
       file: p.file,
       buffer: p.buffer,
       selected: true,
@@ -577,7 +546,6 @@ export async function enrichProduct({
 
   const nocoImages = orderGalleryUploads({
     aiUploads,
-    specsUploads,
     amazonUploads,
     // Never put raw seller photos alone in the gallery if studio AI failed.
     realUploads: aiUploads.length ? originalUploads : [],
