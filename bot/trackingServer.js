@@ -21,9 +21,11 @@ import {
   printJumiaLabels,
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
+import { registerAdminRoutes } from './adminRoutes.js';
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
+registerAdminRoutes(app);
 
 const PORT = Number(process.env.TRACKING_PORT || process.env.PORT || 3001);
 const TIFAWT_LEAD_URL = (

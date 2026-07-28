@@ -45,6 +45,7 @@ import {
   printJumiaLabels,
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
+import { registerAdminRoutes } from './adminRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -53,6 +54,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
+registerAdminRoutes(app);
 
 // Storefront origins allowed to call the /api/* endpoints from the browser.
 const ALLOWED_ORIGINS = (
@@ -65,8 +67,8 @@ app.use('/api', (req, res, next) => {
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password, X-Admin-Secret');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
     res.setHeader('Access-Control-Max-Age', '86400');
   }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
@@ -617,6 +619,8 @@ async function executeAiPolish({
         nocodbUrl: NOCODB_URL,
         // Push to N8N AI1 / Jumia Upload Template when webhook is configured.
         syncSheet: true,
+        // Always publish (create/update) on Jumia after AI description + images.
+        syncJumia: true,
       }),
       enrichTimeout,
       'AI polish'
@@ -774,7 +778,7 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
       ref: cleanReference(record.SKU || rawRef),
       amazonUrl: record.Amazon_URL || '',
       sellerSku,
-      startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.`,
+      startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
     });
   });
 

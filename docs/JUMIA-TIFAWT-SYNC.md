@@ -26,6 +26,10 @@ JUMIA_REFRESH_TOKEN=<refresh-token-from-lock-dialog>
 JUMIA_API_BASE=https://vendor-api.jumia.com
 JUMIA_POLL_MS=120000
 TIFAWT_LEAD_URL=https://errayhany.tifawt.ma/api/v1/lead-sources/api/<your-id>
+# لقائمة طلبات Tifawt / تسجيل الإرجاع من لوحة الإدارة:
+TIFAWT_EMAIL=<tifawt-login-email>
+TIFAWT_PASSWORD=<tifawt-login-password>
+ADMIN_PASSWORD=<same-as-VITE_ADMIN_PASSWORD>
 ```
 
 أسماء بديلة مدعومة للتوافق مع الخطة القديمة:
@@ -107,7 +111,24 @@ API على `/bot-api`:
 
 أزرار «إيقاف منتج» و«جعل المنتج متوفر» على البوت تحدّث NocoDB **و** حالة المنتج على Jumia (`ACTIVE` / `INACTIVE`) إن وُجد نفس الـ SKU.
 
-## 10) اختبار سريع
+## 10) لوحة الإدارة `/admin`
+
+القائمة المبسّطة:
+
+- طلبات الموقع · طلبات Tifawt · طلبات Jumia · مرتجعات الموقع · المنتجات · الإعدادات
+
+| Method | Path | الغرض |
+|--------|------|--------|
+| `GET` | `/bot-api/api/admin/tifawt/orders` | قائمة طلبات Tifawt |
+| `POST` | `/bot-api/api/admin/tifawt/orders/:id/return` | إرجاع عميل → `PENDING_RETURN` |
+| `GET` | `/bot-api/api/admin/jumia/orders` | طلبات Jumia الأخيرة |
+| `POST` | `/bot-api/api/admin/products/:sku/publish-jumia` | نشر منتج NocoDB على Jumia |
+
+الهيدر: `X-Admin-Password` = `ADMIN_PASSWORD` / `VITE_ADMIN_PASSWORD`.
+
+إعادة توليد الوصف/الصور من التيليجرام تنشر على Jumia تلقائياً (`syncJumia: true`).
+
+## 11) اختبار سريع
 
 بعد نشر env:
 

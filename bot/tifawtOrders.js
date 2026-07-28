@@ -47,6 +47,7 @@ const ORDER_STATUS = {
   IN_TRANSIT: { key: 'shipped', label: 'في الطريق', step: 3 },
   OUT_FOR_DELIVERY: { key: 'shipped', label: 'خارج للتوصيل', step: 3 },
   DELIVERED: { key: 'delivered', label: 'تم التوصيل', step: 4 },
+  PENDING_RETURN: { key: 'returned', label: 'مرتجع (قيد الإرجاع)', step: 0 },
   RETURNED: { key: 'returned', label: 'مرتجع', step: 0 },
   REFUSED: { key: 'returned', label: 'مرفوض', step: 0 },
   CANCELLED: { key: 'cancelled', label: 'ملغي', step: 0 },

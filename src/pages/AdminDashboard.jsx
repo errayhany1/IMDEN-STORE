@@ -3,13 +3,11 @@ import axios from 'axios';
 import { Lock, Package, Loader2, Search, ArrowRight, RefreshCw, LogOut, Trash2, Phone, Eye, X, Clock, Truck, XCircle, ShoppingBag, TrendingUp, ChevronDown, ChevronUp, Users, Download, Plus, CreditCard } from 'lucide-react';
 import useStore from '../store/useStore';
 import AdminSidebar from './AdminSidebar';
-import DirectSalesTab from './admin/DirectSalesTab';
 import ReturnsTab from './admin/ReturnsTab';
-import SuppliersTab from './admin/SuppliersTab';
-import WalletsTab from './admin/WalletsTab';
-import ProfitDashboardTab from './admin/ProfitDashboardTab';
-import ReportsTab from './admin/ReportsTab';
+import TifawtOrdersTab from './admin/TifawtOrdersTab';
+import JumiaOrdersTab from './admin/JumiaOrdersTab';
 import { syncOrderSideEffects } from '../services/tifawt';
+import { publishProductToJumia } from '../services/adminApi';
 import { initTelegramWebApp, adminTabFromQuery } from '../utils/telegramWebApp';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
@@ -83,6 +81,7 @@ const AdminDashboard = () => {
     const [ozonCities, setOzonCities] = useState([]);
     const [ozonFormData, setOzonFormData] = useState({ city: '', address: '', name: '', phone: '', price: '', note: '' });
     const [ozonLoading, setOzonLoading] = useState(false);
+    const [publishingJumiaSku, setPublishingJumiaSku] = useState(null);
 
     useEffect(() => {
         initTelegramWebApp();
@@ -96,13 +95,11 @@ const AdminDashboard = () => {
             setIsAuthenticated(true);
             fetchOrders();
             fetchProducts();
-            fetchExpenses();
             
             // Auto refresh every 30 seconds
             const interval = setInterval(() => {
                 fetchOrders(true);
                 fetchProducts(true);
-                fetchExpenses(true);
             }, 30000);
             return () => clearInterval(interval);
         }
@@ -115,7 +112,6 @@ const AdminDashboard = () => {
             sessionStorage.setItem('admin_auth', 'true');
             fetchOrders();
             fetchProducts();
-            fetchExpenses();
         } else {
             setError('كلمة السر غير صحيحة');
         }
@@ -755,9 +751,17 @@ const AdminDashboard = () => {
                 {/* Top Bar */}
                 <header className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-xl ${dm ? 'bg-gray-950/90 border-gray-800' : 'bg-slate-50/90 border-slate-200'}`}>
                     <h2 className="text-lg font-bold mr-10 sm:mr-0">
-                        {{ dashboard: 'لوحة التحكم', orders: 'إدارة الطلبات', customers: 'الزبائن', products: 'المنتجات', expenses: 'المصاريف', settings: 'الإعدادات', 'direct-sales': 'المبيعات المباشرة', returns: 'المرتجعات', suppliers: 'الموردين', wallets: 'المحافظ', 'profit-dashboard': 'لوحة الأرباح', reports: 'التقارير' }[activeTab] || 'لوحة التحكم'}
+                        {{
+                            dashboard: 'لوحة التحكم',
+                            orders: 'طلبات الموقع',
+                            'tifawt-orders': 'طلبات Tifawt',
+                            'jumia-orders': 'طلبات Jumia',
+                            products: 'المنتجات',
+                            returns: 'مرتجعات الموقع',
+                            settings: 'الإعدادات',
+                        }[activeTab] || 'لوحة التحكم'}
                     </h2>
-                    <button onClick={() => { fetchOrders(true); fetchProducts(true); fetchExpenses(true); }}
+                    <button onClick={() => { fetchOrders(true); fetchProducts(true); }}
                         className={`p-2 rounded-lg transition-colors ${dm ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-slate-200 text-slate-500'}`}
                         title="تحديث">
                         <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
@@ -769,11 +773,11 @@ const AdminDashboard = () => {
                 {/* ══════ DASHBOARD TAB ══════ */}
                 {activeTab === 'dashboard' && (<>
                 {/* ── Stats Cards ── */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
                         <div className="flex items-center gap-2 mb-2">
                             <ShoppingBag size={16} className="text-blue-500" />
-                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>إجمالي الطلبات</span>
+                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>طلبات الموقع</span>
                         </div>
                         <p className="text-2xl font-bold">{orders.length}</p>
                     </div>
@@ -786,19 +790,10 @@ const AdminDashboard = () => {
                     </div>
                     <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
                         <div className="flex items-center gap-2 mb-2">
-                            <CreditCard size={16} className="text-red-500" />
-                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>إجمالي المصاريف</span>
-                        </div>
-                        <p className="text-2xl font-bold text-red-500">{totalExpenses.toFixed(0)} DH</p>
-                    </div>
-                    <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
-                        <div className="flex items-center gap-2 mb-2">
                             <Package size={16} className="text-blue-400" />
-                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الربح الصافي</span>
+                            <span className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>المنتجات</span>
                         </div>
-                        <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
-                            {netProfit > 0 ? '+' : ''}{netProfit.toFixed(0)} DH
-                        </p>
+                        <p className="text-2xl font-bold">{products.length}</p>
                     </div>
                 </div>
 
@@ -1203,6 +1198,29 @@ const AdminDashboard = () => {
                                                             >
                                                                 {isPaused ? '👁️ نشر' : '⏸️ إيقاف'}
                                                             </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={publishingJumiaSku === (p.SKU || p.Ref)}
+                                                                onClick={async () => {
+                                                                    const sku = p.SKU || p.Ref;
+                                                                    if (!sku) return alert('لا يوجد مرجع للمنتج');
+                                                                    if (!window.confirm(`نشر ${sku} على Jumia بالوصف والصور الحالية؟\n\nملاحظة: إعادة التوليد من التيليجرام تنشر على Jumia تلقائياً أيضاً.`)) return;
+                                                                    setPublishingJumiaSku(sku);
+                                                                    try {
+                                                                        const result = await publishProductToJumia(sku);
+                                                                        if (!result?.ok) throw new Error(result?.error || 'publish_failed');
+                                                                        alert(`تم النشر على Jumia: ${result.sellerSku || sku}`);
+                                                                    } catch (e) {
+                                                                        alert(e?.response?.data?.error || e.message || 'فشل النشر على Jumia');
+                                                                    } finally {
+                                                                        setPublishingJumiaSku(null);
+                                                                    }
+                                                                }}
+                                                                className="px-2 py-1.5 rounded-lg text-xs font-bold transition-all border bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 whitespace-nowrap"
+                                                                title="نشر المنتج الحالي على Jumia"
+                                                            >
+                                                                {publishingJumiaSku === (p.SKU || p.Ref) ? '...' : 'Jumia'}
+                                                            </button>
                                                             <button 
                                                                 onClick={() => {
                                                                     setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId });
@@ -1303,7 +1321,7 @@ const AdminDashboard = () => {
                         <h3 className="text-lg font-bold">الإعدادات</h3>
                         <div className={`p-4 rounded-xl border ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
                             <p className="text-sm font-bold mb-1">معلومات النظام</p>
-                            <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الإصدار: 1.0 | الطلبات: {orders.length} | الزبائن: {customers.length}</p>
+                            <p className={`text-xs ${dm ? 'text-gray-400' : 'text-slate-500'}`}>الإصدار: 2.0 | طلبات الموقع: {orders.length} | منتجات: {products.length}</p>
                         </div>
                         <div className={`p-4 rounded-xl border space-y-3 ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
                             <div>
@@ -1345,34 +1363,19 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
-                {/* ══════ DIRECT SALES ══════ */}
-                {activeTab === 'direct-sales' && (
-                    <DirectSalesTab dm={dm} products={products} orders={orders} onCreateOrder={createDirectSale} />
+                {/* ══════ TIFAWT ORDERS ══════ */}
+                {activeTab === 'tifawt-orders' && (
+                    <TifawtOrdersTab dm={dm} />
                 )}
 
-                {/* ══════ RETURNS ══════ */}
+                {/* ══════ JUMIA ORDERS ══════ */}
+                {activeTab === 'jumia-orders' && (
+                    <JumiaOrdersTab dm={dm} />
+                )}
+
+                {/* ══════ RETURNS (site/NocoDB) ══════ */}
                 {activeTab === 'returns' && (
                     <ReturnsTab dm={dm} orders={orders} onUpdateStatus={updateOrderStatusWithNotes} />
-                )}
-
-                {/* ══════ SUPPLIERS ══════ */}
-                {activeTab === 'suppliers' && (
-                    <SuppliersTab dm={dm} />
-                )}
-
-                {/* ══════ WALLETS ══════ */}
-                {activeTab === 'wallets' && (
-                    <WalletsTab dm={dm} orders={orders} expenses={expenses} />
-                )}
-
-                {/* ══════ PROFIT DASHBOARD ══════ */}
-                {activeTab === 'profit-dashboard' && (
-                    <ProfitDashboardTab dm={dm} orders={orders} expenses={expenses} products={products} />
-                )}
-
-                {/* ══════ REPORTS ══════ */}
-                {activeTab === 'reports' && (
-                    <ReportsTab dm={dm} orders={orders} expenses={expenses} products={products} />
                 )}
 
             </main>

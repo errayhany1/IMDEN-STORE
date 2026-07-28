@@ -40,14 +40,11 @@ export function adminTabFromQuery() {
   const allowed = new Set([
     'dashboard',
     'orders',
+    'tifawt-orders',
+    'jumia-orders',
     'products',
-    'expenses',
-    'direct',
     'returns',
-    'suppliers',
-    'wallets',
-    'profit',
-    'reports',
+    'settings',
   ]);
   return allowed.has(tab) ? tab : null;
 }
