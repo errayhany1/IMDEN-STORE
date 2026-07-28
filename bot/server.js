@@ -647,11 +647,29 @@ async function executeAiPolish({
     : (sheet?.error
       ? `\n📋 Jumia Sheet خطأ: ${sheet.error}`
       : '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template');
+  const jumia = enrichment?.jumia;
+  let jumiaNote = '';
+  if (jumia?.skipped) {
+    if (jumia.reason === 'jumia_not_configured') {
+      jumiaNote = '\n🛒 Jumia API: أضف JUMIA_CLIENT_ID + JUMIA_REFRESH_TOKEN على imden-bot';
+    }
+  } else if (jumia?.error) {
+    jumiaNote = `\n🛒 Jumia API خطأ: ${jumia.error}`;
+  } else if (jumia?.productSetSid) {
+    const st = jumia.countryStatuses?.[0]?.productStatus || '';
+    jumiaNote = st && /FAIL/i.test(st)
+      ? `\n🛒 Jumia API: أُنشئ (${jumia.sellerSku}) — حالة البلد: ${st}`
+      : `\n🛒 Jumia API: تم إنشاء المنتج (${jumia.sellerSku})`;
+  }
   await sendMessage(
     chatId,
-    `✨ تم تحديث المنتج #${rowId}\n🎨 الصورة 1: احترافية\n📷 الصورة 2: الأصلية\n📝 بطاقة الوصف داخل قسم الوصف فقط (${imgCount} صور في المعرض)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}`
+    `✨ تم تحديث المنتج #${rowId}\n🎨 الصورة 1: احترافية\n📷 الصورة 2: الأصلية\n📝 بطاقة الوصف داخل قسم الوصف فقط (${imgCount} صور في المعرض)\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
   );
-  console.log(`✅ AI polish OK #${rowId}`, sheet?.skipped ? `sheet=${sheet.reason}` : 'sheet=ok');
+  console.log(
+    `✅ AI polish OK #${rowId}`,
+    sheet?.skipped ? `sheet=${sheet.reason}` : 'sheet=ok',
+    jumia?.skipped ? `jumia=${jumia.reason}` : (jumia?.error ? `jumia=err` : 'jumia=ok'),
+  );
 }
 
 /**

@@ -64,11 +64,18 @@ TIFAWT_API_BASE=https://errayhany.tifawt.ma/api/v1
 TIFAWT_EMAIL=admin@errayhany.ma
 TIFAWT_PASSWORD=
 TIFAWT_BUSINESS_ID=1
-# Jumia → Tifawt (خدمة التتبع /bot-api) — انظر docs/JUMIA-TIFAWT-SYNC.md
+# Jumia → Tifawt (خدمة التتبع /bot-api على imden) — انظر docs/JUMIA-TIFAWT-SYNC.md
 # JUMIA_CLIENT_ID=
 # JUMIA_REFRESH_TOKEN=
 # JUMIA_API_BASE=https://vendor-api.jumia.com
 # JUMIA_POLL_MS=120000
+
+# Jumia إنشاء منتجات مباشرة (PIM API على imden-bot) — تطبيق Self Auth منفصل مفضّل عن طلبات imden
+# JUMIA_CLIENT_ID=
+# JUMIA_REFRESH_TOKEN=
+# JUMIA_SHOP_ID=a74ac8a0-03f7-490b-8e45-cf9433b75d2c
+# JUMIA_DEFAULT_BRAND=1045133 - Generic
+# JUMIA_DEFAULT_CATEGORY=1000040 - Electronics / Accessories / Gadgets
 
 # بدون WEBHOOK → long-polling تلقائياً (موصى به)
 # TELEGRAM_MODE=polling

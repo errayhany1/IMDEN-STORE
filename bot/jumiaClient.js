@@ -1,6 +1,7 @@
 /**
  * Jumia Vendor API client (OAuth Self Authorization).
  * Token: POST /token  |  Orders: GET /orders, GET /orders/items
+ * Products: POST api-pim-services /api/product-set (same OAuth token)
  * Base: https://vendor-api.jumia.com
  */
 import axios from 'axios';
@@ -8,6 +9,11 @@ import axios from 'axios';
 const JUMIA_API_BASE = (
   process.env.JUMIA_API_BASE
   || 'https://vendor-api.jumia.com'
+).replace(/\/+$/, '');
+
+const JUMIA_PIM_API = (
+  process.env.JUMIA_PIM_API
+  || 'https://api-pim-services.jumia.com'
 ).replace(/\/+$/, '');
 
 const CLIENT_ID = (
@@ -20,6 +26,16 @@ const REFRESH_TOKEN = (
   process.env.JUMIA_REFRESH_TOKEN
   || process.env.JUMIA_API_KEY
   || ''
+).trim();
+
+const SHOP_ID = (
+  process.env.JUMIA_SHOP_ID
+  || 'a74ac8a0-03f7-490b-8e45-cf9433b75d2c'
+).trim();
+
+const BUSINESS_CLIENT = (
+  process.env.JUMIA_BUSINESS_CLIENT
+  || 'jumia-ma'
 ).trim();
 
 const tokenState = {
@@ -285,4 +301,171 @@ export async function fetchJumiaOrderForTifawt(orderId) {
   }
   const items = await getOrderItems(orderIdOf(order) || orderId);
   return mapJumiaOrderToTifawt(order, items);
+}
+
+/** Parse "1045133 - Generic" or bare code → "1045133". */
+export function parseJumiaCode(value, fallback = '') {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d+)/);
+  if (match) return match[1];
+  return String(fallback || '').trim();
+}
+
+function asHtml(value, fallback = '<p></p>') {
+  const text = String(value || '').trim();
+  if (!text) return fallback;
+  if (/<[a-z][\s\S]*>/i.test(text)) return text;
+  return `<p>${text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')}</p>`;
+}
+
+/**
+ * Create a product via Jumia PIM (same path Vendor Center uses).
+ * OAuth Self Auth access token works with api-pim-services.
+ *
+ * @param {object} product - same shape as sheet payload fields
+ * @returns {{ productSetSid, productSids, sellerSku, countryStatuses }}
+ */
+export async function createJumiaProduct(product = {}) {
+  if (!isJumiaConfigured()) {
+    return { skipped: true, reason: 'jumia_not_configured' };
+  }
+
+  const sellerSku = pick(product.sellerSku, product.SellerSKU, product.parentSku);
+  if (!sellerSku) {
+    return { skipped: true, reason: 'missing_seller_sku' };
+  }
+
+  const name = pick(product.frenchTitle, product.name, product.Name, sellerSku);
+  const description = asHtml(
+    pick(product.descriptionFr, product.description, product.Description),
+    asHtml(name),
+  );
+  const shortDescription = asHtml(
+    pick(product.shortFr, product.short_description, product.shortDescription),
+    asHtml(name),
+  );
+  const brandCode = parseJumiaCode(
+    pick(product.brand, product.Brand, process.env.JUMIA_DEFAULT_BRAND),
+    '1045133',
+  );
+  const categoryCode = parseJumiaCode(
+    pick(product.jumiaCategory, product.category, product.PrimaryCategory, process.env.JUMIA_DEFAULT_CATEGORY),
+    '1000040',
+  );
+  const images = asArray(product.imageUrls || product.images)
+    .map((url) => String(url || '').trim())
+    .filter((url) => /^https?:\/\//i.test(url));
+  if (!images.length) {
+    return { skipped: true, reason: 'missing_images' };
+  }
+
+  const price = Math.max(1, Number(product.price ?? product.Price_MAD ?? 0) || 1);
+  const stock = Math.max(0, Number(product.stock ?? 10) || 0);
+  const color = pick(product.color, 'Multicolore') || 'Multicolore';
+  const colorFamily = pick(product.colorFamily, color) || color;
+  const variation = pick(product.variation, '...') || '...';
+  const weight = String(product.productWeight ?? product.product_weight ?? 1);
+
+  const countryCode = BUSINESS_CLIENT.startsWith('jumia-')
+    ? BUSINESS_CLIENT.replace(/^jumia-/, '').toUpperCase()
+    : BUSINESS_CLIENT.toUpperCase();
+
+  const body = {
+    brandCode,
+    categoryCode,
+    images,
+    parentSKU: pick(product.referenceClean, product.parentSku, sellerSku) || sellerSku,
+    attributes: [
+      { name: 'name', values: [name] },
+      { name: 'description', values: [description] },
+      { name: 'short_description', values: [shortDescription] },
+      { name: 'product_weight', values: [weight] },
+      { name: 'color_family', values: [colorFamily] },
+      { name: 'color', values: [color] },
+    ],
+    variations: [{
+      sellerSKU: sellerSku,
+      price,
+      stock,
+      currency: 'MAD',
+      salePrice: null,
+      saleStartDate: null,
+      saleEndDate: null,
+      variation,
+      businessClients: [{
+        countryCode,
+        price,
+        salePrice: null,
+        saleStartDate: null,
+        saleEndDate: null,
+      }],
+    }],
+    newVariations: [],
+  };
+
+  const token = await getAccessToken();
+  const { data, status } = await axios.post(
+    `${JUMIA_PIM_API}/api/product-set`,
+    body,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        X_MASTER_SHOP_SID: SHOP_ID,
+        X_SHOP_SID_LIST: SHOP_ID,
+      },
+      timeout: 60_000,
+      validateStatus: () => true,
+    },
+  );
+
+  if (status < 200 || status >= 300) {
+    const err = new Error(
+      data?.message || data?.error || `jumia_create_http_${status}`,
+    );
+    err.statusCode = status;
+    err.details = data;
+    throw err;
+  }
+
+  const productSetSid = data?.productSetSid || '';
+  let countryStatuses = [];
+  if (productSetSid) {
+    try {
+      const detail = await axios.get(
+        `${JUMIA_PIM_API}/api/product-set/${productSetSid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            X_MASTER_SHOP_SID: SHOP_ID,
+            X_SHOP_SID_LIST: SHOP_ID,
+          },
+          timeout: 30_000,
+        },
+      );
+      countryStatuses = asArray(detail.data?.products?.[0]?.productCountries).map((c) => ({
+        code: c?.businessClient?.code,
+        productStatus: c?.productStatus,
+        qcStatus: c?.qcStatus,
+        status: c?.status,
+      }));
+    } catch {
+      // detail is optional
+    }
+  }
+
+  return {
+    skipped: false,
+    status,
+    productSetSid,
+    productSids: asArray(data?.productSids),
+    sellerSku,
+    countryStatuses,
+    errors: data?.errors || null,
+  };
 }

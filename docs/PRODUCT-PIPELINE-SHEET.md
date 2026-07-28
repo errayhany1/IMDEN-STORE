@@ -38,15 +38,19 @@ PUBLIC_SITE_URL=https://errayhany.com
 بعد اكتمال توليد AI يُضاف الصف تلقائياً إلى:
 - **Sheet1** (أرشيف داخلي)
 - **Upload Template** (الصيغة التي يقبلها Jumia)
+- **Jumia PIM API** مباشرة (`POST /api/product-set`) إن وُجدت مفاتيح Jumia على `imden-bot`
 
 القيم الافتراضية (من ملف N8N AI1 الناجح):
 
 ```env
 JUMIA_DEFAULT_BRAND=1045133 - Generic
 JUMIA_DEFAULT_CATEGORY=1000040 - Electronics / Accessories / Gadgets
+JUMIA_CLIENT_ID=
+JUMIA_REFRESH_TOKEN=
+JUMIA_SHOP_ID=a74ac8a0-03f7-490b-8e45-cf9433b75d2c
 ```
 
-يمكن تغيير التصنيف لكل متجر عبر `JUMIA_DEFAULT_CATEGORY` بصيغة `CODE - Path`.
+> ملاحظة: Refresh Token يتغيّر عند التجديد. لا تستخدم نفس التطبيق على `imden` (طلبات) و`imden-bot` (منتجات) معاً — أنشئ تطبيق Self Auth ثانٍ للمنتجات.
 
 ## الموديلات
 

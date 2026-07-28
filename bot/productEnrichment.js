@@ -15,6 +15,10 @@ import {
   JUMIA_SHEET_DEFAULTS,
 } from './sheetsAppend.js';
 import {
+  createJumiaProduct,
+  isJumiaConfigured,
+} from './jumiaClient.js';
+import {
   scrapeAmazonProduct,
   downloadImageBuffers,
   isApifyConfigured,
@@ -91,6 +95,45 @@ function hasArabic(text) {
   return /[\u0600-\u06FF]/.test(String(text || ''));
 }
 
+async function maybeSyncSheet(productForSheet, syncSheet) {
+  if (syncSheet && isSheetWebhookConfigured()) {
+    try {
+      return await appendProductToSheet(productForSheet);
+    } catch (e) {
+      console.error('Sheet append error:', e.message);
+      return { error: e.message };
+    }
+  }
+  return {
+    skipped: true,
+    reason: syncSheet ? 'no_webhook' : 'destination_choice',
+  };
+}
+
+async function maybeSyncJumia(productForSheet, syncJumia) {
+  if (!syncJumia) {
+    return { skipped: true, reason: 'destination_choice' };
+  }
+  if (!isJumiaConfigured()) {
+    return { skipped: true, reason: 'jumia_not_configured' };
+  }
+  try {
+    const result = await createJumiaProduct(productForSheet);
+    if (!result?.skipped) {
+      console.log(
+        'Jumia create OK',
+        result.sellerSku,
+        result.productSetSid,
+        result.countryStatuses?.[0]?.productStatus || '',
+      );
+    }
+    return result;
+  } catch (e) {
+    console.error('Jumia create error:', e.message);
+    return { error: e.message, details: e.details || null };
+  }
+}
+
 /**
  * Specs block inside the description as HTML (not a rendered image).
  * Avoids missing Arabic glyphs on Linux/Alpine SVG fonts.
@@ -162,6 +205,7 @@ export async function enrichProduct({
   uploadToNocoDB,
   nocodbUrl,
   syncSheet = true,
+  syncJumia = true,
 }) {
   const enabled = String(process.env.PRODUCT_AI_ENRICHMENT || 'true').toLowerCase() !== 'false';
   const sellerSku = buildSellerSku(ref);
@@ -252,6 +296,7 @@ export async function enrichProduct({
         reason: syncSheet ? 'no_webhook' : 'destination_choice',
       };
     }
+    const jumiaResult = await maybeSyncJumia(productForSheet, syncJumia);
     return {
       sellerSku,
       referenceClean,
@@ -262,6 +307,7 @@ export async function enrichProduct({
       nocoImages,
       imageUrls,
       sheet: sheetResult,
+      jumia: jumiaResult,
       productForSheet,
       aiFailures: [
         !enabled
@@ -471,20 +517,8 @@ export async function enrichProduct({
     stock: JUMIA_SHEET_DEFAULTS.stock,
   };
 
-  let sheetResult = null;
-  if (syncSheet && isSheetWebhookConfigured()) {
-    try {
-      sheetResult = await appendProductToSheet(productForSheet);
-    } catch (e) {
-      console.error('Sheet append error:', e.message);
-      sheetResult = { error: e.message };
-    }
-  } else {
-    sheetResult = {
-      skipped: true,
-      reason: syncSheet ? 'no_webhook' : 'destination_choice',
-    };
-  }
+  const sheetResult = await maybeSyncSheet(productForSheet, syncSheet);
+  const jumiaResult = await maybeSyncJumia(productForSheet, syncJumia);
 
   return {
     sellerSku,
@@ -496,6 +530,7 @@ export async function enrichProduct({
     nocoImages: finalImages,
     imageUrls,
     sheet: sheetResult,
+    jumia: jumiaResult,
     productForSheet,
     aiFailures,
     hasAiImages: aiUploads.length > 0,
