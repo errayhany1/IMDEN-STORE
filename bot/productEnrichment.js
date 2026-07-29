@@ -28,6 +28,7 @@ import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   bulletsFromHtml,
 } from './studioImage.js';
+import { createRealProductCutout } from './localBackground.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -79,25 +80,24 @@ async function uploadBufferPairs(uploadToNocoDB, buffers, prefix) {
 /**
  * Build Image1…Image5 order:
  * Image1 = AI studio hero (white packshot)
- * Image2 = AI alternate angle (if any)
- * Image3 = original front photo (real)
+ * Image2 = real product cutout (local U²-Net, no generation)
+ * Image3 = original front photo only if cutout failed
  * then Amazon extras — never a rendered "specs card" JPEG (broken fonts on Alpine).
  */
 function orderGalleryUploads({
   aiUploads = [],
+  cutoutUploads = [],
   amazonUploads = [],
   realUploads = [],
 }) {
   const hero = aiUploads.filter(Boolean);
   const firstAi = hero[0] ? [hero[0]] : [];
-  const secondAi = hero[1] ? [hero[1]] : [];
-  const extraAi = hero.slice(2);
-  const real = realUploads[0] ? [realUploads[0]] : [];
+  const cutout = cutoutUploads[0] ? [cutoutUploads[0]] : [];
+  const real = !cutout.length && realUploads[0] ? [realUploads[0]] : [];
   return [
     ...firstAi,
-    ...secondAi,
+    ...cutout,
     ...real,
-    ...extraAi,
     ...amazonUploads.filter(Boolean),
   ].slice(0, 5);
 }
@@ -138,6 +138,9 @@ async function maybeSyncJumia(productForSheet, syncJumia) {
   }
   try {
     const result = await createJumiaProduct(productForSheet);
+    if (Array.isArray(result?.imageUrls) && result.imageUrls.length) {
+      productForSheet.imageUrls = result.imageUrls;
+    }
     if (!result?.skipped) {
       console.log(
         'Jumia create OK',
@@ -432,7 +435,7 @@ export async function enrichProduct({
   const imagesPromise = (async () => {
     try {
       const aiBuffers = await runImagesOnce(displayName);
-      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 2);
+      const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
       if (!aiOnly.length) {
         throw new Error('No AI studio image produced from seller photos');
       }
@@ -440,30 +443,45 @@ export async function enrichProduct({
       console.log(`AI studio images uploaded: ${pairs.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
       return pairs;
     } catch (e) {
-      console.error('AI images failed, retrying once:', e.message);
-      try {
-        const aiBuffers = await runImagesOnce(displayName);
-        const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 2);
-        if (!aiOnly.length) throw new Error('No AI studio image on retry');
-        const pairs = await uploadBufferPairs(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
-        console.log(`AI studio images uploaded on retry: ${pairs.length}`);
-        return pairs;
-      } catch (e2) {
-        console.error('AI images retry failed:', e2.message);
-        aiFailures.push(`images:${e2.message}`);
-        return [];
-      }
+      // Never retry image generation automatically: that doubles spend and
+      // frequently repeats the same hallucination.
+      console.error('AI image failed without paid retry:', e.message);
+      aiFailures.push(`images:${e.message}`);
+      return [];
     }
   })();
 
-  const [copyResult, imagePairs] = await Promise.all([
+  const cutoutPromise = (async () => {
+    try {
+      const source = galleryRealBuffers[0] || visionPrimary;
+      const cutout = await createRealProductCutout(source, { price, oldPrice });
+      if (!cutout) return [];
+      const pairs = await uploadBufferPairs(
+        uploadToNocoDB,
+        [cutout],
+        `cutout-${sellerSku}`
+      );
+      console.log(`Local real-product cutout uploaded: ${pairs.length}`);
+      return pairs;
+    } catch (e) {
+      // The generated image and raw original remain available for approval.
+      console.error('Local background removal failed:', e.message);
+      aiFailures.push(`cutout:${e.message}`);
+      return [];
+    }
+  })();
+
+  const [copyResult, imagePairs, cutoutResult] = await Promise.all([
     copyPromise,
     imagesPromise,
+    cutoutPromise,
   ]);
 
   copy = copyResult;
   const aiPairs = imagePairs || [];
+  const cutoutPairs = cutoutResult || [];
   aiUploads = aiPairs.map((p) => p.file);
+  const cutoutUploads = cutoutPairs.map((p) => p.file);
 
   // If copy still empty, one more dedicated retry after images finished.
   if (!copy) {
@@ -529,7 +547,15 @@ export async function enrichProduct({
     ...aiPairs.map((p, i) => ({
       id: `ai-${i + 1}`,
       kind: 'ai',
-      label: `ستوديو ${i + 1}`,
+      label: 'مولّدة بالذكاء',
+      file: p.file,
+      buffer: p.buffer,
+      selected: true,
+    })),
+    ...cutoutPairs.map((p) => ({
+      id: 'cutout',
+      kind: 'cutout',
+      label: 'المنتج الحقيقي — خلفية محذوفة محلياً',
       file: p.file,
       buffer: p.buffer,
       selected: true,
@@ -546,9 +572,10 @@ export async function enrichProduct({
 
   const nocoImages = orderGalleryUploads({
     aiUploads,
+    cutoutUploads,
     amazonUploads,
-    // Never put raw seller photos alone in the gallery if studio AI failed.
-    realUploads: aiUploads.length ? originalUploads : [],
+    // Raw photo is only a fallback when local segmentation failed.
+    realUploads: (aiUploads.length || cutoutUploads.length) ? originalUploads : [],
   });
   // Fallback if ordering somehow empty
   const finalImages = nocoImages.length
@@ -607,7 +634,7 @@ export async function enrichProduct({
     galleryCandidates,
     nocodbUrl,
     aiFailures,
-    hasAiImages: aiUploads.length > 0,
+    hasAiImages: aiUploads.length > 0 || cutoutUploads.length > 0,
     hasSpecsImage,
   };
 }

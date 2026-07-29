@@ -62,6 +62,18 @@ async function removeEdgeConnectedWhite(productBuffer) {
 
   const pixels = Buffer.from(raw.data);
   const total = width * height;
+  let transparentPixels = 0;
+  for (let i = 0; i < total; i += 1) {
+    if (pixels[(i * 4) + 3] < 24) transparentPixels += 1;
+  }
+  // Local U²-Net already returns a transparent foreground. Preserve that
+  // alpha instead of trying to find a white background around it.
+  if (transparentPixels / total >= 0.03) {
+    return sharp(pixels, {
+      raw: { width, height, channels: 4 },
+    }).png().toBuffer();
+  }
+
   const background = new Uint8Array(total);
   const queue = new Int32Array(total);
   let read = 0;

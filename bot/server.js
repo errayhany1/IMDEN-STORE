@@ -597,7 +597,7 @@ async function requestGalleryApproval({
 
   await sendMessage(
     chatId,
-    `🖼️ صور مولّدة للمنتج #${rowId} (${sellerSku})\nاختر ما يظهر في واجهة الموقع، ثم اضغط نشر:\n\n${galleryApprovalSummary(candidates)}`
+    `🖼️ صور المنتج #${rowId} (${sellerSku})\nستجد صورة مولّدة وصورة للمنتج الحقيقي بعد حذف الخلفية محلياً.\nاختر ما يظهر في الواجهة، ثم اضغط نشر:\n\n${galleryApprovalSummary(candidates)}`
   );
 
   for (let i = 0; i < candidates.length; i++) {
@@ -626,8 +626,9 @@ async function requestGalleryApproval({
 function orderSelectedGalleryFiles(candidates) {
   const selected = candidates.filter((c) => c.selected && c.file);
   const ai = selected.filter((c) => c.kind === 'ai').map((c) => c.file);
+  const cutout = selected.filter((c) => c.kind === 'cutout').map((c) => c.file);
   const real = selected.filter((c) => c.kind === 'real').map((c) => c.file);
-  return [...ai, ...real].slice(0, 5);
+  return [...ai, ...cutout, ...real].slice(0, 5);
 }
 
 async function finalizeGalleryApproval(pending, { publishImages }) {
@@ -654,19 +655,15 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
   let sheetNote = '';
   let jumiaNote = '';
   if (publishImages && selectedFiles.length && enrichment.productForSheet) {
-    if (isSheetWebhookConfigured()) {
-      try {
-        const sheet = await appendProductToSheet(enrichment.productForSheet);
-        sheetNote = sheet?.error
-          ? `\n📋 Jumia Sheet خطأ: ${sheet.error}`
-          : '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template';
-      } catch (e) {
-        sheetNote = `\n📋 Jumia Sheet خطأ: ${e.message}`;
-      }
-    }
+    // Jumia first: materializes durable /public-images/p/{sku}/n.jpg URLs.
+    // Sheet must use those same permanent URLs (never NocoDB signed links).
     if (isJumiaConfigured()) {
       try {
         const jumia = await createJumiaProduct(enrichment.productForSheet);
+        if (Array.isArray(jumia?.imageUrls) && jumia.imageUrls.length) {
+          enrichment.productForSheet.imageUrls = jumia.imageUrls;
+          enrichment.imageUrls = jumia.imageUrls;
+        }
         if (jumia?.skipped) {
           if (jumia.reason === 'jumia_not_configured') {
             jumiaNote = '\n🛒 Jumia API: غير مضبوط';
@@ -684,6 +681,16 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
         }
       } catch (e) {
         jumiaNote = `\n🛒 Jumia API خطأ: ${e.message}`;
+      }
+    }
+    if (isSheetWebhookConfigured()) {
+      try {
+        const sheet = await appendProductToSheet(enrichment.productForSheet);
+        sheetNote = sheet?.error
+          ? `\n📋 Jumia Sheet خطأ: ${sheet.error}`
+          : '\n📋 Jumia Sheet: تمت الإضافة إلى Upload Template';
+      } catch (e) {
+        sheetNote = `\n📋 Jumia Sheet خطأ: ${e.message}`;
       }
     }
   }
@@ -924,6 +931,10 @@ async function executeAiPolish({
   if (enrichment.productForSheet?.imageUrls?.length && isJumiaConfigured()) {
     try {
       enrichment.jumia = await createJumiaProduct(enrichment.productForSheet);
+      if (Array.isArray(enrichment.jumia?.imageUrls) && enrichment.jumia.imageUrls.length) {
+        enrichment.productForSheet.imageUrls = enrichment.jumia.imageUrls;
+        enrichment.imageUrls = enrichment.jumia.imageUrls;
+      }
     } catch (e) {
       enrichment.jumia = { error: e.message };
     }
