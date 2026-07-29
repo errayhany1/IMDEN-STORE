@@ -67,8 +67,26 @@ async function removeEdgeConnectedWhite(productBuffer) {
     if (pixels[(i * 4) + 3] < 24) transparentPixels += 1;
   }
   // Local U²-Net already returns a transparent foreground. Preserve that
-  // alpha instead of trying to find a white background around it.
+  // alpha instead of trying to find a white background around it, but still
+  // refuse a mask that kept the whole photo.
   if (transparentPixels / total >= 0.03) {
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let i = 0; i < total; i += 1) {
+      if (pixels[(i * 4) + 3] <= 20) continue;
+      const x = i % width;
+      const y = (i - x) / width;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    if (maxX < minX || maxY < minY) throw new Error('studio_product_missing');
+    if ((maxX - minX + 1) / width > 0.985 && (maxY - minY + 1) / height > 0.985) {
+      throw new Error('studio_rectangular_frame_detected');
+    }
     return sharp(pixels, {
       raw: { width, height, channels: 4 },
     }).png().toBuffer();

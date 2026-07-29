@@ -3,13 +3,11 @@
  */
 import axios from 'axios';
 import { normalizeCatalogImages } from './imageNormalize.js';
-import { composeWhiteStudioProduct } from './studioImage.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || 'google/gemini-2.5-flash';
-// Lite is substantially cheaper and one generation is enough: deterministic
-// Sharp post-processing handles crop/background/shadow after the model call.
-const IMAGE_MODEL = process.env.OPENROUTER_IMAGE_MODEL || 'google/gemini-3.1-flash-lite-image';
+// Gemini 2.5 produced the original AQ10/AQ3 professional studio results.
+const IMAGE_MODEL = process.env.OPENROUTER_IMAGE_MODEL || 'google/gemini-2.5-flash-image';
 
 function apiKey() {
   return process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '';
@@ -217,9 +215,8 @@ async function generateOneImage({ imageBuffers, prompt }) {
 
 /**
  * Returns exactly one website-ready product image:
- * 1) AI isolates the product once
- * 2) deterministic code removes the white plate, crops it, and adds one
- *    silhouette-following contact shadow
+ * One direct professional studio image using the original Gemini 2.5 method.
+ * The separate local U²-Net path provides the non-generative second image.
  *
  * @param {{
  *   imageBuffer?: Buffer,
@@ -249,27 +246,30 @@ export async function generateProductImages({
     throw new Error('No reference photo for AI image generation');
   }
 
-  const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
-Use the product in the reference photo(s) as the ONLY product.
-Keep exact identity: shape, color, ports, logos, button labels, branding marks. Do NOT invent a different product.
-If the reference shows PACKAGING / a cardboard BOX: recreate the REAL PRODUCT illustrated on the box (the device itself), NOT the box — clean packshot like premium Jumia listings (remotes, gadgets on pure white).
-Output a square 1:1 photo on a PLAIN seamless WHITE background (#FFFFFF only).
-CRITICAL framing: the product must FILL about 82–90% of the frame but must NOT touch any edge.
-Center the product. Use even realistic studio lighting.
-NO SHADOW and NO frame: do not add a rectangular/card shadow, drop shadow, floor shadow, glow, border, panel, platform, table, or grey background. Our software adds the final subtle product-shaped shadow later.
-No text overlays, no badges, no props, no hands, no clutter, no colored backdrop.`;
+  const productLabel = titleFr || 'Produit';
+  const base = `You are a professional ecommerce product photographer.
+Use the reference photo(s) as the source of truth for the product.
+Keep the exact same product identity, shape, colors, ports, logos, labels and included accessories.
+Do NOT invent a different product and do NOT add unrelated objects.
+Output a square high-end marketplace photo with sharp focus and soft realistic studio lighting.`;
 
   const prompt = `${base}
-Hero packshot: front or clearest catalog angle, exact same product only.${titleFr ? `\nProduct: ${titleFr}` : ''}
+Create one PROFESSIONAL STUDIO HERO for "${productLabel}":
+- Clean white seamless studio background
+- Centered commercial catalog composition
+- Remove the original messy background, hands and clutter
+- Preserve realistic materials, proportions and true colors
+- Use a subtle natural product shadow, never a rectangular frame shadow
+- No text, price tags, badges or watermarks
 Mode hint: ${mode}. Return one image only.`;
 
   try {
     const generated = await generateOneImage({ imageBuffers: refs, prompt });
     const [clean] = await normalizeCatalogImages([generated]);
     if (!clean) return [];
-    // Do not retry a rejected image: retries double spend and commonly repeat
-    // the same defect. The existing gallery approval keeps raw photos safe.
-    return [await composeWhiteStudioProduct(clean, { price, oldPrice })];
+    // Preserve the direct Gemini studio rendering used by the first products.
+    // No automatic paid retry; Telegram approval remains the quality gate.
+    return [clean];
   } catch (e) {
     console.error('Single studio image generation rejected:', e.message);
     return [];

@@ -22,5 +22,5 @@ HEALTHCHECK --interval=30s --timeout=8s --start-period=25s --retries=3 \
 
 CMD ["node", "server.js"]
 
-# rebuild bump 20260724180500 — amazon scrape + photo-only studio AI
-LABEL imden.bot.rebuild="20260724180500"
+# rebuild bump 20260729153000 — correct U²-Net cutout in a worker thread
+LABEL imden.bot.rebuild="20260729153000"

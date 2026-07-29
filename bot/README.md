@@ -83,7 +83,7 @@ TIFAWT_BUSINESS_ID=1
 # AI_ENRICH_TIMEOUT_MS=90000
 # AI_ENRICH_TIMEOUT_MS_AMAZON=180000
 # One studio image only; the bot intentionally ignores legacy AI_IMAGE_COUNT.
-# OPENROUTER_IMAGE_MODEL=google/gemini-3.1-flash-lite-image
+# OPENROUTER_IMAGE_MODEL=google/gemini-2.5-flash-image
 ```
 
 ## صيغة رفع منتج (+ أمازون اختياري)
