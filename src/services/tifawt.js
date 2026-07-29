@@ -9,7 +9,7 @@
 
 const ORDER_SYNC_PATH = '/bot-api/api/orders/sync';
 
-/** Match the canonical reference created in Tifawt, without Jumia's ERY- prefix. */
+/** Match Tifawt's canonical reference, without marketplace/color namespaces. */
 export function toTifawtSku(rawSku) {
   return String(rawSku || '')
     .trim()
@@ -18,7 +18,9 @@ export function toTifawtSku(rawSku) {
     .replace(/[^A-Z0-9-]/g, '')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-    .replace(/^ERY-+/, '');
+    .replace(/^ER(?:Y)?-+/, '')
+    // Only the explicit Jumia-color namespace (`-JCNO`, `-JCBCNO`, ...).
+    .replace(/-JC[A-Z0-9]{2,4}$/i, '');
 }
 
 export function createStoreOrderId() {

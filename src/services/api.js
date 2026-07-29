@@ -3,6 +3,10 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_NOCODB_URL;
 const API_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const TABLE_ID = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
+const VARIANTS_TABLE_ID = (
+    import.meta.env.VITE_NOCODB_TABLE_PRODUCT_VARIANTS
+    || 'my006z3z2ataq7u'
+);
 
 let staticCatalogPromise = null;
 let localImageManifestPromise = null;
@@ -68,6 +72,54 @@ const resolveAttachmentUrl = (img) => {
     const rawUrl = attachmentRawUrl(img);
     if (!rawUrl) return null;
     return rawUrl.startsWith('http') ? rawUrl : `${API_URL}/${rawUrl}`;
+};
+
+export const fetchProductVariants = async (productId) => {
+    if (!API_URL || !API_TOKEN || !VARIANTS_TABLE_ID || !productId) return [];
+    try {
+        const url = `${API_URL}/api/v2/tables/${VARIANTS_TABLE_ID}/records`;
+        const response = await fetchWithRetry(url, {
+            headers: {
+                'xc-token': API_TOKEN,
+                accept: 'application/json',
+            },
+            params: {
+                limit: 50,
+                where: `(Product_ID,eq,${Number(productId)})`,
+                sort: 'Id',
+            },
+        });
+        return (response.data?.list || [])
+            .filter((row) => String(row.Active || '').trim().toUpperCase() === 'ACTIVE')
+            .map((row) => {
+                const images = [];
+                for (let i = 1; i <= 7; i++) {
+                    for (const file of asAttachmentList(row[`Image${i}`])) {
+                        const src = resolveAttachmentUrl(file);
+                        if (src) images.push(src);
+                    }
+                }
+                return {
+                    id: row.Id || row.id,
+                    productId: row.Product_ID,
+                    colorAr: row.Color_Name_AR || row.Color_Name_FR || '',
+                    colorFr: row.Color_Name_FR || row.Color_Name_AR || '',
+                    code: String(row.Color_Code || ''),
+                    jumiaSku: row.Jumia_SKU || '',
+                    images: [...new Set(images)],
+                };
+            })
+            .filter((variant) => variant.images.length);
+    } catch (error) {
+        console.warn('fetchProductVariants failed', error?.message || error);
+        return [];
+    }
+};
+
+const withProductVariants = async (product) => {
+    if (!product?.id) return product;
+    const variants = await fetchProductVariants(product.id);
+    return variants.length ? { ...product, variants } : product;
 };
 
 const PRIMARY_IMAGE_MODE_KEY = 'ery_primary_image_mode';
@@ -518,17 +570,25 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
     };
 };
 
-/** Normalize SKUs for comparison (spaces, ERY- prefix, encoding). */
+/** Normalize SKUs for comparison (marketplace prefix/color suffix, encoding). */
 export const normalizeSku = (value) =>
     String(value || '')
         .trim()
         .replace(/\+/g, ' ')
         .toLowerCase()
-        .replace(/^ery-/, '')
+        .replace(/^er(?:y)?-/, '')
+        // Only the explicit Jumia-color namespace (`-jcno`, `-jcbcno`, ...).
+        .replace(/-jc[a-z0-9]{2,4}$/i, '')
         // Collapse any run of separators/spaces to a single dash so
         // "ps3 sony" and "ps3-sony" compare equal.
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
+
+/** Same visibility rule as the catalog list: paused technical rows stay hidden. */
+export const isStorefrontVisibleRecord = (record) => {
+    const status = String(record?.POSTEBL || '').trim().toUpperCase();
+    return status === 'POSTEBL' || status === 'NO POSTEBL';
+};
 
 // Exact match only. Substring matching used to make short references
 // (e.g. "1", "ps3") collide with unrelated products, so opening a card
@@ -577,9 +637,11 @@ export const fetchProductBySku = async (rawSku) => {
                     where: `(SKU,eq,${candidate})`,
                 },
             });
-            const list = response.data?.list || [];
+            const list = (response.data?.list || []).filter(isStorefrontVisibleRecord);
             if (list.length) {
-                return mapNocoRecordToProduct(list[0], localImagesByProduct);
+                return withProductVariants(
+                    mapNocoRecordToProduct(list[0], localImagesByProduct),
+                );
             }
         } catch (error) {
             console.warn('fetchProductBySku failed for', candidate, error?.message || error);
@@ -600,8 +662,14 @@ export const fetchProductBySku = async (rawSku) => {
             },
         });
         const list = response.data?.list || [];
-        const hit = list.find((record) => skusMatch(record.SKU, sku));
-        if (hit) return mapNocoRecordToProduct(hit, localImagesByProduct);
+        const hit = list.find(
+            (record) => isStorefrontVisibleRecord(record) && skusMatch(record.SKU, sku),
+        );
+        if (hit) {
+            return withProductVariants(
+                mapNocoRecordToProduct(hit, localImagesByProduct),
+            );
+        }
     } catch (error) {
         console.error('fetchProductBySku fallback failed:', error);
     }

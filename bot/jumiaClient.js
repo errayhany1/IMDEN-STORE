@@ -415,7 +415,12 @@ export async function createJumiaProduct(product = {}) {
   }
 
   // Jumia must fetch permanent URLs; NocoDB signed S3 links expire → Not Live.
-  const images = await ensurePublicImageUrls(rawImages, { sku: sellerSku });
+  const publicImageSku = pick(product.publicImageSku, sellerSku);
+  const publicImageStartIndex = Math.max(1, Number(product.publicImageStartIndex) || 1);
+  const images = await ensurePublicImageUrls(rawImages, {
+    sku: publicImageSku,
+    startIndex: publicImageStartIndex,
+  });
   if (!images.length) {
     return {
       skipped: true,

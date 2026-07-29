@@ -102,6 +102,7 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "woo_title": "titre court Woo FR",
   "brand": "marque si visible sinon Generic",
   "color": "couleur principale ou Multicolore",
+  "color_variants": ["chaque variante visuelle distincte, en français"],
   "barcode": "code-barres exact visible sur une photo, sinon chaîne vide",
   "packaging_specs": ["spec lue sur la boîte 1", "spec 2", "spec 3", "spec 4", "spec 5", "spec 6"]
 }
@@ -109,7 +110,13 @@ Règles packaging_specs:
 - Lis le TEXTE visible sur l'emballage / la boîte / les étiquettes (modèle, RGB, USB-C, voltage, autonomie, dimensions, features…).
 - Français ou anglais court, max 6 lignes, factuelles uniquement.
 - Si peu de texte lisible, déduis 3-5 specs techniques évidentes du produit photographié.
-- N'invente pas de certifications ou chiffres absents de la photo.`;
+- N'invente pas de certifications ou chiffres absents de la photo.
+Règles color_variants:
+- Observe uniquement les unités/couleurs réellement visibles sur les photos.
+- Une combinaison bicolore est UNE variante: "Blanc et Noir", "Noir et Bleu".
+- Ne la découpe pas en deux couleurs simples.
+- Exemples: trois unités Blanc/Noir, Noir/Bleu et Bleu => ["Blanc et Noir","Noir et Bleu","Bleu"].
+- Si une seule variante est visible, retourne un tableau d'un élément. N'invente jamais une couleur.`;
 
   const content = [{ type: 'text', text: prompt }];
   const refs = (imageBuffers?.length ? imageBuffers : [imageBuffer])
@@ -274,6 +281,41 @@ Mode hint: ${mode}. Return one image only.`;
     console.error('Single studio image generation rejected:', e.message);
     return [];
   }
+}
+
+/**
+ * Produce one Jumia-only image containing exactly one visible color variant.
+ * The caller invokes this only after the seller confirms the detected list.
+ */
+export async function generateJumiaColorImage({
+  imageBuffers,
+  titleFr = 'Produit',
+  targetColor,
+}) {
+  if (!isOpenRouterConfigured()) throw new Error('OPENROUTER_API_KEY missing');
+  // Color variants can be spread across several seller photos.
+  const refs = (imageBuffers || []).filter(Boolean).slice(0, 4);
+  if (!refs.length) throw new Error('No reference photo for color image generation');
+  const color = String(targetColor || '').trim();
+  if (!color) throw new Error('Target color missing');
+
+  const prompt = `You are a professional ecommerce product photographer.
+The reference photos may show several units of the exact same model in different colors.
+Create one square 1080x1080 Jumia catalog image for "${titleFr}", variant "${color}".
+- Show EXACTLY ONE product unit, in the declared color or color combination "${color}".
+- Remove every other color variant, duplicate unit, hand, packaging clutter and original background.
+- Preserve the exact model, geometry, proportions, ports, screen, logos, labels and included accessories.
+- For a two-tone variant, preserve both named colors in their correct visible areas.
+- Do not recolor screens, logos, connectors, metal parts or unrelated functional details.
+- Pure seamless white background, centered composition, sharp focus and subtle natural product shadow.
+- No text, badges, prices, borders or watermarks.
+- Never merge features from two units and never invent a color not supported by the references.
+Return one image only.`;
+
+  const generated = await generateOneImage({ imageBuffers: refs, prompt });
+  const [clean] = await normalizeCatalogImages([generated]);
+  if (!clean) throw new Error(`Color image rejected: ${color}`);
+  return clean;
 }
 
 export function isOpenRouterConfigured() {

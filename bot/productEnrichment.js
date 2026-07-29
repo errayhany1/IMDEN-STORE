@@ -6,6 +6,7 @@
 import {
   generateProductCopy,
   generateProductImages,
+  generateJumiaColorImage,
   isOpenRouterConfigured,
 } from './openrouter.js';
 import { generateLandingPageCopy, isOpenAIConfigured } from './openai.js';
@@ -30,6 +31,7 @@ import {
 } from './studioImage.js';
 import { createRealProductCutout } from './localBackground.js';
 import { generateQwenProductImage, isQwenImageConfigured } from './qwenImage.js';
+import { buildColorVariants, buildJumiaColorSku, parseColorList } from './colorVariants.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -79,7 +81,105 @@ async function uploadBufferPairs(uploadToNocoDB, buffers, prefix) {
 }
 
 /**
- * Build Image1…Image5 order:
+ * Generate Jumia-only, seller-confirmed color renders sequentially. Sequential
+ * execution keeps memory/API pressure bounded and avoids paying before approval.
+ */
+export async function generateJumiaColorVariants({
+  colors,
+  sourceBuffers,
+  title,
+  sellerSku,
+  uploadToNocoDB,
+}) {
+  const variants = buildColorVariants(colors);
+  if (!variants.length) return [];
+  const refs = await prepareVisionBuffers((sourceBuffers || []).filter(Boolean).slice(0, 4));
+  if (!refs.length) throw new Error('No source images for color variants');
+
+  const generated = [];
+  for (const variant of variants) {
+    try {
+      const buffer = await generateJumiaColorImage({
+        imageBuffers: refs,
+        titleFr: title,
+        targetColor: variant.label,
+      });
+      const colorSku = buildJumiaColorSku(sellerSku, variant);
+      const [pair] = await uploadBufferPairs(
+        uploadToNocoDB,
+        [buffer],
+        `jumia-color-${colorSku}`,
+      );
+      if (pair) {
+        generated.push({
+          ...variant,
+          sellerSku: colorSku,
+          kind: 'jumia-color',
+          id: `jumia-color-${variant.code.toLowerCase()}`,
+          label: `Jumia — ${variant.label}`,
+          file: pair.file,
+          buffer: pair.buffer,
+          selected: true,
+        });
+      }
+    } catch (e) {
+      console.error(`Jumia color image failed (${variant.label}):`, e.message);
+      generated.push({ ...variant, error: e.message });
+    }
+  }
+  return generated;
+}
+
+/**
+ * Detect only the visible color variants from seller photos. This lightweight
+ * path reuses the text-vision providers without rebuilding the base product.
+ */
+export async function detectProductColorVariants({
+  imageBuffers,
+  name,
+  price,
+  ref,
+}) {
+  const refs = await prepareVisionBuffers((imageBuffers || []).filter(Boolean).slice(0, 4));
+  if (!refs.length) throw new Error('No source images for color detection');
+
+  let lastError;
+  if (isOpenAIConfigured()) {
+    try {
+      const copy = await generateLandingPageCopy({
+        imageBuffers: refs,
+        name,
+        price,
+        ref,
+      });
+      return parseColorList(copy?.color_variants || []);
+    } catch (error) {
+      lastError = error;
+      console.warn('OpenAI color detection failed:', error.message);
+    }
+  }
+
+  if (isOpenRouterConfigured()) {
+    try {
+      const copy = await generateProductCopy({
+        imageBuffers: refs,
+        name,
+        price,
+        ref,
+      });
+      return parseColorList(copy?.color_variants || []);
+    } catch (error) {
+      lastError = error;
+      console.warn('OpenRouter color detection failed:', error.message);
+    }
+  }
+
+  throw lastError || new Error('No configured AI provider for color detection');
+}
+
+/**
+ * Build the normal storefront order. Color-only Jumia renders are appended
+ * later by the approval flow into durable Image1…Image8 slots.
  * Image1 = AI studio hero (white packshot)
  * Image2 = real product cutout (local U²-Net, no generation)
  * Image3 = optional Qwen secondary studio render
@@ -637,6 +737,7 @@ export async function enrichProduct({
     ? nocoImages
     : (aiUploads.length ? aiUploads : (amazonUploads.length ? amazonUploads : []));
   const imageUrls = finalImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
+  const detectedColors = parseColorList(copy?.color_variants || []);
 
   const productForSheet = {
     referenceClean,
@@ -662,16 +763,24 @@ export async function enrichProduct({
     amazonUrl: amazonUrl || amazonMeta?.url || '',
     imageUrls,
     stock: JUMIA_SHEET_DEFAULTS.stock,
+    colorVariants: detectedColors,
   };
 
   // Sheet/Jumia wait until the seller approves gallery images in Telegram
   // (unless caller forces sync — e.g. tests). Default: defer.
-  const deferPublish = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
+  // Multi-color products always defer: otherwise GALLERY_APPROVAL=false would
+  // publish a base Jumia listing before color confirmation creates per-color SKUs.
+  const deferForGallery = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
+  const deferForColors = detectedColors.length > 1;
+  const deferPublish = deferForGallery || deferForColors;
+  const deferReason = deferForColors
+    ? 'awaiting_color_approval'
+    : 'awaiting_gallery_approval';
   const sheetResult = deferPublish
-    ? { skipped: true, reason: 'awaiting_gallery_approval' }
+    ? { skipped: true, reason: deferReason }
     : await maybeSyncSheet(productForSheet, syncSheet);
   const jumiaResult = deferPublish
-    ? { skipped: true, reason: 'awaiting_gallery_approval' }
+    ? { skipped: true, reason: deferReason }
     : await maybeSyncJumia(productForSheet, syncJumia);
 
   return {
@@ -691,6 +800,7 @@ export async function enrichProduct({
     aiFailures,
     hasAiImages: aiUploads.length > 0 || cutoutUploads.length > 0 || qwenUploads.length > 0,
     hasSpecsImage,
+    detectedColorVariants: detectedColors,
   };
 }
 
@@ -705,7 +815,7 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
     SKU: sellerSku,
     price,
     Category_ID: 12,
-    POSTEBL: 'POSTEBL',
+    POSTEBL: enrichment.nocoPostebl || 'POSTEBL',
     description_arabic: copy.description_arabic || '',
   };
 
@@ -727,23 +837,12 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
     record.Amazon_URL = enrichment.amazonUrl;
   }
 
-  const files = enrichment.nocoImages || [];
-  if (files[0]) record.Image1 = [files[0]];
-  if (files[1]) {
-    record.Image2 = [files[1]];
-    record.image2 = [files[1]];
-  }
-  if (files[2]) {
-    record.Image3 = [files[2]];
-    record.image3 = [files[2]];
-  }
-  if (files[3]) {
-    record.Image4 = [files[3]];
-    record.image4 = [files[3]];
-  }
-  if (files[4]) {
-    record.Image5 = [files[4]];
-    record.image5 = [files[4]];
+  const files = (enrichment.nocoImages || []).slice(0, 8);
+  for (let i = 0; i < files.length; i++) {
+    if (!files[i]) continue;
+    record[`Image${i + 1}`] = [files[i]];
+    // Legacy duplicate lowercase fields exist only for slots 2–5.
+    if (i >= 1 && i <= 4) record[`image${i + 1}`] = [files[i]];
   }
 
   return record;

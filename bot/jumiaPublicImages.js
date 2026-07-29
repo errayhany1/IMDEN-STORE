@@ -51,6 +51,11 @@ function nocodbConfig() {
     url: (process.env.VITE_NOCODB_URL || process.env.NOCODB_URL || '').replace(/\/+$/, ''),
     token: process.env.VITE_NOCODB_API_TOKEN || process.env.NOCODB_API_TOKEN || '',
     table: process.env.VITE_NOCODB_TABLE_PRODUCTS || process.env.NOCODB_TABLE_PRODUCTS || '',
+    variantsTable: (
+      process.env.NOCODB_TABLE_PRODUCT_VARIANTS
+      || process.env.VITE_NOCODB_TABLE_PRODUCT_VARIANTS
+      || 'my006z3z2ataq7u'
+    ).trim(),
   };
 }
 
@@ -191,7 +196,9 @@ function collectRowImageUrls(row, nocodbUrl) {
 }
 
 async function findNocoProductBySku(sku) {
-  const { url, token, table } = nocodbConfig();
+  const {
+    url, token, table, variantsTable,
+  } = nocodbConfig();
   if (!url || !token || !table || !sku) return null;
   const candidates = [String(sku).trim()].filter(Boolean);
   for (const field of ['SellerSKU', 'SKU', 'reference_clean']) {
@@ -215,6 +222,27 @@ async function findNocoProductBySku(sku) {
       } catch {
         // try next
       }
+    }
+  }
+  if (variantsTable) {
+    try {
+      const { data, status } = await axios.get(
+        `${url}/api/v2/tables/${variantsTable}/records`,
+        {
+          params: {
+            where: `(Jumia_SKU,eq,${String(sku).trim()})`,
+            limit: 1,
+          },
+          headers: { 'xc-token': token },
+          timeout: 30_000,
+          validateStatus: () => true,
+        },
+      );
+      if (status >= 200 && status < 300 && data?.list?.[0]) {
+        return data.list[0];
+      }
+    } catch {
+      // ProductVariants is optional for legacy deployments.
     }
   }
   return null;
@@ -309,7 +337,7 @@ async function assertPublicReachable(url) {
  * Convert ephemeral (NocoDB signed) image URLs into durable public proxy URLs.
  * Never returns a URL that is not reachable from the public host.
  */
-export async function ensurePublicImageUrls(urls = [], { sku = 'img' } = {}) {
+export async function ensurePublicImageUrls(urls = [], { sku = 'img', startIndex = 1 } = {}) {
   const list = [...new Set(
     (Array.isArray(urls) ? urls : [])
       .map((u) => String(u || '').trim())
@@ -320,7 +348,7 @@ export async function ensurePublicImageUrls(urls = [], { sku = 'img' } = {}) {
 
   const out = [];
   for (let i = 0; i < list.length; i++) {
-    const index = i + 1;
+    const index = Math.max(1, Number(startIndex) || 1) + i;
     const url = list[i];
     const permanent = permanentSkuImageUrl(sku, index);
 

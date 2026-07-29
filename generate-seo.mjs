@@ -497,9 +497,11 @@ async function generate() {
         const catId = p.Category_ID || p.category_id || 12;
         const catName = categoryMapping[catId] || 'إلكترونيات';
         const alt = escapeHtml(`${p.Title || p.SKU || ''} - ${catName} بالجملة ${BRAND} المغرب`);
+        const imageLine = imgUrl
+            ? `      <img src="${escapeHtml(imgUrl)}" alt="${alt}" itemprop="image" loading="lazy" width="200" height="200">\n`
+            : '';
         seoHtml += `    <article class="card" itemscope itemtype="https://schema.org/Product">
-      ${imgUrl ? `<img src="${escapeHtml(imgUrl)}" alt="${alt}" itemprop="image" loading="lazy" width="200" height="200">` : ''}
-      <div class="name" itemprop="name">${title}</div>
+${imageLine}      <div class="name" itemprop="name">${title}</div>
       <div class="ref">REF: <span itemprop="sku">${escapeHtml(p.SKU || '')}</span></div>
       <div class="cat" itemprop="category">${escapeHtml(catName)}</div>
       <div class="price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">

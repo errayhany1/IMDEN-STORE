@@ -20,6 +20,8 @@ import {
   buildNocoRecordFromEnrichment,
   buildSellerSku,
   cleanReference,
+  detectProductColorVariants,
+  generateJumiaColorVariants,
   publicUrlFromNoco,
 } from './productEnrichment.js';
 import {
@@ -56,6 +58,13 @@ import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
 import { toTifawtSku } from './tifawtSku.js';
+import { parseColorList } from './colorVariants.js';
+import {
+  upsertProductVariant,
+  setProductVariantActive,
+  listJumiaColorSkusByProductId,
+  deactivateRemovedProductVariants,
+} from './productVariants.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -140,6 +149,7 @@ const MAIN_KEYBOARD = {
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
     [{ text: '✨ إعادة توليد الوصف والصور' }],
+    [{ text: '🎨 إضافة ألوان لمنتج موجود' }],
     [{ text: '🛒 إعادة بناء من Amazon' }],
     [{ text: '📦 تجهيز شحن Jumia' }, { text: '❌ إلغاء طلب Jumia' }],
     [{ text: '🏷️ ملصق شحن Jumia' }],
@@ -371,10 +381,13 @@ function skuCandidates(rawSku) {
   if (!sku) return [];
   const upper = sku.toUpperCase();
   const noEry = upper.replace(/^ERY-/, '');
+  const canonical = toTifawtSku(upper);
   return Array.from(new Set([
     sku,
     upper,
     noEry,
+    canonical,
+    canonical ? `ERY-${canonical}` : '',
     `ERY-${noEry}`,
     sku.replace(/\s+/g, '-'),
     upper.replace(/\s+/g, '-'),
@@ -460,6 +473,8 @@ const pendingDestinations = new Map();
 const pendingImageRoles = new Map();
 /** After AI: seller picks which generated images go to the storefront gallery. */
 const pendingGalleryApprovals = new Map();
+/** AI suggests visible color variants; seller confirms before paid color renders. */
+const pendingColorApprovals = new Map();
 let productQueue = Promise.resolve();
 /** Serial AI polish queue — never blocks product create, max 1 enrich at a time. */
 let aiPolishQueue = Promise.resolve();
@@ -540,6 +555,220 @@ function galleryApprovalSummary(candidates) {
     .join('\n');
 }
 
+function colorApprovalKeyboard(token, { variantOnly = false } = {}) {
+  return {
+    inline_keyboard: [
+      [{ text: '✅ الألوان صحيحة — أنشئ صور Jumia', callback_data: `colors:${token}:approve` }],
+      [{ text: '✏️ غير صحيحة — سأكتبها بنفسي', callback_data: `colors:${token}:edit` }],
+      [{
+        text: variantOnly ? '✖️ إلغاء إضافة الألوان' : '⏭️ منتج واحد فقط على Jumia',
+        callback_data: `colors:${token}:single`,
+      }],
+    ],
+  };
+}
+
+async function requestColorApproval(context, colors) {
+  const variants = parseColorList(colors);
+  const minimum = context.variantOnly ? 1 : 2;
+  if (variants.length < minimum) return false;
+  const now = Date.now();
+  for (const [key, pending] of pendingColorApprovals) {
+    if (pending.expiresAt < now) pendingColorApprovals.delete(key);
+  }
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  pendingColorApprovals.set(token, {
+    ...context,
+    colors: variants,
+    expiresAt: now + (30 * 60 * 1000),
+  });
+  await sendMessage(
+    context.chatId,
+    `🎨 اكتشفت ${variants.length} أشكال لونية في الصور:\n\n`
+      + variants.map((color, index) => `${index + 1}. ${color}`).join('\n')
+      + '\n\nكل تركيبة مذكورة تعتبر منتجاً مستقلاً في Jumia، بينما يبقى منتجاً واحداً في Tifawt وNocoDB.\nلن أبدأ توليد صور الألوان المدفوعة قبل موافقتك.',
+    colorApprovalKeyboard(token, { variantOnly: context.variantOnly }),
+  );
+  return true;
+}
+
+async function continueAfterColorApproval(pending, colors) {
+  const confirmed = parseColorList(colors);
+  pending.enrichment.confirmedColorVariants = confirmed;
+  pending.enrichment.productForSheet.colorVariants = confirmed;
+  pending.enrichment.requireColorJumia = confirmed.length > 1;
+
+  const shouldGenerateVariants = pending.variantOnly
+    ? confirmed.length > 0
+    : confirmed.length > 1;
+  if (shouldGenerateVariants) {
+    await sendMessage(
+      pending.chatId,
+      `⏳ تم اعتماد ${confirmed.length} ألوان. سأُنشئ الآن صورة احترافية منفصلة لكل لون، بالتتابع لتفادي الضغط والتكرار.`,
+    );
+    let generated = [];
+    try {
+      generated = await generateJumiaColorVariants({
+        colors: confirmed,
+        sourceBuffers: pending.sourceBuffers,
+        title: pending.enrichment.copy?.french_title || pending.name,
+        sellerSku: pending.sellerSku,
+        uploadToNocoDB,
+      });
+    } catch (e) {
+      await sendMessage(
+        pending.chatId,
+        `❌ تعذر بدء توليد صور الألوان: ${e.message}\nلن يُنشر المنتج متعدد الألوان على Jumia بصورة غير صحيحة.`,
+      );
+    }
+    const successful = generated.filter((variant) => variant.file && variant.buffer);
+    const failed = generated.filter((variant) => variant.error);
+    for (const variant of successful) {
+      try {
+        const saved = await upsertProductVariant({
+          productId: pending.rowId,
+          colorLabel: variant.label.replace(/^Jumia\s*—\s*/i, ''),
+          colorCode: variant.code,
+          jumiaSku: variant.sellerSku,
+          imageFiles: [variant.file],
+          active: null,
+        });
+        variant.variantRowId = saved.rowId;
+      } catch (e) {
+        variant.error = `variant_save:${e.message}`;
+        failed.push(variant);
+      }
+    }
+    const savedVariants = successful.filter((variant) => variant.variantRowId && !variant.error);
+    pending.enrichment.galleryCandidates = [
+      ...(pending.enrichment.galleryCandidates || []),
+      ...savedVariants,
+    ];
+    if (failed.length) {
+      await sendMessage(
+        pending.chatId,
+        `⚠️ تعذر توليد ${failed.length} لون: ${failed.map((v) => v.label).join('، ')}.\nلن يُنشر اللون الذي فشلت صورته على Jumia.`,
+      );
+    }
+  } else if (!pending.variantOnly) {
+    // Single-color (or no multi-color) run: retire any leftover color rows.
+    try {
+      const removed = await deactivateRemovedProductVariants(pending.rowId, []);
+      await pauseJumiaColorSkus(removed.map((row) => row.jumiaSku));
+    } catch (e) {
+      console.warn(`Variant clear failed #${pending.rowId}:`, e.message);
+    }
+  }
+
+  const asked = await requestGalleryApproval(pending);
+  if (!asked) {
+    await sendMessage(pending.chatId, '❌ لا توجد صور صالحة للموافقة. لم يتم النشر على Jumia.');
+  }
+}
+
+function existingProductColorContext(chatId, record) {
+  const rowId = record.Id || record.id;
+  const sellerSku = buildSellerSku(record.SKU || rowId);
+  const name = record.Arabic_Title || record.Title || record.French_Title || sellerSku;
+  const frenchTitle = record.French_Title || record.Woo_Title || record.Title || sellerSku;
+  const price = Number(record.price || record.Price || 0);
+  const referenceClean = cleanReference(toTifawtSku(record.SKU || sellerSku));
+  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
+  const productForSheet = {
+    referenceClean,
+    sellerSku,
+    price,
+    wholesalePrice: price,
+    postebl: record.POSTEBL || 'POSTEBL',
+    frenchTitle,
+    arabicTitle: name,
+    shortFr: record.Short_Description_FR || record.short_description_fr || '',
+    shortAr: record.Short_Description_AR || record.short_description_ar || '',
+    descriptionFr: record.description_french || record.Description_French || '',
+    descriptionAr: record.description_arabic || record.Description_Arabic || '',
+    metaTitle: record.Meta_Title || frenchTitle,
+    metaDescription: record.Meta_Description || '',
+    wooTitle: record.Woo_Title || frenchTitle,
+    brand: record.Brand || 'Generic',
+    color: 'Multicolore',
+    colorFamily: 'Multicolore',
+    variation: '',
+    amazonUrl: record.Amazon_URL || '',
+    imageUrls: [],
+  };
+  return {
+    chatId,
+    rowId,
+    recordUrl,
+    record,
+    name,
+    price,
+    sellerSku,
+    variantOnly: true,
+    enrichment: {
+      variantOnly: true,
+      syncJumia: true,
+      syncSheet: false,
+      catalogPublished: String(record.POSTEBL || '').toUpperCase() !== 'PAUSED',
+      requireColorJumia: true,
+      nocoImages: [],
+      imageUrls: [],
+      galleryCandidates: [],
+      nocodbUrl: NOCODB_URL,
+      copy: {
+        french_title: frenchTitle,
+        arabic_title: name,
+      },
+      productForSheet,
+    },
+  };
+}
+
+async function processExistingProductColorPhotos(chatId, files, colorContext) {
+  await sendMessage(
+    chatId,
+    `⏳ جاري تحليل صور ألوان المنتج (${colorContext.sellerSku})...\nلن يتم تعديل صور أو وصف المنتج الأساسي.`,
+  );
+
+  let sourceBuffers;
+  try {
+    const downloaded = [];
+    for (const file of (files || []).slice(0, 4)) {
+      downloaded.push(await downloadTelegramFileData(file.fileId, file.extName));
+    }
+    sourceBuffers = downloaded.map((item) => item.buffer).filter(Boolean);
+    if (!sourceBuffers.length) throw new Error('no_color_photos');
+  } catch (error) {
+    await sendMessage(chatId, `❌ تعذر تحميل صور الألوان: ${error.message}`);
+    return;
+  }
+
+  const pending = {
+    ...colorContext,
+    sourceBuffers,
+    expiresAt: Date.now() + (30 * 60 * 1000),
+  };
+
+  try {
+    const colors = await detectProductColorVariants({
+      imageBuffers: sourceBuffers,
+      name: colorContext.name,
+      price: colorContext.price,
+      ref: colorContext.sellerSku,
+    });
+    const asked = await requestColorApproval(pending, colors);
+    if (asked) return;
+  } catch (error) {
+    console.warn(`Color-only detection failed #${colorContext.rowId}:`, error.message);
+  }
+
+  userState[chatId] = { type: 'AWAITING_COLOR_VARIANTS', pending };
+  await sendMessage(
+    chatId,
+    '⚠️ لم أتمكن من تحديد الألوان بدقة.\nاكتب الآن كل لون أو تركيبة لونية مفصولة بفاصلة.\nمثال: أبيض وأسود، أسود مع أزرق، أزرق',
+  );
+}
+
 function galleryApprovalKeyboard(token, candidates) {
   const rows = candidates.map((c, i) => ([
     {
@@ -547,7 +776,7 @@ function galleryApprovalKeyboard(token, candidates) {
       callback_data: `gal:${token}:${i}:t`,
     },
   ]));
-  rows.push([{ text: '✅ نشر المختارة على الواجهة', callback_data: `gal:${token}:go:x` }]);
+  rows.push([{ text: '✅ اعتماد ونشر للوجهات المختارة', callback_data: `gal:${token}:go:x` }]);
   rows.push([{ text: '✖️ إلغاء الصور (الإبقاء على النص فقط)', callback_data: `gal:${token}:cancel:x` }]);
   return { inline_keyboard: rows };
 }
@@ -563,7 +792,7 @@ async function requestGalleryApproval({
 }) {
   const candidates = (enrichment.galleryCandidates || [])
     .filter((c) => c?.file && c?.buffer)
-    .slice(0, 6);
+    .slice(0, 12);
   if (!candidates.length) {
     return false;
   }
@@ -587,7 +816,7 @@ async function requestGalleryApproval({
 
   await sendMessage(
     chatId,
-    `🖼️ صور المنتج #${rowId} (${sellerSku})\nستجد عند توفرها: Gemini، Qwen، إزالة الخلفية محلياً، والصورة الأصلية للمراجعة.\nاختر ما يظهر في الواجهة، ثم اضغط نشر. الصورة الأصلية لن تُرسل إلى Jumia:\n\n${galleryApprovalSummary(candidates)}`
+    `🖼️ صور المنتج #${rowId} (${sellerSku})\nستجد عند توفرها: Gemini، Qwen، إزالة الخلفية، والصورة الأصلية للمراجعة.${enrichment.syncJumia ? '\nعند اكتشاف عدة ألوان ستظهر أيضاً صورة مستقلة لكل لون في Jumia. الصورة الأصلية لا تُرسل إلى Jumia.' : '\nلم تختر Jumia، لذلك لن يُرسل إليها هذا المنتج.'}\n\n${galleryApprovalSummary(candidates)}`
   );
 
   for (let i = 0; i < candidates.length; i++) {
@@ -614,7 +843,7 @@ async function requestGalleryApproval({
 }
 
 function orderSelectedGalleryFiles(candidates) {
-  const selected = candidates.filter((c) => c.selected && c.file);
+  const selected = candidates.filter((c) => c.selected && c.file && c.kind !== 'jumia-color');
   const ai = selected.filter((c) => c.kind === 'ai').map((c) => c.file);
   const cutout = selected.filter((c) => c.kind === 'cutout').map((c) => c.file);
   const amazon = selected.filter((c) => c.kind === 'amazon').map((c) => c.file);
@@ -627,7 +856,18 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
   const {
     chatId, rowId, recordUrl, name, price, sellerSku, enrichment, candidates,
   } = pending;
-  const selectedFiles = publishImages ? orderSelectedGalleryFiles(candidates) : [];
+  const selectedColorCandidates = publishImages
+    ? candidates.filter((c) => c.selected && c.file && c.kind === 'jumia-color')
+    : [];
+  const allColorCandidates = candidates.filter(
+    (c) => c.file && c.kind === 'jumia-color' && c.variantRowId,
+  );
+  const publishedColorCodes = [];
+  const normalFiles = publishImages ? orderSelectedGalleryFiles(candidates) : [];
+  // Base Image1…Image8 stay reserved for front/back/details. Color images live
+  // in ProductVariants and never displace normal product photography.
+  const selectedFiles = normalFiles.slice(0, 8);
+  const nocoFiles = selectedFiles;
   // Raw seller photos may be shown in our own catalog, but Jumia requires
   // marketplace-ready studio images. Never send a `real` candidate there.
   const professionalFiles = publishImages
@@ -636,28 +876,103 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
   const professionalImageUrls = professionalFiles.map(
     (f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL),
   );
-  enrichment.nocoImages = selectedFiles;
-  enrichment.imageUrls = selectedFiles.map((f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL));
-  if (enrichment.productForSheet) {
-    enrichment.productForSheet.imageUrls = enrichment.imageUrls;
-  }
+  if (!enrichment.variantOnly) {
+    enrichment.nocoImages = nocoFiles;
+    enrichment.imageUrls = selectedFiles.map((f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL));
+    if (enrichment.productForSheet) {
+      enrichment.productForSheet.imageUrls = enrichment.imageUrls;
+    }
 
-  const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
-  patch.Id = rowId;
-  // Clear unused image slots so old raw photos never linger.
-  for (const key of ['Image1', 'Image2', 'Image3', 'Image4', 'Image5', 'image2', 'image3', 'image4', 'image5']) {
-    if (!patch[key]) patch[key] = null;
+    const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
+    patch.Id = rowId;
+    // Clear unused image slots so old raw photos never linger.
+    for (const key of ['Image1', 'Image2', 'Image3', 'Image4', 'Image5', 'Image6', 'Image7', 'Image8', 'image2', 'image3', 'image4', 'image5']) {
+      if (!patch[key]) patch[key] = null;
+    }
+    await http.patch(recordUrl, patch, {
+      headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+    });
   }
-  await http.patch(recordUrl, patch, {
-    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
-  });
+  for (const candidate of allColorCandidates) {
+    try {
+      if (!publishImages || !candidate.selected) {
+        await setProductVariantActive(candidate.variantRowId, false);
+      } else if (!enrichment.syncJumia) {
+        await setProductVariantActive(candidate.variantRowId, true);
+        publishedColorCodes.push(candidate.code);
+      }
+    } catch (e) {
+      console.warn(`Variant status update failed (${candidate.sellerSku}):`, e.message);
+    }
+  }
 
   let sheetNote = '';
   let jumiaNote = '';
-  if (publishImages && selectedFiles.length && enrichment.productForSheet) {
+  if (publishImages && (nocoFiles.length || selectedColorCandidates.length) && enrichment.productForSheet) {
     // Jumia first: materializes durable /public-images/p/{sku}/n.jpg URLs.
     // Sheet must use those same permanent URLs (never NocoDB signed links).
-    if (isJumiaConfigured() && professionalImageUrls.length) {
+    if (enrichment.syncJumia && selectedColorCandidates.length) {
+      const created = [];
+      const failed = [];
+      for (const colorCandidate of selectedColorCandidates) {
+        const colorPayload = {
+          ...enrichment.productForSheet,
+          sellerSku: colorCandidate.sellerSku,
+          parentSku: colorCandidate.sellerSku,
+          referenceClean: `${enrichment.productForSheet.referenceClean}-${colorCandidate.skuSuffix}`,
+          frenchTitle: `${enrichment.productForSheet.frenchTitle} - ${colorCandidate.label.replace(/^Jumia\s*—\s*/i, '')}`.slice(0, 120),
+          arabicTitle: `${enrichment.productForSheet.arabicTitle} - ${colorCandidate.label.replace(/^Jumia\s*—\s*/i, '')}`.slice(0, 120),
+          color: colorCandidate.label.replace(/^Jumia\s*—\s*/i, ''),
+          colorFamily: colorCandidate.label.replace(/^Jumia\s*—\s*/i, ''),
+          variation: colorCandidate.label.replace(/^Jumia\s*—\s*/i, ''),
+          imageUrls: [publicUrlFromNoco(colorCandidate.file, enrichment.nocodbUrl || NOCODB_URL)],
+          // Durable proxy resolves Image1 from ProductVariants by Jumia_SKU.
+          publicImageSku: colorCandidate.sellerSku,
+          publicImageStartIndex: 1,
+        };
+        try {
+          if (!isJumiaConfigured()) {
+            throw new Error('jumia_not_configured');
+          }
+          const jumia = await createJumiaProduct(colorPayload);
+          if (jumia?.error || jumia?.skipped) {
+            throw new Error(jumia?.error || jumia?.reason);
+          }
+          if (jumia?.stockFeed?.ok === false || jumia?.stockFeed?.error) {
+            throw new Error(`stock_feed:${jumia.stockFeed.error || 'failed'}`);
+          }
+          created.push(jumia.sellerSku || colorPayload.sellerSku);
+          publishedColorCodes.push(colorCandidate.code);
+          await setProductVariantActive(colorCandidate.variantRowId, true);
+          if (Array.isArray(jumia.imageUrls) && jumia.imageUrls.length) {
+            colorPayload.imageUrls = jumia.imageUrls;
+          }
+          if (enrichment.syncSheet && isSheetWebhookConfigured()) {
+            await appendProductToSheet(colorPayload);
+          }
+        } catch (e) {
+          failed.push(`${colorPayload.color}: ${e.message}`);
+          try {
+            await setProductVariantActive(
+              colorCandidate.variantRowId,
+              false,
+              { error: e.message },
+            );
+          } catch (statusError) {
+            console.warn(`Variant error status failed (${colorCandidate.sellerSku}):`, statusError.message);
+          }
+        }
+      }
+      jumiaNote = created.length
+        ? `\n🛒 Jumia: تم إنشاء ${created.length} منتجات ألوان\n${created.map((sku) => `• ${sku}`).join('\n')}`
+        : '\n🛒 Jumia: لم يُنشأ أي منتج لون';
+      if (failed.length) jumiaNote += `\n⚠️ ${failed.join(' | ')}`;
+      sheetNote = enrichment.syncSheet && isSheetWebhookConfigured()
+        ? '\n📋 Jumia Sheet: تمت إضافة صف مستقل لكل لون'
+        : '';
+    } else if (enrichment.syncJumia && enrichment.requireColorJumia) {
+      jumiaNote = '\n🛒 Jumia: تم التخطي — لم توافق على أي صورة لون';
+    } else if (enrichment.syncJumia && isJumiaConfigured() && professionalImageUrls.length) {
       try {
         const jumia = await createJumiaProduct({
           ...enrichment.productForSheet,
@@ -685,10 +1000,15 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
       } catch (e) {
         jumiaNote = `\n🛒 Jumia API خطأ: ${e.message}`;
       }
-    } else if (isJumiaConfigured()) {
+    } else if (enrichment.syncJumia && isJumiaConfigured()) {
       jumiaNote = '\n🛒 Jumia: تم التخطي — لا توجد صورة احترافية بخلفية بيضاء';
     }
-    if (isSheetWebhookConfigured()) {
+    if (
+      enrichment.syncSheet
+      && !selectedColorCandidates.length
+      && !enrichment.requireColorJumia
+      && isSheetWebhookConfigured()
+    ) {
       try {
         const sheet = await appendProductToSheet(enrichment.productForSheet);
         sheetNote = sheet?.error
@@ -700,26 +1020,53 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
     }
   }
 
-  const imgCount = selectedFiles.length;
+  // Only retire old colors after at least one replacement was published.
+  // A provider/Jumia outage must not take the previous palette offline.
+  if (publishImages && publishedColorCodes.length) {
+    try {
+      const removed = await deactivateRemovedProductVariants(rowId, publishedColorCodes);
+      if (removed.length) {
+        await pauseJumiaColorSkus(removed.map((row) => row.jumiaSku));
+      }
+    } catch (e) {
+      console.warn(`Removed variant deactivation failed #${rowId}:`, e.message);
+    }
+  }
+
+  const imgCount = nocoFiles.length;
   await sendMessage(
     chatId,
-    publishImages
-      ? `✨ تم نشر ${imgCount} صورة على الواجهة للمنتج #${rowId}\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
-      : `📝 تم حفظ الوصف فقط للمنتج #${rowId} بدون صور واجهة.\nيمكنك إعادة التوليد لاحقاً.`
+    enrichment.variantOnly && publishImages
+      ? `🎨 اكتملت معالجة ألوان المنتج #${rowId} (${sellerSku}).${jumiaNote}\n✅ لم يتم تعديل صور أو وصف المنتج الأساسي.`
+      : enrichment.variantOnly
+        ? `✖️ تم إلغاء إضافة الألوان للمنتج #${rowId}. لم يتم تعديل المنتج الأساسي.`
+        : publishImages
+      ? `✨ تم اعتماد ${imgCount} صورة للمنتج #${rowId}\n📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n${enrichment.catalogPublished ? `🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}` : '🔒 المنتج غير منشور في الموقع؛ سجل الصور التقني مخفي'}${sheetNote}${jumiaNote}`
+      : `📝 تم حفظ الوصف فقط للمنتج #${rowId} بدون صور.${enrichment.catalogPublished ? '\nيمكنك إعادة التوليد لاحقاً.' : '\nالسجل التقني مخفي عن الموقع.'}`
   );
 }
 
-function destinationKeyboard(token) {
+function destinationKeyboard(token, selected = {}) {
+  const mark = (key) => (selected[key] ? '✅' : '⬜');
   return {
     inline_keyboard: [
       [
-        { text: '🌐 NocoDB فقط', callback_data: `dest:noco:${token}` },
-        { text: '🛒 Tifawt فقط', callback_data: `dest:tifawt:${token}` },
+        { text: `${mark('noco')} 🌐 NocoDB`, callback_data: `dest:${token}:noco` },
+        { text: `${mark('tifawt')} 📦 Tifawt`, callback_data: `dest:${token}:tifawt` },
       ],
-      [{ text: '🔄 كلاهما', callback_data: `dest:both:${token}` }],
-      [{ text: '✖️ إلغاء', callback_data: `dest:cancel:${token}` }],
+      [{ text: `${mark('jumia')} 🛒 Jumia`, callback_data: `dest:${token}:jumia` }],
+      [{ text: '✅ تأكيد وجهات النشر', callback_data: `dest:${token}:go` }],
+      [{ text: '✖️ إلغاء', callback_data: `dest:${token}:cancel` }],
     ],
   };
+}
+
+function destinationSummary(selected = {}) {
+  const labels = [];
+  if (selected.noco) labels.push('🌐 NocoDB');
+  if (selected.tifawt) labels.push('📦 Tifawt');
+  if (selected.jumia) labels.push('🛒 Jumia');
+  return labels.length ? labels.join(' + ') : 'لم تختر أي وجهة بعد';
 }
 
 async function requestProductDestination(chatId, files, caption) {
@@ -730,7 +1077,8 @@ async function requestProductDestination(chatId, files, caption) {
   const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   const parsed = parseCaption(caption);
   const expiresAt = now + (10 * 60 * 1000);
-  pendingDestinations.set(token, { chatId, files, caption, expiresAt });
+  const selected = { noco: false, tifawt: false, jumia: false };
+  pendingDestinations.set(token, { chatId, files, caption, selected, expiresAt });
 
   const imageNote = files.length >= 2 && files.length <= 4
     ? `${files.length} صور`
@@ -740,8 +1088,8 @@ async function requestProductDestination(chatId, files, caption) {
     : '';
   await sendMessage(
     chatId,
-    `📍 أين تريد حفظ هذا المنتج؟\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH${saleNote}\n📋 ${parsed.sku}\n🖼️ ${imageNote}\n\n• Tifawt: الاسم والمرجع والصور الأصلية كما أرسلتها (بنفس الترتيب).\n• NocoDB أو كلاهما: صور وعناوين مولّدة للموقع/الشيت، وTifawt يبقى بالأصل فقط.`,
-    destinationKeyboard(token)
+    `📍 اختر أين تريد نشر المنتج (يمكن اختيار أكثر من وجهة):\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH${saleNote}\n📋 ${parsed.sku}\n🖼️ ${imageNote}\n\n• NocoDB: يظهر في الموقع بعد اعتماد الصور.\n• Tifawt: الاسم والمرجع والصور الأصلية.\n• Jumia: وصف وصور احترافية؛ عند اختياره وحده يُستخدم سجل NocoDB مخفي لحفظ الصور دائماً.\n\nالاختيار الحالي: ${destinationSummary(selected)}`,
+    destinationKeyboard(token, selected)
   );
 }
 
@@ -799,7 +1147,7 @@ async function createNocoProductRecord(recordData, { name, sellerSku, price }) {
       SKU: sellerSku,
       price,
       Category_ID: 12,
-      POSTEBL: 'POSTEBL',
+      POSTEBL: recordData.POSTEBL || 'POSTEBL',
       description_arabic: recordData.description_arabic || '',
     };
     for (const key of ['Image1', 'Image2', 'Image3', 'Image4', 'Image5', 'image2', 'image3', 'image4', 'image5']) {
@@ -843,6 +1191,10 @@ async function executeAiPolish({
   startMessage,
   postebl = 'POSTEBL',
   publishRealOriginal = true,
+  syncJumia = true,
+  syncSheet = true,
+  catalogPublished = true,
+  nocoPostebl = 'POSTEBL',
 }) {
   console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
   await sendMessage(
@@ -866,16 +1218,18 @@ async function executeAiPolish({
         amazonUrl,
         uploadToNocoDB,
         nocodbUrl: NOCODB_URL,
-        // Push to N8N AI1 / Jumia Upload Template when webhook is configured.
-        syncSheet: true,
-        // Always publish (create/update) on Jumia after AI description + images.
-        syncJumia: true,
+        syncSheet,
+        syncJumia,
         postebl,
         publishRealOriginal,
       }),
       enrichTimeout,
       'AI polish'
     );
+    enrichment.syncJumia = syncJumia;
+    enrichment.syncSheet = syncSheet;
+    enrichment.catalogPublished = catalogPublished;
+    enrichment.nocoPostebl = nocoPostebl;
   } catch (e) {
     console.error(`AI polish timed out/failed #${rowId}:`, e.message);
     await sendMessage(
@@ -910,6 +1264,26 @@ async function executeAiPolish({
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
   });
 
+  const detectedColors = parseColorList(enrichment.detectedColorVariants || []);
+  if (enrichment.syncJumia && detectedColors.length > 1) {
+    const askedColors = await requestColorApproval({
+      chatId,
+      rowId,
+      recordUrl,
+      name,
+      price,
+      sellerSku,
+      enrichment,
+      // Description-only photos may contain additional variants, so preserve
+      // the full vision set for color-specific generation.
+      sourceBuffers: originalBuffers.slice(0, 4),
+    }, detectedColors);
+    if (askedColors) {
+      console.log(`🎨 Color approval pending #${rowId} ${sellerSku}: ${detectedColors.join(', ')}`);
+      return;
+    }
+  }
+
   const wantsApproval = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
   if (wantsApproval && enrichment.hasAiImages && enrichment.galleryCandidates?.length) {
     const asked = await requestGalleryApproval({
@@ -933,7 +1307,7 @@ async function executeAiPolish({
   await http.patch(recordUrl, patch, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
   });
-  if (enrichment.productForSheet?.imageUrls?.length && isJumiaConfigured()) {
+  if (enrichment.syncJumia && enrichment.productForSheet?.imageUrls?.length && isJumiaConfigured()) {
     try {
       enrichment.jumia = await createJumiaProduct(enrichment.productForSheet);
       if (Array.isArray(enrichment.jumia?.imageUrls) && enrichment.jumia.imageUrls.length) {
@@ -944,7 +1318,7 @@ async function executeAiPolish({
       enrichment.jumia = { error: e.message };
     }
   }
-  if (enrichment.productForSheet?.imageUrls?.length && isSheetWebhookConfigured()) {
+  if (enrichment.syncSheet && enrichment.productForSheet?.imageUrls?.length && isSheetWebhookConfigured()) {
     try {
       enrichment.sheet = await appendProductToSheet(enrichment.productForSheet);
     } catch (e) {
@@ -970,7 +1344,7 @@ async function executeAiPolish({
     `✨ تم تحديث المنتج #${rowId}\n`
     + `🎨 ${imgCount} صور في المعرض\n`
     + `📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n`
-    + `🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}${sheetNote}${jumiaNote}`
+    + `${enrichment.catalogPublished ? `🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}` : '🔒 سجل الصور التقني مخفي عن الموقع'}${sheetNote}${jumiaNote}`
   );
   console.log(`✅ AI polish OK #${rowId} (no gallery approval UI)`);
 }
@@ -993,6 +1367,10 @@ function scheduleAiPolish({
   amazonUrl,
   sellerSku,
   publishRealOriginal = true,
+  syncJumia = true,
+  syncSheet = true,
+  catalogPublished = true,
+  nocoPostebl = 'POSTEBL',
 }) {
   enqueueAiPolish(() => executeAiPolish({
     chatId,
@@ -1008,6 +1386,10 @@ function scheduleAiPolish({
     sellerSku,
     postebl: 'POSTEBL',
     publishRealOriginal,
+    syncJumia,
+    syncSheet,
+    catalogPublished,
+    nocoPostebl,
     startMessage: `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...\n🎨 ستوديو أبيض + زاوية إضافية\n📖 صور الوصف تُستخدم للقراءة فقط ولن تُنشر خام`,
   }));
 }
@@ -1073,6 +1455,13 @@ async function scheduleReenrichByRef(chatId, record, rawRef, { amazonUrl = '' } 
       amazonUrl: amazonUrl || record.Amazon_URL || '',
       sellerSku,
       postebl: record.POSTEBL || record.Postebl || 'POSTEBL',
+      // Preserve Jumia-only technical rows: never unhide PAUSED on re-enrich.
+      nocoPostebl: record.POSTEBL || record.Postebl || 'POSTEBL',
+      catalogPublished: !['PAUSED', 'HIDDEN'].includes(
+        String(record.POSTEBL || record.Postebl || 'POSTEBL').toUpperCase(),
+      ),
+      syncJumia: true,
+      syncSheet: true,
       startMessage: amazonUrl
         ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج بيانات وصور Amazon\n🎨 إنشاء صورة احترافية جديدة\n🛒 سيتم طلب موافقتك على الصور قبل النشر.`
         : `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
@@ -1090,22 +1479,33 @@ async function scheduleReenrichByRef(chatId, record, rawRef, { amazonUrl = '' } 
   );
 }
 
-async function processProduct(chatId, files, caption, destination = 'both', roles = null) {
+async function processProduct(
+  chatId,
+  files,
+  caption,
+  destinations = { noco: true, tifawt: true, jumia: true },
+  roles = null,
+) {
   const { price, oldPrice, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
   const tifawtSku = toTifawtSku(sku, { fallback: 'REF' });
+  const publishNoco = Boolean(destinations?.noco);
+  const publishTifawt = Boolean(destinations?.tifawt);
+  const publishJumia = Boolean(destinations?.jumia);
+  const needsAiStorage = publishNoco || publishJumia;
+  const destinationText = destinationSummary({ noco: publishNoco, tifawt: publishTifawt, jumia: publishJumia });
   const effectiveRoles = Array.isArray(roles) && roles.length === files.length
     ? roles
     : files.map(() => 'both');
   console.log(
-    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | roles=${effectiveRoles.join(',')} | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destination=${destination}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
+    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | roles=${effectiveRoles.join(',')} | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destinations=${destinationText}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
   );
 
   await sendMessage(
     chatId,
-    destination === 'tifawt'
+    !needsAiStorage && publishTifawt
       ? `⏳ جاري إرسال المنتج مباشرة إلى Tifawt (أصل بدون تعديل)...\n📦 ${name}\n💰 ${price} DH\n📋 ${tifawtSku}\n🖼️ ${files.length} صورة`
-      : `⏳ جاري حفظ المنتج بسرعة ثم توليد الوصف والصور في الخلفية...\n📦 ${name}\n💰 ${price} DH${oldPrice ? ` ← كان ${oldPrice}` : ''}\n📋 ${sellerSku}`
+      : `⏳ جاري تجهيز المنتج للوجهات المختارة...\n📍 ${destinationText}\n📦 ${name}\n💰 ${price} DH${oldPrice ? ` ← كان ${oldPrice}` : ''}\n📋 ${sellerSku}`
   );
 
   const downloaded = await Promise.all(
@@ -1144,7 +1544,7 @@ async function processProduct(chatId, files, caption, destination = 'both', role
 
   // Send originals immediately (no barcode scan — that only slowed us down).
   // Tifawt + NocoDB get the seller payload first; AI polish patches later.
-  if (destination === 'tifawt') {
+  if (!needsAiStorage && publishTifawt) {
     const result = await createTifawtProduct({
       name,
       sku: tifawtSku,
@@ -1164,7 +1564,7 @@ async function processProduct(chatId, files, caption, destination = 'both', role
   }
 
   // Fire Tifawt in parallel — do not block NocoDB save on it.
-  if (destination === 'both' && isTifawtProductSyncConfigured()) {
+  if (publishTifawt && isTifawtProductSyncConfigured()) {
     (async () => {
       try {
         let result = await createTifawtProduct({
@@ -1210,6 +1610,10 @@ async function processProduct(chatId, files, caption, destination = 'both', role
   const enrichment = {
     sellerSku,
     amazonUrl: amazonUrl || '',
+    syncJumia: publishJumia,
+    syncSheet: publishJumia,
+    catalogPublished: publishNoco,
+    nocoPostebl: publishNoco ? 'POSTEBL' : 'PAUSED',
     skippedAi: true,
     copy: null,
     barcode: '',
@@ -1233,11 +1637,17 @@ async function processProduct(chatId, files, caption, destination = 'both', role
   const recordUrl = created.recordUrl;
   const landing = `${SITE_URL}/p/${encodeURIComponent(sellerSku)}`;
   const saleNote = oldPrice ? `\n🔥 تخفيض من ${oldPrice} إلى ${price} DH` : '';
-  const tifawtNote = destination === 'both'
+  const tifawtNote = publishTifawt
     ? (isTifawtProductSyncConfigured()
       ? `\n🛒 Tifawt: يُرسل الأصل الآن بالمرجع ${tifawtSku}`
       : '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD')
-    : '\n🌐 تم الحفظ في NocoDB فقط';
+    : '';
+  const nocoNote = publishNoco
+    ? '\n🌐 NocoDB: سيظهر المنتج في الموقع بعد اعتماد الصور'
+    : '\n🔒 NocoDB: سجل تقني مخفي لحفظ صور Jumia فقط';
+  const jumiaChoiceNote = publishJumia
+    ? '\n🛒 Jumia: سيتم النشر بعد اعتماد الصور'
+    : '\n🛒 Jumia: غير محدد — لن يتم النشر';
   const roleNote = `\n🖼️ وصف: ${effectiveRoles.filter((r) => r === 'desc' || r === 'both').length} | عرض: ${effectiveRoles.filter((r) => r === 'display' || r === 'both').length}`;
 
   console.log(`✅ NocoDB row created fast (no raw gallery): #${rowId}`);
@@ -1245,8 +1655,8 @@ async function processProduct(chatId, files, caption, destination = 'both', role
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم حفظ المنتج #${rowId} بدون نشر صور خام!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}\n🔗 صفحة الهبوط: ${landing}${tifawtNote}\n\n✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.\n\n⬇️ اختر تصنيف المنتج:`,
-    keyboard
+    `✅ تم تجهيز المنتج #${rowId} بدون نشر صور خام!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
+    publishNoco ? keyboard : undefined
   );
 
   scheduleAiPolish({
@@ -1261,6 +1671,10 @@ async function processProduct(chatId, files, caption, destination = 'both', role
     sku,
     amazonUrl,
     sellerSku,
+    syncJumia: publishJumia,
+    syncSheet: publishJumia,
+    catalogPublished: publishNoco,
+    nocoPostebl: publishNoco ? 'POSTEBL' : 'PAUSED',
     // Include one display original as Image2 only after AI studio images exist.
     publishRealOriginal: displayBuffers.length > 0,
   });
@@ -1370,6 +1784,11 @@ function isReenrichCommand(text) {
     || text.startsWith('/reenrich');
 }
 
+function isAddColorsCommand(text) {
+  return text === '🎨 إضافة ألوان لمنتج موجود'
+    || text.startsWith('/add_colors');
+}
+
 function isAmazonReenrichCommand(text) {
   return text === '🛒 إعادة بناء من Amazon'
     || text.startsWith('/amazon_rebuild');
@@ -1406,9 +1825,72 @@ function isJumiaLabelCommand(text) {
     || text.startsWith('/jumia_label');
 }
 
-async function syncJumiaVisibility(sku, active) {
+async function pauseJumiaColorSkus(colorSkus = []) {
+  if (!isJumiaConfigured()) return [];
+  const results = [];
+  for (const colorSku of [...new Set((colorSkus || []).map((sku) => String(sku || '').trim()).filter(Boolean))]) {
+    try {
+      const visibility = await setJumiaProductActive(colorSku, false);
+      const stock = await setJumiaProductStock(
+        colorSku,
+        resolveJumiaStock('NO POSTEBL'),
+      ).catch((error) => ({ ok: false, error: error.message }));
+      results.push({ sellerSku: colorSku, visibility, stock });
+    } catch (error) {
+      results.push({ sellerSku: colorSku, error: error.message });
+      console.warn(`Jumia pause failed for removed color ${colorSku}:`, error.message);
+    }
+  }
+  return results;
+}
+
+async function colorJumiaSkusFromRecord(record) {
+  const productId = record?.Id || record?.id;
+  if (!productId) return [];
+  try {
+    return await listJumiaColorSkusByProductId(productId);
+  } catch (e) {
+    console.warn(`Variant SKU lookup failed for #${productId}:`, e.message);
+    return [];
+  }
+}
+
+async function syncJumiaVisibility(recordOrSku, active) {
   if (!isJumiaConfigured()) {
     return { skipped: true, reason: 'jumia_not_configured' };
+  }
+  const record = typeof recordOrSku === 'object' ? recordOrSku : null;
+  const sku = record?.SKU || recordOrSku;
+  const colorSkus = await colorJumiaSkusFromRecord(record);
+  if (colorSkus.length) {
+    const results = [];
+    for (const colorSku of colorSkus) {
+      try {
+        const visibility = await setJumiaProductActive(colorSku, active);
+        const stock = await setJumiaProductStock(
+          colorSku,
+          active ? resolveJumiaStock('POSTEBL') : resolveJumiaStock('NO POSTEBL'),
+        ).catch((error) => ({ ok: false, error: error.message }));
+        results.push({
+          ...visibility,
+          sellerSku: visibility.sellerSku || colorSku,
+          stock,
+        });
+      } catch (error) {
+        results.push({ sellerSku: colorSku, error: error.message });
+      }
+    }
+    const failures = results.filter(
+      (result) => result.error || result.stock?.ok === false || result.stock?.error,
+    );
+    return {
+      ok: failures.length === 0,
+      colorCount: colorSkus.length,
+      results,
+      error: failures.length
+        ? failures.map((f) => `${f.sellerSku}:${f.error || f.stock?.error || 'stock_failed'}`).join(' | ')
+        : null,
+    };
   }
   const candidates = [
     buildSellerSku(sku),
@@ -1452,6 +1934,11 @@ function formatJumiaVisibilityNote(jumiaResult, active) {
   if (jumiaResult.error) {
     return `\n🛒 Jumia خطأ: ${jumiaResult.error}`;
   }
+  if (jumiaResult.colorCount) {
+    return active
+      ? `\n🛒 Jumia: تم تفعيل ${jumiaResult.colorCount} منتجات ألوان`
+      : `\n🛒 Jumia: تم إيقاف ${jumiaResult.colorCount} منتجات ألوان`;
+  }
   return active
     ? '\n🛒 Jumia: تم تفعيل المنتج (ACTIVE)'
     : '\n🛒 Jumia: تم إيقاف المنتج (INACTIVE)';
@@ -1470,7 +1957,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: اضغط الزر ثم أرسل المرجع ورابط Amazon، أو استخدم «المرجع 112».',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🎨 إضافة ألوان: اضغط «إضافة ألوان لمنتج موجود»، أرسل المرجع ثم صور الألوان.\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: اضغط الزر ثم أرسل المرجع ورابط Amazon، أو استخدم «المرجع 112».',
         MAIN_KEYBOARD
       );
       return;
@@ -1497,6 +1984,30 @@ async function handleUpdate(update) {
 
     if (isSaleTemplatesCommand(text)) {
       await sendTemplateGallery(chatId, 'sale');
+      return;
+    }
+
+    const colorState = userState[chatId];
+    if (colorState?.type === 'AWAITING_COLOR_VARIANTS') {
+      if (colorState.pending?.expiresAt < Date.now()) {
+        delete userState[chatId];
+        await sendMessage(chatId, '⌛ انتهت مهلة تصحيح الألوان. أعد توليد المنتج.');
+        return;
+      }
+      const colors = parseColorList(text);
+      if (!colors.length) {
+        await sendMessage(
+          chatId,
+          '❌ لم أفهم الألوان. اكتب كل شكل لوني مفصولاً بفاصلة.\nمثال:\nأبيض وأسود، أسود مع أزرق، أزرق',
+        );
+        return;
+      }
+      delete userState[chatId];
+      await sendMessage(
+        chatId,
+        `✅ تم اعتماد الألوان التي كتبتها:\n${colors.map((color, index) => `${index + 1}. ${color}`).join('\n')}`,
+      );
+      enqueueAiPolish(() => continueAfterColorApproval(colorState.pending, colors));
       return;
     }
 
@@ -1573,6 +2084,15 @@ async function handleUpdate(update) {
     if (isPriceCommand(text)) {
       userState[chatId] = 'AWAITING_REF_PRICE';
       await sendMessage(chatId, '⚙️ تم تفعيل وضع تغيير السعر.\n\nأرسل المرجع (REF) للمنتج الذي تريد تغيير سعره.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت');
+      return;
+    }
+
+    if (isAddColorsCommand(text)) {
+      userState[chatId] = 'AWAITING_REF_ADD_COLORS';
+      await sendMessage(
+        chatId,
+        '🎨 إضافة ألوان لمنتج موجود\n\nأرسل الآن مرجع المنتج (REF أو SKU).\nبعد العثور عليه سأطلب منك صور الألوان فقط، ولن أغيّر صور أو وصف المنتج الأساسي.',
+      );
       return;
     }
 
@@ -1715,6 +2235,14 @@ async function handleUpdate(update) {
       return;
     }
 
+    if (userState[chatId]?.type === 'AWAITING_EXISTING_COLOR_PHOTOS') {
+      await sendMessage(
+        chatId,
+        `📷 أرسل الآن صورة واحدة أو ألبوم صور يحتوي على ألوان المنتج (${userState[chatId].context.sellerSku}).\nللإلغاء اضغط 🔄 إعادة تشغيل البوت.`,
+      );
+      return;
+    }
+
     if (userState[chatId]) {
       const state = userState[chatId];
       const sku = text;
@@ -1729,7 +2257,7 @@ async function handleUpdate(update) {
             { Id: recordId, POSTEBL: 'NO POSTEBL' },
             { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }, timeout: 30000 }
           );
-          const jumiaResult = await syncJumiaVisibility(record.SKU || sku, false);
+          const jumiaResult = await syncJumiaVisibility(record, false);
           await sendMessage(
             chatId,
             `✅ تم إيقاف المنتج (${sku}) ← "نفد من المخزون"${formatJumiaVisibilityNote(jumiaResult, false)}\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`
@@ -1740,7 +2268,7 @@ async function handleUpdate(update) {
             { Id: recordId, POSTEBL: 'POSTEBL' },
             { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }, timeout: 30000 }
           );
-          const jumiaResult = await syncJumiaVisibility(record.SKU || sku, true);
+          const jumiaResult = await syncJumiaVisibility(record, true);
           await sendMessage(
             chatId,
             `✅ تم جعل المنتج (${sku}) "متوفراً"${formatJumiaVisibilityNote(jumiaResult, true)}\n\n🔁 أرسل مرجع منتج آخر أو اضغط 🔄 للخروج.`
@@ -1762,6 +2290,16 @@ async function handleUpdate(update) {
           );
         } else if (state === 'AWAITING_REF_REENRICH') {
           await scheduleReenrichByRef(chatId, record, sku);
+        } else if (state === 'AWAITING_REF_ADD_COLORS') {
+          const context = existingProductColorContext(chatId, record);
+          userState[chatId] = {
+            type: 'AWAITING_EXISTING_COLOR_PHOTOS',
+            context,
+          };
+          await sendMessage(
+            chatId,
+            `✅ تم العثور على المنتج (${context.sellerSku}).\n\n📷 أرسل الآن صور الألوان كصورة واحدة أو ألبوم.\nسأكتشف الألوان ثم أطلب موافقتك قبل إنشاء صور ومنتجات Jumia.\n\n🔒 صور ووصف المنتج الأساسي لن يتغيرا.`,
+          );
         }
       } else {
         await sendMessage(chatId, `❌ لم أجد منتج بمرجع: ${sku}\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`);
@@ -1783,25 +2321,51 @@ async function handleUpdate(update) {
     }
 
     const groupId = msg.media_group_id;
+    const colorPhotoState = userState[chatId]?.type === 'AWAITING_EXISTING_COLOR_PHOTOS'
+      ? userState[chatId]
+      : null;
 
     if (groupId) {
       if (!albumBuffer[groupId]) {
+        const colorContext = colorPhotoState?.context || null;
+        if (colorPhotoState) delete userState[chatId];
         albumBuffer[groupId] = {
           files: [],
           caption: '',
           chatId,
+          mode: colorContext ? 'existing-colors' : 'new-product',
+          colorContext,
           timer: setTimeout(() => {
             const album = albumBuffer[groupId];
             delete albumBuffer[groupId];
             if (!album) return;
-            requestProductDestination(album.chatId, album.files, album.caption).catch((err) => {
-              console.error('Destination prompt failed:', err.message);
-            });
+            if (album.mode === 'existing-colors') {
+              enqueueAiPolish(
+                () => processExistingProductColorPhotos(
+                  album.chatId,
+                  album.files,
+                  album.colorContext,
+                ),
+              );
+            } else {
+              requestProductDestination(album.chatId, album.files, album.caption).catch((err) => {
+                console.error('Destination prompt failed:', err.message);
+              });
+            }
           }, 3000),
         };
       }
       albumBuffer[groupId].files.push({ fileId, extName });
       if (msg.caption) albumBuffer[groupId].caption = msg.caption;
+    } else if (colorPhotoState) {
+      delete userState[chatId];
+      enqueueAiPolish(
+        () => processExistingProductColorPhotos(
+          chatId,
+          [{ fileId, extName }],
+          colorPhotoState.context,
+        ),
+      );
     } else {
       await requestProductDestination(chatId, [{ fileId, extName }], msg.caption);
     }
@@ -1848,8 +2412,58 @@ async function handleUpdate(update) {
       return;
     }
 
+    if (data.startsWith('colors:')) {
+      const [, token, action] = data.split(':');
+      const pending = pendingColorApprovals.get(token);
+      if (!pending || pending.chatId !== chatId || pending.expiresAt < Date.now()) {
+        pendingColorApprovals.delete(token);
+        await answerCallback(cb.id, 'انتهت مهلة تأكيد الألوان');
+        await editMessage(chatId, msgId, '⌛ انتهت مهلة تأكيد الألوان. أعد توليد المنتج.');
+        return;
+      }
+
+      if (action === 'edit') {
+        pendingColorApprovals.delete(token);
+        userState[chatId] = { type: 'AWAITING_COLOR_VARIANTS', pending };
+        await answerCallback(cb.id, 'اكتب الألوان الصحيحة');
+        await editMessage(
+          chatId,
+          msgId,
+          '✏️ اكتب الآن كل شكل لوني مفصولاً بفاصلة.\n\nالتركيبة ذات اللونين تُكتب كعنصر واحد.\nمثال: أبيض وأسود، أسود مع أزرق، أزرق',
+        );
+        return;
+      }
+
+      if (action === 'approve' || action === 'single') {
+        pendingColorApprovals.delete(token);
+        if (action === 'single' && pending.variantOnly) {
+          await answerCallback(cb.id, 'تم إلغاء إضافة الألوان');
+          await editMessage(
+            chatId,
+            msgId,
+            '✖️ تم إلغاء إضافة الألوان. لم يتم تعديل المنتج الأساسي أو الألوان المنشورة سابقاً.',
+          );
+          return;
+        }
+        const colors = action === 'approve' ? pending.colors : [];
+        await answerCallback(cb.id, action === 'approve' ? 'تم اعتماد الألوان' : 'سيُنشر كمنتج واحد');
+        await editMessage(
+          chatId,
+          msgId,
+          action === 'approve'
+            ? `✅ تم اعتماد ${colors.length} أشكال لونية. بدأ توليد صور Jumia.`
+            : '⏭️ تم إلغاء تقسيم الألوان. سيُعامل كمنتج واحد.',
+        );
+        enqueueAiPolish(() => continueAfterColorApproval(pending, colors));
+        return;
+      }
+
+      await answerCallback(cb.id, 'اختيار غير صالح');
+      return;
+    }
+
     if (data.startsWith('dest:')) {
-      const [, destination, token] = data.split(':');
+      const [, token, action] = data.split(':');
       const pending = pendingDestinations.get(token);
       if (!pending || pending.chatId !== chatId || pending.expiresAt < Date.now()) {
         pendingDestinations.delete(token);
@@ -1857,34 +2471,55 @@ async function handleUpdate(update) {
         await editMessage(chatId, msgId, '⌛ انتهت صلاحية هذا الطلب. أرسل صور المنتج مجدداً.');
         return;
       }
-      pendingDestinations.delete(token);
 
-      if (destination === 'cancel') {
+      if (action === 'cancel') {
+        pendingDestinations.delete(token);
         await answerCallback(cb.id, 'تم الإلغاء');
         await editMessage(chatId, msgId, '✖️ تم إلغاء إضافة المنتج.');
         return;
       }
 
-      const labels = {
-        noco: 'NocoDB فقط',
-        tifawt: 'Tifawt فقط',
-        both: 'NocoDB وTifawt',
-      };
-      if (!labels[destination]) {
+      if (['noco', 'tifawt', 'jumia'].includes(action)) {
+        pending.selected[action] = !pending.selected[action];
+        await answerCallback(
+          cb.id,
+          `${pending.selected[action] ? 'تم اختيار' : 'تم إلغاء'} ${action === 'noco' ? 'NocoDB' : action === 'tifawt' ? 'Tifawt' : 'Jumia'}`,
+        );
+        try {
+          await axios.post(`${TG_API}/editMessageText`, {
+            chat_id: chatId,
+            message_id: msgId,
+            text: `📍 اختر وجهات النشر ثم اضغط تأكيد:\n\nالاختيار الحالي: ${destinationSummary(pending.selected)}`,
+            reply_markup: destinationKeyboard(token, pending.selected),
+          }, { timeout: 30000 });
+        } catch (e) {
+          console.warn('edit destination keyboard failed:', e.message);
+        }
+        return;
+      }
+
+      if (action !== 'go') {
         await answerCallback(cb.id, 'اختيار غير صالح');
         return;
       }
 
-      await answerCallback(cb.id, `تم اختيار ${labels[destination]}`);
-      await editMessage(chatId, msgId, `✅ الوجهة: ${labels[destination]}`);
+      const destinations = { ...pending.selected };
+      if (!destinations.noco && !destinations.tifawt && !destinations.jumia) {
+        await answerCallback(cb.id, 'اختر وجهة واحدة على الأقل');
+        return;
+      }
+      pendingDestinations.delete(token);
+      const summary = destinationSummary(destinations);
+      await answerCallback(cb.id, 'تم تأكيد وجهات النشر');
+      await editMessage(chatId, msgId, `✅ وجهات النشر: ${summary}`);
 
-      // Tifawt-only keeps all originals. Noco/both: classify photos when 2+.
-      if (destination !== 'tifawt' && pending.files.length >= 2) {
+      // AI destinations classify photos; Tifawt-only keeps every original.
+      if ((destinations.noco || destinations.jumia) && pending.files.length >= 2) {
         await requestImageRoles(
           pending.chatId,
           pending.files,
           pending.caption,
-          destination
+          destinations
         );
         return;
       }
@@ -1894,7 +2529,7 @@ async function handleUpdate(update) {
         pending.chatId,
         pending.files,
         pending.caption,
-        destination,
+        destinations,
         pending.files.map(() => 'both'),
       ));
       return;
@@ -1931,7 +2566,7 @@ async function handleUpdate(update) {
         await editMessage(
           chatId,
           msgId,
-          `✅ جاري نشر ${selected.length} صورة على الواجهة...\n${galleryApprovalSummary(pending.candidates)}`
+          `✅ جاري اعتماد ${selected.length} صورة والنشر في الوجهات التي اخترتها...\n${galleryApprovalSummary(pending.candidates)}`
         );
         try {
           await finalizeGalleryApproval(pending, { publishImages: true });

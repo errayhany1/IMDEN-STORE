@@ -138,6 +138,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const [refCopied, setRefCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareFlash, setShareFlash] = useState(false);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const touchX = useRef(null);
 
   const sku = useMemo(() => {
@@ -162,6 +163,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       setLoadError('');
       setDirectProduct(null);
       setActiveImg(0);
+      setSelectedVariantId(null);
 
       let loaded = false;
       try {
@@ -211,6 +213,10 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
   const od = useMemo(() => product?.originalData || {}, [product]);
   const isFr = lang === 'fr';
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  const selectedVariant = variants.find(
+    (variant) => String(variant.id) === String(selectedVariantId),
+  ) || null;
   const title = isFr
     ? (od.French_Title || od.Woo_Title || product?.name || sku)
     : (od.Arabic_Title || od.Title || product?.name || sku);
@@ -249,11 +255,13 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   );
 
   const images = useMemo(() => {
-    const list = (product?.images?.length
+    const list = (selectedVariant?.images?.length
+      ? selectedVariant.images
+      : product?.images?.length
       ? product.images
       : [product?.image, product?.originalImage].filter(Boolean));
     return Array.from(new Set((list || []).filter(Boolean)));
-  }, [product]);
+  }, [product, selectedVariant]);
 
   /** Product shots only — specs / A+ cards stay in the description section. */
   const carouselImages = useMemo(
@@ -398,7 +406,19 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
   const handleAdd = () => {
     if (!product || !available) return;
-    addToCart(product);
+    const cartProduct = selectedVariant
+      ? {
+        ...product,
+        id: `${product.id}-color-${selectedVariant.code || selectedVariant.id}`,
+        ref: product.ref,
+        name: `${product.name} — ${isFr ? selectedVariant.colorFr : selectedVariant.colorAr}`,
+        image: selectedVariant.images[0] || product.image,
+        images: selectedVariant.images,
+        selectedColor: isFr ? selectedVariant.colorFr : selectedVariant.colorAr,
+        colorCode: selectedVariant.code,
+      }
+      : product;
+    addToCart(cartProduct);
     setAddedFlash(true);
     setTimeout(() => setAddedFlash(false), 1600);
     if (!useStore.getState().isCartOpen) toggleCart();
@@ -755,6 +775,47 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                     <img src={src} alt="" loading="lazy" className="w-full h-full object-contain" />
                   </button>
                 ))}
+              </div>
+            )}
+
+            {variants.length > 0 && (
+              <div className="mt-4">
+                <p className={`text-xs font-semibold mb-2 ${muted}`}>
+                  {isFr ? 'Choisir la couleur' : 'اختر اللون'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedVariantId(null);
+                      setActiveImg(0);
+                    }}
+                    className={`px-3 py-2 rounded-xl border text-xs font-semibold transition ${
+                      selectedVariantId == null
+                        ? 'border-primary text-primary bg-primary/10'
+                        : `${line} ${muted}`
+                    }`}
+                  >
+                    {isFr ? 'Toutes les couleurs' : 'كل الألوان'}
+                  </button>
+                  {variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedVariantId(variant.id);
+                        setActiveImg(0);
+                      }}
+                      className={`px-3 py-2 rounded-xl border text-xs font-semibold transition ${
+                        String(selectedVariantId) === String(variant.id)
+                          ? 'border-primary text-primary bg-primary/10'
+                          : `${line} ${muted}`
+                      }`}
+                    >
+                      {isFr ? variant.colorFr : variant.colorAr}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </section>

@@ -116,7 +116,10 @@ export async function appendProductToSheet(product) {
   // Never write NocoDB signed URLs into the Jumia sheet.
   if (rawImages.length && rawImages.some((u) => !/\/bot-api\/public-images\/p\//i.test(String(u || '')))) {
     try {
-      const durable = await ensurePublicImageUrls(rawImages, { sku });
+      const durable = await ensurePublicImageUrls(rawImages, {
+        sku: product.publicImageSku || sku,
+        startIndex: product.publicImageStartIndex || 1,
+      });
       if (durable.length) product.imageUrls = durable;
     } catch (e) {
       console.warn('[sheet] ensurePublicImageUrls failed:', e.message);
