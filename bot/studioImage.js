@@ -45,6 +45,100 @@ function wrapLines(text, maxChars = 42, maxLines = 3) {
 }
 
 /**
+ * Remove only near-white pixels connected to the canvas edges. This preserves
+ * white areas inside the product while eliminating the opaque white rectangle
+ * that previously caused Sharp to cast a shadow around the whole image.
+ */
+async function removeEdgeConnectedWhite(productBuffer) {
+  const raw = await sharp(productBuffer)
+    .rotate()
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = raw.info;
+  if (channels !== 4 || width < 256 || height < 256) {
+    throw new Error('studio_invalid_dimensions');
+  }
+
+  const pixels = Buffer.from(raw.data);
+  const total = width * height;
+  const background = new Uint8Array(total);
+  const queue = new Int32Array(total);
+  let read = 0;
+  let write = 0;
+
+  const isWhiteBackground = (pixelIndex) => {
+    const p = pixelIndex * 4;
+    const r = pixels[p];
+    const g = pixels[p + 1];
+    const b = pixels[p + 2];
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    return min >= 232 && max - min <= 24;
+  };
+  const enqueue = (pixelIndex) => {
+    if (background[pixelIndex] || !isWhiteBackground(pixelIndex)) return;
+    background[pixelIndex] = 1;
+    queue[write++] = pixelIndex;
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    enqueue(x);
+    enqueue((height - 1) * width + x);
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    enqueue(y * width);
+    enqueue(y * width + width - 1);
+  }
+
+  while (read < write) {
+    const i = queue[read++];
+    const x = i % width;
+    if (x > 0) enqueue(i - 1);
+    if (x + 1 < width) enqueue(i + 1);
+    if (i >= width) enqueue(i - width);
+    if (i + width < total) enqueue(i + width);
+  }
+
+  const backgroundRatio = write / total;
+  if (backgroundRatio < 0.08) {
+    throw new Error('studio_background_not_clean');
+  }
+
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let i = 0; i < total; i += 1) {
+    const p = i * 4;
+    if (background[i]) {
+      pixels[p + 3] = 0;
+      continue;
+    }
+    if (pixels[p + 3] > 20) {
+      const x = i % width;
+      const y = Math.floor(i / width);
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  if (maxX < minX || maxY < minY) throw new Error('studio_product_missing');
+
+  // Reject a remaining rectangular plate/frame instead of publishing it.
+  const boxWidthRatio = (maxX - minX + 1) / width;
+  const boxHeightRatio = (maxY - minY + 1) / height;
+  if (boxWidthRatio > 0.97 && boxHeightRatio > 0.97) {
+    throw new Error('studio_rectangular_frame_detected');
+  }
+
+  return sharp(pixels, {
+    raw: { width, height, channels: 4 },
+  }).png().toBuffer();
+}
+
+/**
  * Finish an AI (or seller) product photo as a white-studio catalog image:
  * trim empty margins → enlarge to fill the square → soft drop shadow only.
  * No separate oval "floor" shadow (that looked like a floating grey blob on cards).
@@ -55,18 +149,17 @@ function wrapLines(text, maxChars = 42, maxLines = 3) {
  */
 export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const size = CATALOG_IMAGE_SIZE;
-  const fill = Number(process.env.STUDIO_PRODUCT_FILL || 0.94);
+  const fill = Number(process.env.STUDIO_PRODUCT_FILL || 0.91);
 
-  let cut = productBuffer;
+  let cut = await removeEdgeConnectedWhite(productBuffer);
   try {
-    cut = await sharp(productBuffer)
-      .rotate()
+    cut = await sharp(cut)
       .trim({ threshold: 22 })
       .ensureAlpha()
       .png()
       .toBuffer();
-  } catch {
-    cut = await sharp(productBuffer).rotate().ensureAlpha().png().toBuffer();
+  } catch (error) {
+    throw new Error(`studio_trim_failed:${error.message}`);
   }
 
   const maxSide = Math.round(size * fill);
@@ -85,7 +178,7 @@ export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const left = Math.round((size - pw) / 2);
   const top = Math.round((size - ph) / 2);
 
-  // Soft drop shadow only — follows the product silhouette (no detached ellipse).
+  // Very light shadow that follows only the isolated product silhouette.
   const raw = await sharp(product)
     .ensureAlpha()
     .raw()
@@ -96,12 +189,12 @@ export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
     pixels[i] = 0;
     pixels[i + 1] = 0;
     pixels[i + 2] = 0;
-    pixels[i + 3] = Math.round(a * 0.22);
+    pixels[i + 3] = Math.round(a * 0.14);
   }
   const shadowCore = await sharp(pixels, {
     raw: { width: raw.info.width, height: raw.info.height, channels: 4 },
   })
-    .blur(14)
+    .blur(10)
     .png()
     .toBuffer();
 
@@ -117,8 +210,8 @@ export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const layers = [
     {
       input: shadowCore,
-      left: left + 2,
-      top: top + 8,
+      left: left + 1,
+      top: top + 5,
     },
     { input: product, left, top },
   ];

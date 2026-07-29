@@ -7,7 +7,9 @@ import { composeWhiteStudioProduct } from './studioImage.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || 'google/gemini-2.5-flash';
-const IMAGE_MODEL = process.env.OPENROUTER_IMAGE_MODEL || 'google/gemini-2.5-flash-image';
+// Lite is substantially cheaper and one generation is enough: deterministic
+// Sharp post-processing handles crop/background/shadow after the model call.
+const IMAGE_MODEL = process.env.OPENROUTER_IMAGE_MODEL || 'google/gemini-3.1-flash-lite-image';
 
 function apiKey() {
   return process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '';
@@ -128,6 +130,8 @@ Règles packaging_specs:
       model: TEXT_MODEL,
       messages: [{ role: 'user', content }],
       temperature: 0.4,
+      response_format: { type: 'json_object' },
+      max_tokens: 1800,
     },
     { headers: headers(), timeout: 45000 }
   );
@@ -166,6 +170,8 @@ Copy every visible character exactly. Never guess. If no barcode is clearly read
       model: TEXT_MODEL,
       messages: [{ role: 'user', content }],
       temperature: 0,
+      response_format: { type: 'json_object' },
+      max_tokens: 120,
     },
     { headers: headers(), timeout: 45000 }
   );
@@ -175,7 +181,9 @@ Copy every visible character exactly. Never guess. If no barcode is clearly read
 }
 
 async function generateOneImage({ imageBuffers, prompt }) {
-  const refs = (imageBuffers || []).filter(Boolean).slice(0, 4);
+  // Two references are enough to preserve identity while avoiding the image
+  // token cost of sending the whole Telegram album to the generation model.
+  const refs = (imageBuffers || []).filter(Boolean).slice(0, 2);
   if (!refs.length) {
     throw new Error('No reference images for AI generation');
   }
@@ -194,6 +202,7 @@ async function generateOneImage({ imageBuffers, prompt }) {
       model: IMAGE_MODEL,
       messages: [{ role: 'user', content }],
       modalities: ['image', 'text'],
+      image_config: { aspect_ratio: '1:1' },
     },
     { headers: headers(), timeout: 60000 }
   );
@@ -207,9 +216,10 @@ async function generateOneImage({ imageBuffers, prompt }) {
 }
 
 /**
- * Returns website-ready product images:
- * 1) AI cleans the product (white plate)
- * 2) We trim margins, enlarge to fill the square, and add soft studio shadows
+ * Returns exactly one website-ready product image:
+ * 1) AI isolates the product once
+ * 2) deterministic code removes the white plate, crops it, and adds one
+ *    silhouette-following contact shadow
  *
  * @param {{
  *   imageBuffer?: Buffer,
@@ -239,59 +249,31 @@ export async function generateProductImages({
     throw new Error('No reference photo for AI image generation');
   }
 
-  const cutoutCount = Math.min(
-    Math.max(1, Number(process.env.AI_IMAGE_COUNT || 2) || 2),
-    3
-  );
-
   const base = `You are a professional ecommerce product photographer for Errayhany (Morocco wholesale).
 Use the product in the reference photo(s) as the ONLY product.
 Keep exact identity: shape, color, ports, logos, button labels, branding marks. Do NOT invent a different product.
 If the reference shows PACKAGING / a cardboard BOX: recreate the REAL PRODUCT illustrated on the box (the device itself), NOT the box — clean packshot like premium Jumia listings (remotes, gadgets on pure white).
 Output a square 1:1 photo on a PLAIN seamless WHITE background (#FFFFFF only).
-CRITICAL framing: the product must FILL about 88–94% of the frame — tight crop, little empty white margin.
-Center the product. Soft realistic studio lighting. Soft contact shadow under the product only (no floating oval blob, no grey floor disc, no table, no wood floor).
+CRITICAL framing: the product must FILL about 82–90% of the frame but must NOT touch any edge.
+Center the product. Use even realistic studio lighting.
+NO SHADOW and NO frame: do not add a rectangular/card shadow, drop shadow, floor shadow, glow, border, panel, platform, table, or grey background. Our software adds the final subtle product-shaped shadow later.
 No text overlays, no badges, no props, no hands, no clutter, no colored backdrop.`;
 
-  const angleHints = [
-    'Hero packshot: front / clearest catalog angle, product filling the frame on pure white.',
-    'Alternate pose: slight 3/4 angle OR useful detail (ports, clip, buttons) — same product, same white studio, still fills the frame.',
-    'Lifestyle-free detail: top-down or side profile on pure white, still the same product only.',
-  ];
+  const prompt = `${base}
+Hero packshot: front or clearest catalog angle, exact same product only.${titleFr ? `\nProduct: ${titleFr}` : ''}
+Mode hint: ${mode}. Return one image only.`;
 
-  const cutouts = [];
-  for (let i = 0; i < cutoutCount; i++) {
-    const prompt = `${base}\n${angleHints[i % angleHints.length]}${titleFr ? `\nProduct: ${titleFr}` : ''}\nMode hint: ${mode}.`;
-    try {
-      const buf = await generateOneImage({ imageBuffers: refs, prompt });
-      if (buf) cutouts.push(buf);
-    } catch (e) {
-      console.error('Cutout image gen failed:', e.message);
-    }
+  try {
+    const generated = await generateOneImage({ imageBuffers: refs, prompt });
+    const [clean] = await normalizeCatalogImages([generated]);
+    if (!clean) return [];
+    // Do not retry a rejected image: retries double spend and commonly repeat
+    // the same defect. The existing gallery approval keeps raw photos safe.
+    return [await composeWhiteStudioProduct(clean, { price, oldPrice })];
+  } catch (e) {
+    console.error('Single studio image generation rejected:', e.message);
+    return [];
   }
-
-  if (!cutouts.length) {
-    try {
-      const buf = await generateOneImage({ imageBuffers: refs, prompt: `${base}\nFront hero, fill the frame.` });
-      if (buf) cutouts.push(buf);
-    } catch (e) {
-      console.error('Cutout retry failed:', e.message);
-    }
-  }
-
-  if (!cutouts.length) return [];
-
-  const clean = await normalizeCatalogImages(cutouts);
-  const finished = [];
-  for (const cutout of clean) {
-    try {
-      finished.push(await composeWhiteStudioProduct(cutout, { price, oldPrice }));
-    } catch (e) {
-      console.error('White studio finish failed:', e.message);
-      finished.push(cutout);
-    }
-  }
-  return finished;
 }
 
 export function isOpenRouterConfigured() {
