@@ -1,10 +1,17 @@
 /**
  * Permanent public image URLs for Jumia PIM.
  *
- * Jumia copies seller image URLs onto vendorcenter.jumia.com. NocoDB S3 signed
- * URLs expire (~2h) and often leave products QC-approved but Not Live
- * (VISIBLE_NO_COUNTRIES). We download once, store on disk, and serve from
- * https://errayhany.com/bot-api/public-images/...
+ * Failure mode we solve:
+ * - NocoDB S3 signed URLs expire (~2h) → Jumia QC OK but Not Live
+ * - Disk-only `/public-images/{hash}.jpg` dies on every EasyPanel redeploy → images vanish again
+ *
+ * Durable design:
+ * Jumia receives stable URLs:
+ *   https://errayhany.com/bot-api/public-images/p/{sku}/{n}.jpg
+ * On each request the storefront:
+ *   1) serves a local cache file if present
+ *   2) otherwise re-fetches a FRESH signed URL from NocoDB Image{n} and caches it
+ * So redeploys wipe disk but images keep working as long as NocoDB still has attachments.
  */
 import fs from 'fs/promises';
 import path from 'path';
@@ -39,6 +46,14 @@ function uploadSecret() {
   ).trim();
 }
 
+function nocodbConfig() {
+  return {
+    url: (process.env.VITE_NOCODB_URL || process.env.NOCODB_URL || '').replace(/\/+$/, ''),
+    token: process.env.VITE_NOCODB_API_TOKEN || process.env.NOCODB_API_TOKEN || '',
+    table: process.env.VITE_NOCODB_TABLE_PRODUCTS || process.env.NOCODB_TABLE_PRODUCTS || '',
+  };
+}
+
 function isAlreadyPublic(url) {
   const u = String(url || '');
   if (!u) return false;
@@ -50,10 +65,25 @@ function isSignedOrEphemeral(url) {
   return /X-Amz-|Signature=|Expires=|nocohub|amazonaws\.com/i.test(String(url || ''));
 }
 
-function safeSkuPart(sku) {
+function isDurablePublicUrl(url) {
+  return /\/bot-api\/public-images\/p\//i.test(String(url || ''));
+}
+
+export function safeSkuPart(sku) {
   return String(sku || 'img')
     .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .slice(0, 48) || 'img';
+    .slice(0, 64) || 'img';
+}
+
+/** Stable Jumia-facing URL — survives container rebuilds via NocoDB-backed proxy. */
+export function permanentSkuImageUrl(sku, index = 1) {
+  const part = encodeURIComponent(String(sku || 'img').trim() || 'img');
+  const n = Math.max(1, Number(index) || 1);
+  return `${publicImageBaseUrl()}/p/${part}/${n}.jpg`;
+}
+
+function stableCacheFileName(sku, index) {
+  return `p-${safeSkuPart(sku)}-${Math.max(1, Number(index) || 1)}.jpg`;
 }
 
 async function ensureCacheDir() {
@@ -78,24 +108,46 @@ async function optimizeForJumia(buffer) {
   }
 }
 
+async function writeCacheFile(fileName, buffer) {
+  await ensureCacheDir();
+  const filePath = path.join(CACHE_DIR, fileName);
+  await fs.writeFile(filePath, buffer);
+  return filePath;
+}
+
+async function readCacheFile(fileName) {
+  try {
+    const filePath = path.join(CACHE_DIR, fileName);
+    const buf = await fs.readFile(filePath);
+    if (!buf || buf.length < 500) return null;
+    return buf;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Persist a JPEG/PNG buffer locally and return its public URL.
+ * Prefer permanentSkuImageUrl + stable cache names for Jumia.
  */
-export async function persistPublicImage(buffer, { sku = 'img', index = 1 } = {}) {
+export async function persistPublicImage(buffer, { sku = 'img', index = 1, stable = true } = {}) {
   if (!buffer || !Buffer.isBuffer(buffer) || buffer.length < 500) {
     throw new Error('invalid_image_buffer');
   }
   const optimized = await optimizeForJumia(buffer);
   await ensureCacheDir();
-  const hash = crypto.createHash('sha1').update(optimized).digest('hex').slice(0, 16);
-  const name = `${safeSkuPart(sku)}-${index}-${hash}.jpg`;
-  const filePath = path.join(CACHE_DIR, name);
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(filePath, optimized);
+  let name;
+  let url;
+  if (stable) {
+    name = stableCacheFileName(sku, index);
+    url = permanentSkuImageUrl(sku, index);
+  } else {
+    const hash = crypto.createHash('sha1').update(optimized).digest('hex').slice(0, 16);
+    name = `${safeSkuPart(sku)}-${index}-${hash}.jpg`;
+    url = `${publicImageBaseUrl()}/${name}`;
   }
-  return { url: `${publicImageBaseUrl()}/${name}`, buffer: optimized, fileName: name };
+  await writeCacheFile(name, optimized);
+  return { url, buffer: optimized, fileName: name };
 }
 
 async function downloadImage(url) {
@@ -113,12 +165,75 @@ async function downloadImage(url) {
   const ct = String(headers['content-type'] || '');
   if (buf.length < 500) throw new Error('image_too_small');
   if (ct && !/^image\//i.test(ct) && !/octet-stream/i.test(ct)) {
-    // still allow if bytes look like jpeg/png
     const isJpeg = buf[0] === 0xff && buf[1] === 0xd8;
     const isPng = buf[0] === 0x89 && buf[1] === 0x50;
     if (!isJpeg && !isPng) throw new Error(`not_an_image:${ct}`);
   }
   return buf;
+}
+
+function attachmentUrl(fileObj, nocodbUrl) {
+  if (!fileObj) return '';
+  const raw = fileObj.signedUrl || fileObj.url || '';
+  if (!raw) return '';
+  return raw.startsWith('http') ? raw : `${nocodbUrl}/${raw}`;
+}
+
+function collectRowImageUrls(row, nocodbUrl) {
+  const out = [];
+  for (let i = 1; i <= 8; i++) {
+    const field = row?.[`Image${i}`];
+    const file = Array.isArray(field) ? field[0] : field;
+    const u = attachmentUrl(file, nocodbUrl);
+    if (u) out.push({ index: i, url: u });
+  }
+  return out;
+}
+
+async function findNocoProductBySku(sku) {
+  const { url, token, table } = nocodbConfig();
+  if (!url || !token || !table || !sku) return null;
+  const candidates = [String(sku).trim()].filter(Boolean);
+  for (const field of ['SellerSKU', 'SKU', 'reference_clean']) {
+    for (const value of candidates) {
+      try {
+        const { data, status } = await axios.get(
+          `${url}/api/v2/tables/${table}/records`,
+          {
+            params: {
+              where: `(${field},eq,${value})`,
+              limit: 1,
+            },
+            headers: { 'xc-token': token },
+            timeout: 30_000,
+            validateStatus: () => true,
+          },
+        );
+        if (status >= 200 && status < 300 && data?.list?.[0]) {
+          return data.list[0];
+        }
+      } catch {
+        // try next
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Re-fetch Image{n} from NocoDB (fresh signed URL) and cache it under a stable name.
+ */
+export async function refreshSkuImageFromNoco(sku, index = 1) {
+  const { url: nocodbUrl } = nocodbConfig();
+  const row = await findNocoProductBySku(sku);
+  if (!row) throw new Error('product_not_found');
+  const field = row[`Image${index}`];
+  const file = Array.isArray(field) ? field[0] : field;
+  const source = attachmentUrl(file, nocodbUrl);
+  if (!source) throw new Error('image_slot_empty');
+  const buf = await downloadImage(source);
+  const persisted = await persistPublicImage(buf, { sku, index, stable: true });
+  return persisted;
 }
 
 /**
@@ -139,6 +254,7 @@ async function mirrorToPublicHost(buffer, { sku, index, fileName }) {
         sku,
         index,
         fileName,
+        stable: true,
         contentType: 'image/jpeg',
         dataBase64: buffer.toString('base64'),
       },
@@ -159,9 +275,39 @@ async function mirrorToPublicHost(buffer, { sku, index, fileName }) {
   return null;
 }
 
+async function assertPublicReachable(url) {
+  try {
+    const head = await axios.head(url, {
+      timeout: 20_000,
+      maxRedirects: 5,
+      validateStatus: () => true,
+      headers: { 'User-Agent': 'ErrayhanyJumiaImages/1.0' },
+    });
+    if (head.status >= 200 && head.status < 400) return true;
+  } catch {
+    // fall through to GET
+  }
+  try {
+    const get = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 30_000,
+      maxRedirects: 5,
+      maxContentLength: 2_000_000,
+      validateStatus: () => true,
+      headers: {
+        'User-Agent': 'ErrayhanyJumiaImages/1.0',
+        Range: 'bytes=0-1023',
+      },
+    });
+    return get.status >= 200 && get.status < 400 && Buffer.from(get.data || []).length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Convert ephemeral (NocoDB signed) image URLs into permanent public URLs.
- * Best-effort: keeps original URL if download/persist fails (caller may still fail QC).
+ * Convert ephemeral (NocoDB signed) image URLs into durable public proxy URLs.
+ * Never returns a URL that is not reachable from the public host.
  */
 export async function ensurePublicImageUrls(urls = [], { sku = 'img' } = {}) {
   const list = [...new Set(
@@ -174,39 +320,129 @@ export async function ensurePublicImageUrls(urls = [], { sku = 'img' } = {}) {
 
   const out = [];
   for (let i = 0; i < list.length; i++) {
+    const index = i + 1;
     const url = list[i];
-    if (isAlreadyPublic(url) && !isSignedOrEphemeral(url)) {
-      out.push(url);
-      continue;
-    }
+    const permanent = permanentSkuImageUrl(sku, index);
+
     try {
+      // Already our durable proxy URL — warm cache / verify, keep it.
+      if (isDurablePublicUrl(url) && !isSignedOrEphemeral(url)) {
+        const cached = await readCacheFile(stableCacheFileName(sku, index));
+        if (!cached) {
+          try {
+            await refreshSkuImageFromNoco(sku, index);
+          } catch {
+            // If Noco refresh fails, try downloading the durable URL itself.
+            const buf = await downloadImage(url);
+            await persistPublicImage(buf, { sku, index, stable: true });
+          }
+        }
+        if (await assertPublicReachable(permanent)) {
+          out.push(permanent);
+          continue;
+        }
+      }
+
       const buf = await downloadImage(url);
-      const persisted = await persistPublicImage(buf, { sku, index: i + 1 });
+      const persisted = await persistPublicImage(buf, { sku, index, stable: true });
       const mirrored = await mirrorToPublicHost(persisted.buffer, {
         sku,
-        index: i + 1,
+        index,
         fileName: persisted.fileName,
       });
-      out.push(mirrored || persisted.url);
+
+      // Prefer the durable /p/{sku}/{n}.jpg form — never a hash-only path that dies on redeploy.
+      const candidate = permanent;
+      if (mirrored && isDurablePublicUrl(mirrored)) {
+        // ok
+      } else if (mirrored && !isDurablePublicUrl(mirrored)) {
+        console.warn('[jumia-images] mirror returned non-durable URL; using proxy path anyway', mirrored);
+      }
+
+      const ok = await assertPublicReachable(candidate);
+      if (!ok) {
+        // Last resort: ask public host to accept bytes again, then re-check.
+        await mirrorToPublicHost(persisted.buffer, {
+          sku,
+          index,
+          fileName: persisted.fileName,
+        });
+        if (!(await assertPublicReachable(candidate))) {
+          throw new Error('public_url_unreachable');
+        }
+      }
+      out.push(candidate);
     } catch (e) {
       console.warn(`[jumia-images] failed to materialize ${url.slice(0, 80)}…`, e.message);
-      // Do not pass signed URLs to Jumia — they cause Not Live.
+      // Do not pass signed / unreachable URLs to Jumia.
     }
   }
   return out;
 }
 
 /**
- * Express routes: static files + authenticated upload (for bot → imden mirror).
+ * Warm durable proxy URLs for a SKU from current NocoDB Image1…N slots.
+ * Useful after redeploy or for bulk repair.
+ */
+export async function ensurePublicImagesForSku(sku, { max = 8 } = {}) {
+  const { url: nocodbUrl } = nocodbConfig();
+  const row = await findNocoProductBySku(sku);
+  if (!row) return { ok: false, error: 'product_not_found', urls: [] };
+  const slots = collectRowImageUrls(row, nocodbUrl).slice(0, max);
+  if (!slots.length) return { ok: false, error: 'missing_images', urls: [] };
+
+  const sourceUrls = slots.map((s) => s.url);
+  const urls = await ensurePublicImageUrls(sourceUrls, { sku });
+  return {
+    ok: urls.length > 0,
+    error: urls.length ? null : 'images_not_public',
+    urls,
+    rowId: row.Id,
+  };
+}
+
+/**
+ * Express routes: durable proxy + static cache + authenticated upload (bot → imden mirror).
  */
 export function registerPublicImageRoutes(app) {
   ensureCacheDir().catch(() => {});
+
+  // Durable Jumia URL: /public-images/p/{sku}/{n}.jpg
+  app.get('/public-images/p/:sku/:index', async (req, res) => {
+    try {
+      const sku = decodeURIComponent(String(req.params.sku || '').trim());
+      const index = Math.max(1, parseInt(String(req.params.index || '').replace(/\.jpe?g$/i, ''), 10) || 0);
+      if (!sku || !index) {
+        return res.status(400).type('text/plain').send('bad_request');
+      }
+
+      const fileName = stableCacheFileName(sku, index);
+      let buf = await readCacheFile(fileName);
+      if (!buf) {
+        try {
+          const refreshed = await refreshSkuImageFromNoco(sku, index);
+          buf = refreshed.buffer;
+        } catch (e) {
+          console.warn(`[jumia-images] proxy miss sku=${sku} #${index}:`, e.message);
+          return res.status(404).type('text/plain').send('not_found');
+        }
+      }
+
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.send(buf);
+    } catch (e) {
+      console.error('[jumia-images] proxy error:', e.message);
+      return res.status(500).type('text/plain').send('error');
+    }
+  });
 
   app.use(
     '/public-images',
     express.static(CACHE_DIR, {
       maxAge: '365d',
-      fallthrough: false,
+      fallthrough: true,
       setHeaders(res) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -231,16 +467,29 @@ export function registerPublicImageRoutes(app) {
       const buffer = Buffer.from(b64, 'base64');
       const sku = req.body?.sku || 'img';
       const index = Number(req.body?.index) || 1;
+      const wantStable = req.body?.stable !== false;
+
       let url;
-      if (req.body?.fileName && /^[a-zA-Z0-9._-]+\.jpe?g$/i.test(req.body.fileName)) {
-        await ensureCacheDir();
-        const filePath = path.join(CACHE_DIR, req.body.fileName);
-        await fs.writeFile(filePath, buffer);
-        url = `${publicImageBaseUrl()}/${req.body.fileName}`;
+      let fileName = req.body?.fileName;
+      if (fileName && /^[a-zA-Z0-9._-]+\.jpe?g$/i.test(fileName)) {
+        await writeCacheFile(fileName, buffer);
+        // If upload used stable p-SKU-N.jpg naming, expose durable proxy URL.
+        const m = String(fileName).match(/^p-(.+)-(\d+)\.jpe?g$/i);
+        if (m) {
+          url = permanentSkuImageUrl(sku, index);
+        } else if (wantStable) {
+          const persisted = await persistPublicImage(buffer, { sku, index, stable: true });
+          url = persisted.url;
+          fileName = persisted.fileName;
+        } else {
+          url = `${publicImageBaseUrl()}/${fileName}`;
+        }
       } else {
-        url = (await persistPublicImage(buffer, { sku, index })).url;
+        const persisted = await persistPublicImage(buffer, { sku, index, stable: true });
+        url = persisted.url;
+        fileName = persisted.fileName;
       }
-      return res.json({ ok: true, url });
+      return res.json({ ok: true, url, fileName });
     } catch (e) {
       console.error('[jumia-images] upload failed:', e.message);
       return res.status(500).json({ ok: false, error: e.message || 'upload_failed' });

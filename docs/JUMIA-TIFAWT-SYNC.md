@@ -142,3 +142,18 @@ curl -s -X POST https://errayhany.com/bot-api/api/jumia/sync \
 ```
 
 الطلبات القديمة لا تُنقل تلقائياً؛ مرّر `createdAfter` أقدم إن احتجت مزامنة لمرة واحدة.
+
+## 12) صور المنتجات الدائمة (لا تختفي بعد Redeploy)
+
+Jumia لا يستقبل ملفات؛ يستقبل روابط HTTP. روابط NocoDB الموقّعة (`X-Amz-*`) تنتهي خلال ~ساعتين.
+التخزين على قرص الحاوية فقط يُمسح عند كل Rebuild على EasyPanel → الصور تختفي من Jumia مجدداً.
+
+**الحل الحالي (دائم):**
+
+- الروابط التي تُرسل لـ Jumia:
+  `https://errayhany.com/bot-api/public-images/p/{SKU}/{n}.jpg`
+- عند كل طلب: الخدمة تعيد جلب صورة طازجة من NocoDB (`Image1…ImageN`) إن اختفى الكاش المحلي.
+- لذلك يجب أن تحتوي خدمة المتجر (`imden`) على نفس `VITE_NOCODB_URL` / `VITE_NOCODB_API_TOKEN` / `VITE_NOCODB_TABLE_PRODUCTS`.
+
+بعد نشر الكود: أعد نشر كل منتج متأثر من لوحة الإدارة → زر **Jumia** (أو أعد التوليد من التيليجرام).
+Endpoint اختياري لتسخين الكاش فقط: `POST /bot-api/api/admin/products/:sku/rehost-images`.

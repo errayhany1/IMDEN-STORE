@@ -64,3 +64,12 @@ export async function publishProductToJumia(sku) {
   );
   return data;
 }
+
+export async function setJumiaProductStockAdmin(sku, stock = 100) {
+  const { data } = await axios.post(
+    `/bot-api/api/admin/products/${encodeURIComponent(sku)}/jumia-stock`,
+    { stock },
+    { headers: headers(), timeout: 60000 },
+  );
+  return data;
+}

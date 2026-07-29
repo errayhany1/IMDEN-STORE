@@ -460,6 +460,7 @@ export async function createJumiaProduct(product = {}) {
       sellerSKU: sellerSku,
       price: listPrice,
       stock,
+      quantity: stock,
       currency: 'MAD',
       salePrice,
       saleStartDate: offer.saleStartDate,
@@ -469,6 +470,8 @@ export async function createJumiaProduct(product = {}) {
         countryCode,
         price: listPrice,
         salePrice,
+        stock,
+        quantity: stock,
         saleStartDate: offer.saleStartDate,
         saleEndDate: offer.saleEndDate,
       }],
@@ -503,6 +506,7 @@ export async function createJumiaProduct(product = {}) {
   }
 
   const productSetSid = data?.productSetSid || '';
+  const productSids = asArray(data?.productSids);
   let countryStatuses = [];
   if (productSetSid) {
     try {
@@ -529,15 +533,30 @@ export async function createJumiaProduct(product = {}) {
     }
   }
 
+  // PIM create often leaves Vendor Center stock as "-" — push via stock feed.
+  let stockFeed = null;
+  try {
+    stockFeed = await pushJumiaStockFeed({
+      sellerSku,
+      stock,
+      productSid: productSids[0] || '',
+    });
+  } catch (e) {
+    console.warn('[jumia] stock feed after create failed:', e.message);
+    stockFeed = { ok: false, error: e.message };
+  }
+
   return {
     skipped: false,
     status,
     productSetSid,
-    productSids: asArray(data?.productSids),
+    productSids,
     sellerSku,
     countryStatuses,
     offer,
     imageUrls: images,
+    stock,
+    stockFeed,
     errors: data?.errors || null,
   };
 }
@@ -692,30 +711,41 @@ export async function setJumiaProductActive(sellerSku, active = true) {
 }
 
 /** Push stock via Vendor API feed (100 in stock / 0 when NO POSTEBL). */
-export async function setJumiaProductStock(sellerSku, stock = 100) {
-  const found = await findJumiaProductBySellerSku(sellerSku);
-  if (!found?.id) {
-    const error = new Error('jumia_product_not_found');
-    error.statusCode = 404;
+export async function pushJumiaStockFeed({ sellerSku, stock = 100, productSid = '' } = {}) {
+  const sku = String(sellerSku || '').trim();
+  if (!sku) {
+    const error = new Error('missing_seller_sku');
+    error.statusCode = 400;
     throw error;
   }
   const qty = Math.max(0, Number(stock) || 0);
+  const product = { sellerSku: sku, stock: qty };
+  if (productSid) product.id = productSid;
+
   const data = await jumiaRequest('post', '/feeds/products/stock', {
-    body: {
-      products: [{
-        id: found.id,
-        sellerSku: found.sellerSku,
-        stock: qty,
-      }],
-    },
+    body: { products: [product] },
   });
   return {
     ok: true,
-    sellerSku: found.sellerSku,
-    productSid: found.id,
+    sellerSku: sku,
+    productSid: productSid || null,
     stock: qty,
     feedId: data?.feedId || null,
   };
+}
+
+/** Push stock via Vendor API feed (100 in stock / 0 when NO POSTEBL). */
+export async function setJumiaProductStock(sellerSku, stock = 100) {
+  const found = await findJumiaProductBySellerSku(sellerSku);
+  if (!found?.id) {
+    // Still try by sellerSku alone — catalog index can lag right after create.
+    return pushJumiaStockFeed({ sellerSku, stock });
+  }
+  return pushJumiaStockFeed({
+    sellerSku: found.sellerSku,
+    stock,
+    productSid: found.id,
+  });
 }
 
 async function resolveOrderItemIds(orderId) {

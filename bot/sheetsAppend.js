@@ -8,6 +8,7 @@
  */
 import axios from 'axios';
 import { buildJumiaOffer } from './jumiaPricing.js';
+import { ensurePublicImageUrls } from './jumiaPublicImages.js';
 
 const SHEET_ID = process.env.PRODUCT_SHEET_ID || '1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4';
 const WEBHOOK = process.env.PRODUCT_SHEET_WEBHOOK_URL || '';
@@ -110,12 +111,24 @@ export async function appendProductToSheet(product) {
     return { skipped: true, reason: 'no_webhook' };
   }
 
+  const sku = product.sellerSku || product.SellerSKU || product.referenceClean || 'img';
+  const rawImages = Array.isArray(product.imageUrls) ? product.imageUrls : [];
+  // Never write NocoDB signed URLs into the Jumia sheet.
+  if (rawImages.length && rawImages.some((u) => !/\/bot-api\/public-images\/p\//i.test(String(u || '')))) {
+    try {
+      const durable = await ensurePublicImageUrls(rawImages, { sku });
+      if (durable.length) product.imageUrls = durable;
+    } catch (e) {
+      console.warn('[sheet] ensurePublicImageUrls failed:', e.message);
+    }
+  }
+
   const payload = buildSheetPayload(product);
   const { data, status } = await axios.post(WEBHOOK, payload, {
     headers: { 'Content-Type': 'application/json' },
     timeout: 30000,
   });
-  return { skipped: false, status, data, sellerSku: product.sellerSku };
+  return { skipped: false, status, data, sellerSku: product.sellerSku, imageUrls: product.imageUrls };
 }
 
 export function isSheetWebhookConfigured() {

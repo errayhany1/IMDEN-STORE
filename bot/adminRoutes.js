@@ -19,7 +19,10 @@ import {
   cancelJumiaOrder,
   printJumiaLabels,
   setJumiaProductActive,
+  setJumiaProductStock,
 } from './jumiaClient.js';
+import { ensurePublicImagesForSku } from './jumiaPublicImages.js';
+import { resolveJumiaStock } from './jumiaPricing.js';
 
 function adminPassword() {
   return (
@@ -82,7 +85,7 @@ function buildSellerSku(raw) {
 }
 
 function rowToJumiaPayload(row, nocodbUrl) {
-  const sku = buildSellerSku(row.SKU || row.Ref || row.sku);
+  const sku = buildSellerSku(row.SellerSKU || row.SKU || row.Ref || row.sku);
   const imageUrls = collectImageUrls(row, nocodbUrl);
   return {
     sellerSku: sku,
@@ -271,6 +274,27 @@ export function registerAdminRoutes(app) {
     }
   });
 
+  /**
+   * Re-host NocoDB images under durable /public-images/p/{sku}/n.jpg URLs
+   * (NocoDB-backed proxy — survives EasyPanel redeploys).
+   */
+  app.post('/api/admin/products/:sku/rehost-images', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      const sku = buildSellerSku(req.params.sku) || req.params.sku;
+      const result = await ensurePublicImagesForSku(sku);
+      if (!result.ok) {
+        return res.status(400).json(result);
+      }
+      return res.json(result);
+    } catch (error) {
+      return res.status(error?.statusCode || 502).json({
+        ok: false,
+        error: error?.message || 'rehost_failed',
+      });
+    }
+  });
+
   /** Publish (create) a NocoDB product on Jumia PIM from current title/desc/images. */
   app.post('/api/admin/products/:sku/publish-jumia', async (req, res) => {
     if (!requireAdmin(req, res)) return;
@@ -301,6 +325,29 @@ export function registerAdminRoutes(app) {
         ok: false,
         error: error?.message || 'publish_failed',
         details: error?.details || error?.response?.data || null,
+      });
+    }
+  });
+
+  app.post('/api/admin/products/:sku/jumia-stock', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      if (!isJumiaConfigured()) {
+        return res.status(503).json({ ok: false, error: 'jumia_not_configured' });
+      }
+      const sku = buildSellerSku(req.params.sku) || req.params.sku;
+      let stock = req.body?.stock;
+      if (stock == null) {
+        const row = await findNocoProductBySku(req.params.sku);
+        stock = resolveJumiaStock(row?.POSTEBL || row?.Postebl || 'POSTEBL');
+      }
+      const result = await setJumiaProductStock(sku, stock);
+      return res.json(result);
+    } catch (error) {
+      return res.status(error?.statusCode || 502).json({
+        ok: false,
+        error: error?.message || 'stock_failed',
+        details: error?.details || null,
       });
     }
   });
