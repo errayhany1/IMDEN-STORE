@@ -140,6 +140,7 @@ const MAIN_KEYBOARD = {
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
     [{ text: '✨ إعادة توليد الوصف والصور' }],
+    [{ text: '🛒 إعادة بناء من Amazon' }],
     [{ text: '📦 تجهيز شحن Jumia' }, { text: '❌ إلغاء طلب Jumia' }],
     [{ text: '🏷️ ملصق شحن Jumia' }],
     [{ text: '🎨 خلفيات الموقع' }, { text: '🔥 خلفيات التخفيض' }],
@@ -586,7 +587,7 @@ async function requestGalleryApproval({
 
   await sendMessage(
     chatId,
-    `🖼️ صور المنتج #${rowId} (${sellerSku})\nستجد صورة مولّدة وصورة للمنتج الحقيقي بعد حذف الخلفية محلياً.\nاختر ما يظهر في الواجهة، ثم اضغط نشر:\n\n${galleryApprovalSummary(candidates)}`
+    `🖼️ صور المنتج #${rowId} (${sellerSku})\nستجد عند توفرها: Gemini، Qwen، إزالة الخلفية محلياً، والصورة الأصلية للمراجعة.\nاختر ما يظهر في الواجهة، ثم اضغط نشر. الصورة الأصلية لن تُرسل إلى Jumia:\n\n${galleryApprovalSummary(candidates)}`
   );
 
   for (let i = 0; i < candidates.length; i++) {
@@ -616,8 +617,10 @@ function orderSelectedGalleryFiles(candidates) {
   const selected = candidates.filter((c) => c.selected && c.file);
   const ai = selected.filter((c) => c.kind === 'ai').map((c) => c.file);
   const cutout = selected.filter((c) => c.kind === 'cutout').map((c) => c.file);
+  const amazon = selected.filter((c) => c.kind === 'amazon').map((c) => c.file);
+  const qwen = selected.filter((c) => c.kind === 'qwen').map((c) => c.file);
   const real = selected.filter((c) => c.kind === 'real').map((c) => c.file);
-  return [...ai, ...cutout, ...real].slice(0, 5);
+  return [...ai, ...cutout, ...amazon, ...qwen, ...real].slice(0, 5);
 }
 
 async function finalizeGalleryApproval(pending, { publishImages }) {
@@ -1367,6 +1370,11 @@ function isReenrichCommand(text) {
     || text.startsWith('/reenrich');
 }
 
+function isAmazonReenrichCommand(text) {
+  return text === '🛒 إعادة بناء من Amazon'
+    || text.startsWith('/amazon_rebuild');
+}
+
 /** Shortcut: "<REF> 112" starts an Amazon-backed rebuild for that product. */
 function amazonReenrichRef(text) {
   const match = String(text || '').trim().match(/^(.+?)\s+112$/i);
@@ -1462,7 +1470,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: أرسل «المرجع 112» ثم أرسل رابط Amazon عندما يطلبه البوت.',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: اضغط الزر ثم أرسل المرجع ورابط Amazon، أو استخدم «المرجع 112».',
         MAIN_KEYBOARD
       );
       return;
@@ -1565,6 +1573,15 @@ async function handleUpdate(update) {
     if (isPriceCommand(text)) {
       userState[chatId] = 'AWAITING_REF_PRICE';
       await sendMessage(chatId, '⚙️ تم تفعيل وضع تغيير السعر.\n\nأرسل المرجع (REF) للمنتج الذي تريد تغيير سعره.\nللخروج من هذا الوضع اضغط: 🔄 إعادة تشغيل البوت');
+      return;
+    }
+
+    if (isAmazonReenrichCommand(text)) {
+      userState[chatId] = 'AWAITING_REF_AMAZON_REENRICH';
+      await sendMessage(
+        chatId,
+        '🛒 إعادة بناء منتج من Amazon\n\nأرسل الآن مرجع المنتج فقط (REF أو SKU).\nمثال: KP-2205\n\nبعد العثور عليه سأطلب منك رابط Amazon.'
+      );
       return;
     }
 
@@ -1734,6 +1751,15 @@ async function handleUpdate(update) {
         } else if (state === 'AWAITING_REF_PRICE') {
           userState[chatId] = `AWAITING_NEW_PRICE_${sku}`;
           await sendMessage(chatId, `✅ تم العثور على المنتج (${sku}).\n💰 سعره الحالي: ${record.price || 0} DH\n\n⬇️ يرجى إرسال السعر الجديد الآن (أرقام فقط):`);
+        } else if (state === 'AWAITING_REF_AMAZON_REENRICH') {
+          userState[chatId] = {
+            type: 'AWAITING_AMAZON_REENRICH_URL',
+            ref: sku,
+          };
+          await sendMessage(
+            chatId,
+            `✅ تم العثور على المنتج (${record.SKU || sku}).\n\n🔗 أرسل الآن رابط المنتج المطابق من Amazon.\nبعدها سأستخرج بياناته وصوره وأعرض Gemini وQwen وإزالة الخلفية والصورة الأصلية للاختيار.`
+          );
         } else if (state === 'AWAITING_REF_REENRICH') {
           await scheduleReenrichByRef(chatId, record, sku);
         }

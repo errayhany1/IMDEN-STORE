@@ -84,6 +84,10 @@ TIFAWT_BUSINESS_ID=1
 # AI_ENRICH_TIMEOUT_MS_AMAZON=180000
 # One studio image only; the bot intentionally ignores legacy AI_IMAGE_COUNT.
 # OPENROUTER_IMAGE_MODEL=google/gemini-2.5-flash-image
+# Optional secondary image for every product; Telegram shows Qwen beside Gemini,
+# local cutout and the original review photo before publishing.
+# QWEN_API_KEY=
+# QWEN_IMAGE_MODEL=qwen-image-2.0
 ```
 
 ## صيغة رفع منتج (+ أمازون اختياري)

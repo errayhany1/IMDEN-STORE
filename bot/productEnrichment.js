@@ -29,6 +29,7 @@ import {
   bulletsFromHtml,
 } from './studioImage.js';
 import { createRealProductCutout } from './localBackground.js';
+import { generateQwenProductImage, isQwenImageConfigured } from './qwenImage.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -81,24 +82,29 @@ async function uploadBufferPairs(uploadToNocoDB, buffers, prefix) {
  * Build Image1…Image5 order:
  * Image1 = AI studio hero (white packshot)
  * Image2 = real product cutout (local U²-Net, no generation)
- * Image3 = original front photo only if cutout failed
- * then Amazon extras — never a rendered "specs card" JPEG (broken fonts on Alpine).
+ * Image3 = optional Qwen secondary studio render
+ * then Amazon extras — never a rendered "specs card" JPEG.
  */
 function orderGalleryUploads({
   aiUploads = [],
   cutoutUploads = [],
   amazonUploads = [],
+  qwenUploads = [],
   realUploads = [],
 }) {
   const hero = aiUploads.filter(Boolean);
   const firstAi = hero[0] ? [hero[0]] : [];
   const cutout = cutoutUploads[0] ? [cutoutUploads[0]] : [];
   const real = !cutout.length && realUploads[0] ? [realUploads[0]] : [];
+  const amazon = amazonUploads.filter(Boolean);
+  const qwen = qwenUploads[0] ? [qwenUploads[0]] : [];
   return [
     ...firstAi,
     ...cutout,
     ...real,
-    ...amazonUploads.filter(Boolean),
+    ...amazon.slice(0, 1),
+    ...qwen,
+    ...amazon.slice(1),
   ].slice(0, 5);
 }
 
@@ -259,6 +265,7 @@ export async function enrichProduct({
   let amazonMeta = null;
   let amazonUploads = [];
   let amazonBuffers = [];
+  let amazonPairs = [];
 
   if (amazonUrl) {
     if (!isApifyConfigured()) {
@@ -270,11 +277,12 @@ export async function enrichProduct({
         console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || cleanAmazonUrl}`);
         amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 4 });
         if (amazonBuffers.length) {
-          amazonUploads = await uploadBuffers(
+          amazonPairs = await uploadBufferPairs(
             uploadToNocoDB,
             amazonBuffers,
             `amazon-${sellerSku}`
           );
+          amazonUploads = amazonPairs.map((pair) => pair.file);
         }
       } catch (e) {
         console.error('Amazon scrape failed:', e.message);
@@ -477,17 +485,40 @@ export async function enrichProduct({
     }
   })();
 
-  const [copyResult, imagePairs, cutoutResult] = await Promise.all([
+  // Qwen is an optional secondary render for every product. It never replaces
+  // Gemini and a missing/invalid key must not block product enrichment.
+  const qwenPromise = (async () => {
+    if (!isQwenImageConfigured()) return [];
+    try {
+      const qwenBuffer = await generateQwenProductImage({
+        imageBuffers: visionBuffers,
+        title: displayName,
+      });
+      if (!qwenBuffer) return [];
+      const pairs = await uploadBufferPairs(uploadToNocoDB, [qwenBuffer], `qwen-${sellerSku}`);
+      console.log(`Qwen secondary image uploaded: ${pairs.length}`);
+      return pairs;
+    } catch (e) {
+      console.warn('Qwen secondary image skipped:', e.message);
+      aiFailures.push(`qwen:${e.message}`);
+      return [];
+    }
+  })();
+
+  const [copyResult, imagePairs, cutoutResult, qwenResult] = await Promise.all([
     copyPromise,
     imagesPromise,
     cutoutPromise,
+    qwenPromise,
   ]);
 
   copy = copyResult;
   const aiPairs = imagePairs || [];
   const cutoutPairs = cutoutResult || [];
+  const qwenPairs = qwenResult || [];
   aiUploads = aiPairs.map((p) => p.file);
   const cutoutUploads = cutoutPairs.map((p) => p.file);
+  const qwenUploads = qwenPairs.map((p) => p.file);
 
   // If copy still empty, one more dedicated retry after images finished.
   if (!copy) {
@@ -569,10 +600,26 @@ export async function enrichProduct({
     ...realPairs.map((p) => ({
       id: 'real',
       kind: 'real',
-      label: 'الأصل (عرض)',
+      label: 'الصورة الأصلية — للمراجعة (لا تُرسل إلى Jumia)',
       file: p.file,
       buffer: p.buffer,
       selected: false,
+    })),
+    ...qwenPairs.map((p) => ({
+      id: 'qwen',
+      kind: 'qwen',
+      label: 'Qwen — صورة احترافية ثانوية',
+      file: p.file,
+      buffer: p.buffer,
+      selected: true,
+    })),
+    ...amazonPairs.slice(0, 1).map((p) => ({
+      id: 'amazon-source',
+      kind: 'amazon',
+      label: 'صورة Amazon الأصلية الاحترافية',
+      file: p.file,
+      buffer: p.buffer,
+      selected: true,
     })),
   ];
 
@@ -580,6 +627,7 @@ export async function enrichProduct({
     aiUploads,
     cutoutUploads,
     amazonUploads,
+    qwenUploads,
     // Raw seller photos are review references only. Jumia forbids ordinary
     // backgrounds, so an AI/cutout failure must skip publishing instead.
     realUploads: [],
@@ -641,7 +689,7 @@ export async function enrichProduct({
     galleryCandidates,
     nocodbUrl,
     aiFailures,
-    hasAiImages: aiUploads.length > 0 || cutoutUploads.length > 0,
+    hasAiImages: aiUploads.length > 0 || cutoutUploads.length > 0 || qwenUploads.length > 0,
     hasSpecsImage,
   };
 }
