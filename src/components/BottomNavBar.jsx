@@ -3,7 +3,7 @@ import { Home, BookOpen, ShoppingCart, Heart, LayoutGrid } from 'lucide-react';
 import useStore from '../store/useStore';
 
 /**
- * Floating bottom nav (mobile).
+ * Floating bottom nav (all viewports).
  * RTL order (right → left): Catalog | Home | Categories | Cart | Favorites
  * Account lives in the sidebar menu only.
  */
@@ -126,12 +126,12 @@ const BottomNavBar = ({ activeOverride = null }) => {
 
     return (
         <nav
-            className="fixed bottom-0 inset-x-0 z-[60] md:hidden pointer-events-none pb-[max(4px,env(safe-area-inset-bottom))] px-3"
+            className="fixed bottom-0 inset-x-0 z-[60] pointer-events-none pb-[max(4px,env(safe-area-inset-bottom))] px-3 md:px-6"
             aria-label="التنقل السفلي"
         >
             <div
                 dir="rtl"
-                className={`pointer-events-auto max-w-lg mx-auto h-[64px] px-1.5 flex items-stretch justify-between rounded-[22px] border shadow-[0_8px_28px_rgba(15,23,42,0.12)]
+                className={`pointer-events-auto w-full max-w-[1600px] mx-auto h-[64px] md:h-[68px] px-1.5 md:px-3 flex items-stretch justify-between rounded-[22px] border shadow-[0_8px_28px_rgba(15,23,42,0.12)]
                     ${darkMode
                         ? 'bg-[#142038]/95 border-white/10 text-gray-300 backdrop-blur-md'
                         : 'bg-white/95 border-slate-100 text-slate-500 backdrop-blur-md'}`}

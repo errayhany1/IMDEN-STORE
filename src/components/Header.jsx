@@ -88,7 +88,7 @@ const Header = () => {
                 className={`sticky top-0 z-40 w-full transition-colors duration-300 pt-[env(safe-area-inset-top)]
                     ${dm ? 'bg-gray-950' : 'bg-background-light'}`}
             >
-                <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2">
+                <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-3 pb-2">
                     {/* Floating bar — logo | search | menu (matches brand mockup) */}
                     <div
                         dir="ltr"

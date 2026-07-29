@@ -564,11 +564,11 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
   return (
     <div
-      className={`min-h-screen ${shell} pb-28 md:pb-16`}
+      className={`min-h-screen ${shell} pb-28`}
       dir={isFr ? 'ltr' : 'rtl'}
     >
       <header className={`sticky top-0 z-40 pt-[env(safe-area-inset-top)] ${dm ? 'bg-gray-950' : 'bg-background-light'}`}>
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2">
+        <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-3 pb-2">
           <div
             className={`flex items-center gap-2 sm:gap-3 h-14 sm:h-[58px] px-2.5 sm:px-4 rounded-2xl border shadow-[0_4px_18px_rgba(15,23,42,0.07)]
               ${dm ? 'bg-[#142038] border-white/5 shadow-black/30' : 'bg-white border-slate-100'}`}
@@ -671,7 +671,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 pt-4 md:pt-8">
+      <main className="max-w-[1600px] mx-auto px-4 md:px-6 pt-4 md:pt-8">
         <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
           {/* Gallery */}
           <section className="md:sticky md:top-20">

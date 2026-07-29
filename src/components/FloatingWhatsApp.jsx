@@ -17,7 +17,7 @@ const FloatingWhatsApp = () => {
     const [open, setOpen] = useState(false);
 
     return (
-        <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-50 flex flex-col items-center gap-3">
+        <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-6 z-50 flex flex-col items-center gap-3">
             <AnimatePresence>
                 {open && (
                     <>

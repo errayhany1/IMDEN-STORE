@@ -46,7 +46,7 @@ const CategoriesPage = () => {
         >
             <Header />
 
-            <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-5 pb-28 md:pb-8" style={{ direction: 'rtl' }}>
+            <main className="flex-grow max-w-[1600px] mx-auto w-full px-4 md:px-6 py-5 pb-28" style={{ direction: 'rtl' }}>
                 <h1 className={`text-xl font-bold mb-1 ${dm ? 'text-white' : 'text-slate-900'}`}>
                     التصنيفات
                 </h1>

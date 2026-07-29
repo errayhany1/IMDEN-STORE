@@ -366,7 +366,7 @@ function App() {
       <NotificationPrompt />
 
       {/* Main Content — extra bottom padding clears the mobile bottom nav */}
-      <main className="flex-grow max-w-7xl mx-auto w-full px-4 pt-3 pb-28 md:pb-6">
+      <main className="flex-grow max-w-[1600px] mx-auto w-full px-4 md:px-6 pt-3 pb-28">
 
         {/* Family hero slider — click opens the family catalog */}
         <FamilyHeroSlider />
@@ -396,7 +396,7 @@ function App() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-28 md:bottom-24 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
+          className={`fixed bottom-28 left-6 z-50 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95
           ${darkMode ? 'bg-gray-800 text-white border border-gray-700 hover:bg-gray-700' : 'bg-white text-primary border border-slate-200 hover:bg-primary hover:text-white'}`}
           style={{ animation: 'slideUp 0.3s ease-out' }}
           aria-label="العودة للأعلى"
@@ -440,7 +440,7 @@ function App() {
       {/* Login Toast Notification */}
       {showLoginToast && !user && (
         <div 
-          className={`fixed bottom-28 md:bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50 
+          className={`fixed bottom-28 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50
           rounded-2xl shadow-2xl border p-4 flex items-center gap-3 cursor-pointer
           ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
           style={{ direction: 'rtl', animation: 'slideUp 0.4s ease-out' }}
