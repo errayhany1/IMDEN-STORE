@@ -55,6 +55,7 @@ import {
 import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
+import { toTifawtSku } from './tifawtSku.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -364,18 +365,6 @@ function parseCaption(caption) {
   return { price, oldPrice, name, sku, amazonUrl };
 }
 
-/** Tifawt SKU: uppercase A–Z / 0–9 with hyphens between words (e.g. CABLE-RADIO-CODY). */
-function tifawtSkuFromCaption(rawSku) {
-  const cleaned = String(rawSku || '')
-    .trim()
-    .toUpperCase()
-    .replace(/[\s_]+/g, '-')
-    .replace(/[^A-Z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  return cleaned || 'REF';
-}
-
 function skuCandidates(rawSku) {
   const sku = String(rawSku || '').trim();
   if (!sku) return [];
@@ -636,6 +625,14 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
     chatId, rowId, recordUrl, name, price, sellerSku, enrichment, candidates,
   } = pending;
   const selectedFiles = publishImages ? orderSelectedGalleryFiles(candidates) : [];
+  // Raw seller photos may be shown in our own catalog, but Jumia requires
+  // marketplace-ready studio images. Never send a `real` candidate there.
+  const professionalFiles = publishImages
+    ? orderSelectedGalleryFiles(candidates.filter((c) => c.kind !== 'real'))
+    : [];
+  const professionalImageUrls = professionalFiles.map(
+    (f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL),
+  );
   enrichment.nocoImages = selectedFiles;
   enrichment.imageUrls = selectedFiles.map((f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL));
   if (enrichment.productForSheet) {
@@ -657,9 +654,12 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
   if (publishImages && selectedFiles.length && enrichment.productForSheet) {
     // Jumia first: materializes durable /public-images/p/{sku}/n.jpg URLs.
     // Sheet must use those same permanent URLs (never NocoDB signed links).
-    if (isJumiaConfigured()) {
+    if (isJumiaConfigured() && professionalImageUrls.length) {
       try {
-        const jumia = await createJumiaProduct(enrichment.productForSheet);
+        const jumia = await createJumiaProduct({
+          ...enrichment.productForSheet,
+          imageUrls: professionalImageUrls,
+        });
         if (Array.isArray(jumia?.imageUrls) && jumia.imageUrls.length) {
           enrichment.productForSheet.imageUrls = jumia.imageUrls;
           enrichment.imageUrls = jumia.imageUrls;
@@ -682,6 +682,8 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
       } catch (e) {
         jumiaNote = `\n🛒 Jumia API خطأ: ${e.message}`;
       }
+    } else if (isJumiaConfigured()) {
+      jumiaNote = '\n🛒 Jumia: تم التخطي — لا توجد صورة احترافية بخلفية بيضاء';
     }
     if (isSheetWebhookConfigured()) {
       try {
@@ -1008,7 +1010,7 @@ function scheduleAiPolish({
 }
 
 /** Re-run AI enrichment for an existing product found by REF/SKU. */
-async function scheduleReenrichByRef(chatId, record, rawRef) {
+async function scheduleReenrichByRef(chatId, record, rawRef, { amazonUrl = '' } = {}) {
   const rowId = record.Id || record.id;
   const sellerSku = buildSellerSku(record.SKU || rawRef);
   const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
@@ -1065,10 +1067,12 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
       price: Number(record.price) || 0,
       oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
       ref: cleanReference(record.SKU || rawRef),
-      amazonUrl: record.Amazon_URL || '',
+      amazonUrl: amazonUrl || record.Amazon_URL || '',
       sellerSku,
       postebl: record.POSTEBL || record.Postebl || 'POSTEBL',
-      startMessage: `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
+      startMessage: amazonUrl
+        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج بيانات وصور Amazon\n🎨 إنشاء صورة احترافية جديدة\n🛒 سيتم طلب موافقتك على الصور قبل النشر.`
+        : `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
     });
   });
 
@@ -1077,14 +1081,16 @@ async function scheduleReenrichByRef(chatId, record, rawRef) {
     : '';
   await sendMessage(
     chatId,
-    `✅ تم إدراج (${sellerSku}) في قائمة التوليد.${queueNote}\n⏳ سأرسل لك رسالة عند الانتهاء.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
+    amazonUrl
+      ? `✅ تم إدراج (${sellerSku}) لإعادة البناء من Amazon.${queueNote}\n⏳ سأرسل لك الصور والنتيجة عند الانتهاء.`
+      : `✅ تم إدراج (${sellerSku}) في قائمة التوليد.${queueNote}\n⏳ سأرسل لك رسالة عند الانتهاء.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
   );
 }
 
 async function processProduct(chatId, files, caption, destination = 'both', roles = null) {
   const { price, oldPrice, name, sku, amazonUrl } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
-  const tifawtSku = tifawtSkuFromCaption(sku);
+  const tifawtSku = toTifawtSku(sku, { fallback: 'REF' });
   const effectiveRoles = Array.isArray(roles) && roles.length === files.length
     ? roles
     : files.map(() => 'both');
@@ -1361,6 +1367,21 @@ function isReenrichCommand(text) {
     || text.startsWith('/reenrich');
 }
 
+/** Shortcut: "<REF> 112" starts an Amazon-backed rebuild for that product. */
+function amazonReenrichRef(text) {
+  const match = String(text || '').trim().match(/^(.+?)\s+112$/i);
+  return match?.[1]?.trim() || '';
+}
+
+function validAmazonProductUrl(text) {
+  try {
+    const url = new URL(String(text || '').trim());
+    return /^https?:$/.test(url.protocol) && /(^|\.)amazon\./i.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function isJumiaShipCommand(text) {
   return text === '📦 تجهيز شحن Jumia'
     || text.startsWith('/jumia_ship')
@@ -1441,7 +1462,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: أرسل «المرجع 112» ثم أرسل رابط Amazon عندما يطلبه البوت.',
         MAIN_KEYBOARD
       );
       return;
@@ -1468,6 +1489,58 @@ async function handleUpdate(update) {
 
     if (isSaleTemplatesCommand(text)) {
       await sendTemplateGallery(chatId, 'sale');
+      return;
+    }
+
+    const amazonState = userState[chatId];
+    if (amazonState?.type === 'AWAITING_AMAZON_REENRICH_URL') {
+      if (!validAmazonProductUrl(text)) {
+        await sendMessage(
+          chatId,
+          '❌ الرابط غير صالح. أرسل رابط منتج من Amazon يبدأ بـ https://www.amazon...'
+        );
+        return;
+      }
+
+      const amazonUrl = normalizeAmazonUrl(text);
+      const record = await findProductBySku(amazonState.ref);
+      if (!record) {
+        delete userState[chatId];
+        await sendMessage(chatId, `❌ لم أعد أجد المنتج (${amazonState.ref}) في قاعدة البيانات.`);
+        return;
+      }
+
+      const recordId = record.Id || record.id;
+      await axios.patch(
+        `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`,
+        { Id: recordId, Amazon_URL: amazonUrl },
+        { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }, timeout: 30000 }
+      );
+      delete userState[chatId];
+      await scheduleReenrichByRef(chatId, { ...record, Amazon_URL: amazonUrl }, amazonState.ref, {
+        amazonUrl,
+      });
+      return;
+    }
+
+    const amazonRef = amazonReenrichRef(text);
+    if (amazonRef) {
+      const record = await findProductBySku(amazonRef);
+      if (!record) {
+        await sendMessage(
+          chatId,
+          `❌ لم أجد منتجاً بالمرجع (${amazonRef}).\nتأكد من المرجع ثم أرسل مثلاً: ${amazonRef} 112`
+        );
+        return;
+      }
+      userState[chatId] = {
+        type: 'AWAITING_AMAZON_REENRICH_URL',
+        ref: amazonRef,
+      };
+      await sendMessage(
+        chatId,
+        `✅ تم العثور على المنتج (${record.SKU || amazonRef}).\n\n🔗 أرسل الآن رابط المنتج المطابق من Amazon.\nبعدها سأستخرج بياناته وصوره وأعيد إنشاء الوصف والصورة الاحترافية.`
+      );
       return;
     }
 
@@ -1996,10 +2069,10 @@ function cleanupOrderSyncCache() {
 function normalizeOrderItems(items) {
   if (!Array.isArray(items) || !items.length) return [];
   return items.map((item) => ({
-    sku: String(item?.ref || item?.sku || item?.SKU || item?.id || 'UNKNOWN').trim(),
+    sku: toTifawtSku(item?.ref || item?.sku || item?.SKU || item?.id),
     quantity: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1) || 1),
     unitPrice: Math.max(0, Number(item?.price ?? item?.unitPrice ?? 0) || 0),
-  })).filter((item) => item.sku && item.sku !== 'UNKNOWN');
+  })).filter((item) => item.sku);
 }
 
 function readStoreOrderId(orderRow, items, fallback = '') {

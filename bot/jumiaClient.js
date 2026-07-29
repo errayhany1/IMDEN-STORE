@@ -7,6 +7,7 @@
 import axios from 'axios';
 import { buildJumiaOffer } from './jumiaPricing.js';
 import { ensurePublicImageUrls } from './jumiaPublicImages.js';
+import { toTifawtSku } from './tifawtSku.js';
 
 const JUMIA_API_BASE = (
   process.env.JUMIA_API_BASE
@@ -286,7 +287,9 @@ export function mapJumiaOrderToTifawt(order, items = []) {
     'المغرب',
   );
 
-  const lineItems = mapItems(items.length ? items : (order?.items || order?.orderItems || []));
+  const lineItems = mapItems(items.length ? items : (order?.items || order?.orderItems || []))
+    .map((item) => ({ ...item, sku: toTifawtSku(item.sku) }))
+    .filter((item) => item.sku);
 
   return {
     orderId: `JUMIA-${jumiaId}`,

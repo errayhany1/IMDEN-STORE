@@ -258,6 +258,7 @@ export async function enrichProduct({
 
   let amazonMeta = null;
   let amazonUploads = [];
+  let amazonBuffers = [];
 
   if (amazonUrl) {
     if (!isApifyConfigured()) {
@@ -267,7 +268,7 @@ export async function enrichProduct({
         const cleanAmazonUrl = normalizeAmazonUrl(amazonUrl);
         amazonMeta = await scrapeAmazonProduct(cleanAmazonUrl);
         console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || cleanAmazonUrl}`);
-        const amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 4 });
+        amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 4 });
         if (amazonBuffers.length) {
           amazonUploads = await uploadBuffers(
             uploadToNocoDB,
@@ -360,10 +361,15 @@ export async function enrichProduct({
   const displayName = amazonMeta?.title || name;
   const aiFailures = [];
 
-  // Downscale before any vision call — full Telegram photos regularly blow
+  // Amazon rebuilds must use Amazon's product photos as the visual source,
+  // not stale seller photos already stored on the catalog row.
+  const enrichmentBuffers = amazonBuffers.length ? amazonBuffers : realBuffers;
+  const enrichmentPrimary = enrichmentBuffers[0] || realBuffer;
+
+  // Downscale before any vision call — full source photos regularly blow
   // past the soft timeout and leave products with only the raw caption.
-  const visionBuffers = await prepareVisionBuffers(realBuffers.slice(0, 4));
-  const visionPrimary = visionBuffers[0] || realBuffer;
+  const visionBuffers = await prepareVisionBuffers(enrichmentBuffers.slice(0, 4));
+  const visionPrimary = visionBuffers[0] || enrichmentPrimary;
 
   async function runCopyOnce() {
     if (isOpenAIConfigured()) {
@@ -437,7 +443,7 @@ export async function enrichProduct({
       const aiBuffers = await runImagesOnce(displayName);
       const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
       if (!aiOnly.length) {
-        throw new Error('No AI studio image produced from seller photos');
+        throw new Error('No AI studio image produced from source photos');
       }
       const pairs = await uploadBufferPairs(uploadToNocoDB, aiOnly, `ai-${sellerSku}`);
       console.log(`AI studio images uploaded: ${pairs.length} (mode=${amazonUrl ? 'amazon' : 'photo'})`);
@@ -453,7 +459,7 @@ export async function enrichProduct({
 
   const cutoutPromise = (async () => {
     try {
-      const source = galleryRealBuffers[0] || visionPrimary;
+      const source = amazonBuffers[0] || galleryRealBuffers[0] || visionPrimary;
       const cutout = await createRealProductCutout(source, { price, oldPrice });
       if (!cutout) return [];
       const pairs = await uploadBufferPairs(
@@ -574,8 +580,9 @@ export async function enrichProduct({
     aiUploads,
     cutoutUploads,
     amazonUploads,
-    // Raw photo is only a fallback when local segmentation failed.
-    realUploads: (aiUploads.length || cutoutUploads.length) ? originalUploads : [],
+    // Raw seller photos are review references only. Jumia forbids ordinary
+    // backgrounds, so an AI/cutout failure must skip publishing instead.
+    realUploads: [],
   });
   // Fallback if ordering somehow empty
   const finalImages = nocoImages.length

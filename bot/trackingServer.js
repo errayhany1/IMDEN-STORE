@@ -23,6 +23,7 @@ import {
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
+import { toTifawtSku } from './tifawtSku.js';
 
 const app = express();
 // Public Jumia images: register before the small JSON body limit so uploads can be multi-MB.
@@ -73,7 +74,7 @@ function cleanupOrderSyncCache() {
 function normalizeItems(items) {
   if (!Array.isArray(items)) return [];
   return items.map((item) => ({
-    sku: String(item?.ref || item?.sku || item?.SKU || item?.id || '').trim(),
+    sku: toTifawtSku(item?.ref || item?.sku || item?.SKU || item?.id),
     quantity: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1) || 1),
     unitPrice: Math.max(0, Number(item?.price ?? item?.unitPrice ?? 0) || 0),
   })).filter((item) => item.sku);
