@@ -6,8 +6,14 @@ import AdminSidebar from './AdminSidebar';
 import ReturnsTab from './admin/ReturnsTab';
 import TifawtOrdersTab from './admin/TifawtOrdersTab';
 import JumiaOrdersTab from './admin/JumiaOrdersTab';
+import BotSettingsTab from './admin/BotSettingsTab';
 import { syncOrderSideEffects } from '../services/tifawt';
-import { publishProductToJumia } from '../services/adminApi';
+import {
+    createAdminSession,
+    destroyAdminSession,
+    publishProductToJumia,
+    verifyAdminSession,
+} from '../services/adminApi';
 import { initTelegramWebApp, adminTabFromQuery } from '../utils/telegramWebApp';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
@@ -16,7 +22,6 @@ const ORDERS_TABLE = import.meta.env.VITE_NOCODB_TABLE_ORDERS;
 const PRODUCTS_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
 const PRODUCTS_TABLE = import.meta.env.VITE_NOCODB_TABLE_PRODUCTS;
 const EXPENSES_TABLE = import.meta.env.VITE_NOCODB_TABLE_EXPENSES;
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'imden2026';
 const CAT_MAP = {
     1: 'Chargers',
     2: 'Audio',
@@ -46,6 +51,7 @@ const AdminDashboard = () => {
     const dm = darkMode;
     
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [authChecking, setAuthChecking] = useState(true);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     
@@ -92,32 +98,42 @@ const AdminDashboard = () => {
     useEffect(() => {
         const savedAuth = sessionStorage.getItem('admin_auth');
         if (savedAuth === 'true') {
-            setIsAuthenticated(true);
-            fetchOrders();
-            fetchProducts();
-            
-            // Auto refresh every 30 seconds
-            const interval = setInterval(() => {
-                fetchOrders(true);
-                fetchProducts(true);
-            }, 30000);
-            return () => clearInterval(interval);
+            verifyAdminSession()
+                .then(() => {
+                    setIsAuthenticated(true);
+                    fetchOrders();
+                    fetchProducts();
+                })
+                .catch(() => {
+                    sessionStorage.removeItem('admin_auth');
+                    setIsAuthenticated(false);
+                })
+                .finally(() => setAuthChecking(false));
+        } else {
+            setAuthChecking(false);
         }
     }, []);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
+        setError('');
+        try {
+            await createAdminSession(password);
             setIsAuthenticated(true);
             sessionStorage.setItem('admin_auth', 'true');
             fetchOrders();
             fetchProducts();
-        } else {
+        } catch {
             setError('كلمة السر غير صحيحة');
         }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await destroyAdminSession();
+        } catch {
+            // Clear the local dashboard even if the server session already expired.
+        }
         sessionStorage.removeItem('admin_auth');
         setIsAuthenticated(false);
         setOrders([]);
@@ -141,7 +157,7 @@ const AdminDashboard = () => {
                 if (list.length < 100) hasMore = false;
                 else offset += 100;
             }
-            setProducts(allProducts);
+            setProducts(allProducts.filter((product) => product.SKU !== 'ERY-BOT-SETTINGS'));
         } catch (err) {
             console.error("Error fetching products:", err);
         } finally {
@@ -696,6 +712,14 @@ const AdminDashboard = () => {
     };
 
     // ── LOGIN PAGE ──
+    if (authChecking) {
+        return (
+            <div className={`min-h-screen flex items-center justify-center ${dm ? 'bg-gray-950' : 'bg-slate-100'}`}>
+                <Loader2 size={34} className="animate-spin text-blue-500" />
+            </div>
+        );
+    }
+
     if (!isAuthenticated) {
         return (
             <div className={`min-h-screen flex items-center justify-center p-4 ${dm ? 'bg-gray-950' : 'bg-gradient-to-br from-blue-50 to-slate-100'}`}>
@@ -758,6 +782,7 @@ const AdminDashboard = () => {
                             'jumia-orders': 'طلبات Jumia',
                             products: 'المنتجات',
                             returns: 'مرتجعات الموقع',
+                            'bot-settings': 'مركز تحكم البوت',
                             settings: 'الإعدادات',
                         }[activeTab] || 'لوحة التحكم'}
                     </h2>
@@ -1313,6 +1338,11 @@ const AdminDashboard = () => {
                             )}
                         </div>
                     </div>
+                )}
+
+                {/* ══════ SETTINGS TAB ══════ */}
+                {activeTab === 'bot-settings' && (
+                    <BotSettingsTab />
                 )}
 
                 {/* ══════ SETTINGS TAB ══════ */}

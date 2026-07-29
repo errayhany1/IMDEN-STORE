@@ -3,13 +3,35 @@
  */
 import axios from 'axios';
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'imden2026';
-
 function headers() {
   return {
     'Content-Type': 'application/json',
-    'X-Admin-Password': ADMIN_PASSWORD,
   };
+}
+
+export async function createAdminSession(password) {
+  const { data } = await axios.post(
+    '/bot-api/api/admin/session',
+    { password },
+    { headers: headers(), timeout: 30000 },
+  );
+  return data;
+}
+
+export async function verifyAdminSession() {
+  const { data } = await axios.get('/bot-api/api/admin/session', {
+    headers: headers(),
+    timeout: 15000,
+  });
+  return data;
+}
+
+export async function destroyAdminSession() {
+  const { data } = await axios.delete('/bot-api/api/admin/session', {
+    headers: headers(),
+    timeout: 15000,
+  });
+  return data;
 }
 
 export async function fetchTifawtOrders({ search = '', status = 'all', limit = 50 } = {}) {
@@ -70,6 +92,32 @@ export async function setJumiaProductStockAdmin(sku, stock = 100) {
     `/bot-api/api/admin/products/${encodeURIComponent(sku)}/jumia-stock`,
     { stock },
     { headers: headers(), timeout: 60000 },
+  );
+  return data;
+}
+
+export async function fetchBotSettings() {
+  const { data } = await axios.get('/bot-api/api/admin/bot/settings', {
+    headers: headers(),
+    timeout: 30000,
+  });
+  return data;
+}
+
+export async function saveBotSettings(settings) {
+  const { data } = await axios.patch(
+    '/bot-api/api/admin/bot/settings',
+    { settings },
+    { headers: headers(), timeout: 30000 },
+  );
+  return data;
+}
+
+export async function resetBotSettings() {
+  const { data } = await axios.post(
+    '/bot-api/api/admin/bot/settings/reset',
+    {},
+    { headers: headers(), timeout: 30000 },
   );
   return data;
 }

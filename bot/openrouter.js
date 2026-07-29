@@ -3,11 +3,12 @@
  */
 import axios from 'axios';
 import { normalizeCatalogImages } from './imageNormalize.js';
+import { getBotSetting } from './runtimeSettings.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const TEXT_MODEL = process.env.OPENROUTER_TEXT_MODEL || 'google/gemini-2.5-flash';
 // Gemini 2.5 produced the original AQ10/AQ3 professional studio results.
-const IMAGE_MODEL = process.env.OPENROUTER_IMAGE_MODEL || 'google/gemini-2.5-flash-image';
+const textModel = () => getBotSetting('openrouterTextModel');
+const imageModel = () => getBotSetting('openrouterImageModel');
 
 function apiKey() {
   return process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '';
@@ -132,7 +133,7 @@ Règles color_variants:
   const { data } = await axios.post(
     OPENROUTER_URL,
     {
-      model: TEXT_MODEL,
+      model: textModel(),
       messages: [{ role: 'user', content }],
       temperature: 0.4,
       response_format: { type: 'json_object' },
@@ -172,7 +173,7 @@ Copy every visible character exactly. Never guess. If no barcode is clearly read
   const { data } = await axios.post(
     OPENROUTER_URL,
     {
-      model: TEXT_MODEL,
+      model: textModel(),
       messages: [{ role: 'user', content }],
       temperature: 0,
       response_format: { type: 'json_object' },
@@ -204,7 +205,7 @@ async function generateOneImage({ imageBuffers, prompt }) {
   const { data } = await axios.post(
     OPENROUTER_URL,
     {
-      model: IMAGE_MODEL,
+      model: imageModel(),
       messages: [{ role: 'user', content }],
       modalities: ['image', 'text'],
       image_config: { aspect_ratio: '1:1' },

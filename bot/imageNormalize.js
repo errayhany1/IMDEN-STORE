@@ -3,8 +3,10 @@
  * AI models often return slightly different sizes; NocoDB/Sheets need uniformity.
  */
 import sharp from 'sharp';
+import { getBotSetting, refreshBotSettings } from './runtimeSettings.js';
 
-export const CATALOG_IMAGE_SIZE = Number(process.env.CATALOG_IMAGE_SIZE || 1080);
+await refreshBotSettings();
+export const CATALOG_IMAGE_SIZE = Number(getBotSetting('catalogImageSize'));
 
 /**
  * Fit the image into a square canvas (contain + soft fill), JPEG output.
@@ -56,8 +58,8 @@ export async function normalizeCatalogImages(buffers = []) {
  * @returns {Promise<Buffer[]>}
  */
 export async function prepareVisionBuffers(buffers = [], opts = {}) {
-  const maxEdge = opts.maxEdge || Number(process.env.AI_VISION_MAX_EDGE || 1280);
-  const quality = opts.quality || Number(process.env.AI_VISION_JPEG_QUALITY || 82);
+  const maxEdge = opts.maxEdge || Number(getBotSetting('visionMaxEdge'));
+  const quality = opts.quality || Number(getBotSetting('visionJpegQuality'));
   const out = [];
   for (const buf of buffers) {
     if (!buf?.length) continue;

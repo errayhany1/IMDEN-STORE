@@ -5,6 +5,7 @@
  * Specs cards: bilingual-ready SVG rendered to a fixed 1080×1080 JPEG for the description.
  */
 import sharp from 'sharp';
+import { getBotSetting } from './runtimeSettings.js';
 import { CATALOG_IMAGE_SIZE } from './imageNormalize.js';
 
 function calcDiscountPercent(oldPrice, price) {
@@ -179,7 +180,7 @@ async function removeEdgeConnectedWhite(productBuffer) {
  */
 export async function composeWhiteStudioProduct(productBuffer, opts = {}) {
   const size = CATALOG_IMAGE_SIZE;
-  const fill = Number(process.env.STUDIO_PRODUCT_FILL || 0.91);
+  const fill = Number(getBotSetting('studioProductFill'));
 
   let cut = await removeEdgeConnectedWhite(productBuffer);
   try {

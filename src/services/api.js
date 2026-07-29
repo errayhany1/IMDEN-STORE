@@ -395,7 +395,7 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                 }
 
                 // Filter: Show POSTEBL and NO POSTEBL
-                const visibleRecords = records.filter(record => record.POSTEBL === 'POSTEBL' || record.POSTEBL === 'NO POSTEBL');
+                const visibleRecords = records.filter(isStorefrontVisibleRecord);
 
                 // Map fields and extract category images
                 const mappedChunk = visibleRecords.map(record => {
@@ -586,6 +586,7 @@ export const normalizeSku = (value) =>
 
 /** Same visibility rule as the catalog list: paused technical rows stay hidden. */
 export const isStorefrontVisibleRecord = (record) => {
+    if (String(record?.SKU || '').trim().toUpperCase() === 'ERY-BOT-SETTINGS') return false;
     const status = String(record?.POSTEBL || '').trim().toUpperCase();
     return status === 'POSTEBL' || status === 'NO POSTEBL';
 };

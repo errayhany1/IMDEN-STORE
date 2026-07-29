@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getBotSetting } from './runtimeSettings.js';
 import { normalizeCatalogImage } from './imageNormalize.js';
 
 const QWEN_IMAGE_URL = (
@@ -38,7 +39,7 @@ objects, text, price, badge, watermark, deformation or duplicate product.`,
   const { data } = await axios.post(
     QWEN_IMAGE_URL,
     {
-      model: process.env.QWEN_IMAGE_MODEL || 'qwen-image-2.0',
+      model: getBotSetting('qwenImageModel'),
       input: { messages: [{ role: 'user', content }] },
       parameters: {
         n: 1,

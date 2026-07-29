@@ -32,6 +32,7 @@ import {
 import { createRealProductCutout } from './localBackground.js';
 import { generateQwenProductImage, isQwenImageConfigured } from './qwenImage.js';
 import { buildColorVariants, buildJumiaColorSku, parseColorList } from './colorVariants.js';
+import { getBotSetting } from './runtimeSettings.js';
 
 export function buildSellerSku(ref) {
   const clean = String(ref || 'REF')
@@ -339,7 +340,7 @@ export async function enrichProduct({
   /** When false, never put raw seller photos in Image1–5 (vision-only backs). */
   publishRealOriginal = true,
 }) {
-  const enabled = String(process.env.PRODUCT_AI_ENRICHMENT || 'true').toLowerCase() !== 'false';
+  const enabled = Boolean(getBotSetting('productAiEnrichment'));
   const sellerSku = buildSellerSku(ref);
   const referenceClean = cleanReference(ref);
   const realBuffers = (originalBuffers || []).filter(Boolean);
@@ -770,7 +771,7 @@ export async function enrichProduct({
   // (unless caller forces sync — e.g. tests). Default: defer.
   // Multi-color products always defer: otherwise GALLERY_APPROVAL=false would
   // publish a base Jumia listing before color confirmation creates per-color SKUs.
-  const deferForGallery = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
+  const deferForGallery = Boolean(getBotSetting('galleryApproval'));
   const deferForColors = detectedColors.length > 1;
   const deferPublish = deferForGallery || deferForColors;
   const deferReason = deferForColors

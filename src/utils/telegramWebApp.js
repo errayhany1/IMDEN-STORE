@@ -44,6 +44,7 @@ export function adminTabFromQuery() {
     'jumia-orders',
     'products',
     'returns',
+    'bot-settings',
     'settings',
   ]);
   return allowed.has(tab) ? tab : null;

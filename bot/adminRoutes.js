@@ -3,6 +3,7 @@
  * Auth: header `X-Admin-Password` must match ADMIN_PASSWORD / VITE_ADMIN_PASSWORD.
  */
 import axios from 'axios';
+import crypto from 'crypto';
 import {
   listTifawtOrdersAdmin,
   markTifawtOrderReturned,
@@ -23,23 +24,94 @@ import {
 } from './jumiaClient.js';
 import { ensurePublicImagesForSku } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
+import {
+  getBotSetting,
+  publicBotSettingsPayload,
+  refreshBotSettings,
+  resetBotSettings,
+  updateBotSettings,
+} from './runtimeSettings.js';
 
 function adminPassword() {
-  return (
+  const configured = (
     process.env.ADMIN_PASSWORD
     || process.env.VITE_ADMIN_PASSWORD
-    || 'imden2026'
+    || ''
+  );
+  if (configured) return configured;
+  return process.env.NODE_ENV === 'production' ? '' : 'imden2026';
+}
+
+const adminSessions = new Map();
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const loginAttempts = new Map();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 6;
+
+function loginKey(req) {
+  // nginx overwrites X-Real-IP with the socket peer; unlike a client-supplied
+  // X-Forwarded-For chain, this value cannot be rotated to bypass throttling.
+  return String(req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown').trim();
+}
+
+function isLoginRateLimited(req) {
+  const key = loginKey(req);
+  const cutoff = Date.now() - LOGIN_WINDOW_MS;
+  const attempts = (loginAttempts.get(key) || []).filter((time) => time > cutoff);
+  loginAttempts.set(key, attempts);
+  return attempts.length >= LOGIN_MAX_ATTEMPTS;
+}
+
+function recordLoginFailure(req) {
+  const key = loginKey(req);
+  const attempts = loginAttempts.get(key) || [];
+  attempts.push(Date.now());
+  loginAttempts.set(key, attempts);
+}
+
+function parseCookies(req) {
+  return Object.fromEntries(
+    String(req.headers.cookie || '')
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const index = part.indexOf('=');
+        return index < 0
+          ? [part, '']
+          : [part.slice(0, index), decodeURIComponent(part.slice(index + 1))];
+      }),
   );
 }
 
+function passwordMatches(provided) {
+  const expected = Buffer.from(String(adminPassword()));
+  const actual = Buffer.from(String(provided || ''));
+  return expected.length > 0
+    && expected.length === actual.length
+    && crypto.timingSafeEqual(expected, actual);
+}
+
+function activeSession(req) {
+  const token = parseCookies(req).admin_session;
+  if (!token) return false;
+  const expiresAt = adminSessions.get(token);
+  if (!expiresAt || expiresAt < Date.now()) {
+    adminSessions.delete(token);
+    return false;
+  }
+  return true;
+}
+
 function requireAdmin(req, res) {
+  if (activeSession(req)) return true;
   const provided = String(
     req.headers['x-admin-password']
     || req.headers['x-admin-secret']
     || req.body?.password
     || '',
   ).trim();
-  if (!provided || provided !== adminPassword()) {
+  if (!provided || !passwordMatches(provided)) {
     res.status(401).json({ ok: false, error: 'unauthorized' });
     return false;
   }
@@ -99,12 +171,12 @@ function rowToJumiaPayload(row, nocodbUrl) {
     shortAr: row.Short_AR || row.short_ar || '',
     descriptionFr: row.description_french || row.Description_FR || row.French_Description || row.Description || '',
     descriptionAr: row.description_arabic || row.Description_AR || row.Arabic_Description || '',
-    brand: row.Brand || process.env.JUMIA_DEFAULT_BRAND || '1045133 - Generic',
-    color: row.Color || 'Multicolore',
-    colorFamily: row.Color_Family || row.Color || 'Multicolore',
-    variation: row.Variation || '...',
-    productWeight: row.Weight || 1,
-    jumiaCategory: row.Jumia_Category || process.env.JUMIA_DEFAULT_CATEGORY || '1000040',
+    brand: row.Brand || getBotSetting('jumiaDefaultBrand'),
+    color: row.Color || getBotSetting('jumiaDefaultColor'),
+    colorFamily: row.Color_Family || row.Color || getBotSetting('jumiaDefaultColorFamily'),
+    variation: row.Variation || getBotSetting('jumiaDefaultVariation'),
+    productWeight: row.Weight || getBotSetting('jumiaDefaultWeight'),
+    jumiaCategory: row.Jumia_Category || getBotSetting('jumiaDefaultCategory'),
     imageUrls,
   };
 }
@@ -158,6 +230,70 @@ async function findNocoProductBySku(sku) {
  * @param {import('express').Express} app
  */
 export function registerAdminRoutes(app) {
+  app.post('/api/admin/session', (req, res) => {
+    if (isLoginRateLimited(req)) {
+      return res.status(429).json({ ok: false, error: 'too_many_attempts' });
+    }
+    if (!passwordMatches(req.body?.password)) {
+      recordLoginFailure(req);
+      return res.status(401).json({ ok: false, error: 'unauthorized' });
+    }
+    loginAttempts.delete(loginKey(req));
+    const token = crypto.randomBytes(32).toString('base64url');
+    adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
+    const secure = String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https';
+    res.setHeader(
+      'Set-Cookie',
+      `admin_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(ADMIN_SESSION_TTL_MS / 1000)}${secure ? '; Secure' : ''}`,
+    );
+    return res.json({ ok: true });
+  });
+
+  app.get('/api/admin/session', (req, res) => (
+    activeSession(req)
+      ? res.json({ ok: true })
+      : res.status(401).json({ ok: false, error: 'unauthorized' })
+  ));
+
+  app.delete('/api/admin/session', (req, res) => {
+    const token = parseCookies(req).admin_session;
+    if (token) adminSessions.delete(token);
+    res.setHeader('Set-Cookie', 'admin_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0');
+    return res.json({ ok: true });
+  });
+
+  app.get('/api/admin/bot/settings', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      await refreshBotSettings({ strict: true });
+      return res.json({ ok: true, ...publicBotSettingsPayload() });
+    } catch (error) {
+      return res.status(503).json({ ok: false, error: error.message || 'settings_unavailable' });
+    }
+  });
+
+  app.patch('/api/admin/bot/settings', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      await updateBotSettings(req.body?.settings || req.body || {});
+      return res.json({ ok: true, ...publicBotSettingsPayload() });
+    } catch (error) {
+      console.error('[admin] bot settings update failed:', error.message);
+      return res.status(500).json({ ok: false, error: 'settings_update_failed' });
+    }
+  });
+
+  app.post('/api/admin/bot/settings/reset', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      await resetBotSettings();
+      return res.json({ ok: true, ...publicBotSettingsPayload() });
+    } catch (error) {
+      console.error('[admin] bot settings reset failed:', error.message);
+      return res.status(500).json({ ok: false, error: 'settings_reset_failed' });
+    }
+  });
+
   app.get('/api/admin/tifawt/orders', async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {

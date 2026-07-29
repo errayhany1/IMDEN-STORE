@@ -7,6 +7,7 @@
  * Both prices end with .99 or .98
  * Sale window: long (years)
  */
+import { getBotSetting } from './runtimeSettings.js';
 
 const JUMIA_COMMISSION = 0.15;
 const PACK_WAREHOUSE_DH = 5;
@@ -80,7 +81,7 @@ export function isOutOfStockPostebl(postebl) {
 
 /** Always 100, or 0 when NocoDB says NO POSTEBL. */
 export function resolveJumiaStock(postebl) {
-  return isOutOfStockPostebl(postebl) ? 0 : 100;
+  return isOutOfStockPostebl(postebl) ? 0 : Number(getBotSetting('jumiaDefaultStock'));
 }
 
 function longSaleWindow() {

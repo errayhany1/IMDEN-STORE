@@ -5,6 +5,7 @@
  * Base: https://vendor-api.jumia.com
  */
 import axios from 'axios';
+import { getBotSetting } from './runtimeSettings.js';
 import { buildJumiaOffer } from './jumiaPricing.js';
 import { ensurePublicImageUrls } from './jumiaPublicImages.js';
 import { toTifawtSku } from './tifawtSku.js';
@@ -400,11 +401,11 @@ export async function createJumiaProduct(product = {}) {
     name,
   });
   const brandCode = parseJumiaCode(
-    pick(product.brand, product.Brand, process.env.JUMIA_DEFAULT_BRAND),
+    pick(product.brand, product.Brand, getBotSetting('jumiaDefaultBrand')),
     '1045133',
   );
   const categoryCode = parseJumiaCode(
-    pick(product.jumiaCategory, product.category, product.PrimaryCategory, process.env.JUMIA_DEFAULT_CATEGORY),
+    pick(product.jumiaCategory, product.category, product.PrimaryCategory, getBotSetting('jumiaDefaultCategory')),
     '1000040',
   );
   const rawImages = asArray(product.imageUrls || product.images)

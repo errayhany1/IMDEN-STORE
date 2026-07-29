@@ -9,23 +9,25 @@
 import axios from 'axios';
 import { buildJumiaOffer } from './jumiaPricing.js';
 import { ensurePublicImageUrls } from './jumiaPublicImages.js';
+import { getBotSetting } from './runtimeSettings.js';
 
 const SHEET_ID = process.env.PRODUCT_SHEET_ID || '1zuRmrjaMjTsvN7j822b5w6v3NR3Dh_TclhFyFKXx5h4';
 const WEBHOOK = process.env.PRODUCT_SHEET_WEBHOOK_URL || '';
 
 /** Defaults taken from working Jumia "N8N AI1" Upload Template exports. */
-export const JUMIA_SHEET_DEFAULTS = {
-  brand: (process.env.JUMIA_DEFAULT_BRAND || '1045133 - Generic').trim(),
-  category: (
-    process.env.JUMIA_DEFAULT_CATEGORY
-    || '1000040 - Electronics / Accessories / Gadgets'
-  ).trim(),
-  color: 'Multicolore',
-  colorFamily: 'Multicolore',
-  variation: '...',
-  productWeight: 1,
-  stock: 100,
-};
+export const JUMIA_SHEET_DEFAULTS = new Proxy({}, {
+  get(_target, key) {
+    return ({
+      brand: getBotSetting('jumiaDefaultBrand'),
+      category: getBotSetting('jumiaDefaultCategory'),
+      color: getBotSetting('jumiaDefaultColor'),
+      colorFamily: getBotSetting('jumiaDefaultColorFamily'),
+      variation: getBotSetting('jumiaDefaultVariation'),
+      productWeight: getBotSetting('jumiaDefaultWeight'),
+      stock: getBotSetting('jumiaDefaultStock'),
+    })[key];
+  },
+});
 
 export function buildSheetPayload(product) {
   const now = new Date().toISOString();
@@ -135,5 +137,5 @@ export async function appendProductToSheet(product) {
 }
 
 export function isSheetWebhookConfigured() {
-  return Boolean(WEBHOOK);
+  return Boolean(WEBHOOK) && Boolean(getBotSetting('sheetSyncEnabled'));
 }

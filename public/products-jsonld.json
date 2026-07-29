@@ -1,6 +1,131 @@
 [
   {
     "@type": "Product",
+    "name": "كابل شحن USB عالمي لساعة ذكية AIR - إكسسوار أساسي للساعات الذكية",
+    "image": "https://errayhany.com/product-images/1721-1-e68a98b527-1600.webp",
+    "description": "كابل شحن USB عالمي لساعة ذكية AIR - إكسسوار أساسي للساعات الذكية - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CABLE-WATCH-AIR",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CABLE-WATCH-AIR",
+      "price": 17,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "كابل شحن W02 للساعة الذكية - أسود | إكسسوار أساسي",
+    "image": "https://errayhany.com/product-images/1720-1-f610ce19d2-1600.webp",
+    "description": "كابل شحن W02 للساعة الذكية - أسود | إكسسوار أساسي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CABLE-WATCH-W02",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CABLE-WATCH-W02",
+      "price": 15,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "كابل شحن مغناطيسي T1 للساعة الذكية - بديل متين وعملي",
+    "image": "https://errayhany.com/product-images/1719-1-f58c39170b-1600.webp",
+    "description": "كابل شحن مغناطيسي T1 للساعة الذكية - بديل متين وعملي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CABLE-WATCH-T1",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CABLE-WATCH-T1",
+      "price": 15,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "كابل شحن USB للساعة الذكية لايت - بديل وإكسسوار أساسي",
+    "image": "https://errayhany.com/product-images/1718-1-40220b8a9c-1600.webp",
+    "description": "كابل شحن USB للساعة الذكية لايت - بديل وإكسسوار أساسي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CABLE-WATCH-LITE",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CABLE-WATCH-LITE",
+      "price": 15,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "كابل شحن مغناطيسي USB لساعة KR PRO الذكية - إكسسوار أساسي",
+    "image": "https://errayhany.com/product-images/1717-1-364ac369b8-1600.webp",
+    "description": "كابل شحن مغناطيسي USB لساعة KR PRO الذكية - إكسسوار أساسي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CABLE-WATCH-KR-PRO",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CABLE-WATCH-KR-PRO",
+      "price": 15,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
     "name": "كابل شحن مغناطيسي USB لساعة ذكية KR - ملحق للساعات الذكية",
     "image": "https://errayhany.com/product-images/1716-1-c331b96f98-1600.webp",
     "description": "كابل شحن مغناطيسي USB لساعة ذكية KR - ملحق للساعات الذكية - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
@@ -2364,131 +2489,6 @@
       "@type": "Offer",
       "url": "https://errayhany.com/?search=BT185",
       "price": 140,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Clavier numérique",
-    "image": "https://errayhany.com/product-images/1596-1-86b3877e05-1600.webp",
-    "description": "Clavier numérique - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "K35",
-    "category": "ماوس وكيبورد",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=K35",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Support de Téléphone Réglable 360°",
-    "image": "https://errayhany.com/product-images/1590-1-449a820112-1600.webp",
-    "description": "Support de Téléphone Réglable 360° - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "Z10",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=Z10",
-      "price": 140,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Projecteur",
-    "image": "https://errayhany.com/product-images/1588-1-5fd12a7f8b-1600.webp",
-    "description": "Projecteur - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "SY1280",
-    "category": "إضاءة",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=SY1280",
-      "price": 500,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "Table pc gamer",
-    "image": "https://errayhany.com/product-images/1587-1-ccef9255de-1600.webp",
-    "description": "Table pc gamer - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "Table pc gamer",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=Table%20pc%20gamer",
-      "price": 700,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "نوكيا 1616 - الهاتف البسيط والفعال للجميع",
-    "image": "https://errayhany.com/product-images/1585-1-4ae587f85c-1600.webp",
-    "description": "نوكيا 1616 - الهاتف البسيط والفعال للجميع - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-NOKIA-1616",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-NOKIA-1616",
-      "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition",

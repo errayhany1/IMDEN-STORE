@@ -3,9 +3,9 @@
  * Used by the Telegram enrichment pipeline when OPENAI_API_KEY is set.
  */
 import axios from 'axios';
+import { getBotSetting } from './runtimeSettings.js';
 
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
-const TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || 'gpt-4o-mini';
 
 function apiKey() {
   return process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
@@ -120,7 +120,7 @@ Règles:
   const { data } = await axios.post(
     OPENAI_URL,
     {
-      model: TEXT_MODEL,
+      model: getBotSetting('openaiTextModel'),
       temperature: 0.4,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content }],

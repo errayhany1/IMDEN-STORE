@@ -65,11 +65,13 @@ import {
   listJumiaColorSkusByProductId,
   deactivateRemovedProductVariants,
 } from './productVariants.js';
+import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
 dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
+startBotSettingsSync({ publishConnections: true });
 
 const app = express();
 registerPublicImageRoutes(app);
@@ -88,7 +90,7 @@ app.use('/api', (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password, X-Admin-Secret');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
     res.setHeader('Access-Control-Max-Age', '86400');
   }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
@@ -109,14 +111,8 @@ const TELEGRAM_WEBAPP_URL = (
   process.env.TELEGRAM_WEBAPP_URL
   || `${SITE_URL.replace(/\/$/, '')}/admin?from=tg&tab=products`
 ).trim();
-/** Soft timeout so AI cannot hang the whole bot forever.
- *  Copy + studio cutouts + background composites routinely
- *  exceed 90s on large Telegram photos, so the default is 5 minutes. */
-const AI_ENRICH_TIMEOUT_MS = Number(process.env.AI_ENRICH_TIMEOUT_MS || 300000);
-/** Background polish after the product is already saved (must be bounded). */
-const AI_ENRICH_BG_TIMEOUT_MS = Number(process.env.AI_ENRICH_BG_TIMEOUT_MS || 360000);
 /** Reject oversized Telegram downloads before they OOM the process. */
-const MAX_TELEGRAM_IMAGE_BYTES = Number(process.env.MAX_TELEGRAM_IMAGE_BYTES || 12 * 1024 * 1024);
+const MAX_TELEGRAM_IMAGE_BYTES = Number(getBotSetting('maxTelegramImageMb')) * 1024 * 1024;
 
 function assertBotConfig() {
   const missing = [];
@@ -1077,7 +1073,11 @@ async function requestProductDestination(chatId, files, caption) {
   const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   const parsed = parseCaption(caption);
   const expiresAt = now + (10 * 60 * 1000);
-  const selected = { noco: false, tifawt: false, jumia: false };
+  const selected = {
+    noco: Boolean(getBotSetting('defaultDestinationNoco')),
+    tifawt: Boolean(getBotSetting('defaultDestinationTifawt')),
+    jumia: Boolean(getBotSetting('defaultDestinationJumia')),
+  };
   pendingDestinations.set(token, { chatId, files, caption, selected, expiresAt });
 
   const imageNote = files.length >= 2 && files.length <= 4
@@ -1202,8 +1202,8 @@ async function executeAiPolish({
     startMessage || `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId}...`
   );
   const enrichTimeout = amazonUrl
-    ? Number(process.env.AI_ENRICH_TIMEOUT_MS_AMAZON || Math.max(AI_ENRICH_BG_TIMEOUT_MS, 240000))
-    : AI_ENRICH_BG_TIMEOUT_MS;
+    ? Number(getBotSetting('amazonTimeoutMs'))
+    : Number(getBotSetting('aiBackgroundTimeoutMs'));
 
   let enrichment;
   try {
@@ -1284,7 +1284,7 @@ async function executeAiPolish({
     }
   }
 
-  const wantsApproval = String(process.env.GALLERY_APPROVAL || 'true').toLowerCase() !== 'false';
+  const wantsApproval = Boolean(getBotSetting('galleryApproval'));
   if (wantsApproval && enrichment.hasAiImages && enrichment.galleryCandidates?.length) {
     const asked = await requestGalleryApproval({
       chatId,

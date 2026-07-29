@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 import { Worker } from 'worker_threads';
 import sharp from 'sharp';
 import { composeWhiteStudioProduct } from './studioImage.js';
+import { getBotSetting } from './runtimeSettings.js';
 
 const SIZE = 320;
 const WORKER_PATH = fileURLToPath(new URL('./segmentWorker.js', import.meta.url));
@@ -30,11 +31,11 @@ const pending = new Map();
 let queue = Promise.resolve();
 
 function enabled() {
-  return String(process.env.LOCAL_BACKGROUND_REMOVAL || 'true').toLowerCase() !== 'false';
+  return Boolean(getBotSetting('localBackgroundRemoval'));
 }
 
 function timeoutMs() {
-  return Number(process.env.LOCAL_BACKGROUND_TIMEOUT_MS || 60_000);
+  return Number(getBotSetting('localBackgroundTimeoutMs'));
 }
 
 function modelDir() {
