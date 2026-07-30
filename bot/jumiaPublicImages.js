@@ -155,8 +155,8 @@ export async function persistPublicImage(buffer, { sku = 'img', index = 1, stabl
   return { url, buffer: optimized, fileName: name };
 }
 
-async function downloadImage(url) {
-  const { data, headers } = await axios.get(url, {
+async function downloadImage(url, attempt = 0) {
+  const { data, headers, status } = await axios.get(url, {
     responseType: 'arraybuffer',
     timeout: 60_000,
     maxRedirects: 5,
@@ -164,8 +164,15 @@ async function downloadImage(url) {
       'User-Agent': 'Mozilla/5.0 (compatible; ErrayhanyJumiaImages/1.0)',
       Accept: 'image/*,*/*',
     },
-    validateStatus: (s) => s >= 200 && s < 400,
+    validateStatus: () => true,
   });
+  if (status < 200 || status >= 400) {
+    if ((status === 429 || status >= 500) && attempt < 2) {
+      await sleep(500 * (attempt + 1) ** 2);
+      return downloadImage(url, attempt + 1);
+    }
+    throw new Error(`image_fetch_${status}`);
+  }
   const buf = Buffer.from(data);
   const ct = String(headers['content-type'] || '');
   if (buf.length < 500) throw new Error('image_too_small');
@@ -195,7 +202,16 @@ function collectRowImageUrls(row, nocodbUrl) {
   return out;
 }
 
-async function findNocoProductBySku(sku) {
+// Jumia fetches a product's images in one burst. On a cold cache that turns
+// into a dozen simultaneous NocoDB lookups, and the throttled ones used to
+// surface as 404 → "images failed" on the listing.
+const ROW_CACHE_TTL_MS = 5 * 60_000;
+const rowCache = new Map();
+const rowLookups = new Map();
+
+const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+async function lookupNocoProductBySku(sku) {
   const {
     url, token, table, variantsTable,
   } = nocodbConfig();
@@ -203,22 +219,26 @@ async function findNocoProductBySku(sku) {
   const exact = String(sku).trim();
 
   async function queryOne(tableId, field, value) {
-    try {
-      const { data, status } = await axios.get(
-        `${url}/api/v2/tables/${tableId}/records`,
-        {
-          params: {
-            where: `(${field},eq,${value})`,
-            limit: 1,
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data, status } = await axios.get(
+          `${url}/api/v2/tables/${tableId}/records`,
+          {
+            params: {
+              where: `(${field},eq,${value})`,
+              limit: 1,
+            },
+            headers: { 'xc-token': token },
+            timeout: 30_000,
+            validateStatus: () => true,
           },
-          headers: { 'xc-token': token },
-          timeout: 30_000,
-          validateStatus: () => true,
-        },
-      );
-      if (status >= 200 && status < 300 && data?.list?.[0]) return data.list[0];
-    } catch {
-      // Caller falls through to the next lookup.
+        );
+        if (status >= 200 && status < 300) return data?.list?.[0] || null;
+        if (status !== 429 && status < 500) return null;
+      } catch {
+        // Network hiccup — same backoff as a throttled response.
+      }
+      await sleep(400 * (attempt + 1) ** 2);
     }
     return null;
   }
@@ -244,20 +264,50 @@ async function findNocoProductBySku(sku) {
   return null;
 }
 
+async function findNocoProductBySku(sku) {
+  const key = String(sku || '').trim();
+  if (!key) return null;
+
+  const cached = rowCache.get(key);
+  if (cached && Date.now() - cached.ts < ROW_CACHE_TTL_MS) return cached.row;
+
+  const inFlight = rowLookups.get(key);
+  if (inFlight) return inFlight;
+
+  const promise = lookupNocoProductBySku(key)
+    .then((row) => {
+      if (row) rowCache.set(key, { row, ts: Date.now() });
+      return row;
+    })
+    .finally(() => rowLookups.delete(key));
+  rowLookups.set(key, promise);
+  return promise;
+}
+
 /**
  * Re-fetch Image{n} from NocoDB (fresh signed URL) and cache it under a stable name.
  */
+const refreshJobs = new Map();
+
 export async function refreshSkuImageFromNoco(sku, index = 1) {
-  const { url: nocodbUrl } = nocodbConfig();
-  const row = await findNocoProductBySku(sku);
-  if (!row) throw new Error('product_not_found');
-  const field = row[`Image${index}`];
-  const file = Array.isArray(field) ? field[0] : field;
-  const source = attachmentUrl(file, nocodbUrl);
-  if (!source) throw new Error('image_slot_empty');
-  const buf = await downloadImage(source);
-  const persisted = await persistPublicImage(buf, { sku, index, stable: true });
-  return persisted;
+  const key = `${sku}#${index}`;
+  const running = refreshJobs.get(key);
+  if (running) return running;
+
+  const job = (async () => {
+    const { url: nocodbUrl } = nocodbConfig();
+    const row = await findNocoProductBySku(sku);
+    if (!row) throw new Error('product_not_found');
+    const field = row[`Image${index}`];
+    const file = Array.isArray(field) ? field[0] : field;
+    const source = attachmentUrl(file, nocodbUrl);
+    if (!source) throw new Error('image_slot_empty');
+    const buf = await downloadImage(source);
+    return persistPublicImage(buf, { sku, index, stable: true });
+  })().finally(() => refreshJobs.delete(key));
+
+  refreshJobs.set(key, job);
+  return job;
 }
 
 /**
