@@ -378,8 +378,8 @@ export function findRelatedProducts(product, catalog = [], options = {}) {
  * Secondary never repeats primary items.
  */
 export function findRelatedProductTiers(product, catalog = [], options = {}) {
-  const primaryLimit = options.primaryLimit ?? options.limit ?? 8;
-  const secondaryLimit = options.secondaryLimit ?? 8;
+  const primaryLimit = options.primaryLimit ?? options.limit ?? 12;
+  const secondaryLimit = options.secondaryLimit ?? 12;
   const primaryMin = options.primaryMinScore ?? 6;
   const secondaryMin = options.secondaryMinScore ?? 2.5;
 
@@ -400,6 +400,39 @@ export function findRelatedProductTiers(product, catalog = [], options = {}) {
     // Allow a bit more same-category variety in the looser row.
     maxSameCategory: options.secondaryMaxSameCategory ?? 3,
   });
+
+  // Sparse categories may not have enough scored matches. Keep the shelf
+  // useful by filling the exploratory row with other available products,
+  // while never repeating the current product or the primary row.
+  if (secondary.length < secondaryLimit) {
+    const usedIds = new Set(
+      [...primary, ...secondary].map((item) => String(item.id || item.ref)),
+    );
+    const productId = String(product?.id || product?.ref || '');
+    const fallback = remainder
+      .filter((candidate) => {
+        const id = String(candidate?.id || candidate?.ref || '');
+        return id
+          && id !== productId
+          && !usedIds.has(id)
+          && candidate.category !== 'Out of Stock'
+          && candidate.isAvailable !== false;
+      })
+      .map((candidate) => ({
+        candidate,
+        score: scoreRelatedProduct(product, candidate),
+      }))
+      .sort((a, b) => (
+        b.score - a.score
+        || Number(a.candidate.price || 0) - Number(b.candidate.price || 0)
+      ));
+
+    for (const row of fallback) {
+      if (secondary.length >= secondaryLimit) break;
+      secondary.push(row.candidate);
+      usedIds.add(String(row.candidate.id || row.candidate.ref));
+    }
+  }
 
   return { primary, secondary };
 }

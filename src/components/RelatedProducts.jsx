@@ -33,10 +33,11 @@ function RelatedStrip({
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return undefined;
-    updateScrollState();
+    const frame = window.requestAnimationFrame(updateScrollState);
     el.addEventListener('scroll', updateScrollState, { passive: true });
     window.addEventListener('resize', updateScrollState);
     return () => {
+      window.cancelAnimationFrame(frame);
       el.removeEventListener('scroll', updateScrollState);
       window.removeEventListener('resize', updateScrollState);
     };
@@ -183,8 +184,8 @@ function RelatedStrip({
 const RelatedProducts = ({
   product,
   onSelect,
-  limit = 8,
-  secondaryLimit = 8,
+  limit = 12,
+  secondaryLimit = 12,
   titleAr = 'قد يعجبك أيضاً',
   titleFr = 'Vous aimerez aussi',
   lang = 'ar',

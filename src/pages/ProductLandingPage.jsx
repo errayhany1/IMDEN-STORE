@@ -1069,7 +1069,8 @@ const ProductLandingPage = ({ sku: skuProp }) => {
           <RelatedProducts
             product={product}
             lang={lang}
-            limit={8}
+            limit={12}
+            secondaryLimit={16}
             onSelect={(item) => {
               const ref = encodeURIComponent(item.ref || item.id);
               window.location.assign(`/p/${ref}`);
