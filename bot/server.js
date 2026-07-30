@@ -64,6 +64,7 @@ import {
   upsertProductVariant,
   setProductVariantActive,
   listJumiaColorSkusByProductId,
+  listProductVariantsByProductId,
   deactivateRemovedProductVariants,
 } from './productVariants.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
@@ -1004,14 +1005,34 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
           failed.push(`${numberedSku}: ${source.error}`);
           continue;
         }
+        const sourceFiles = Array.isArray(source.files) ? source.files : [];
         const imageUrls = source.index === 1
           ? professionalImageUrls
-          : source.imageUrls;
+          : sourceFiles.map((f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL));
         if (!imageUrls?.length) {
           failed.push(`${numberedSku}: missing_images`);
           continue;
         }
+        let linkRowId = null;
         try {
+          // Register the extra listing before publishing: the durable image
+          // proxy resolves Image1…N by Jumia_SKU, so an unregistered SKU goes
+          // dark on Jumia the moment the disk cache is recycled.
+          if (source.index > 1 && sourceFiles.length) {
+            try {
+              const saved = await upsertProductVariant({
+                productId: rowId,
+                colorLabel: `Amazon ${source.index}`,
+                colorCode: `LINK${source.index}`,
+                jumiaSku: numberedSku,
+                imageFiles: sourceFiles,
+                active: null,
+              });
+              linkRowId = saved?.rowId || null;
+            } catch (e) {
+              console.warn(`Amazon link ${source.index} variant row failed:`, e.message);
+            }
+          }
           const jumia = await createJumiaProduct({
             ...basePayload,
             sellerSku: numberedSku,
@@ -1030,9 +1051,38 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
             throw new Error(`stock_feed:${jumia.stockFeed.error || 'failed'}`);
           }
           created.push(jumia.sellerSku || numberedSku);
+          if (linkRowId) await setProductVariantActive(linkRowId, true);
         } catch (error) {
           failed.push(`${numberedSku}: ${error.message}`);
+          if (linkRowId) {
+            try {
+              await setProductVariantActive(linkRowId, false, { error: error.message });
+            } catch (statusError) {
+              console.warn(`Amazon link status failed (${numberedSku}):`, statusError.message);
+            }
+          }
         }
+      }
+      // Sending fewer links than last time must retire the extra listings.
+      try {
+        const keepCodes = enrichment.amazonJumiaSources
+          .filter((s) => s.index > 1)
+          .map((s) => `LINK${s.index}`);
+        const rows = await listProductVariantsByProductId(rowId);
+        const orphans = rows.filter((row) => {
+          const code = String(row?.Color_Code || '').trim().toUpperCase();
+          const status = String(row?.Active || '').trim().toUpperCase();
+          return /^LINK\d+$/.test(code)
+            && !keepCodes.includes(code)
+            && status !== 'INACTIVE'
+            && !status.startsWith('ERROR:');
+        });
+        for (const row of orphans) {
+          await setProductVariantActive(row.Id || row.id, false);
+        }
+        await pauseJumiaColorSkus(orphans.map((row) => row.Jumia_SKU));
+      } catch (e) {
+        console.warn(`Amazon link cleanup failed #${rowId}:`, e.message);
       }
       jumiaNote = created.length
         ? `\n🛒 Jumia: تم إنشاء ${created.length} منشورات من روابط Amazon\n${created.map((sku) => `• ${sku}`).join('\n')}`

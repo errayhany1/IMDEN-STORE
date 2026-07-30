@@ -42,3 +42,15 @@ test('empty keep list treats every live variant as stale', () => {
   assert.equal(stale.length, 1);
   assert.equal(stale[0].code, 'BL');
 });
+
+test('extra Amazon link rows survive a color-only regeneration', () => {
+  const stale = selectStaleProductVariants(
+    [
+      { Id: 10, Color_Code: 'BL', Jumia_SKU: 'ERY-A-JCBL', Active: 'ACTIVE' },
+      { Id: 11, Color_Code: 'LINK2', Jumia_SKU: 'ERY-A-2', Active: 'ACTIVE' },
+      { Id: 12, Color_Code: 'link3', Jumia_SKU: 'ERY-A-3', Active: 'ACTIVE' },
+    ],
+    [],
+  );
+  assert.deepEqual(stale.map((row) => row.code), ['BL']);
+});

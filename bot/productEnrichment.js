@@ -470,11 +470,24 @@ export async function enrichProduct({
         if (!extra.imageUrls?.length) {
           throw new Error('Amazon returned no product images');
         }
+        // Jumia only stays live while our proxy can re-fetch the bytes, so the
+        // extra links need NocoDB attachments too — Amazon CDN links and the
+        // local disk cache both disappear.
+        const extraBuffers = await downloadImageBuffers(extra.imageUrls, { max: 8 });
+        if (!extraBuffers.length) {
+          throw new Error('Amazon returned no downloadable product images');
+        }
+        const extraPairs = await uploadBufferPairs(
+          uploadToNocoDB,
+          extraBuffers,
+          `amazon${i + 1}-${sellerSku}`,
+        );
         amazonJumiaSources.push({
           index: i + 1,
           url: extraUrl,
           title: extra.title || '',
           imageUrls: extra.imageUrls,
+          files: extraPairs.map((pair) => pair.file),
         });
         console.log(`Amazon Jumia-only source ${i + 1} OK: ${extra.title || extra.asin || extraUrl}`);
       } catch (error) {

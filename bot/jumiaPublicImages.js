@@ -200,37 +200,15 @@ async function findNocoProductBySku(sku) {
     url, token, table, variantsTable,
   } = nocodbConfig();
   if (!url || !token || !table || !sku) return null;
-  const candidates = [String(sku).trim()].filter(Boolean);
-  for (const field of ['SellerSKU', 'SKU', 'reference_clean']) {
-    for (const value of candidates) {
-      try {
-        const { data, status } = await axios.get(
-          `${url}/api/v2/tables/${table}/records`,
-          {
-            params: {
-              where: `(${field},eq,${value})`,
-              limit: 1,
-            },
-            headers: { 'xc-token': token },
-            timeout: 30_000,
-            validateStatus: () => true,
-          },
-        );
-        if (status >= 200 && status < 300 && data?.list?.[0]) {
-          return data.list[0];
-        }
-      } catch {
-        // try next
-      }
-    }
-  }
-  if (variantsTable) {
+  const exact = String(sku).trim();
+
+  async function queryOne(tableId, field, value) {
     try {
       const { data, status } = await axios.get(
-        `${url}/api/v2/tables/${variantsTable}/records`,
+        `${url}/api/v2/tables/${tableId}/records`,
         {
           params: {
-            where: `(Jumia_SKU,eq,${String(sku).trim()})`,
+            where: `(${field},eq,${value})`,
             limit: 1,
           },
           headers: { 'xc-token': token },
@@ -238,11 +216,29 @@ async function findNocoProductBySku(sku) {
           validateStatus: () => true,
         },
       );
-      if (status >= 200 && status < 300 && data?.list?.[0]) {
-        return data.list[0];
-      }
+      if (status >= 200 && status < 300 && data?.list?.[0]) return data.list[0];
     } catch {
-      // ProductVariants is optional for legacy deployments.
+      // Caller falls through to the next lookup.
+    }
+    return null;
+  }
+
+  for (const field of ['SellerSKU', 'SKU', 'reference_clean']) {
+    const row = await queryOne(table, field, exact);
+    if (row) return row;
+  }
+  if (variantsTable) {
+    const row = await queryOne(variantsTable, 'Jumia_SKU', exact);
+    if (row) return row;
+  }
+
+  // Extra Amazon links publish as `ERY-X-2`. If that listing was created before
+  // it got its own variant row, serve the base product rather than a dead slot.
+  const base = exact.replace(/-\d{1,2}$/, '');
+  if (base && base !== exact) {
+    for (const field of ['SellerSKU', 'SKU', 'reference_clean']) {
+      const row = await queryOne(table, field, base);
+      if (row) return row;
     }
   }
   return null;

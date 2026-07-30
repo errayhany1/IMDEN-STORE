@@ -129,6 +129,11 @@ export async function listJumiaColorSkusByProductId(productId) {
   )];
 }
 
+/** Extra-Amazon-link rows share this table but are not part of any palette. */
+export function isColorVariantCode(code) {
+  return !/^LINK\d+$/i.test(String(code || '').trim());
+}
+
 /**
  * Pure helper: which ProductVariants rows should be deactivated when the
  * current generation keeps only `keepColorCodes`.
@@ -153,6 +158,7 @@ export function selectStaleProductVariants(rows = [], keepColorCodes = []) {
     })
     .filter((row) => {
       if (!row.rowId) return false;
+      if (!isColorVariantCode(row.code)) return false;
       if (row.code && keep.has(row.code)) return false;
       if (row.status === 'INACTIVE' || row.status.startsWith('ERROR:')) return false;
       return true;
