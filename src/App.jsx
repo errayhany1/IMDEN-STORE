@@ -17,6 +17,7 @@ import OrderTracking from './pages/OrderTracking';
 import AccountPage from './pages/AccountPage';
 import CategoriesPage from './pages/CategoriesPage';
 import ProductLandingPage from './pages/ProductLandingPage';
+import PurchaseCountPage from './pages/PurchaseCountPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import InstallAppBanner from './components/InstallAppBanner';
 import useStore from './store/useStore';
@@ -339,6 +340,9 @@ function App() {
   }
   if (path === '/tracking') {
       return <OrderTracking />;
+  }
+  if (path === '/purchase-count') {
+      return <PurchaseCountPage />;
   }
   if (path === '/account') {
       return <AccountPage />;

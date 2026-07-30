@@ -22,6 +22,7 @@ import {
   cleanReference,
   detectProductColorVariants,
   generateJumiaColorVariants,
+  generateOptionalAmazonHero,
   publicUrlFromNoco,
 } from './productEnrichment.js';
 import {
@@ -39,7 +40,7 @@ import {
 import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
 import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
-import { normalizeAmazonUrl } from './amazonScrape.js';
+import { normalizeAmazonUrl, normalizeAmazonUrls } from './amazonScrape.js';
 import {
   createJumiaProduct,
   isJumiaConfigured,
@@ -244,12 +245,12 @@ async function sendPhotoBuffer(chatId, buffer, caption, replyMarkup = null) {
   );
 }
 
-async function editMessage(chatId, messageId, text) {
+async function editMessage(chatId, messageId, text, replyMarkup = null) {
   await axios.post(`${TG_API}/editMessageText`, {
     chat_id: chatId,
     message_id: messageId,
     text,
-    reply_markup: { inline_keyboard: [] },
+    reply_markup: replyMarkup || { inline_keyboard: [] },
   }, { timeout: 30000 });
 }
 
@@ -325,14 +326,14 @@ async function updateNocoDBCategory(rowId, categoryId) {
 
 function parseCaption(caption) {
   const lines = (caption || '').split('\n').map((l) => l.trim()).filter(Boolean);
-  let amazonUrl = '';
+  const amazonUrls = normalizeAmazonUrls(caption, { max: 4 });
+  const amazonUrl = amazonUrls[0] || '';
   const contentLines = [];
 
   for (const line of lines) {
-    const urlMatch = line.match(/https?:\/\/\S+/i);
-    if (urlMatch) {
-      amazonUrl = normalizeAmazonUrl(urlMatch[0]);
-      const rest = line.replace(urlMatch[0], '').trim();
+    const urlMatches = line.match(/https?:\/\/\S+/gi) || [];
+    if (urlMatches.length) {
+      const rest = urlMatches.reduce((text, url) => text.replace(url, ''), line).trim();
       if (rest) contentLines.push(rest);
     } else {
       contentLines.push(line);
@@ -369,7 +370,7 @@ function parseCaption(caption) {
   const name = contentLines[nameIdx] || 'منتج غير محدد';
   let sku = contentLines[nameIdx + 1] || contentLines[nameIdx] || 'REF-000';
   if (/^https?:\/\//i.test(sku)) sku = contentLines[nameIdx] || 'REF-000';
-  return { price, oldPrice, name, sku, amazonUrl };
+  return { price, oldPrice, name, sku, amazonUrl, amazonUrls };
 }
 
 function skuCandidates(rawSku) {
@@ -547,7 +548,7 @@ async function requestImageRoles(chatId, files, caption, destination) {
 
 function galleryApprovalSummary(candidates) {
   return candidates
-    .map((c, i) => `${c.selected ? '✅' : '⬜'} ${i + 1}) ${c.label}`)
+    .map((c, i) => `${c.selected ? '✅' : '⬜'}${c.isPrimary ? ' ⭐' : ''} ${i + 1}) ${c.label}`)
     .join('\n');
 }
 
@@ -765,13 +766,26 @@ async function processExistingProductColorPhotos(chatId, files, colorContext) {
   );
 }
 
-function galleryApprovalKeyboard(token, candidates) {
-  const rows = candidates.map((c, i) => ([
-    {
+function galleryApprovalKeyboard(token, candidates, enrichment = {}) {
+  const rows = candidates.map((c, i) => {
+    const row = [{
       text: `${c.selected ? '✅' : '⬜'} ${i + 1}. ${c.label}`,
       callback_data: `gal:${token}:${i}:t`,
-    },
-  ]));
+    }];
+    if (c.kind !== 'jumia-color') {
+      row.push({
+        text: c.isPrimary ? '⭐ الرئيسية' : '☆ اجعلها الرئيسية',
+        callback_data: `gal:${token}:${i}:p`,
+      });
+    }
+    return row;
+  });
+  if (enrichment.amazonAiChoiceRequired && !enrichment.amazonAiChoice) {
+    rows.push([
+      { text: '✨ نعم، أنشئ صورة بالذكاء', callback_data: `gal:${token}:ai:g` },
+      { text: '🚫 لا، استخدم صور Amazon', callback_data: `gal:${token}:ai:n` },
+    ]);
+  }
   rows.push([{ text: '✅ اعتماد ونشر للوجهات المختارة', callback_data: `gal:${token}:go:x` }]);
   rows.push([{ text: '✖️ إلغاء الصور (الإبقاء على النص فقط)', callback_data: `gal:${token}:cancel:x` }]);
   return { inline_keyboard: rows };
@@ -783,6 +797,7 @@ async function requestGalleryApproval({
   recordUrl,
   name,
   price,
+  oldPrice = 0,
   sellerSku,
   enrichment,
 }) {
@@ -804,6 +819,7 @@ async function requestGalleryApproval({
     recordUrl,
     name,
     price,
+    oldPrice,
     sellerSku,
     enrichment,
     candidates,
@@ -812,7 +828,7 @@ async function requestGalleryApproval({
 
   await sendMessage(
     chatId,
-    `🖼️ صور المنتج #${rowId} (${sellerSku})\nستجد عند توفرها: Gemini، Qwen، إزالة الخلفية، والصورة الأصلية للمراجعة.${enrichment.syncJumia ? '\nعند اكتشاف عدة ألوان ستظهر أيضاً صورة مستقلة لكل لون في Jumia. الصورة الأصلية لا تُرسل إلى Jumia.' : '\nلم تختر Jumia، لذلك لن يُرسل إليها هذا المنتج.'}\n\n${galleryApprovalSummary(candidates)}`
+    `🖼️ صور المنتج #${rowId} (${sellerSku})\n${enrichment.amazonUrl ? 'هذه جميع صور Amazon التي تم كشطها. اختر ⭐ الصورة الأساسية، ثم قرر هل تريد إنشاء صورة إضافية بالذكاء أم الاكتفاء بصور Amazon.' : 'ستجد عند توفرها: Gemini، Qwen، إزالة الخلفية، والصورة الأصلية للمراجعة.'}${enrichment.syncJumia ? '\nعند اكتشاف عدة ألوان ستظهر أيضاً صورة مستقلة لكل لون في Jumia. الصورة الأصلية لا تُرسل إلى Jumia.' : '\nلم تختر Jumia، لذلك لن يُرسل إليها هذا المنتج.'}\n\n${galleryApprovalSummary(candidates)}`
   );
 
   for (let i = 0; i < candidates.length; i++) {
@@ -833,19 +849,23 @@ async function requestGalleryApproval({
   await sendMessage(
     chatId,
     `⬇️ فعّل/عطّل كل صورة ثم انشر:\n\n${galleryApprovalSummary(candidates)}`,
-    galleryApprovalKeyboard(token, candidates)
+    galleryApprovalKeyboard(token, candidates, enrichment)
   );
   return true;
 }
 
 function orderSelectedGalleryFiles(candidates) {
   const selected = candidates.filter((c) => c.selected && c.file && c.kind !== 'jumia-color');
-  const ai = selected.filter((c) => c.kind === 'ai').map((c) => c.file);
-  const cutout = selected.filter((c) => c.kind === 'cutout').map((c) => c.file);
-  const amazon = selected.filter((c) => c.kind === 'amazon').map((c) => c.file);
-  const qwen = selected.filter((c) => c.kind === 'qwen').map((c) => c.file);
-  const real = selected.filter((c) => c.kind === 'real').map((c) => c.file);
-  return [...ai, ...cutout, ...amazon, ...qwen, ...real].slice(0, 5);
+  const primary = selected.find((c) => c.isPrimary);
+  const remaining = primary ? selected.filter((c) => c !== primary) : selected;
+  const ai = remaining.filter((c) => c.kind === 'ai').map((c) => c.file);
+  const cutout = remaining.filter((c) => c.kind === 'cutout').map((c) => c.file);
+  const amazon = remaining.filter((c) => c.kind === 'amazon').map((c) => c.file);
+  const qwen = remaining.filter((c) => c.kind === 'qwen').map((c) => c.file);
+  const real = remaining.filter((c) => c.kind === 'real').map((c) => c.file);
+  return [primary?.file, ...ai, ...cutout, ...amazon, ...qwen, ...real]
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 async function finalizeGalleryApproval(pending, { publishImages }) {
@@ -904,6 +924,7 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
 
   let sheetNote = '';
   let jumiaNote = '';
+  let amazonMultiHandled = false;
   if (publishImages && (nocoFiles.length || selectedColorCandidates.length) && enrichment.productForSheet) {
     // Jumia first: materializes durable /public-images/p/{sku}/n.jpg URLs.
     // Sheet must use those same permanent URLs (never NocoDB signed links).
@@ -968,6 +989,55 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
         : '';
     } else if (enrichment.syncJumia && enrichment.requireColorJumia) {
       jumiaNote = '\n🛒 Jumia: تم التخطي — لم توافق على أي صورة لون';
+    } else if (
+      enrichment.syncJumia
+      && isJumiaConfigured()
+      && enrichment.amazonJumiaSources?.length > 1
+    ) {
+      amazonMultiHandled = true;
+      const created = [];
+      const failed = [];
+      const basePayload = enrichment.productForSheet;
+      for (const source of enrichment.amazonJumiaSources) {
+        const numberedSku = `${sellerSku}-${source.index}`;
+        if (source.error) {
+          failed.push(`${numberedSku}: ${source.error}`);
+          continue;
+        }
+        const imageUrls = source.index === 1
+          ? professionalImageUrls
+          : source.imageUrls;
+        if (!imageUrls?.length) {
+          failed.push(`${numberedSku}: missing_images`);
+          continue;
+        }
+        try {
+          const jumia = await createJumiaProduct({
+            ...basePayload,
+            sellerSku: numberedSku,
+            parentSku: numberedSku,
+            referenceClean: `${basePayload.referenceClean}-${source.index}`,
+            frenchTitle: `${basePayload.frenchTitle} - ${source.index}`.slice(0, 120),
+            arabicTitle: `${basePayload.arabicTitle} - ${source.index}`.slice(0, 120),
+            imageUrls,
+            publicImageSku: source.index === 1 ? sellerSku : numberedSku,
+            publicImageStartIndex: 1,
+          });
+          if (jumia?.error || jumia?.skipped) {
+            throw new Error(jumia?.error || jumia?.reason);
+          }
+          if (jumia?.stockFeed?.ok === false || jumia?.stockFeed?.error) {
+            throw new Error(`stock_feed:${jumia.stockFeed.error || 'failed'}`);
+          }
+          created.push(jumia.sellerSku || numberedSku);
+        } catch (error) {
+          failed.push(`${numberedSku}: ${error.message}`);
+        }
+      }
+      jumiaNote = created.length
+        ? `\n🛒 Jumia: تم إنشاء ${created.length} منشورات من روابط Amazon\n${created.map((sku) => `• ${sku}`).join('\n')}`
+        : '\n🛒 Jumia: لم يُنشأ أي منشور من روابط Amazon';
+      if (failed.length) jumiaNote += `\n⚠️ ${failed.join(' | ')}`;
     } else if (enrichment.syncJumia && isJumiaConfigured() && professionalImageUrls.length) {
       try {
         const jumia = await createJumiaProduct({
@@ -1003,6 +1073,7 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
       enrichment.syncSheet
       && !selectedColorCandidates.length
       && !enrichment.requireColorJumia
+      && !amazonMultiHandled
       && isSheetWebhookConfigured()
     ) {
       try {
@@ -1187,6 +1258,7 @@ async function executeAiPolish({
   oldPrice,
   ref,
   amazonUrl,
+  amazonUrls = [],
   sellerSku,
   startMessage,
   postebl = 'POSTEBL',
@@ -1216,6 +1288,7 @@ async function executeAiPolish({
         oldPrice,
         ref,
         amazonUrl,
+        amazonUrls,
         uploadToNocoDB,
         nocodbUrl: NOCODB_URL,
         syncSheet,
@@ -1272,11 +1345,16 @@ async function executeAiPolish({
       recordUrl,
       name,
       price,
+      oldPrice,
       sellerSku,
       enrichment,
       // Description-only photos may contain additional variants, so preserve
       // the full vision set for color-specific generation.
-      sourceBuffers: originalBuffers.slice(0, 4),
+      sourceBuffers: (
+        enrichment.amazonSourceBuffers?.length
+          ? enrichment.amazonSourceBuffers
+          : originalBuffers
+      ).slice(0, 4),
     }, detectedColors);
     if (askedColors) {
       console.log(`🎨 Color approval pending #${rowId} ${sellerSku}: ${detectedColors.join(', ')}`);
@@ -1284,8 +1362,8 @@ async function executeAiPolish({
     }
   }
 
-  const wantsApproval = Boolean(getBotSetting('galleryApproval'));
-  if (wantsApproval && enrichment.hasAiImages && enrichment.galleryCandidates?.length) {
+  const wantsApproval = Boolean(amazonUrl || getBotSetting('galleryApproval'));
+  if (wantsApproval && enrichment.galleryCandidates?.length) {
     const asked = await requestGalleryApproval({
       chatId,
       rowId,
@@ -1365,6 +1443,7 @@ function scheduleAiPolish({
   oldPrice,
   sku,
   amazonUrl,
+  amazonUrls = [],
   sellerSku,
   publishRealOriginal = true,
   syncJumia = true,
@@ -1383,6 +1462,7 @@ function scheduleAiPolish({
     oldPrice,
     ref: sku,
     amazonUrl,
+    amazonUrls,
     sellerSku,
     postebl: 'POSTEBL',
     publishRealOriginal,
@@ -1390,12 +1470,19 @@ function scheduleAiPolish({
     syncSheet,
     catalogPublished,
     nocoPostebl,
-    startMessage: `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...\n🎨 ستوديو أبيض + زاوية إضافية\n📖 صور الوصف تُستخدم للقراءة فقط ولن تُنشر خام`,
+    startMessage: amazonUrl
+      ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\n⭐ سأرسل جميع الصور لاختيار الأساسية\n🎨 لن أُنشئ صورة بالذكاء قبل موافقتك`
+      : `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...\n🎨 ستوديو أبيض + زاوية إضافية\n📖 صور الوصف تُستخدم للقراءة فقط ولن تُنشر خام`,
   }));
 }
 
 /** Re-run AI enrichment for an existing product found by REF/SKU. */
-async function scheduleReenrichByRef(chatId, record, rawRef, { amazonUrl = '' } = {}) {
+async function scheduleReenrichByRef(
+  chatId,
+  record,
+  rawRef,
+  { amazonUrl = '', amazonUrls = [] } = {},
+) {
   const rowId = record.Id || record.id;
   const sellerSku = buildSellerSku(record.SKU || rawRef);
   const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
@@ -1453,6 +1540,9 @@ async function scheduleReenrichByRef(chatId, record, rawRef, { amazonUrl = '' } 
       oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
       ref: cleanReference(record.SKU || rawRef),
       amazonUrl: amazonUrl || record.Amazon_URL || '',
+      amazonUrls: amazonUrls.length
+        ? amazonUrls
+        : [amazonUrl || record.Amazon_URL || ''].filter(Boolean),
       sellerSku,
       postebl: record.POSTEBL || record.Postebl || 'POSTEBL',
       // Preserve Jumia-only technical rows: never unhide PAUSED on re-enrich.
@@ -1463,7 +1553,7 @@ async function scheduleReenrichByRef(chatId, record, rawRef, { amazonUrl = '' } 
       syncJumia: true,
       syncSheet: true,
       startMessage: amazonUrl
-        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج بيانات وصور Amazon\n🎨 إنشاء صورة احترافية جديدة\n🛒 سيتم طلب موافقتك على الصور قبل النشر.`
+        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج ${amazonUrls.length || 1} رابط وصور Amazon\n⭐ سترسل لك الصور لاختيار الأساسية\n🎨 سأطلب منك اختيار إنشاء صورة بالذكاء أو الاكتفاء بصور Amazon\n🛒 ${amazonUrls.length > 1 ? `سيتم إنشاء ${amazonUrls.length} منشورات Jumia مرقّمة` : 'سيتم طلب موافقتك قبل النشر'}.`
         : `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
     });
   });
@@ -1486,7 +1576,9 @@ async function processProduct(
   destinations = { noco: true, tifawt: true, jumia: true },
   roles = null,
 ) {
-  const { price, oldPrice, name, sku, amazonUrl } = parseCaption(caption);
+  const {
+    price, oldPrice, name, sku, amazonUrl, amazonUrls,
+  } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
   const tifawtSku = toTifawtSku(sku, { fallback: 'REF' });
   const publishNoco = Boolean(destinations?.noco);
@@ -1655,7 +1747,7 @@ async function processProduct(
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم تجهيز المنتج #${rowId} بدون نشر صور خام!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
+    `✅ تم تجهيز المنتج #${rowId} بدون نشر صور خام!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n${amazonUrl ? `🔎 سيتم كشط ${amazonUrls.length || 1} رابط Amazon، ثم تختار الصورة الأساسية وهل تريد توليد صورة بالذكاء.` : '✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.'}${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
     publishNoco ? keyboard : undefined
   );
 
@@ -1670,6 +1762,7 @@ async function processProduct(
     oldPrice,
     sku,
     amazonUrl,
+    amazonUrls,
     sellerSku,
     syncJumia: publishJumia,
     syncSheet: publishJumia,
@@ -1801,12 +1894,7 @@ function amazonReenrichRef(text) {
 }
 
 function validAmazonProductUrl(text) {
-  try {
-    const url = new URL(String(text || '').trim());
-    return /^https?:$/.test(url.protocol) && /(^|\.)amazon\./i.test(url.hostname);
-  } catch {
-    return false;
-  }
+  return normalizeAmazonUrls(text, { max: 4 }).length > 0;
 }
 
 function isJumiaShipCommand(text) {
@@ -1957,7 +2045,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط أمازون (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🎨 إضافة ألوان: اضغط «إضافة ألوان لمنتج موجود»، أرسل المرجع ثم صور الألوان.\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: اضغط الزر ثم أرسل المرجع ورابط Amazon، أو استخدم «المرجع 112».',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط Amazon واحد أو حتى 4 روابط (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🎨 إضافة ألوان: اضغط «إضافة ألوان لمنتج موجود»، أرسل المرجع ثم صور الألوان.\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: الرابط الأول للمتجر، وكل رابط ينشئ منشور Jumia مرقّماً مستقلاً.',
         MAIN_KEYBOARD
       );
       return;
@@ -2016,12 +2104,13 @@ async function handleUpdate(update) {
       if (!validAmazonProductUrl(text)) {
         await sendMessage(
           chatId,
-          '❌ الرابط غير صالح. أرسل رابط منتج من Amazon يبدأ بـ https://www.amazon...'
+          '❌ لم أجد رابط Amazon صالحاً. أرسل من رابط واحد إلى 4 روابط، كل رابط في سطر مستقل.'
         );
         return;
       }
 
-      const amazonUrl = normalizeAmazonUrl(text);
+      const amazonUrls = normalizeAmazonUrls(text, { max: 4 });
+      const amazonUrl = amazonUrls[0];
       const record = await findProductBySku(amazonState.ref);
       if (!record) {
         delete userState[chatId];
@@ -2038,6 +2127,7 @@ async function handleUpdate(update) {
       delete userState[chatId];
       await scheduleReenrichByRef(chatId, { ...record, Amazon_URL: amazonUrl }, amazonState.ref, {
         amazonUrl,
+        amazonUrls,
       });
       return;
     }
@@ -2058,7 +2148,7 @@ async function handleUpdate(update) {
       };
       await sendMessage(
         chatId,
-        `✅ تم العثور على المنتج (${record.SKU || amazonRef}).\n\n🔗 أرسل الآن رابط المنتج المطابق من Amazon.\nبعدها سأستخرج بياناته وصوره وأعيد إنشاء الوصف والصورة الاحترافية.`
+        `✅ تم العثور على المنتج (${record.SKU || amazonRef}).\n\n🔗 أرسل من رابط واحد إلى 4 روابط Amazon لنفس المنتج.\nضع كل رابط في سطر مستقل. الرابط الأول سيُستخدم للمتجر، وسيُنشأ في Jumia منشور مستقل لكل رابط بمرجع مرقّم.`
       );
       return;
     }
@@ -2100,7 +2190,7 @@ async function handleUpdate(update) {
       userState[chatId] = 'AWAITING_REF_AMAZON_REENRICH';
       await sendMessage(
         chatId,
-        '🛒 إعادة بناء منتج من Amazon\n\nأرسل الآن مرجع المنتج فقط (REF أو SKU).\nمثال: KP-2205\n\nبعد العثور عليه سأطلب منك رابط Amazon.'
+        '🛒 إعادة بناء منتج من Amazon\n\nأرسل الآن مرجع المنتج فقط (REF أو SKU).\nمثال: KP-2205\n\nبعد العثور عليه يمكنك إرسال من رابط واحد إلى 4 روابط Amazon لنفس المنتج. الرابط الأول للمتجر، وكل رابط ينشئ منشور Jumia مستقلاً.'
       );
       return;
     }
@@ -2286,7 +2376,7 @@ async function handleUpdate(update) {
           };
           await sendMessage(
             chatId,
-            `✅ تم العثور على المنتج (${record.SKU || sku}).\n\n🔗 أرسل الآن رابط المنتج المطابق من Amazon.\nبعدها سأستخرج بياناته وصوره وأعرض Gemini وQwen وإزالة الخلفية والصورة الأصلية للاختيار.`
+            `✅ تم العثور على المنتج (${record.SKU || sku}).\n\n🔗 أرسل من رابط واحد إلى 4 روابط Amazon لنفس المنتج، كل رابط في سطر.\nالرابط الأول سيُستخدم للمتجر، وسيُنشأ منشور Jumia مرقّم لكل رابط.\nبعد الكشط سأرسل الصور لتختار الرئيسية وتقرر هل تريد توليد صورة بالذكاء.`
           );
         } else if (state === 'AWAITING_REF_REENRICH') {
           await scheduleReenrichByRef(chatId, record, sku);
@@ -2472,6 +2562,76 @@ async function handleUpdate(update) {
         return;
       }
 
+      if (action === 'ai') {
+        const choice = parts[3];
+        if (!pending.enrichment.amazonAiChoiceRequired || !['g', 'n'].includes(choice)) {
+          await answerCallback(cb.id, 'اختيار غير صالح');
+          return;
+        }
+        if (choice === 'n') {
+          pending.enrichment.amazonAiChoice = 'no';
+          await answerCallback(cb.id, 'سيتم استخدام صور Amazon فقط');
+          await editMessage(
+            chatId,
+            msgId,
+            `🚫 لن يتم إنشاء صورة بالذكاء. اختر الصورة الأساسية ⭐ ثم انشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
+            galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+          );
+          return;
+        }
+        if (pending.enrichment.amazonAiChoice === 'generating') {
+          await answerCallback(cb.id, 'التوليد جارٍ بالفعل');
+          return;
+        }
+        pending.enrichment.amazonAiChoice = 'generating';
+        await answerCallback(cb.id, 'بدأ إنشاء الصورة');
+        await editMessage(
+          chatId,
+          msgId,
+          `⏳ جاري إنشاء صورة أساسية من صور Amazon...\n\n${galleryApprovalSummary(pending.candidates)}`,
+        );
+        enqueueAiPolish(async () => {
+          try {
+            const generated = await generateOptionalAmazonHero({
+              sourceBuffers: pending.enrichment.amazonSourceBuffers,
+              title: pending.enrichment.copy?.french_title || pending.name,
+              price: pending.price,
+              oldPrice: pending.oldPrice,
+              sellerSku: pending.sellerSku,
+              uploadToNocoDB,
+            });
+            pending.candidates.forEach((candidate) => {
+              if (candidate.kind !== 'jumia-color') candidate.isPrimary = false;
+            });
+            pending.candidates.unshift(generated);
+            pending.enrichment.galleryCandidates = pending.candidates;
+            pending.enrichment.amazonAiChoice = 'yes';
+            await sendPhotoBuffer(
+              chatId,
+              generated.buffer,
+              `⭐ صورة أساسية مولّدة بالذكاء\n#${pending.rowId} ${pending.sellerSku}`,
+            );
+            generated.buffer = null;
+            await editMessage(
+              chatId,
+              msgId,
+              `✅ تم إنشاء الصورة. يمكنك تغيير الصورة الأساسية ⭐ أو تعطيل أي صورة ثم النشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
+              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+            );
+          } catch (error) {
+            pending.enrichment.amazonAiChoice = null;
+            await sendMessage(chatId, `❌ فشل إنشاء الصورة بالذكاء: ${error.message}`);
+            await editMessage(
+              chatId,
+              msgId,
+              `⚠️ فشل التوليد. يمكنك إعادة المحاولة أو اختيار عدم التوليد.\n\n${galleryApprovalSummary(pending.candidates)}`,
+              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+            );
+          }
+        });
+        return;
+      }
+
       if (action === 'cancel') {
         pendingDestinations.delete(token);
         await answerCallback(cb.id, 'تم الإلغاء');
@@ -2556,6 +2716,18 @@ async function handleUpdate(update) {
       }
 
       if (action === 'go') {
+        if (
+          pending.enrichment.amazonAiChoiceRequired
+          && !['yes', 'no'].includes(pending.enrichment.amazonAiChoice)
+        ) {
+          await answerCallback(
+            cb.id,
+            pending.enrichment.amazonAiChoice === 'generating'
+              ? 'انتظر اكتمال توليد الصورة'
+              : 'اختر أولاً: إنشاء صورة بالذكاء أم لا',
+          );
+          return;
+        }
         const selected = pending.candidates.filter((c) => c.selected);
         if (!selected.length) {
           await answerCallback(cb.id, 'اختر صورة واحدة على الأقل');
@@ -2578,19 +2750,47 @@ async function handleUpdate(update) {
       }
 
       const index = Number(action);
-      if (!Number.isInteger(index) || index < 0 || index >= pending.candidates.length || parts[3] !== 't') {
+      if (!Number.isInteger(index) || index < 0 || index >= pending.candidates.length) {
+        await answerCallback(cb.id, 'أمر غير صالح');
+        return;
+      }
+      if (parts[3] === 'p') {
+        const primary = pending.candidates[index];
+        if (primary.kind === 'jumia-color') {
+          await answerCallback(cb.id, 'صورة اللون مخصصة لـ Jumia');
+          return;
+        }
+        pending.candidates.forEach((candidate) => {
+          if (candidate.kind !== 'jumia-color') candidate.isPrimary = false;
+        });
+        primary.selected = true;
+        primary.isPrimary = true;
+        await answerCallback(cb.id, `الصورة ${index + 1} أصبحت الرئيسية`);
+        await editMessage(
+          chatId,
+          msgId,
+          `⭐ تم اختيار الصورة الأساسية.\n\n${galleryApprovalSummary(pending.candidates)}`,
+          galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+        );
+        return;
+      }
+      if (parts[3] !== 't') {
         await answerCallback(cb.id, 'أمر غير صالح');
         return;
       }
       pending.candidates[index].selected = !pending.candidates[index].selected;
       const c = pending.candidates[index];
+      if (!c.selected) c.isPrimary = false;
+      if (c.selected && !pending.candidates.some((candidate) => candidate.selected && candidate.isPrimary)) {
+        c.isPrimary = c.kind !== 'jumia-color';
+      }
       await answerCallback(cb.id, `${c.selected ? 'تم التفعيل' : 'تم الإلغاء'}: ${c.label}`);
       try {
         await axios.post(`${TG_API}/editMessageText`, {
           chat_id: chatId,
           message_id: msgId,
           text: `⬇️ فعّل/عطّل كل صورة ثم انشر:\n\n${galleryApprovalSummary(pending.candidates)}`,
-          reply_markup: galleryApprovalKeyboard(token, pending.candidates),
+          reply_markup: galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
         }, { timeout: 30000 });
       } catch (e) {
         console.warn('editMessageText gal failed:', e.message);

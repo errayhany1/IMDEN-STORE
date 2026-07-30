@@ -63,6 +63,17 @@ Données Amazon (source produit):
 - Description: ${String(amazonMeta.description || '').slice(0, 1200)}
 `
     : '';
+  const amazonRewriteRules = amazonMeta
+    ? `
+Règles impératives de réécriture Amazon:
+- Amazon est une source de faits produit uniquement. Réécris tout depuis zéro; ne copie jamais ses phrases commerciales.
+- Supprime toute mention de pays/ville/marché étranger, vendeur, boutique, Amazon, Prime ou disponibilité.
+- N'écris aucun prix, devise ou symbole monétaire (USD, dollar, EUR, euro, GBP, etc.). Le prix vendeur MAD est affiché séparément par le site.
+- Supprime livraison, expédition, délais, frais d'importation, retours, remboursement, promotion et garantie non fournie explicitement par le vendeur.
+- Ne traduis pas ces éléments interdits: omets-les. Conserve seulement les caractéristiques, usages, compatibilités et contenu du produit.
+- Le résultat final doit sembler rédigé directement pour Errayhany au Maroc, jamais extrait d'une fiche Amazon étrangère.
+`
+    : '';
 
   const prompt = `Tu es un expert e-commerce grossiste au Maroc (Errayhany / Jumia / WhatsApp).
 Analyse ${amazonMeta ? 'les données Amazon + ' : ''}toutes les photos produit et rédige le contenu d'une PAGE D'ATTERRISSAGE de conversion (AR + FR).
@@ -72,6 +83,7 @@ Données vendeur:
 - Prix: ${price} MAD
 - Référence: ${ref}
 ${amazonBlock}
+${amazonRewriteRules}
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
 {
   "french_title": "titre FR SEO max 120 chars (PAS de chiffres)",

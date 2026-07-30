@@ -82,6 +82,17 @@ Données Amazon (source produit):
 - Description: ${String(amazonMeta.description || '').slice(0, 1200)}
 `
     : '';
+  const amazonRewriteRules = amazonMeta
+    ? `
+Règles impératives de réécriture Amazon:
+- Utilise Amazon uniquement pour les faits techniques du produit. Réécris le contenu entièrement, sans copier ses formulations commerciales.
+- Retire pays, villes, marchés étrangers, vendeur, boutique, Amazon, Prime et disponibilité.
+- N'inclus aucun prix, devise ou symbole monétaire (USD, dollar, EUR, euro, GBP, etc.); le prix MAD est géré séparément.
+- Retire livraison, expédition, délais, importation, retours, remboursement, promotions et garanties non confirmées par le vendeur.
+- N'essaie pas de traduire ces mentions: omets-les. Garde uniquement caractéristiques, usages, compatibilités et contenu du produit.
+- Le texte final doit être naturel pour Errayhany au Maroc et ne doit jamais sembler extrait d'une marketplace étrangère.
+`
+    : '';
   const prompt = `Tu es un expert e-commerce Maroc (Jumia / vente en gros électronique).
 Analyse ${amazonMeta ? 'les données Amazon + ' : ''}toutes les photos du produit et génère du contenu bilingue FR/AR.
 
@@ -90,6 +101,7 @@ Produit donné par le vendeur:
 - Prix: ${price} MAD
 - Référence: ${ref}
 ${amazonBlock}
+${amazonRewriteRules}
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
 {
   "french_title": "titre FR SEO max 120 chars",
