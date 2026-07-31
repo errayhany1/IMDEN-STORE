@@ -247,20 +247,32 @@ async function sendPhotoBuffer(chatId, buffer, caption, replyMarkup = null) {
 }
 
 async function editMessage(chatId, messageId, text, replyMarkup = null) {
-  await axios.post(`${TG_API}/editMessageText`, {
-    chat_id: chatId,
-    message_id: messageId,
-    text,
-    reply_markup: replyMarkup || { inline_keyboard: [] },
-  }, { timeout: 30000 });
+  try {
+    await axios.post(`${TG_API}/editMessageText`, {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      reply_markup: replyMarkup || { inline_keyboard: [] },
+    }, { timeout: 30000 });
+  } catch (e) {
+    const description = e.response?.data?.description || e.message;
+    // Telegram rejects no-op edits; treat them as success so button clicks stay snappy.
+    if (/message is not modified/i.test(String(description))) return;
+    console.warn('editMessageText failed:', description);
+    throw Object.assign(new Error(description), { cause: e });
+  }
 }
 
-async function answerCallback(callbackQueryId, text) {
-  await axios.post(`${TG_API}/answerCallbackQuery`, {
-    callback_query_id: callbackQueryId,
-    text,
-    show_alert: false,
-  }, { timeout: 15000 });
+async function answerCallback(callbackQueryId, text, { showAlert = false } = {}) {
+  try {
+    await axios.post(`${TG_API}/answerCallbackQuery`, {
+      callback_query_id: callbackQueryId,
+      text: String(text || '').slice(0, 200),
+      show_alert: Boolean(showAlert),
+    }, { timeout: 15000 });
+  } catch (e) {
+    console.warn('answerCallbackQuery failed:', e.response?.data?.description || e.message);
+  }
 }
 
 /** Menu button next to the message field (like Fader bots "OPEN"). */
@@ -767,7 +779,15 @@ async function processExistingProductColorPhotos(chatId, files, colorContext) {
   );
 }
 
-function galleryApprovalKeyboard(token, candidates, enrichment = {}) {
+function releaseAmazonSourceBuffers(pending) {
+  if (!pending?.enrichment) return;
+  pending.enrichment.amazonSourceBuffers = [];
+  for (const candidate of pending.candidates || []) {
+    if (candidate?.kind === 'amazon' || candidate?.kind === 'ai') {
+      candidate.buffer = null;
+    }
+  }
+}
   const rows = candidates.map((c, i) => {
     const row = [{
       text: `${c.selected ? '✅' : '⬜'} ${i + 1}. ${c.label}`,
@@ -843,8 +863,11 @@ async function requestGalleryApproval({
     } catch (e) {
       console.warn('send gallery candidate failed:', e.message);
     }
-    // Free RAM after Telegram has the photo; selection only needs file refs.
-    c.buffer = null;
+    // Keep Amazon bytes until the seller answers the optional AI prompt —
+    // those buffers are shared with enrichment.amazonSourceBuffers.
+    if (!(enrichment.amazonAiChoiceRequired && (c.kind === 'amazon' || c.kind === 'ai'))) {
+      c.buffer = null;
+    }
   }
 
   await sendMessage(
@@ -2612,76 +2635,6 @@ async function handleUpdate(update) {
         return;
       }
 
-      if (action === 'ai') {
-        const choice = parts[3];
-        if (!pending.enrichment.amazonAiChoiceRequired || !['g', 'n'].includes(choice)) {
-          await answerCallback(cb.id, 'اختيار غير صالح');
-          return;
-        }
-        if (choice === 'n') {
-          pending.enrichment.amazonAiChoice = 'no';
-          await answerCallback(cb.id, 'سيتم استخدام صور Amazon فقط');
-          await editMessage(
-            chatId,
-            msgId,
-            `🚫 لن يتم إنشاء صورة بالذكاء. اختر الصورة الأساسية ⭐ ثم انشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
-            galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-          );
-          return;
-        }
-        if (pending.enrichment.amazonAiChoice === 'generating') {
-          await answerCallback(cb.id, 'التوليد جارٍ بالفعل');
-          return;
-        }
-        pending.enrichment.amazonAiChoice = 'generating';
-        await answerCallback(cb.id, 'بدأ إنشاء الصورة');
-        await editMessage(
-          chatId,
-          msgId,
-          `⏳ جاري إنشاء صورة أساسية من صور Amazon...\n\n${galleryApprovalSummary(pending.candidates)}`,
-        );
-        enqueueAiPolish(async () => {
-          try {
-            const generated = await generateOptionalAmazonHero({
-              sourceBuffers: pending.enrichment.amazonSourceBuffers,
-              title: pending.enrichment.copy?.french_title || pending.name,
-              price: pending.price,
-              oldPrice: pending.oldPrice,
-              sellerSku: pending.sellerSku,
-              uploadToNocoDB,
-            });
-            pending.candidates.forEach((candidate) => {
-              if (candidate.kind !== 'jumia-color') candidate.isPrimary = false;
-            });
-            pending.candidates.unshift(generated);
-            pending.enrichment.galleryCandidates = pending.candidates;
-            pending.enrichment.amazonAiChoice = 'yes';
-            await sendPhotoBuffer(
-              chatId,
-              generated.buffer,
-              `⭐ صورة أساسية مولّدة بالذكاء\n#${pending.rowId} ${pending.sellerSku}`,
-            );
-            generated.buffer = null;
-            await editMessage(
-              chatId,
-              msgId,
-              `✅ تم إنشاء الصورة. يمكنك تغيير الصورة الأساسية ⭐ أو تعطيل أي صورة ثم النشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
-              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-            );
-          } catch (error) {
-            pending.enrichment.amazonAiChoice = null;
-            await sendMessage(chatId, `❌ فشل إنشاء الصورة بالذكاء: ${error.message}`);
-            await editMessage(
-              chatId,
-              msgId,
-              `⚠️ فشل التوليد. يمكنك إعادة المحاولة أو اختيار عدم التوليد.\n\n${galleryApprovalSummary(pending.candidates)}`,
-              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-            );
-          }
-        });
-        return;
-      }
-
       if (action === 'cancel') {
         pendingDestinations.delete(token);
         await answerCallback(cb.id, 'تم الإلغاء');
@@ -2757,6 +2710,92 @@ async function handleUpdate(update) {
         return;
       }
 
+      // Amazon rebuilds force an explicit AI yes/no before publishing.
+      if (action === 'ai') {
+        const choice = parts[3];
+        if (!pending.enrichment.amazonAiChoiceRequired || !['g', 'n'].includes(choice)) {
+          await answerCallback(cb.id, 'اختيار غير صالح');
+          return;
+        }
+        if (choice === 'n') {
+          pending.enrichment.amazonAiChoice = 'no';
+          releaseAmazonSourceBuffers(pending);
+          await answerCallback(cb.id, 'سيتم استخدام صور Amazon فقط');
+          try {
+            await editMessage(
+              chatId,
+              msgId,
+              `🚫 لن يتم إنشاء صورة بالذكاء. اختر الصورة الأساسية ⭐ ثم انشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
+              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+            );
+          } catch (e) {
+            await sendMessage(chatId, '🚫 تم اختيار صور Amazon فقط. اضغط اعتماد ونشر للمتابعة.');
+          }
+          return;
+        }
+        if (pending.enrichment.amazonAiChoice === 'generating') {
+          await answerCallback(cb.id, 'التوليد جارٍ بالفعل');
+          return;
+        }
+        pending.enrichment.amazonAiChoice = 'generating';
+        await answerCallback(cb.id, 'بدأ إنشاء الصورة');
+        try {
+          await editMessage(
+            chatId,
+            msgId,
+            `⏳ جاري إنشاء صورة أساسية من صور Amazon...\n\n${galleryApprovalSummary(pending.candidates)}`,
+            galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+          );
+        } catch (_) {
+          // Keep going — generation still runs even if the keyboard refresh fails.
+        }
+        enqueueAiPolish(async () => {
+          try {
+            const generated = await generateOptionalAmazonHero({
+              sourceBuffers: pending.enrichment.amazonSourceBuffers,
+              title: pending.enrichment.copy?.french_title || pending.name,
+              price: pending.price,
+              oldPrice: pending.oldPrice,
+              sellerSku: pending.sellerSku,
+              uploadToNocoDB,
+            });
+            pending.candidates.forEach((candidate) => {
+              if (candidate.kind !== 'jumia-color') candidate.isPrimary = false;
+            });
+            pending.candidates.unshift(generated);
+            pending.enrichment.galleryCandidates = pending.candidates;
+            pending.enrichment.amazonAiChoice = 'yes';
+            await sendPhotoBuffer(
+              chatId,
+              generated.buffer,
+              `⭐ صورة أساسية مولّدة بالذكاء\n#${pending.rowId} ${pending.sellerSku}`,
+            );
+            generated.buffer = null;
+            releaseAmazonSourceBuffers(pending);
+            await editMessage(
+              chatId,
+              msgId,
+              `✅ تم إنشاء الصورة. يمكنك تغيير الصورة الأساسية ⭐ أو تعطيل أي صورة ثم النشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
+              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+            );
+          } catch (error) {
+            pending.enrichment.amazonAiChoice = null;
+            await sendMessage(chatId, `❌ فشل إنشاء الصورة بالذكاء: ${error.message}`);
+            try {
+              await editMessage(
+                chatId,
+                msgId,
+                `⚠️ فشل التوليد. يمكنك إعادة المحاولة أو اختيار عدم التوليد.\n\n${galleryApprovalSummary(pending.candidates)}`,
+                galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+              );
+            } catch (_) {
+              // Fallback message above already notified the user.
+            }
+          }
+        });
+        return;
+      }
+
       if (action === 'cancel') {
         pendingGalleryApprovals.delete(token);
         await answerCallback(cb.id, 'تم الإبقاء على النص فقط');
@@ -2774,22 +2813,27 @@ async function handleUpdate(update) {
             cb.id,
             pending.enrichment.amazonAiChoice === 'generating'
               ? 'انتظر اكتمال توليد الصورة'
-              : 'اختر أولاً: إنشاء صورة بالذكاء أم لا',
+              : 'اختر أولاً أحد الزرين: إنشاء صورة بالذكاء أو استخدام صور Amazon',
+            { showAlert: true },
           );
           return;
         }
         const selected = pending.candidates.filter((c) => c.selected);
         if (!selected.length) {
-          await answerCallback(cb.id, 'اختر صورة واحدة على الأقل');
+          await answerCallback(cb.id, 'اختر صورة واحدة على الأقل', { showAlert: true });
           return;
         }
         pendingGalleryApprovals.delete(token);
         await answerCallback(cb.id, `نشر ${selected.length} صور`);
-        await editMessage(
-          chatId,
-          msgId,
-          `✅ جاري اعتماد ${selected.length} صورة والنشر في الوجهات التي اخترتها...\n${galleryApprovalSummary(pending.candidates)}`
-        );
+        try {
+          await editMessage(
+            chatId,
+            msgId,
+            `✅ جاري اعتماد ${selected.length} صورة والنشر في الوجهات التي اخترتها...\n${galleryApprovalSummary(pending.candidates)}`,
+          );
+        } catch (_) {
+          // Publishing continues even if the status edit fails.
+        }
         try {
           await finalizeGalleryApproval(pending, { publishImages: true });
         } catch (e) {
@@ -2816,12 +2860,16 @@ async function handleUpdate(update) {
         primary.selected = true;
         primary.isPrimary = true;
         await answerCallback(cb.id, `الصورة ${index + 1} أصبحت الرئيسية`);
-        await editMessage(
-          chatId,
-          msgId,
-          `⭐ تم اختيار الصورة الأساسية.\n\n${galleryApprovalSummary(pending.candidates)}`,
-          galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-        );
+        try {
+          await editMessage(
+            chatId,
+            msgId,
+            `⭐ تم اختيار الصورة الأساسية.\n\n${galleryApprovalSummary(pending.candidates)}`,
+            galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+          );
+        } catch (e) {
+          await sendMessage(chatId, `⭐ الصورة ${index + 1} أصبحت الرئيسية. أكمل الاختيار ثم انشر.`);
+        }
         return;
       }
       if (parts[3] !== 't') {
@@ -2836,12 +2884,12 @@ async function handleUpdate(update) {
       }
       await answerCallback(cb.id, `${c.selected ? 'تم التفعيل' : 'تم الإلغاء'}: ${c.label}`);
       try {
-        await axios.post(`${TG_API}/editMessageText`, {
-          chat_id: chatId,
-          message_id: msgId,
-          text: `⬇️ فعّل/عطّل كل صورة ثم انشر:\n\n${galleryApprovalSummary(pending.candidates)}`,
-          reply_markup: galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-        }, { timeout: 30000 });
+        await editMessage(
+          chatId,
+          msgId,
+          `⬇️ فعّل/عطّل كل صورة ثم انشر:\n\n${galleryApprovalSummary(pending.candidates)}`,
+          galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
+        );
       } catch (e) {
         console.warn('editMessageText gal failed:', e.message);
       }
