@@ -788,6 +788,8 @@ function releaseAmazonSourceBuffers(pending) {
     }
   }
 }
+
+function galleryApprovalKeyboard(token, candidates, enrichment = {}) {
   const rows = candidates.map((c, i) => {
     const row = [{
       text: `${c.selected ? '✅' : '⬜'} ${i + 1}. ${c.label}`,
