@@ -521,16 +521,10 @@ export async function enrichProduct({
         french_title: amazonMeta.title || name,
         arabic_title: name,
         woo_title: amazonMeta.title || name,
-        description_french: appendAmazonDescriptionImages(
-          amazonMeta.description || '',
-          amazonDescriptionImageUrls,
-          'fr',
-        ),
-        description_arabic: appendAmazonDescriptionImages(
-          '',
-          amazonDescriptionImageUrls,
-          'ar',
-        ),
+        // Description images from Amazon A+ content are intentionally excluded;
+        // they would appear in the wrong section of the storefront.
+        description_french: amazonMeta.description || '',
+        description_arabic: '',
       }
       : null;
     const productForSheet = {
@@ -822,18 +816,8 @@ export async function enrichProduct({
       });
       copy.description_arabic = injectSpecsIntoDescription(copy.description_arabic, arBlock);
       copy.description_french = injectSpecsIntoDescription(copy.description_french, frBlock);
-      if (amazonDescriptionImageUrls.length) {
-        copy.description_arabic = appendAmazonDescriptionImages(
-          copy.description_arabic,
-          amazonDescriptionImageUrls,
-          'ar',
-        );
-        copy.description_french = appendAmazonDescriptionImages(
-          copy.description_french,
-          amazonDescriptionImageUrls,
-          'fr',
-        );
-      }
+      // Amazon A+ description images are intentionally NOT appended to the HTML description.
+      // They appeared in the wrong place (description section instead of the gallery).
       hasSpecsImage = true;
       console.log('HTML specs injected into description (no gallery specs image)');
     } catch (e) {
