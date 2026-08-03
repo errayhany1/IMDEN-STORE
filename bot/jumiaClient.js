@@ -8,7 +8,7 @@ import axios from 'axios';
 import { getBotSetting } from './runtimeSettings.js';
 import { buildJumiaOffer } from './jumiaPricing.js';
 import { ensurePublicImageUrls } from './jumiaPublicImages.js';
-import { toTifawtSku } from './tifawtSku.js';
+import { resolveTifawtOrderSku } from './tifawtSku.js';
 
 const JUMIA_API_BASE = (
   process.env.JUMIA_API_BASE
@@ -289,7 +289,10 @@ export function mapJumiaOrderToTifawt(order, items = []) {
   );
 
   const lineItems = mapItems(items.length ? items : (order?.items || order?.orderItems || []))
-    .map((item) => ({ ...item, sku: toTifawtSku(item.sku) }))
+    .map((item) => ({
+      ...item,
+      sku: resolveTifawtOrderSku(item.sku, getBotSetting('tifawtSkuAliases') || ''),
+    }))
     .filter((item) => item.sku);
 
   return {

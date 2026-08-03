@@ -130,6 +130,11 @@ export const BOT_SETTINGS_SCHEMA = {
     min: 2, max: 40, step: 1,
     restartRequired: true,
   },
+  tifawtSkuAliases: {
+    group: 'tifawt', type: 'textarea', label: 'مطابقة مراجع الموقع → تيفاوت',
+    description: 'سطر لكل منتج: مرجع_الموقع=مرجع_تيفاوت_الحالي. لا تغيّر SKU المخزون في تيفاوت؛ فقط اربط مرجع المتجر به. مثال:\nMP3 car M53=CODE-IN-TIFAWT\nStarry Sky=CHARGEUR-4IN1',
+    default: textEnv('TIFAWT_SKU_ALIASES', ''),
+  },
   jumiaDefaultBrand: {
     group: 'jumia', type: 'text', label: 'علامة Jumia الافتراضية',
     description: 'معرف واسم العلامة عندما لا تتوفر علامة للمنتج.',
@@ -188,6 +193,9 @@ function sanitizeValue(key, value) {
     const number = Number(value);
     if (!Number.isFinite(number)) return definition.default;
     return Math.min(definition.max ?? number, Math.max(definition.min ?? number, number));
+  }
+  if (definition.type === 'textarea') {
+    return String(value ?? '').replace(/\r\n/g, '\n').trim().slice(0, 12000);
   }
   return String(value ?? '').trim().slice(0, 180);
 }

@@ -58,7 +58,7 @@ import {
 import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
-import { toTifawtSku } from './tifawtSku.js';
+import { toTifawtSku, resolveTifawtOrderSku } from './tifawtSku.js';
 import { parseColorList } from './colorVariants.js';
 import {
   upsertProductVariant,
@@ -3029,8 +3029,12 @@ function cleanupOrderSyncCache() {
 
 function normalizeOrderItems(items) {
   if (!Array.isArray(items) || !items.length) return [];
+  const aliases = getBotSetting('tifawtSkuAliases') || '';
   return items.map((item) => ({
-    sku: toTifawtSku(item?.ref || item?.sku || item?.SKU || item?.id),
+    sku: resolveTifawtOrderSku(
+      item?.ref || item?.sku || item?.SKU || item?.id,
+      aliases,
+    ),
     quantity: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1) || 1),
     unitPrice: Math.max(0, Number(item?.price ?? item?.unitPrice ?? 0) || 0),
   })).filter((item) => item.sku);

@@ -39,6 +39,13 @@ const GROUPS = [
     color: 'from-emerald-400 to-teal-500',
   },
   {
+    id: 'tifawt',
+    label: 'تيفاوت',
+    subtitle: 'مطابقة المراجع والمخزون',
+    icon: Database,
+    color: 'from-lime-400 to-emerald-500',
+  },
+  {
     id: 'ai',
     label: 'الذكاء الاصطناعي',
     subtitle: 'النماذج والمهل',
@@ -99,6 +106,22 @@ function Toggle({ checked, onChange }) {
 function SettingControl({ settingKey, definition, value, onChange }) {
   if (definition.type === 'boolean') {
     return <Toggle checked={Boolean(value)} onChange={(next) => onChange(settingKey, next)} />;
+  }
+
+  if (definition.type === 'textarea') {
+    return (
+      <div className="w-full">
+        <textarea
+          value={value ?? ''}
+          rows={8}
+          spellCheck={false}
+          placeholder={'MP3 car M53=CODE-IN-TIFAWT\nStarry Sky=CHARGEUR-4IN1'}
+          onChange={(event) => onChange(settingKey, event.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-[#07111f] px-3.5 py-2.5 font-mono text-left text-xs leading-5 text-slate-100 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"
+          dir="ltr"
+        />
+      </div>
+    );
   }
 
   return (
@@ -332,7 +355,11 @@ const BotSettingsTab = () => {
             {currentSettings.map(([key, definition]) => (
               <article
                 key={key}
-                className="flex flex-col gap-4 rounded-2xl border border-white/[.08] bg-white/[.035] p-4 transition hover:border-white/[.14] sm:flex-row sm:items-center sm:justify-between"
+                className={`flex flex-col gap-4 rounded-2xl border border-white/[.08] bg-white/[.035] p-4 transition hover:border-white/[.14] ${
+                  definition.type === 'textarea'
+                    ? ''
+                    : 'sm:flex-row sm:items-center sm:justify-between'
+                }`}
               >
                 <div className="max-w-xl">
                   <div className="flex flex-wrap items-center gap-2">
