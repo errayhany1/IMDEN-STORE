@@ -8,13 +8,19 @@
 `Order Metadata`. هذا المعرف يمنع تكرار إنشاء العميل للطلب نفسه إذا وصل طلب
 المتصفح وWebhook NocoDB في الوقت ذاته.
 
-## إعدادات النشر المطلوبة
+## مسار الطلبات متعددة المنتجات
 
-في خدمة البوت في EasyPanel أضف:
+واجهة Lead Source العامة تنشئ **lead منفصلاً لكل منتج** في المصفوفة.
+لذلك المزامنة تستخدم `POST /api/v1/leads` بمصادقة البريد/كلمة المرور وتضع كل
+أسطر الطلب في lead واحد (`externalOrderId` = معرف المتجر).
+
+يتطلب على خدمة المتجر (`imden`):
 
 ```env
-TIFAWT_LEAD_URL=https://errayhany.tifawt.ma/api/v1/lead-sources/api/...
-STOREFRONT_ORIGINS=https://errayhany.com,https://www.errayhany.com
+TIFAWT_EMAIL=...
+TIFAWT_PASSWORD=...
+TIFAWT_API_BASE=https://errayhany.tifawt.ma/api/v1
+TIFAWT_BUSINESS_ID=1
 ```
 
 لا تضف `VITE_TIFAWT_LEAD_URL` إلى إعدادات الواجهة؛ أي متغير يبدأ بـ `VITE_`

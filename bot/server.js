@@ -68,6 +68,10 @@ import {
   deactivateRemovedProductVariants,
 } from './productVariants.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
+import {
+  createBundledTifawtLead,
+  isBundledTifawtLeadConfigured,
+} from './tifawtLeadCreate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Local: prefer bot/.env, then repo root .env. EasyPanel injects env directly.
@@ -3074,6 +3078,30 @@ async function postOrderToTifawt({ orderId, name, phone, address, city, items })
   if (inFlightStoreOrders.has(orderId)) return inFlightStoreOrders.get(orderId);
 
   const task = (async () => {
+    if (isBundledTifawtLeadConfigured()) {
+      const result = await createBundledTifawtLead({
+        orderId,
+        name,
+        phone,
+        address,
+        city,
+        items,
+      });
+      syncedStoreOrders.set(orderId, { completedAt: Date.now() });
+      console.log(
+        `✅ Tifawt bundled lead ${orderId} leadId=${result.leadId} products=${result.productCount}${result.duplicate ? ' (duplicate)' : ''}`,
+      );
+      return result;
+    }
+
+    if (tifawtProducts.length > 1) {
+      const error = new Error(
+        'tifawt_multi_product_requires_api: set TIFAWT_EMAIL and TIFAWT_PASSWORD so the order stays one lead',
+      );
+      error.statusCode = 503;
+      throw error;
+    }
+
     const tifawtPayload = {
       customerName: String(name).trim(),
       customerPhone: String(phone).trim(),

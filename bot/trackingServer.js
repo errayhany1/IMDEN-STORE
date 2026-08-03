@@ -25,6 +25,10 @@ import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
+import {
+  createBundledTifawtLead,
+  isBundledTifawtLeadConfigured,
+} from './tifawtLeadCreate.js';
 
 startBotSettingsSync();
 
@@ -133,11 +137,6 @@ function orderInputFromRequest(req) {
 
 async function syncOrderToTifawt({ orderId, name, phone, address, city, items }) {
   const products = normalizeItems(items);
-  if (!TIFAWT_LEAD_URL) {
-    const error = new Error('tifawt_not_configured');
-    error.statusCode = 503;
-    throw error;
-  }
   if (!orderId || !String(name || '').trim() || !String(phone || '').trim() || !products.length) {
     const error = new Error('invalid_order_payload');
     error.statusCode = 400;
@@ -149,6 +148,37 @@ async function syncOrderToTifawt({ orderId, name, phone, address, city, items })
   if (inFlightStoreOrders.has(orderId)) return inFlightStoreOrders.get(orderId);
 
   const task = (async () => {
+    // Authenticated /leads keeps every line on one ticket. The public Lead
+    // Source endpoint creates a separate lead per products[] entry.
+    if (isBundledTifawtLeadConfigured()) {
+      const result = await createBundledTifawtLead({
+        orderId,
+        name,
+        phone,
+        address,
+        city,
+        items,
+      });
+      syncedStoreOrders.set(orderId, { completedAt: Date.now() });
+      console.log(
+        `[orders] Tifawt bundled lead ${orderId} leadId=${result.leadId} products=${result.productCount}${result.duplicate ? ' (duplicate)' : ''}`,
+      );
+      return result;
+    }
+
+    if (!TIFAWT_LEAD_URL) {
+      const error = new Error('tifawt_not_configured');
+      error.statusCode = 503;
+      throw error;
+    }
+    if (products.length > 1) {
+      const error = new Error(
+        'tifawt_multi_product_requires_api: set TIFAWT_EMAIL and TIFAWT_PASSWORD so the order stays one lead',
+      );
+      error.statusCode = 503;
+      throw error;
+    }
+
     let lastError;
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {

@@ -7,7 +7,7 @@ import ReturnsTab from './admin/ReturnsTab';
 import TifawtOrdersTab from './admin/TifawtOrdersTab';
 import JumiaOrdersTab from './admin/JumiaOrdersTab';
 import BotSettingsTab from './admin/BotSettingsTab';
-import { syncOrderSideEffects } from '../services/tifawt';
+import { createStoreOrderId, syncOrderSideEffects } from '../services/tifawt';
 import {
     createAdminSession,
     destroyAdminSession,
@@ -401,7 +401,9 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             const salePrice = newOrderData.items.reduce((sum, item) => sum + ((item.price || item.Price || 0) * item.quantity), 0);
+            const storeOrderId = createStoreOrderId();
             const orderMetaData = newOrderData.items.map(i => ({
+                storeOrderId,
                 id: i.Id,
                 name: i.Title || i.title,
                 ref: i.SKU || i.Ref,
@@ -430,6 +432,7 @@ const AdminDashboard = () => {
             }
 
             syncOrderSideEffects({
+                orderId: storeOrderId,
                 name: newOrderData.name,
                 phone: newOrderData.phone,
                 address: newOrderData.address,
@@ -451,7 +454,9 @@ const AdminDashboard = () => {
     // Create direct sale (used by DirectSalesTab)
     const createDirectSale = async (saleData) => {
         const salePrice = saleData.total || saleData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const storeOrderId = createStoreOrderId();
         const orderMetaData = saleData.items.map(i => ({
+            storeOrderId,
             id: i.id, name: i.name, ref: i.ref, price: i.price, qty: i.qty
         }));
         const orderPayload = {
@@ -473,6 +478,7 @@ const AdminDashboard = () => {
         }
 
         syncOrderSideEffects({
+            orderId: storeOrderId,
             name: saleData.name || 'بيع مباشر',
             phone: saleData.phone || '',
             address: saleData.address || 'المحل',
