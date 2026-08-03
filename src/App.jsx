@@ -18,6 +18,7 @@ import AccountPage from './pages/AccountPage';
 import CategoriesPage from './pages/CategoriesPage';
 import ProductLandingPage from './pages/ProductLandingPage';
 import PurchaseCountPage from './pages/PurchaseCountPage';
+import MarketingLandingPage from './pages/MarketingLandingPage';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import InstallAppBanner from './components/InstallAppBanner';
 import useStore from './store/useStore';
@@ -353,6 +354,9 @@ function App() {
   if (path.startsWith('/p/')) {
       const sku = decodeURIComponent(path.slice(3));
       return <ProductLandingPage sku={sku} />;
+  }
+  if (path === '/vip') {
+      return <MarketingLandingPage />;
   }
   // /family/:id and /catalog(/family/:id) are handled by the main storefront + store state
 
