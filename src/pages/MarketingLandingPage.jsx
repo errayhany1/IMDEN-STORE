@@ -17,7 +17,16 @@ const TELEGRAM_URL = 'https://t.me/Imden_technology';
 const STORE_URL = '/catalog';
 
 const trackPixelEvent = (eventName) => {
-  if (window.fbq) window.fbq('trackCustom', eventName);
+  if (window.fbq) {
+    // Map to Standard Events for better Facebook Ads optimization
+    if (eventName.includes('WhatsApp') || eventName.includes('Telegram')) {
+      window.fbq('track', 'Contact');
+    } else if (eventName.includes('EnterStore')) {
+      window.fbq('track', 'Lead');
+    } else {
+      window.fbq('trackCustom', eventName);
+    }
+  }
   if (window.ttq) window.ttq.track(eventName);
 };
 
