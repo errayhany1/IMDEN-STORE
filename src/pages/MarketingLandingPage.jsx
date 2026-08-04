@@ -101,7 +101,7 @@ const MarketingLandingPage = () => {
             <div className="absolute bottom-[10%] left-[10%] w-[100px] h-[100px] rounded-full bg-cyan-400/40 blur-md animate-[bounce_6s_infinite_reverse]" />
             
             <div className={`absolute inset-8 border-2 border-dashed rounded-[30px] flex items-center justify-center overflow-hidden ${darkMode ? 'border-blue-500/30' : 'border-blue-300'}`}>
-               <img src="/banners/family-power.jpg" alt="Showcase" className="w-full h-full object-cover rounded-[28px]" />
+               <img src="/banners/family-devices.jpg" alt="Showcase" className="w-full h-full object-cover rounded-[28px]" />
             </div>
           </div>
         </section>
