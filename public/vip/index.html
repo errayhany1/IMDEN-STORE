@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الريحاني - إلكترونيات بالجملة | Errayhany Grossiste</title>
+  <meta name="description" content="المورد الأول للإلكترونيات وإكسسوارات الهواتف بالجملة في المغرب. أسعار تنافسية، جودة مضمونة، توصيل سريع لجميع المدن.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Facebook Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1885373908712378');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1885373908712378&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel Code -->
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --p: #2563eb; --p2: #38bdf8; --bg: #eef6ff; --txt: #0f172a; --muted: #64748b;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: radial-gradient(circle at 85% 5%, #93c5fd44, transparent 30%),
+                  radial-gradient(circle at 10% 90%, #67e8f944, transparent 25%),
+                  var(--bg);
+      color: var(--txt);
+      overflow-x: hidden;
+    }
+    /* Background Orbs */
+    .orb { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; animation: float 10s ease-in-out infinite; }
+    .orb-1 { width: 320px; height: 320px; background: #60a5fa44; top: 5%; left: 8%; }
+    .orb-2 { width: 420px; height: 420px; background: #38bdf833; right: 5%; bottom: 0; animation-delay: -5s; }
+    @keyframes float { 50% { transform: translateY(30px) translateX(20px) scale(1.08); } }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid #dbeafe;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    header img { height: 44px; object-fit: contain; }
+    .header-cta {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 14px;
+      background: var(--p); color: #fff; font-weight: 700; font-size: 14px;
+      text-decoration: none; transition: .2s;
+    }
+    .header-cta:hover { background: #1d4ed8; transform: translateY(-2px); }
+
+    /* Hero */
+    .hero {
+      position: relative; z-index: 1;
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      min-height: calc(100vh - 76px);
+      display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 60px;
+    }
+    .badge {
+      display: inline-block; background: #dbeafe; color: var(--p);
+      padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 14px;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: clamp(36px, 5vw, 62px); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
+    h1 span { background: linear-gradient(90deg, var(--p), var(--p2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-desc { font-size: 18px; line-height: 1.8; color: var(--muted); max-width: 560px; margin-bottom: 32px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 14px; }
+    .btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 16px 26px; border-radius: 16px; color: #fff;
+      font-weight: 700; font-size: 16px; text-decoration: none;
+      transition: .25s; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .btn:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+    .btn-store { background: linear-gradient(135deg, var(--p), #1d4ed8); }
+    .btn-wa { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .btn-tg { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+
+    /* Showcase */
+    .showcase { position: relative; height: 560px; display: flex; align-items: center; justify-content: center; }
+    .glass-card {
+      position: absolute; inset: 0; border-radius: 36px;
+      background: rgba(255,255,255,0.7); backdrop-filter: blur(16px);
+      border: 1px solid rgba(219,234,254,0.8);
+      box-shadow: 0 25px 70px rgba(37,99,235,0.12);
+    }
+    .showcase img {
+      position: absolute; inset: 28px; width: calc(100% - 56px); height: calc(100% - 56px);
+      object-fit: cover; border-radius: 24px;
+    }
+    .orb-mini { position: absolute; border-radius: 50%; filter: blur(8px); animation: float 6s ease-in-out infinite; }
+    .orb-mini-1 { width: 100px; height: 100px; background: #60a5fa44; top: 20px; right: 30px; }
+    .orb-mini-2 { width: 80px; height: 80px; background: #22d3ee44; left: 20px; bottom: 30px; animation-delay: -3s; }
+
+    /* Stats */
+    .stats-section { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 64px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .stat-card {
+      background: #fff; border-radius: 24px; padding: 32px 20px; text-align: center;
+      box-shadow: 0 20px 50px rgba(37,99,235,0.07);
+    }
+    .stat-num { font-size: 40px; font-weight: 900; color: var(--p); margin-bottom: 6px; }
+    .stat-label { font-size: 14px; font-weight: 600; color: var(--muted); }
+
+    /* Slider */
+    .slider-section { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 64px; }
+    .section-title { font-size: 36px; font-weight: 900; text-align: center; margin-bottom: 12px; }
+    .section-sub { text-align: center; color: var(--muted); font-size: 16px; margin-bottom: 40px; }
+    .slider { position: relative; border-radius: 28px; overflow: hidden; aspect-ratio: 16/6; box-shadow: 0 25px 60px rgba(37,99,235,0.12); }
+    .slide { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+    .slide.active { opacity: 1; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; }
+    .slider-dots { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: #cbd5e1; cursor: pointer; transition: all .3s; border: none; }
+    .dot.active { width: 28px; background: var(--p); }
+    .slider-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);
+      border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .2s; z-index: 10; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .slider:hover .slider-btn { opacity: 1; }
+    .slider-btn.prev { right: 14px; }
+    .slider-btn.next { left: 14px; }
+
+    /* Categories */
+    .cats-section { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 64px; }
+    .cat-rail { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
+    .cat-rail::-webkit-scrollbar { display: none; }
+    .cat-item { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+    .cat-img { width: 88px; height: 88px; border-radius: 22px; overflow: hidden; padding: 8px; background: #fff; box-shadow: 0 8px 24px rgba(37,99,235,0.1); border: 1px solid #e2e8f0; transition: all .3s; }
+    .cat-img:hover { transform: scale(1.08); box-shadow: 0 16px 40px rgba(37,99,235,0.18); border-color: var(--p); }
+    .cat-img img { width: 100%; height: 100%; object-fit: contain; }
+    .cat-name { font-size: 13px; font-weight: 700; color: #334155; white-space: nowrap; }
+
+    /* Features */
+    .features-section { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 64px; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .feature-card {
+      background: #fff; border-radius: 28px; padding: 36px 28px;
+      box-shadow: 0 20px 50px rgba(37,99,235,0.07);
+      transition: all .3s; position: relative; overflow: hidden;
+    }
+    .feature-card:hover { transform: translateY(-8px); box-shadow: 0 30px 70px rgba(37,99,235,0.14); }
+    .feature-icon { font-size: 40px; margin-bottom: 18px; }
+    .feature-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 12px; }
+    .feature-card p { color: var(--muted); line-height: 1.7; font-size: 15px; }
+
+    /* CTA */
+    .cta-section { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+    .cta-box {
+      border-radius: 36px; padding: 64px 48px; text-align: center;
+      background: linear-gradient(135deg, var(--p), var(--p2));
+      box-shadow: 0 30px 80px rgba(37,99,235,0.25);
+      position: relative; overflow: hidden;
+    }
+    .cta-box::before {
+      content: ''; position: absolute; inset: 0;
+      background: url('/banners/family-devices.jpg') center/cover;
+      opacity: .12; border-radius: 36px;
+    }
+    .cta-box > * { position: relative; z-index: 1; }
+    .cta-box h2 { font-size: 36px; font-weight: 900; color: #fff; margin-bottom: 16px; }
+    .cta-box p { color: rgba(255,255,255,.85); font-size: 18px; margin-bottom: 36px; max-width: 600px; margin-inline: auto; }
+    .cta-btns { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    .cta-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 16px 32px; border-radius: 18px;
+      background: #fff; color: var(--p); font-weight: 700; font-size: 16px;
+      text-decoration: none; transition: .2s;
+    }
+    .cta-btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+    .cta-btn.wa { background: #22c55e; color: #fff; }
+    .cta-btn.tg { background: #0ea5e9; color: #fff; }
+
+    /* Footer */
+    footer {
+      position: relative; z-index: 1;
+      background: linear-gradient(135deg, #1e3a8a, #0284c7);
+      color: #fff; padding: 60px 24px 32px;
+    }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+    footer img { height: 44px; object-fit: contain; margin-bottom: 16px; }
+    footer p { color: rgba(255,255,255,.75); line-height: 1.8; max-width: 360px; }
+    footer h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    footer ul { list-style: none; }
+    footer li { margin-bottom: 10px; color: rgba(255,255,255,.75); font-size: 14px; }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,.15); padding-top: 24px; text-align: center; color: rgba(255,255,255,.5); font-size: 13px; }
+
+    /* WhatsApp Float */
+    .wa-float {
+      position: fixed; left: 24px; bottom: 24px; z-index: 999;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: #22c55e; color: #fff; font-size: 28px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 30px rgba(34,197,94,0.4); text-decoration: none;
+      transition: .2s;
+    }
+    .wa-float:hover { transform: scale(1.1); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; padding: 40px 20px; min-height: auto; }
+      .showcase { height: 320px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .header-cta span { display: none; }
+    }
+    @media (max-width: 560px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      h1 { font-size: 32px; }
+      .cta-box { padding: 40px 24px; }
+      .cta-box h2 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- Header -->
+  <header>
+    <img src="/logo.png" alt="Errayhany Grossiste">
+    <a href="/catalog" class="header-cta" onclick="fbq('track','Lead')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span>تصفح المتجر</span>
+    </a>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <div class="badge">⚡ إلكترونيات بالجملة • المغرب</div>
+      <h1>المورد الأول للإلكترونيات <span>بالجملة في المغرب</span></h1>
+      <p class="hero-desc">منصة الريحاني توفر لك أحدث الإلكترونيات وإكسسوارات الهواتف بأسعار الجملة التنافسية. تشكيلة واسعة، جودة مضمونة، وتوصيل سريع إلى جميع المدن.</p>
+      <div class="btns">
+        <a href="/catalog" class="btn btn-store" onclick="fbq('track','Lead')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          دخول المتجر
+        </a>
+        <a href="https://wa.me/212664630566?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%2C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D9%85%D9%86%D8%AA%D8%AC%D8%A7%D8%AA%D9%83%D9%85%20%D8%A8%D8%A7%D9%84%D8%AC%D9%85%D9%84%D8%A9" target="_blank" class="btn btn-wa" onclick="fbq('track','Contact')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          واتساب
+        </a>
+        <a href="https://t.me/Imden_technology" target="_blank" class="btn btn-tg" onclick="fbq('track','Contact')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          تيليجرام
+        </a>
+      </div>
+    </div>
+    <div class="showcase">
+      <div class="glass-card"></div>
+      <div class="orb-mini orb-mini-1"></div>
+      <div class="orb-mini orb-mini-2"></div>
+      <img src="/banners/family-devices.jpg" alt="إلكترونيات الريحاني">
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">+500</div><div class="stat-label">منتج متوفر</div></div>
+      <div class="stat-card"><div class="stat-num">+1000</div><div class="stat-label">تاجر يثق بنا</div></div>
+      <div class="stat-card"><div class="stat-num">48h</div><div class="stat-label">توصيل سريع</div></div>
+      <div class="stat-card"><div class="stat-num">60+</div><div class="stat-label">مدينة نغطيها</div></div>
+    </div>
+  </section>
+
+  <!-- Slider -->
+  <section class="slider-section">
+    <h2 class="section-title">عروضنا <span style="color:var(--p)">الحصرية</span></h2>
+    <p class="section-sub">تشكيلة واسعة من المنتجات التقنية بأفضل أسعار الجملة في المغرب</p>
+    <div class="slider" id="slider">
+      <div class="slide active"><img src="/banners/family-devices.jpg" alt="أجهزة وإكسسوارات"></div>
+      <div class="slide"><img src="/banners/family-power.jpg" alt="طاقة وشواحن"></div>
+      <div class="slide"><img src="/banners/family-audio.jpg" alt="صوت وترفيه"></div>
+      <button class="slider-btn prev" onclick="changeSlide(-1)">&#8250;</button>
+      <button class="slider-btn next" onclick="changeSlide(1)">&#8249;</button>
+    </div>
+    <div class="slider-dots" id="dots">
+      <button class="dot active" onclick="goSlide(0)"></button>
+      <button class="dot" onclick="goSlide(1)"></button>
+      <button class="dot" onclick="goSlide(2)"></button>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="cats-section">
+    <h2 class="section-title">تشكيلة <span style="color:var(--p)">واسعة</span> من الفئات</h2>
+    <p class="section-sub">اختر من بين أكثر من 20 فئة من المنتجات التقنية المتوفرة</p>
+    <div class="cat-rail">
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/chargers.png" alt="شواحن"></div>
+        <span class="cat-name">شواحن</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/audio.png" alt="سماعات"></div>
+        <span class="cat-name">سماعات</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/smart-watches.png" alt="ساعات ذكية"></div>
+        <span class="cat-name">ساعات ذكية</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/batteries-power-banks.png" alt="باوربانك"></div>
+        <span class="cat-name">باوربانك</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/cameras.png" alt="كاميرات"></div>
+        <span class="cat-name">كاميرات</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/gaming.png" alt="ألعاب"></div>
+        <span class="cat-name">ألعاب</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/cables.png" alt="كابلات"></div>
+        <span class="cat-name">كابلات</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/lighting.png" alt="إضاءة"></div>
+        <span class="cat-name">إضاءة</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/storage.png" alt="تخزين"></div>
+        <span class="cat-name">تخزين</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/network.png" alt="شبكات"></div>
+        <span class="cat-name">شبكات</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/microphones.png" alt="ميكروفونات"></div>
+        <span class="cat-name">ميكروفونات</span>
+      </div>
+      <div class="cat-item" onclick="fbq('track','Lead'); window.location='/catalog'">
+        <div class="cat-img"><img src="/category-images/mouse-keyboard.png" alt="ماوس وكيبورد"></div>
+        <span class="cat-name">ماوس وكيبورد</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section">
+    <h2 class="section-title">لماذا <span style="color:var(--p)">الريحاني</span>؟</h2>
+    <p class="section-sub">نقدم أفضل تجربة للتجار في المغرب</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>أسعار تنافسية</h3>
+        <p>هوامش ربح ممتازة مقارنة بالسوق. أسعارنا مباشرة من المصدر بدون وسطاء لتضمن أعلى ربحية لتجارتك.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✅</div>
+        <h3>جودة مضمونة</h3>
+        <p>جميع المنتجات أصلية ومختبرة. ضمان الاستبدال في حالة أي خلل في التصنيع لتجنب أي مشاكل مع زبائنك.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3>توصيل سريع</h3>
+        <p>توصيل لجميع مدن المغرب في أقل من 48 ساعة. دفع عند الاستلام أو تحويل بنكي بكل سهولة وأمان.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-box">
+      <h2>ابدأ تجارتك الآن مع الريحاني</h2>
+      <p>انضم لأكثر من 1000 تاجر يثقون بنا. تصفح الكتالوج، اختر منتجاتك، وابدأ البيع بأرباح عالية.</p>
+      <div class="cta-btns">
+        <a href="/catalog" class="cta-btn" onclick="fbq('track','Lead')">
+          🌐 دخول المتجر
+        </a>
+        <a href="https://wa.me/212664630566?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%2C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D9%85%D9%86%D8%AA%D8%AC%D8%A7%D8%AA%D9%83%D9%85%20%D8%A8%D8%A7%D9%84%D8%AC%D9%85%D9%84%D8%A9" target="_blank" class="cta-btn wa" onclick="fbq('track','Contact')">
+          💬 تواصل واتساب
+        </a>
+        <a href="https://t.me/Imden_technology" target="_blank" class="cta-btn tg" onclick="fbq('track','Contact')">
+          📢 قناة تيليجرام
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <img src="/logo-dark.png" alt="Errayhany Grossiste">
+        <p>الريحاني - منصة البيع بالجملة الرائدة للإلكترونيات وإكسسوارات الهواتف في الدار البيضاء والمغرب.</p>
+      </div>
+      <div>
+        <h3>روابط سريعة</h3>
+        <ul>
+          <li><a href="/catalog" style="color:rgba(255,255,255,.75); text-decoration:none;">تصفح المتجر</a></li>
+          <li><a href="https://wa.me/212664630566" style="color:rgba(255,255,255,.75); text-decoration:none;">تواصل معنا</a></li>
+          <li><a href="https://t.me/Imden_technology" style="color:rgba(255,255,255,.75); text-decoration:none;">قناة تيليجرام</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>خدماتنا</h3>
+        <ul>
+          <li>شحن لجميع المدن</li>
+          <li>أسعار تنافسية للتجار</li>
+          <li>خدمة عملاء 7/7</li>
+          <li>جودة مضمونة</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2025 Errayhany Grossiste. جميع الحقوق محفوظة.</div>
+  </footer>
+
+  <!-- WhatsApp Float -->
+  <a href="https://wa.me/212664630566" target="_blank" class="wa-float" onclick="fbq('track','Contact')" aria-label="واتساب">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+
+  <script>
+    let current = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    let timer = setInterval(() => changeSlide(1), 4000);
+
+    function goSlide(n) {
+      slides[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      current = n;
+      slides[current].classList.add('active');
+      dots[current].classList.add('active');
+      clearInterval(timer);
+      timer = setInterval(() => changeSlide(1), 4000);
+    }
+    function changeSlide(dir) {
+      goSlide((current + dir + slides.length) % slides.length);
+    }
+  </script>
+</body>
+</html>
