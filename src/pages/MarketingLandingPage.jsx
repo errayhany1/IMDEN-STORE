@@ -13,7 +13,7 @@ import {
 import useStore from '../store/useStore';
 
 const WA_NUMBER = '212664630566';
-const TELEGRAM_URL = 'https://t.me/Imden_technology';
+const TELEGRAM_URL = 'https://t.me/ERRAYHANY_GROSSISTE';
 const STORE_URL = '/catalog';
 
 const trackPixelEvent = (eventName) => {

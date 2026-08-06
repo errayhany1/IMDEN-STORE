@@ -1,11 +1,36 @@
 [
   {
     "@type": "Product",
+    "name": "موزع USB-C 4 في 1: 3x USB 3.0 + HDMI + USB-C PD - محول متعدد المنافذ من النوع C للكمبيوتر/الماك/الهاتف الذكي",
+    "image": "https://errayhany.com/product-images/1815-1-0c9c6ac4a8-1600.webp",
+    "description": "موزع USB-C 4 في 1: 3x USB 3.0 + HDMI + USB-C PD - محول متعدد المنافذ من النوع C للكمبيوتر/الماك/الهاتف الذكي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HUB-TC-30-4PORT",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HUB-TC-30-4PORT",
+      "price": 25,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
     "name": "سماعات أذن لاسلكية A8 Pro ANC مع كشف معدل ضربات القلب والأكسجين في الدم - أبيض",
     "image": "https://errayhany.com/product-images/1814-1-19b8f5d454-1600.webp",
-    "description": "سماعات أذن لاسلكية A8 Pro ANC مع كشف معدل ضربات القلب والأكسجين في الدم - أبيض - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "سماعات أذن لاسلكية A8 Pro ANC مع كشف معدل ضربات القلب والأكسجين في الدم - أبيض - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-AIRPODS-A8-PRO",
-    "category": "عام",
+    "category": "سماعات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -53,9 +78,9 @@
     "@type": "Product",
     "name": "محول طاقة سامسونج 60 واط USB-C أصلي - شحن سريع واستهلاك منخفض للطاقة",
     "image": "https://errayhany.com/product-images/1812-1-450326a3be-1600.webp",
-    "description": "محول طاقة سامسونج 60 واط USB-C أصلي - شحن سريع واستهلاك منخفض للطاقة - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول طاقة سامسونج 60 واط USB-C أصلي - شحن سريع واستهلاك منخفض للطاقة - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-ADAPTER-NOIR-SAMSUNG-COW-ORIGINAL",
-    "category": "عام",
+    "category": "شواحن",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -78,9 +103,9 @@
     "@type": "Product",
     "name": "كابل USB-C إلى USB-C سامسونج S26 بطول 1.8 متر - شحن سريع 3 أمبير ونقل بيانات 480 ميجابت في الثانية",
     "image": "https://errayhany.com/product-images/1811-1-b7e5f8538e-1600.webp",
-    "description": "كابل USB-C إلى USB-C سامسونج S26 بطول 1.8 متر - شحن سريع 3 أمبير ونقل بيانات 480 ميجابت في الثانية - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل USB-C إلى USB-C سامسونج S26 بطول 1.8 متر - شحن سريع 3 أمبير ونقل بيانات 480 ميجابت في الثانية - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-SAMSUNG-C-C-S26",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -128,9 +153,9 @@
     "@type": "Product",
     "name": "محول USB بلوتوث 5.3 لاسلكي للكمبيوتر، اللابتوب، أندرويد - اتصال مستقر وسريع",
     "image": "https://errayhany.com/product-images/1809-1-ca23f3231c-1600.webp",
-    "description": "محول USB بلوتوث 5.3 لاسلكي للكمبيوتر، اللابتوب، أندرويد - اتصال مستقر وسريع - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول USB بلوتوث 5.3 لاسلكي للكمبيوتر، اللابتوب، أندرويد - اتصال مستقر وسريع - تخزين بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CLE-BT--3",
-    "category": "عام",
+    "category": "تخزين",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -178,9 +203,9 @@
     "@type": "Product",
     "name": "سماعات أذن سلكية USB-C من Flair - صوت واضح وميكروفون مدمج - توافق عالمي - أسود/أبيض",
     "image": "https://errayhany.com/product-images/1807-1-9e3c7ebd20-1600.webp",
-    "description": "سماعات أذن سلكية USB-C من Flair - صوت واضح وميكروفون مدمج - توافق عالمي - أسود/أبيض - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "سماعات أذن سلكية USB-C من Flair - صوت واضح وميكروفون مدمج - توافق عالمي - أسود/أبيض - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-KIT-FLAIR-TPC",
-    "category": "عام",
+    "category": "سماعات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -202,10 +227,10 @@
   {
     "@type": "Product",
     "name": "راوتر واي فاي محمول 5G LTE SL305 3000mAh - إنترنت عالي السرعة في كل مكان",
-    "image": "https://errayhany.com/product-images/1806-1-e4d8faf3c9-1600.webp",
-    "description": "راوتر واي فاي محمول 5G LTE SL305 3000mAh - إنترنت عالي السرعة في كل مكان - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "image": "https://errayhany.com/product-images/1806-1-a401e87942-1600.webp",
+    "description": "راوتر واي فاي محمول 5G LTE SL305 3000mAh - إنترنت عالي السرعة في كل مكان - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-MOBILE-WIFI-SL305",
-    "category": "عام",
+    "category": "شبكات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -227,10 +252,10 @@
   {
     "@type": "Product",
     "name": "علبة قرص صلب/SSD خارجي 2.5 بوصة SATA III USB 3.0/3.1 - محول قرص صلب محمول",
-    "image": "https://errayhany.com/product-images/1805-1-ec46c0fadb-1600.webp",
-    "description": "علبة قرص صلب/SSD خارجي 2.5 بوصة SATA III USB 3.0/3.1 - محول قرص صلب محمول - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "image": "https://errayhany.com/product-images/1805-1-d9fc75abd1-1600.webp",
+    "description": "علبة قرص صلب/SSD خارجي 2.5 بوصة SATA III USB 3.0/3.1 - محول قرص صلب محمول - تخزين بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-BOITIER-MOVE-25-INCH-HDD",
-    "category": "عام",
+    "category": "تخزين",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -253,9 +278,9 @@
     "@type": "Product",
     "name": "كابل بيانات VIDVIE USB-C إلى USB-C عالي السرعة 6A 120W شحن سريع 1 متر",
     "image": "https://errayhany.com/product-images/1804-1-2a98ab0b66-1600.webp",
-    "description": "كابل بيانات VIDVIE USB-C إلى USB-C عالي السرعة 6A 120W شحن سريع 1 متر - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل بيانات VIDVIE USB-C إلى USB-C عالي السرعة 6A 120W شحن سريع 1 متر - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-VIDVIE-TC-TC-6A",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -278,9 +303,9 @@
     "@type": "Product",
     "name": "كابل بيانات VIDVIE CB4031i/V/T - شحن سريع 3 أمبير للآيفون، V8 وتايب سي",
     "image": "https://errayhany.com/product-images/1803-1-c0a443764e-1600.webp",
-    "description": "كابل بيانات VIDVIE CB4031i/V/T - شحن سريع 3 أمبير للآيفون، V8 وتايب سي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل بيانات VIDVIE CB4031i/V/T - شحن سريع 3 أمبير للآيفون، V8 وتايب سي - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-VIDVIE-CB4031-IP-V8-TYPE-C",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -353,9 +378,9 @@
     "@type": "Product",
     "name": "جراب هاتف مقاوم للماء عالمي Imden Technology - حماية قصوى ضد الانزلاق",
     "image": "https://errayhany.com/product-images/1800-1-53355f8518-1600.webp",
-    "description": "جراب هاتف مقاوم للماء عالمي Imden Technology - حماية قصوى ضد الانزلاق - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "جراب هاتف مقاوم للماء عالمي Imden Technology - حماية قصوى ضد الانزلاق - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-PUCHETTE-LMA",
-    "category": "عام",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -378,9 +403,9 @@
     "@type": "Product",
     "name": "حامل رقبة Jmary MG-01 2 في 1 للهاتف الذكي وكاميرا الحركة - تصوير POV بدون استخدام اليدين",
     "image": "https://errayhany.com/product-images/1799-1-90eb206e25-1600.webp",
-    "description": "حامل رقبة Jmary MG-01 2 في 1 للهاتف الذكي وكاميرا الحركة - تصوير POV بدون استخدام اليدين - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "حامل رقبة Jmary MG-01 2 في 1 للهاتف الذكي وكاميرا الحركة - تصوير POV بدون استخدام اليدين - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-SUPPORT-JMARY-MG-01",
-    "category": "عام",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -403,9 +428,9 @@
     "@type": "Product",
     "name": "كابل AV SCNY 2 متر لجهاز PS2 - جودة صوت وفيديو عالية RCA لأجهزة الألعاب والتلفزيون",
     "image": "https://errayhany.com/product-images/1798-1-d47db609c3-1600.webp",
-    "description": "كابل AV SCNY 2 متر لجهاز PS2 - جودة صوت وفيديو عالية RCA لأجهزة الألعاب والتلفزيون - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل AV SCNY 2 متر لجهاز PS2 - جودة صوت وفيديو عالية RCA لأجهزة الألعاب والتلفزيون - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-PS2",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -428,9 +453,9 @@
     "@type": "Product",
     "name": "سماعات أذن SAMSUNG Type-C AKG Tuned - صوت لا مثيل له وراحة داخل الأذن - أبيض",
     "image": "https://errayhany.com/product-images/1797-1-639af19b22-1600.webp",
-    "description": "سماعات أذن SAMSUNG Type-C AKG Tuned - صوت لا مثيل له وراحة داخل الأذن - أبيض - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "سماعات أذن SAMSUNG Type-C AKG Tuned - صوت لا مثيل له وراحة داخل الأذن - أبيض - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-KIT-AKG-TPC",
-    "category": "عام",
+    "category": "سماعات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -453,9 +478,9 @@
     "@type": "Product",
     "name": "BBC-9 ضوء سيلفي للهاتف مع حلقة إضاءة وشاتر بلوتوث - شحن Type-C، بطارية 750mAh",
     "image": "https://errayhany.com/product-images/1796-1-6a5eb83b38-1600.webp",
-    "description": "BBC-9 ضوء سيلفي للهاتف مع حلقة إضاءة وشاتر بلوتوث - شحن Type-C، بطارية 750mAh - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "BBC-9 ضوء سيلفي للهاتف مع حلقة إضاءة وشاتر بلوتوث - شحن Type-C، بطارية 750mAh - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-BBC-9",
-    "category": "عام",
+    "category": "ستاندات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -478,9 +503,9 @@
     "@type": "Product",
     "name": "كابل بيانات سريع KONFULON DC32C Micro USB 3.0A - شحن ونقل بيانات 2 في 1",
     "image": "https://errayhany.com/product-images/1795-1-27879d95a6-1600.webp",
-    "description": "كابل بيانات سريع KONFULON DC32C Micro USB 3.0A - شحن ونقل بيانات 2 في 1 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل بيانات سريع KONFULON DC32C Micro USB 3.0A - شحن ونقل بيانات 2 في 1 - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-KONFULON-DC32C",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -503,9 +528,9 @@
     "@type": "Product",
     "name": "كابل بيانات سريع كونفولون DC32 ميكرو USB 3.0 أمبير - شحن ونقل بيانات سريع",
     "image": "https://errayhany.com/product-images/1794-1-cb7068b71d-1600.webp",
-    "description": "كابل بيانات سريع كونفولون DC32 ميكرو USB 3.0 أمبير - شحن ونقل بيانات سريع - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل بيانات سريع كونفولون DC32 ميكرو USB 3.0 أمبير - شحن ونقل بيانات سريع - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-KONFULON-DC32",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -553,9 +578,9 @@
     "@type": "Product",
     "name": "كابل صوت بصري Toslink OLYGOS CASA BLANCA 3 متر أسود - ألياف رقمية عالية الجودة",
     "image": "https://errayhany.com/product-images/1792-1-3e6576324b-1600.webp",
-    "description": "كابل صوت بصري Toslink OLYGOS CASA BLANCA 3 متر أسود - ألياف رقمية عالية الجودة - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل صوت بصري Toslink OLYGOS CASA BLANCA 3 متر أسود - ألياف رقمية عالية الجودة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-FIBRE-AUDIO-3M",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -728,9 +753,9 @@
     "@type": "Product",
     "name": "كابل شحن سريع 3 أمبير USB-A إلى USB-C أبيض 1000 مم - متوافق مع جميع أجهزة Type-C",
     "image": "https://errayhany.com/product-images/1785-1-44b026928c-1600.webp",
-    "description": "كابل شحن سريع 3 أمبير USB-A إلى USB-C أبيض 1000 مم - متوافق مع جميع أجهزة Type-C - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل شحن سريع 3 أمبير USB-A إلى USB-C أبيض 1000 مم - متوافق مع جميع أجهزة Type-C - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-CABLE-SACHIE-SOBA-TC",
-    "category": "عام",
+    "category": "كابلات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -753,9 +778,9 @@
     "@type": "Product",
     "name": "مكبر صوت بلوتوث محمول X-911 ديسكو سيريز - أضواء LED وصوت غامر - مثالي للحفلات والسفر",
     "image": "https://errayhany.com/product-images/1784-1-802c56321f-1600.webp",
-    "description": "مكبر صوت بلوتوث محمول X-911 ديسكو سيريز - أضواء LED وصوت غامر - مثالي للحفلات والسفر - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "مكبر صوت بلوتوث محمول X-911 ديسكو سيريز - أضواء LED وصوت غامر - مثالي للحفلات والسفر - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-BAF-X-911",
-    "category": "عام",
+    "category": "سماعات",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -1153,9 +1178,9 @@
     "@type": "Product",
     "name": "جهاز تحكم عن بعد عالمي AQ9 للأبواب الأوتوماتيكية والإنذارات - ناسخ مفاتيح لاسلكي",
     "image": "https://errayhany.com/product-images/1767-1-3759f26c14-1600.webp",
-    "description": "جهاز تحكم عن بعد عالمي AQ9 للأبواب الأوتوماتيكية والإنذارات - ناسخ مفاتيح لاسلكي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "جهاز تحكم عن بعد عالمي AQ9 للأبواب الأوتوماتيكية والإنذارات - ناسخ مفاتيح لاسلكي - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-REMOTE-AQ9",
-    "category": "عام",
+    "category": "إكسسوارات السيارة",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -1902,10 +1927,10 @@
   {
     "@type": "Product",
     "name": "جهاز تحكم عن بعد عالمي AQ11 لأبواب المرآب والبوابات - 4 قنوات - تصميم أزرق مدمج",
-    "image": "https://errayhany.com/product-images/1737-1-98f6f2ab2a-1600.webp",
-    "description": "جهاز تحكم عن بعد عالمي AQ11 لأبواب المرآب والبوابات - 4 قنوات - تصميم أزرق مدمج - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "image": "https://errayhany.com/product-images/1737-1-5c4960b371-1600.webp",
+    "description": "جهاز تحكم عن بعد عالمي AQ11 لأبواب المرآب والبوابات - 4 قنوات - تصميم أزرق مدمج - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
     "sku": "ERY-REMOTE-AQ11",
-    "category": "عام",
+    "category": "إكسسوارات السيارة",
     "brand": {
       "@type": "Brand",
       "name": "Errayhany Store"
@@ -2464,31 +2489,6 @@
       "@type": "Offer",
       "url": "https://errayhany.com/?search=ERY-CHARGEUR-12V-5A",
       "price": 50,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن فليير 5 فولت 2 أمبير - مثالي لجميع أجهزتك",
-    "image": "https://errayhany.com/product-images/1713-1-53b6447796-1600.webp",
-    "description": "شاحن فليير 5 فولت 2 أمبير - مثالي لجميع أجهزتك - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGER-FLAIR-5V-2A",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGER-FLAIR-5V-2A",
-      "price": 20,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition",

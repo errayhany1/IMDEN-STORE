@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 
-const TELEGRAM_URL = 'https://t.me/Imden_technology';
+const TELEGRAM_URL = 'https://t.me/ERRAYHANY_GROSSISTE';
 const WA_NUMBER = '212664630566';
 
 const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';

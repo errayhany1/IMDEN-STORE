@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const TELEGRAM_URL = 'https://t.me/Imden_technology';
+const TELEGRAM_URL = 'https://t.me/ERRAYHANY_GROSSISTE';
 const WA_NUMBER = '212664630566';
 
 const PromotionalBanner = () => {
