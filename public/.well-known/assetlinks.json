@@ -1,11 +1,15 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.imden.store",
       "sha256_cert_fingerprints": [
-        "36:BC:80:E9:6D:BD:E8:3B:97:39:F6:06:98:DB:76:F0:BF:23:08:99:1E:E2:97:69:D4:38:E2:A1:27:7B:C1:36"
+        "36:BC:80:E9:6D:BD:E8:3B:97:39:F6:06:98:DB:76:F0:BF:23:08:99:1E:E2:97:69:D4:38:E2:A1:27:7B:C1:36",
+        "2D:9F:EB:A1:07:EF:02:28:2B:9D:24:5B:0C:A4:BB:83:AA:5A:66:11:95:72:11:23:51:D2:AF:C7:C0:83:B8:0F"
       ]
     }
   }
