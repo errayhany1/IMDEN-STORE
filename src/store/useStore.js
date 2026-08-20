@@ -6,6 +6,7 @@ import {
     getPrimaryImageMode,
     setPrimaryImageModeStorage,
 } from '../services/api';
+import { uniqueProductsById } from '../utils/productList';
 
 const useStore = create(
     persist(
@@ -58,6 +59,7 @@ const useStore = create(
             searchQuery: "",
             sortBy: 'default', // default | price-asc | price-desc | name-asc
             stockFilter: 'all', // all | in-stock | out-of-stock
+            featuredProductIds: [],
 
             setUser: (user) => set({ user }),
             setAuthModalOpen: (isOpen) => set({ isAuthModalOpen: isOpen }),
@@ -66,10 +68,14 @@ const useStore = create(
             setProducts: (data) => {
                 const mode = getPrimaryImageMode();
                 const list = Array.isArray(data)
-                    ? data.map((p) => applyPrimaryImageMode(p, mode))
+                    ? uniqueProductsById(data.map((p) => applyPrimaryImageMode(p, mode)))
                     : data;
                 set({ products: list, primaryImageMode: mode });
             },
+
+            setFeaturedProductIds: (ids) => set({
+                featuredProductIds: Array.isArray(ids) ? ids.map((id) => String(id)) : [],
+            }),
 
             setPrimaryImageMode: (mode) => {
                 const next = setPrimaryImageModeStorage(mode);
@@ -122,11 +128,14 @@ const useStore = create(
             appendProducts: (newProducts) => {
                 set((state) => {
                     const mode = state.primaryImageMode || getPrimaryImageMode();
-                    // Avoid duplicates just in case
-                    const existingIds = new Set(state.products.map(p => p.id));
-                    const uniqueNew = newProducts
-                        .filter(p => !existingIds.has(p.id))
-                        .map((p) => applyPrimaryImageMode(p, mode));
+                    const existingIds = new Set(state.products.map((p) => String(p.id)));
+                    const uniqueNew = [];
+                    for (const product of uniqueProductsById(newProducts || [])) {
+                        const id = String(product.id);
+                        if (existingIds.has(id)) continue;
+                        existingIds.add(id);
+                        uniqueNew.push(applyPrimaryImageMode(product, mode));
+                    }
                     return { products: [...state.products, ...uniqueNew] };
                 });
             },

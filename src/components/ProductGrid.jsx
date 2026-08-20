@@ -7,6 +7,13 @@ import PromotionalBanner from './PromotionalBanner';
 import { categoryTranslation } from './CategoryRail';
 import { getFamilyById } from '../data/families';
 import { LOCAL_CATEGORY_IMAGES } from '../data/categories';
+import { shouldShowHomeFeatured } from '../utils/featuredProducts';
+import {
+    excludeProductsById,
+    splitProductsForBanner,
+    uniqueProductsById,
+} from '../utils/productList';
+
 const ProductGrid = () => {
     const {
         products,
@@ -21,6 +28,7 @@ const ProductGrid = () => {
         sortBy,
         stockFilter,
         gridColumns,
+        featuredProductIds,
     } = useStore();
 
     const [displayLimit, setDisplayLimit] = React.useState(20);
@@ -125,14 +133,22 @@ const ProductGrid = () => {
             return 0;
         });
 
-    const displayedProducts = filteredProducts.slice(0, displayLimit);
+    const uniqueFiltered = uniqueProductsById(filteredProducts);
+    const catalogProducts = shouldShowHomeFeatured({
+        searchQuery,
+        selectedCategory,
+        selectedFamily,
+    })
+        ? excludeProductsById(uniqueFiltered, featuredProductIds)
+        : uniqueFiltered;
+    const displayedProducts = catalogProducts.slice(0, displayLimit);
 
     // Intersection observer for infinite scroll
     const loadMoreRef = React.useRef(null);
     useEffect(() => {
         const currentRef = loadMoreRef.current;
         const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && displayLimit < filteredProducts.length) {
+            if (entries[0].isIntersecting && displayLimit < catalogProducts.length) {
                 setDisplayLimit(prev => prev + 20);
             }
         }, { threshold: 0.1 });
@@ -142,7 +158,7 @@ const ProductGrid = () => {
         return () => {
             if (currentRef) observer.unobserve(currentRef);
         };
-    }, [displayLimit, filteredProducts.length]);
+    }, [displayLimit, catalogProducts.length]);
 
     // Mobile: 1 or 2 cols (user toggle), Desktop: always 4
     // Note: must override sm: breakpoint too when in single-col mode
@@ -172,19 +188,10 @@ const ProductGrid = () => {
         );
     }
 
-    // Insert Promotional Banner every 12 items (approx 3 rows on desktop)
-    const itemsWithBanners = [];
-    displayedProducts.forEach((product) => {
-        itemsWithBanners.push(<ProductCard key={product.id} product={product} />);
-        // simplified banner logic
-    });
-
     // Split into responsive chunks:
     // Mobile (2 cols): show banner after 4 products (2 rows)
     // Desktop (4 cols): show banner after 8 products (2 rows)
-    const mobileFirst = displayedProducts.slice(0, 4);   // shown then banner on mobile
-    const desktopFirst = displayedProducts.slice(4, 8);   // combined with mobileFirst = 8 on desktop
-    const rest = displayedProducts.slice(8);
+    const { mobileFirst, desktopFirst, rest } = splitProductsForBanner(displayedProducts);
 
     return (
         <div className="pb-24">
@@ -198,18 +205,18 @@ const ProductGrid = () => {
                     />
                 ))}
 
-                {/* On desktop (lg): show 4 more products before banner */}
+                {/* On desktop (lg): show 4 more products before banner.
+                    ProductCard ignores className, so the hide/show must live on this wrapper.
+                    Otherwise products 5–8 render twice on mobile. */}
                 {desktopFirst.map(product => (
-                    <ProductCard
-                        key={`d-${product.id}`}
-                        product={product}
-                        className="hidden lg:block"
-                    />
+                    <div key={`d-${product.id}`} className="hidden lg:block h-full">
+                        <ProductCard product={product} />
+                    </div>
                 ))}
             </section>
 
             {/* Banner after row 2 on desktop (8 products), row 2 on mobile (4 products) */}
-            {filteredProducts.length > 0 && <PromotionalBanner />}
+            {catalogProducts.length > 0 && <PromotionalBanner />}
 
             {/* On mobile: show products 5–8 after the banner */}
             {desktopFirst.length > 0 && (
@@ -229,22 +236,22 @@ const ProductGrid = () => {
                 </section>
             )}
 
-            {filteredProducts.length === 0 && (
+            {catalogProducts.length === 0 && (
                 <div className="text-center py-10 text-slate-500">
                     لا توجد منتجات في هذه الفئة.
                 </div>
             )}
 
-            {filteredProducts.length > 0 && (
+            {catalogProducts.length > 0 && (
                 <div className="text-center py-6">
                     <span className="inline-block text-slate-400 text-sm">
-                        عرض {filteredProducts.length} منتج
+                        عرض {catalogProducts.length} منتج
                     </span>
                 </div>
             )}
 
             {/* Invisible observer element to trigger next page */}
-            {displayLimit < filteredProducts.length && (
+            {displayLimit < catalogProducts.length && (
                 <div ref={loadMoreRef} className="h-10 w-full" />
             )}
         </div>

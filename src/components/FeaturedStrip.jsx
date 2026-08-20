@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useStore from '../store/useStore';
-import { getRotatingFeatured } from '../utils/featuredProducts';
+import { getRotatingFeatured, shouldShowHomeFeatured } from '../utils/featuredProducts';
 import ProductCard from './ProductCard';
 import ProductFilters from './ProductFilters';
 
 const FeaturedStrip = () => {
-    const { products, searchQuery, selectedCategory, selectedFamily } = useStore();
+    const { products, searchQuery, selectedCategory, selectedFamily, setFeaturedProductIds } = useStore();
 
     const [featured, setFeatured] = useState([]);
     const productsRef = useRef(products);
+
+    const applyFeatured = (list) => {
+        setFeatured(list);
+        setFeaturedProductIds((list || []).map((product) => product.id));
+    };
 
     useEffect(() => {
         productsRef.current = products;
@@ -16,8 +21,9 @@ const FeaturedStrip = () => {
 
     useEffect(() => {
         if (products.length > 0 && featured.length === 0) {
-            setFeatured(getRotatingFeatured(products));
+            applyFeatured(getRotatingFeatured(products));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [products, featured.length]);
 
     useEffect(() => {
@@ -27,15 +33,20 @@ const FeaturedStrip = () => {
             const msLeft = (10 * 60 * 1000) - msInSlot;
 
             if (msLeft <= 1000 && productsRef.current.length > 0) {
-                setTimeout(() => setFeatured(getRotatingFeatured(productsRef.current)), 1100);
+                setTimeout(() => applyFeatured(getRotatingFeatured(productsRef.current)), 1100);
             }
         }, 1000);
 
         return () => clearInterval(tick);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const showFeatured =
-        featured.length > 0 && !searchQuery && selectedCategory === 'All' && !selectedFamily;
+        featured.length > 0 && shouldShowHomeFeatured({
+            searchQuery,
+            selectedCategory,
+            selectedFamily,
+        });
 
     return (
         <div className="mb-6">
