@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-08-20T15:41:32.943Z",
+  "totals": {
+    "nocoAll": 836,
+    "nocoPublished": 565,
+    "tifawtAll": 901,
+    "tifawtInStock": 478,
+    "matchedOk": 316,
+    "addToNoco": 159,
+    "enableOnSite": 3,
+    "hideOnSite": 265,
+    "tifawtStockedNotInNoco": 159,
+    "nocoPosteblUnlinked": 154
+  }
+}

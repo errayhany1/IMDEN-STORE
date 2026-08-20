@@ -121,3 +121,42 @@ export async function resetBotSettings() {
   );
   return data;
 }
+
+export async function fetchInventoryReconcile() {
+  const { data } = await axios.get('/bot-api/api/admin/inventory/reconcile', {
+    headers: headers(),
+    timeout: 120000,
+  });
+  return data;
+}
+
+export async function linkInventorySku({ nocoSku, tifawtSku }) {
+  const { data } = await axios.post(
+    '/bot-api/api/admin/inventory/link',
+    { nocoSku, tifawtSku },
+    { headers: headers(), timeout: 30000 },
+  );
+  return data;
+}
+
+export async function unlinkInventorySku({ nocoSku }) {
+  const { data } = await axios.post(
+    '/bot-api/api/admin/inventory/unlink',
+    { nocoSku },
+    { headers: headers(), timeout: 30000 },
+  );
+  return data;
+}
+
+export async function setInventoryNocoStatus({ nocoId, postebl }) {
+  const { data } = await axios.post(
+    '/bot-api/api/admin/inventory/noco-status',
+    { nocoId, postebl },
+    { headers: headers(), timeout: 30000 },
+  );
+  return data;
+}
+
+export function inventoryExportUrl(kind) {
+  return `/bot-api/api/admin/inventory/export/${kind}`;
+}

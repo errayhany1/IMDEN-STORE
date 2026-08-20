@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     LayoutDashboard, ShoppingBag, Package, Settings, LogOut,
     ArrowRight, X, Menu, ClipboardList, RefreshCcw, ChevronDown, ChevronUp,
-    Store, Bot
+    Store, Bot, Link2,
 } from 'lucide-react';
 
 const sidebarGroups = [
@@ -27,7 +27,10 @@ const sidebarGroups = [
         id: 'products',
         label: 'المنتجات',
         icon: Package,
-        children: null,
+        children: [
+            { id: 'products', label: 'منتجات الموقع', icon: Package },
+            { id: 'inventory-sync', label: 'مطابقة Tifawt', icon: Link2 },
+        ],
     },
     {
         id: 'bot-settings',

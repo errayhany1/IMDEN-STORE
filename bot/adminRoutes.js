@@ -31,6 +31,7 @@ import {
   resetBotSettings,
   updateBotSettings,
 } from './runtimeSettings.js';
+import { registerInventoryAdminRoutes } from './inventoryAdmin.js';
 
 function adminPassword() {
   const configured = (
@@ -503,4 +504,6 @@ export function registerAdminRoutes(app) {
       });
     }
   });
+
+  registerInventoryAdminRoutes(app, { requireAdmin });
 }

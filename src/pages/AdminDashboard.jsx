@@ -7,6 +7,7 @@ import ReturnsTab from './admin/ReturnsTab';
 import TifawtOrdersTab from './admin/TifawtOrdersTab';
 import JumiaOrdersTab from './admin/JumiaOrdersTab';
 import BotSettingsTab from './admin/BotSettingsTab';
+import InventorySyncTab from './admin/InventorySyncTab';
 import { createStoreOrderId, syncOrderSideEffects } from '../services/tifawt';
 import {
     createAdminSession,
@@ -787,6 +788,7 @@ const AdminDashboard = () => {
                             'tifawt-orders': 'طلبات Tifawt',
                             'jumia-orders': 'طلبات Jumia',
                             products: 'المنتجات',
+                            'inventory-sync': 'مطابقة Tifawt',
                             returns: 'مرتجعات الموقع',
                             'bot-settings': 'مركز تحكم البوت',
                             settings: 'الإعدادات',
@@ -1407,6 +1409,11 @@ const AdminDashboard = () => {
                 {/* ══════ JUMIA ORDERS ══════ */}
                 {activeTab === 'jumia-orders' && (
                     <JumiaOrdersTab dm={dm} />
+                )}
+
+                {/* ══════ INVENTORY SYNC ══════ */}
+                {activeTab === 'inventory-sync' && (
+                    <InventorySyncTab dm={dm} />
                 )}
 
                 {/* ══════ RETURNS (site/NocoDB) ══════ */}
