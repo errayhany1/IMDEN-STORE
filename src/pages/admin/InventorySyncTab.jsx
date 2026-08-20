@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Download,
   Link2,
   Loader2,
+  Package,
   PauseCircle,
   RefreshCw,
   Search,
@@ -21,6 +22,111 @@ const TABS = [
   { id: 'tifawt-only', label: 'Tifawt بدون NocoDB', key: 'tifawtStockedNotInNoco' },
   { id: 'matched', label: 'مطابق', key: 'matchedOk' },
 ];
+
+function ProductThumb({ src, alt, size = 44, dm }) {
+  const [failed, setFailed] = useState(false);
+  const box = `w-[${size}px] h-[${size}px]`;
+  const cls = `shrink-0 rounded-lg border overflow-hidden flex items-center justify-center ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-100 border-slate-200'}`;
+  if (!src || failed) {
+    return (
+      <div className={cls} style={{ width: size, height: size }}>
+        <Package size={Math.round(size * 0.4)} className={dm ? 'text-gray-600' : 'text-slate-300'} />
+      </div>
+    );
+  }
+  return (
+    <div className={cls} style={{ width: size, height: size }}>
+      <img
+        src={src}
+        alt={alt || ''}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className={`${box} object-contain`}
+        style={{ width: size, height: size }}
+      />
+    </div>
+  );
+}
+
+function rowImage(row, tab) {
+  if (tab === 'unlinked') return row.nocoImage;
+  if (tab === 'tifawt-only') return row.tifawtImage;
+  return row.nocoImage || row.tifawtImage;
+}
+
+function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
+  const wrapRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [needle, setNeedle] = useState(value || '');
+
+  useEffect(() => { setNeedle(value || ''); }, [value]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDoc);
+    return () => document.removeEventListener('pointerdown', onDoc);
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = needle.trim().toLowerCase();
+    const list = options || [];
+    if (!q) return list.slice(0, 40);
+    return list.filter((opt) => (
+      String(opt.tifawtSku || '').toLowerCase().includes(q)
+      || String(opt.tifawtName || '').toLowerCase().includes(q)
+    )).slice(0, 40);
+  }, [needle, options]);
+
+  const selected = options?.find((o) => o.tifawtSku === value);
+
+  return (
+    <div ref={wrapRef} className="relative min-w-[200px]">
+      <div className="flex items-center gap-2">
+        {selected?.tifawtImage && <ProductThumb src={selected.tifawtImage} alt={selected.tifawtSku} size={36} dm={dm} />}
+        <input
+          value={needle}
+          disabled={disabled}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => {
+            setNeedle(e.target.value);
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          placeholder="ابحث SKU أو اسم Tifawt..."
+          className={`flex-1 px-2 py-1.5 rounded-lg text-xs border ${dm ? 'bg-gray-950 border-gray-800' : 'border-slate-200 bg-white'}`}
+        />
+      </div>
+      {open && filtered.length > 0 && (
+        <div
+          className={`absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-xl border shadow-xl ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
+        >
+          {filtered.map((opt) => (
+            <button
+              key={opt.tifawtSku}
+              type="button"
+              onClick={() => {
+                onChange(opt.tifawtSku);
+                setNeedle(opt.tifawtSku);
+                setOpen(false);
+              }}
+              className={`w-full flex items-center gap-2 px-2 py-2 text-right border-b last:border-b-0 ${dm ? 'border-gray-800 hover:bg-gray-800' : 'border-slate-100 hover:bg-slate-50'}`}
+            >
+              <ProductThumb src={opt.tifawtImage} alt={opt.tifawtSku} size={40} dm={dm} />
+              <div className="min-w-0 flex-1">
+                <div className="font-mono text-[11px] font-bold truncate">{opt.tifawtSku}</div>
+                <div className={`text-[11px] truncate ${dm ? 'text-gray-400' : 'text-slate-500'}`}>{opt.tifawtName}</div>
+              </div>
+              <div className="text-[11px] font-bold text-emerald-600 shrink-0">×{opt.tifawtStock}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const InventorySyncTab = ({ dm }) => {
   const [data, setData] = useState(null);
@@ -56,15 +162,7 @@ const InventorySyncTab = ({ dm }) => {
     return list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
   }, [data, tab, query]);
 
-  const tifawtOptions = useMemo(() => {
-    const stocked = data?.tifawtStockedNotInNoco || [];
-    const matched = data?.matchedOk || [];
-    const map = new Map();
-    [...stocked, ...matched].forEach((row) => {
-      if (row.tifawtSku) map.set(row.tifawtSku, row.tifawtName || row.tifawtSku);
-    });
-    return [...map.entries()].map(([sku, name]) => ({ sku, name }));
-  }, [data]);
+  const tifawtPicker = useMemo(() => data?.tifawtPicker || [], [data]);
 
   const run = async (key, fn) => {
     setBusyKey(key);
@@ -170,6 +268,21 @@ const InventorySyncTab = ({ dm }) => {
           </div>
         </div>
 
+        {query.trim() && rows.length > 0 && (
+          <div className={`flex gap-2 p-3 overflow-x-auto border-b ${dm ? 'border-gray-800 bg-gray-950/30' : 'border-slate-100 bg-slate-50/80'}`}>
+            {rows.slice(0, 24).map((row, i) => {
+              const img = rowImage(row, tab);
+              const label = row.nocoSku || row.tifawtSku || `#${i + 1}`;
+              return (
+                <div key={`${label}-${i}`} className="shrink-0 w-16 text-center">
+                  <ProductThumb src={img} alt={label} size={56} dm={dm} />
+                  <div className={`mt-1 text-[9px] font-mono truncate ${muted}`} title={label}>{label}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {loading ? (
           <div className="p-16 flex justify-center text-primary"><Loader2 className="animate-spin" size={32} /></div>
         ) : rows.length === 0 ? (
@@ -179,6 +292,7 @@ const InventorySyncTab = ({ dm }) => {
             <table className="w-full text-sm">
               <thead className={dm ? 'bg-gray-950 text-gray-400' : 'bg-slate-50 text-slate-500'}>
                 <tr>
+                  <th className="p-3 w-14 text-right">صورة</th>
                   {tab === 'unlinked' && (
                     <>
                       <th className="p-3 text-right">NocoDB SKU</th>
@@ -210,15 +324,18 @@ const InventorySyncTab = ({ dm }) => {
                   const draft = linkDraft[row.nocoSku] || '';
                   return (
                     <tr key={key} className={`border-t ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                      <td className="p-3">
+                        <ProductThumb src={row.nocoImage} alt={row.nocoSku} dm={dm} />
+                      </td>
                       <td className="p-3 font-mono text-xs">{row.nocoSku}</td>
                       <td className="p-3 max-w-[220px] truncate" title={row.nocoName}>{row.nocoName || '—'}</td>
                       <td className="p-3">
-                        <input
-                          list="tifawt-sku-options"
+                        <TifawtSkuPicker
                           value={draft}
-                          onChange={(e) => setLinkDraft((prev) => ({ ...prev, [row.nocoSku]: e.target.value }))}
-                          placeholder="Tifawt SKU"
-                          className={`w-full min-w-[140px] px-2 py-1.5 rounded-lg text-xs border ${dm ? 'bg-gray-950 border-gray-800' : 'border-slate-200'}`}
+                          options={tifawtPicker}
+                          dm={dm}
+                          disabled={busyKey === key}
+                          onChange={(sku) => setLinkDraft((prev) => ({ ...prev, [row.nocoSku]: sku }))}
                         />
                       </td>
                       <td className="p-3">
@@ -260,6 +377,9 @@ const InventorySyncTab = ({ dm }) => {
 
                 {tab === 'tifawt-only' && rows.map((row) => (
                   <tr key={row.tifawtSku} className={`border-t ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                    <td className="p-3">
+                      <ProductThumb src={row.tifawtImage} alt={row.tifawtSku} dm={dm} />
+                    </td>
                     <td className="p-3 font-mono text-xs">{row.tifawtSku}</td>
                     <td className="p-3 max-w-[260px] truncate" title={row.tifawtName}>{row.tifawtName}</td>
                     <td className="p-3 font-bold text-emerald-600">{row.tifawtStock}</td>
@@ -269,6 +389,12 @@ const InventorySyncTab = ({ dm }) => {
 
                 {tab === 'matched' && rows.map((row) => (
                   <tr key={`${row.tifawtSku}-${row.nocoId}`} className={`border-t ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                    <td className="p-3">
+                      <div className="flex gap-1">
+                        <ProductThumb src={row.tifawtImage} alt={row.tifawtSku} size={36} dm={dm} />
+                        <ProductThumb src={row.nocoImage} alt={row.nocoSku} size={36} dm={dm} />
+                      </div>
+                    </td>
                     <td className="p-3">
                       <div className="font-mono text-xs">{row.tifawtSku}</div>
                       <div className={`text-xs truncate max-w-[200px] ${muted}`}>{row.tifawtName}</div>
@@ -286,16 +412,8 @@ const InventorySyncTab = ({ dm }) => {
         )}
       </div>
 
-      <datalist id="tifawt-sku-options">
-        {tifawtOptions.map((opt) => (
-          <option key={opt.sku} value={opt.sku}>{opt.name}</option>
-        ))}
-      </datalist>
-
       <p className={`text-xs ${muted}`}>
         الربط يُحفظ في «مركز تحكم البوت → تيفاوت → مطابقة مراجع الموقع» ويُستخدم لطلبات Tifawt/Jumia.
-        الملفات الثابتة: <code>docs/inventory/tifawt-stocked-not-in-nocodb.csv</code> و
-        <code>docs/inventory/noco-postebl-unlinked-tifawt.csv</code>
       </p>
     </div>
   );

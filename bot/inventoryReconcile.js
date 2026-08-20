@@ -12,6 +12,47 @@ import {
 } from './tifawtSku.js';
 import { getBotSetting } from './runtimeSettings.js';
 
+const TIFAWT_SITE = (
+  process.env.TIFAWT_SITE_URL
+  || String(process.env.TIFAWT_API_BASE || 'https://errayhany.tifawt.ma/api/v1').replace(/\/api\/v1\/?$/, '')
+).replace(/\/+$/, '');
+
+const STORE_SITE = (
+  process.env.SITE_URL
+  || process.env.VITE_SITE_URL
+  || 'https://errayhany.com'
+).replace(/\/+$/, '');
+
+function nocoImageUrl(record, nocodbUrl) {
+  for (const key of ['Image1', 'Image2', 'Image3']) {
+    const img = record?.[key]?.[0];
+    if (!img) continue;
+    const raw = img.signedUrl || img.url || img.path || '';
+    if (!raw) continue;
+    return raw.startsWith('http') ? raw : `${nocodbUrl}/${String(raw).replace(/^\//, '')}`;
+  }
+  const sku = encodeURIComponent(String(record?.SKU || '').trim());
+  if (sku) return `${STORE_SITE}/bot-api/public-images/p/${sku}/1.jpg`;
+  return '';
+}
+
+function tifawtImageUrl(product) {
+  const raw = product?.image || product?.imageUrl || '';
+  if (!raw) return '';
+  if (raw.startsWith('http')) return raw;
+  return `${TIFAWT_SITE}${raw.startsWith('/') ? raw : `/${raw}`}`;
+}
+
+function tifawtPickerRow(product) {
+  return {
+    tifawtSku: product.sku,
+    tifawtName: product.name,
+    tifawtStock: product.availableStock,
+    tifawtPrice: product.price,
+    tifawtImage: tifawtImageUrl(product),
+  };
+}
+
 function nocodbConfig() {
   return {
     url: (process.env.VITE_NOCODB_URL || process.env.NOCODB_URL || '').replace(/\/+$/, ''),
@@ -142,6 +183,7 @@ export function findTifawtForNoco(record, { tifawtBySku, aliases }) {
 }
 
 export function reconcileInventory({ nocoRecords, tifawtProducts, aliasesRaw = '' } = {}) {
+  const { url: nocodbUrl } = nocodbConfig();
   const aliases = aliasesRaw instanceof Map
     ? aliasesRaw
     : parseTifawtSkuAliases(aliasesRaw || getBotSetting('tifawtSkuAliases') || '');
@@ -163,6 +205,7 @@ export function reconcileInventory({ nocoRecords, tifawtProducts, aliasesRaw = '
         tifawtName: tp.name,
         tifawtStock: tp.availableStock,
         tifawtPrice: tp.price,
+        tifawtImage: tifawtImageUrl(tp),
         suggestedNocoSku: tp.sku.toUpperCase().startsWith('ERY-') ? tp.sku : `ERY-${tp.sku}`,
       });
       continue;
@@ -173,9 +216,11 @@ export function reconcileInventory({ nocoRecords, tifawtProducts, aliasesRaw = '
       tifawtSku: tp.sku,
       tifawtName: tp.name,
       tifawtStock: tp.availableStock,
+      tifawtImage: tifawtImageUrl(tp),
       nocoId: record.Id,
       nocoSku: record.SKU,
       nocoName: record.Arabic_Title || record.French_Title || record.Title || record.Woo_Title,
+      nocoImage: nocoImageUrl(record, nocodbUrl),
       nocoStatus: record.POSTEBL,
       matchVia: hit.via,
     };
@@ -192,10 +237,15 @@ export function reconcileInventory({ nocoRecords, tifawtProducts, aliasesRaw = '
       nocoId: record.Id,
       nocoSku: record.SKU,
       nocoName: record.Arabic_Title || record.French_Title || record.Title || record.Woo_Title,
+      nocoImage: nocoImageUrl(record, nocodbUrl),
       nocoPrice: record.price || record.Price,
       aliasHint: aliases.get(normalizeAliasKey(record.SKU)) || '',
     });
   }
+
+  const tifawtPicker = tifawtStocked
+    .map(tifawtPickerRow)
+    .sort((a, b) => String(a.tifawtSku).localeCompare(String(b.tifawtSku), 'en'));
 
   return {
     generatedAt: new Date().toISOString(),
@@ -213,6 +263,7 @@ export function reconcileInventory({ nocoRecords, tifawtProducts, aliasesRaw = '
     tifawtStockedNotInNoco,
     nocoPosteblUnlinked,
     enableOnSite,
+    tifawtPicker,
     aliases: Object.fromEntries(aliases),
   };
 }
