@@ -365,12 +365,16 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     setMetaTag('property', 'og:title', metaTitle);
     setMetaTag('property', 'og:description', metaDesc);
     setMetaTag('property', 'og:type', 'product');
+    setMetaTag('property', 'og:url', `${SITE_URL}/p/${encodeURIComponent(product.ref || product.id)}`);
+    setMetaTag('property', 'og:site_name', `${BRAND} Store`);
     if (images[0]) {
-      setMetaTag(
-        'property',
-        'og:image',
-        images[0].startsWith('http') ? images[0] : `${SITE_URL}${images[0]}`
-      );
+      const imageUrl = images[0].startsWith('http') ? images[0] : `${SITE_URL}${images[0]}`;
+      setMetaTag('property', 'og:image', imageUrl);
+      setMetaTag('property', 'og:image:secure_url', imageUrl);
+      setMetaTag('name', 'twitter:card', 'summary_large_image');
+      setMetaTag('name', 'twitter:title', metaTitle);
+      setMetaTag('name', 'twitter:description', metaDesc);
+      setMetaTag('name', 'twitter:image', imageUrl);
     }
 
     const jsonLd = {

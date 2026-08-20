@@ -23,6 +23,7 @@ import {
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
+import { registerProductOgRoutes } from './productOgShare.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
 import {
@@ -35,6 +36,7 @@ startBotSettingsSync();
 const app = express();
 // Public Jumia images: register before the small JSON body limit so uploads can be multi-MB.
 registerPublicImageRoutes(app);
+registerProductOgRoutes(app);
 app.use(express.json({ limit: '256kb' }));
 registerAdminRoutes(app);
 
