@@ -1,5 +1,26 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { frenchProductTitle, isRtlText } from './productText';
+
+/** jsPDF default fonts cannot render Arabic — use French/Latin copy instead. */
+function pdfProductName(item) {
+    const french = frenchProductTitle(item);
+    if (french && !isRtlText(french)) return french.slice(0, 140);
+
+    const od = item?.originalData || {};
+    const latinCandidates = [
+        od.Woo_Title,
+        od.Title,
+        item?.ref,
+        item?.id,
+    ];
+    for (const candidate of latinCandidates) {
+        const text = String(candidate || '').trim();
+        if (text && !isRtlText(text)) return text.slice(0, 140);
+    }
+
+    return String(item?.ref || 'Produit').slice(0, 140);
+}
 
 // Helper to load image as base64
 const getDataUrl = (url) => {
@@ -45,7 +66,7 @@ export const generatePDF = async (cartItems, saveToDisk = true) => {
     const tableData = itemsWithImages.map(item => [
         '', // Image column
         item.ref || 'N/A',
-        item.name || 'Produit sans nom',
+        pdfProductName(item),
         `${item.price} DH`,
         item.quantity,
         `${(item.price * item.quantity).toFixed(2)} DH`
