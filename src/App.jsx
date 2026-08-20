@@ -51,7 +51,9 @@ function App() {
     clearFamily,
     setBrowseMode,
     browseMode,
+    searchQuery,
   } = useStore();
+  const isSearching = Boolean(String(searchQuery || '').trim());
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showCatalogToast, setShowCatalogToast] = useState(false);
@@ -376,17 +378,23 @@ function App() {
       {/* Main Content — extra bottom padding clears the mobile bottom nav */}
       <main className="flex-grow max-w-[1600px] mx-auto w-full px-4 md:px-6 pt-3 pb-28">
 
-        {/* Family hero slider — click opens the family catalog */}
-        <FamilyHeroSlider />
+        {isSearching ? (
+          <ProductGrid />
+        ) : (
+          <>
+            {/* Family hero slider — click opens the family catalog */}
+            <FamilyHeroSlider />
 
-        {/* Categories Rail (narrows to family subcategories when a family is open) */}
-        <CategoryRail />
+            {/* Categories Rail (narrows to family subcategories when a family is open) */}
+            <CategoryRail />
 
-        {/* Featured & New Products (hourly rotation + today's new) */}
-        <FeaturedStrip />
+            {/* Featured & New Products (hourly rotation + today's new) */}
+            <FeaturedStrip />
 
-        {/* Full Product Grid */}
-        <ProductGrid />
+            {/* Full Product Grid */}
+            <ProductGrid />
+          </>
+        )}
 
       </main>
 

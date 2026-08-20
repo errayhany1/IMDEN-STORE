@@ -3,6 +3,7 @@ import useStore from '../store/useStore';
 import { fetchProducts } from '../services/api';
 import ProductCard from './ProductCard';
 import PromotionalBanner from './PromotionalBanner';
+import ProductFilters from './ProductFilters';
 
 import { categoryTranslation } from './CategoryRail';
 import { getFamilyById } from '../data/families';
@@ -126,6 +127,7 @@ const ProductGrid = () => {
         });
 
     const displayedProducts = filteredProducts.slice(0, displayLimit);
+    const isSearching = Boolean(String(searchQuery || '').trim());
 
     // Intersection observer for infinite scroll
     const loadMoreRef = React.useRef(null);
@@ -187,7 +189,8 @@ const ProductGrid = () => {
     const rest = displayedProducts.slice(8);
 
     return (
-        <div className="pb-24">
+        <div id="products-section" className="pb-24">
+            {isSearching && <ProductFilters />}
             {/* First 4 products (both mobile and desktop) */}
             <section className={gridClass}>
                 {mobileFirst.map((product, index) => (
@@ -209,7 +212,7 @@ const ProductGrid = () => {
             </section>
 
             {/* Banner after row 2 on desktop (8 products), row 2 on mobile (4 products) */}
-            {filteredProducts.length > 0 && <PromotionalBanner />}
+            {!isSearching && filteredProducts.length > 0 && <PromotionalBanner />}
 
             {/* On mobile: show products 5–8 after the banner */}
             {desktopFirst.length > 0 && (

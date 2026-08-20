@@ -34,12 +34,13 @@ const FeaturedStrip = () => {
         return () => clearInterval(tick);
     }, []);
 
+    const isSearching = Boolean(String(searchQuery || '').trim());
     const showFeatured =
-        featured.length > 0 && !searchQuery && selectedCategory === 'All' && !selectedFamily;
+        featured.length > 0 && !isSearching && selectedCategory === 'All' && !selectedFamily;
 
     return (
         <div className="mb-6">
-            <ProductFilters />
+            {!isSearching && <ProductFilters />}
 
             {showFeatured && (
                 <>
