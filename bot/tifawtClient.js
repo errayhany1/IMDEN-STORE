@@ -56,14 +56,31 @@ async function login() {
 }
 
 export async function getTifawtToken({ force = false } = {}) {
-  if (!cachedToken && tifawtStaticToken()) {
-    cachedToken = tifawtStaticToken();
+  const email = tifawtEmail();
+  const password = tifawtPassword();
+  const staticToken = tifawtStaticToken();
+
+  if (email && password) {
+    const fresh = cachedToken
+      && !force
+      && (Date.now() - tokenFetchedAt) < TOKEN_TTL_MS;
+    if (fresh) return cachedToken;
+    return login();
+  }
+
+  if (!cachedToken && staticToken) {
+    cachedToken = staticToken;
     tokenFetchedAt = Date.now();
   }
   const fresh = cachedToken
     && !force
     && (Date.now() - tokenFetchedAt) < TOKEN_TTL_MS;
   if (fresh) return cachedToken;
+  if (staticToken) {
+    cachedToken = staticToken;
+    tokenFetchedAt = Date.now();
+    return cachedToken;
+  }
   return login();
 }
 

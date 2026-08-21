@@ -30,6 +30,13 @@ import {
   isTifawtProductSyncConfigured,
 } from './tifawtProducts.js';
 import {
+  syncTifawtCategoryForProduct,
+} from './tifawtCategories.js';
+import {
+  PICKER_CATEGORY_IDS,
+  STORE_CATEGORY_LABEL_BOT,
+} from './storeCategories.js';
+import {
   REGULAR_TEMPLATES,
   SALE_TEMPLATES,
   loadTemplateSelection,
@@ -136,14 +143,7 @@ function assertBotConfig() {
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const TG_FILE_API = `https://api.telegram.org/file/bot${BOT_TOKEN}`;
 
-const CATEGORIES = {
-  1: '🔌 شواحن', 2: '🎧 سماعات', 3: '⌚ ساعات ذكية', 4: '🎮 ألعاب',
-  5: '🖱️ ماوس وكيبورد', 6: '💾 تخزين', 7: '💻 شواحن حواسيب', 8: '📐 ستاندات',
-  9: '💡 إضاءة', 10: '📷 كاميرات', 11: '📡 شبكات', 12: '📦 عام',
-  13: '🎙️ ميكروفونات', 14: '🔋 بطاريات وباوربانك',
-  16: '🔗 كابلات', 17: '🚗 إكسسوارات السيارة',
-  18: '🔌 محولات وHUB', 19: '📺 أجهزة بث', 20: '❄️ تبريد', 21: '📱 هواتف',
-};
+const CATEGORIES = STORE_CATEGORY_LABEL_BOT;
 
 const MAIN_KEYBOARD = {
   keyboard: [
@@ -173,12 +173,11 @@ const SHOW_KEYBOARD = {
 };
 
 function buildCategoryKeyboard(rowId) {
-  const catIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21];
   const rows = [];
-  for (let i = 0; i < catIds.length; i += 2) {
+  for (let i = 0; i < PICKER_CATEGORY_IDS.length; i += 2) {
     const row = [];
-    for (let j = i; j < i + 2 && j < catIds.length; j++) {
-      const id = catIds[j];
+    for (let j = i; j < i + 2 && j < PICKER_CATEGORY_IDS.length; j++) {
+      const id = PICKER_CATEGORY_IDS[j];
       row.push({ text: CATEGORIES[id], callback_data: `cat_${id}_row_${rowId}` });
     }
     rows.push(row);
@@ -339,6 +338,15 @@ async function updateNocoDBCategory(rowId, categoryId) {
   await http.patch(url, { Id: rowId, Category_ID: categoryId }, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
   });
+}
+
+async function fetchNocoRowById(rowId) {
+  const url = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records/${rowId}`;
+  const { data } = await http.get(url, {
+    headers: { 'xc-token': NOCODB_TOKEN },
+    timeout: 30000,
+  });
+  return data;
 }
 
 function parseCaption(caption) {
@@ -1792,6 +1800,8 @@ async function processProduct(
     sheet: { skipped: true, reason: 'destination_choice' },
     aiFailures: [],
     hasAiImages: false,
+    includeCategory: true,
+    categoryId: 12,
   };
   const recordData = buildNocoRecordFromEnrichment({ price, name, enrichment });
 
@@ -2987,11 +2997,26 @@ async function handleUpdate(update) {
     const catName = CATEGORIES[catId] || '📦 عام';
 
     await updateNocoDBCategory(rowId, catId);
+    let tifawtCategoryNote = '';
+    try {
+      const row = await fetchNocoRowById(rowId);
+      const sku = row?.SKU || row?.sku || row?.Ref;
+      if (sku) {
+        const tifawtSync = await syncTifawtCategoryForProduct({ sku, storeCategoryId: catId });
+        if (tifawtSync?.ok) {
+          tifawtCategoryNote = `\n🛒 Tifawt: تم ربط التصنيف (${tifawtSync.tifawtCategoryId})`;
+        } else if (tifawtSync?.reason === 'no_mapping') {
+          tifawtCategoryNote = '\n🛒 Tifawt: أضف tifawtCategoryMap في إعدادات البوت';
+        }
+      }
+    } catch (e) {
+      console.warn('Tifawt category sync failed:', e.message);
+    }
     await answerCallback(cb.id, `تم: ${catName}`);
     await editMessage(
       chatId,
       msgId,
-      `✅ تم تصنيف المنتج #${rowId} بنجاح!\n\n📂 التصنيف: ${catName}\n🌐 سيظهر على الموقع خلال لحظات.`
+      `✅ تم تصنيف المنتج #${rowId} بنجاح!\n\n📂 التصنيف: ${catName}${tifawtCategoryNote}\n🌐 سيظهر على الموقع خلال لحظات.`
     );
   }
 }

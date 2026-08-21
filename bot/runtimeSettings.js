@@ -135,6 +135,11 @@ export const BOT_SETTINGS_SCHEMA = {
     description: 'سطر لكل منتج: مرجع_الموقع=مرجع_تيفاوت_الحالي. لا تغيّر SKU المخزون في تيفاوت؛ فقط اربط مرجع المتجر به. مثال:\nMP3 car M53=CODE-IN-TIFAWT\nStarry Sky=CHARGEUR-4IN1',
     default: textEnv('TIFAWT_SKU_ALIASES', ''),
   },
+  tifawtCategoryMap: {
+    group: 'tifawt', type: 'textarea', label: 'مطابقة تصنيفات الموقع → تيفاوt',
+    description: 'سطر لكل تصنيف: رقم_تصنيف_الموقع=رقم_تصنيف_تيفاوt. مثال:\n1=12\n2=15\n\nشغّل scripts/setup-tifawt-categories.mjs لإنشاء التصنيفات في تيفاوt تلقائياً.',
+    default: textEnv('TIFAWT_CATEGORY_MAP', ''),
+  },
   jumiaDefaultBrand: {
     group: 'jumia', type: 'text', label: 'علامة Jumia الافتراضية',
     description: 'معرف واسم العلامة عندما لا تتوفر علامة للمنتج.',

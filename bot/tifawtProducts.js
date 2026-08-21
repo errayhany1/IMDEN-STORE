@@ -45,6 +45,9 @@ function appendProductFields(form, product, { includeSku = true } = {}) {
   if (Number.isFinite(BUSINESS_ID) && BUSINESS_ID > 0) {
     form.append('businessId', String(BUSINESS_ID));
   }
+  if (Number.isFinite(Number(product.categoryId)) && Number(product.categoryId) > 0) {
+    form.append('categoryId', String(product.categoryId));
+  }
   if (product.imageBuffers?.[0] || product.imageBuffer) {
     const buf = product.imageBuffers?.[0] || product.imageBuffer;
     form.append('image', buf, {
@@ -63,6 +66,7 @@ function appendProductFields(form, product, { includeSku = true } = {}) {
  *   imageBuffer?: Buffer,
  *   imageBuffers?: Buffer[],
  *   imageFileName?: string,
+ *   categoryId?: number,
  * }} product
  */
 export async function createTifawtProduct(product) {

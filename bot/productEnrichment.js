@@ -969,10 +969,15 @@ export function buildNocoRecordFromEnrichment({ price, name, enrichment }) {
     Woo_Title: copy.woo_title || copy.french_title || name,
     SKU: sellerSku,
     price,
-    Category_ID: 12,
     POSTEBL: enrichment.nocoPostebl || 'POSTEBL',
     description_arabic: copy.description_arabic || '',
   };
+
+  // Only set Category_ID on initial create — never during AI PATCH (preserves Telegram picker).
+  if (enrichment.includeCategory) {
+    const categoryId = Number(enrichment.categoryId);
+    record.Category_ID = Number.isFinite(categoryId) ? categoryId : 12;
+  }
 
   // Never write barcode from enrichment.
   if (copy.description_french) record.description_french = copy.description_french;
