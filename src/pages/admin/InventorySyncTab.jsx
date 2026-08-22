@@ -146,11 +146,14 @@ const InventorySyncTab = ({ dm }) => {
       setData(result);
     } catch (e) {
       const apiError = e?.response?.data;
+      const code = apiError?.error || '';
       setError(
-        apiError?.hint
-        || apiError?.error
-        || e.message
-        || 'تعذر تحميل المطابقة',
+        code === 'unauthorized'
+          ? 'انتهت جلسة الأدمن — سجّل الخروج من اللوحة ثم ادخل من جديد.'
+          : (apiError?.hint
+            || apiError?.error
+            || e.message
+            || 'تعذر تحميل المطابقة'),
       );
       setData(null);
     } finally {

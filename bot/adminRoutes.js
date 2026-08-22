@@ -43,8 +43,59 @@ function adminPassword() {
   return process.env.NODE_ENV === 'production' ? '' : 'imden2026';
 }
 
-const adminSessions = new Map();
 const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const ADMIN_COOKIE_PATH = '/bot-api';
+
+function sessionSecret() {
+  return String(
+    process.env.ADMIN_SESSION_SECRET
+    || process.env.BOT_SETTINGS_ENCRYPTION_KEY
+    || adminPassword()
+    || 'dev-admin-session',
+  );
+}
+
+function issueSessionToken() {
+  const exp = Date.now() + ADMIN_SESSION_TTL_MS;
+  const payload = Buffer.from(JSON.stringify({ exp, v: 1 })).toString('base64url');
+  const sig = crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+function verifySessionToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  const dot = token.lastIndexOf('.');
+  if (dot <= 0) return false;
+  const payload = token.slice(0, dot);
+  const sig = token.slice(dot + 1);
+  const expected = crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url');
+  try {
+    const sigBuf = Buffer.from(sig);
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return false;
+  } catch {
+    return false;
+  }
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return typeof data.exp === 'number' && data.exp > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function adminSessionCookie(token, req, maxAgeSec) {
+  const secure = String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https';
+  const parts = [
+    `admin_session=${token}`,
+    `Path=${ADMIN_COOKIE_PATH}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${maxAgeSec}`,
+  ];
+  if (secure) parts.push('Secure');
+  return parts.join('; ');
+}
 const loginAttempts = new Map();
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 6;
@@ -94,14 +145,7 @@ function passwordMatches(provided) {
 }
 
 function activeSession(req) {
-  const token = parseCookies(req).admin_session;
-  if (!token) return false;
-  const expiresAt = adminSessions.get(token);
-  if (!expiresAt || expiresAt < Date.now()) {
-    adminSessions.delete(token);
-    return false;
-  }
-  return true;
+  return verifySessionToken(parseCookies(req).admin_session);
 }
 
 function requireAdmin(req, res) {
@@ -240,12 +284,10 @@ export function registerAdminRoutes(app) {
       return res.status(401).json({ ok: false, error: 'unauthorized' });
     }
     loginAttempts.delete(loginKey(req));
-    const token = crypto.randomBytes(32).toString('base64url');
-    adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
-    const secure = String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https';
+    const token = issueSessionToken();
     res.setHeader(
       'Set-Cookie',
-      `admin_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(ADMIN_SESSION_TTL_MS / 1000)}${secure ? '; Secure' : ''}`,
+      adminSessionCookie(token, req, Math.floor(ADMIN_SESSION_TTL_MS / 1000)),
     );
     return res.json({ ok: true });
   });
@@ -257,9 +299,7 @@ export function registerAdminRoutes(app) {
   ));
 
   app.delete('/api/admin/session', (req, res) => {
-    const token = parseCookies(req).admin_session;
-    if (token) adminSessions.delete(token);
-    res.setHeader('Set-Cookie', 'admin_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0');
+    res.setHeader('Set-Cookie', adminSessionCookie('', req, 0));
     return res.json({ ok: true });
   });
 
