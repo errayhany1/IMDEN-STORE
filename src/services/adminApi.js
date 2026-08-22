@@ -149,9 +149,10 @@ export async function resetBotSettings() {
   return data;
 }
 
-export async function fetchInventoryReconcile() {
+export async function fetchInventoryReconcile({ force = false } = {}) {
   const { data } = await adminAxios.get('/bot-api/api/admin/inventory/reconcile', {
-    timeout: 180000,
+    params: force ? { force: '1' } : undefined,
+    timeout: 60000,
   });
   return data;
 }

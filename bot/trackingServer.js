@@ -31,6 +31,16 @@ import {
   isBundledTifawtLeadConfigured,
 } from './tifawtLeadCreate.js';
 
+// A background admin refresh must never take the storefront down: the entrypoint
+// stops nginx as soon as this process exits, so any escaped rejection would turn
+// one failed API call into a site-wide 502.
+process.on('unhandledRejection', (error) => {
+  console.error('[tracking] unhandledRejection:', error?.stack || error);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[tracking] uncaughtException:', error?.stack || error);
+});
+
 startBotSettingsSync();
 
 const app = express();

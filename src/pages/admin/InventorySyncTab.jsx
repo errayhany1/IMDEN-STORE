@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AlertTriangle,
   Download,
   Link2,
   Loader2,
@@ -18,13 +19,29 @@ import {
 } from '../../services/adminApi';
 
 const TABS = [
-  { id: 'unlinked', label: 'منتجات الموقع غير مربوطة', key: 'nocoPosteblUnlinked' },
+  { id: 'unlinked', label: 'غير مربوط', key: 'nocoPosteblUnlinked' },
   { id: 'tifawt-only', label: 'في Tifawt فقط', key: 'tifawtStockedNotInNoco' },
-  { id: 'matched', label: 'مربوطة', key: 'matchedOk' },
+  { id: 'matched', label: 'مربوط', key: 'matchedOk' },
 ];
+
+const POLL_INTERVAL_MS = 3000;
+const POLL_MAX_ATTEMPTS = 60;
+
+function messageFor(payload, fallback = 'تعذر تحميل المطابقة') {
+  const code = payload?.error || '';
+  if (code === 'unauthorized') return 'انتهت صلاحية الدخول. سجّل الخروج ثم ادخل من جديد.';
+  if (code === 'tifawt_unauthorized') return payload?.hint || 'Tifawt رفض تسجيل الدخول.';
+  return payload?.hint || code || fallback;
+}
+
+function errorFrom(e) {
+  if (e?.response?.data) return messageFor(e.response.data);
+  return e?.message || 'تعذر الاتصال بالخادم';
+}
 
 function Thumb({ src, alt, size = 44, dm }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [src]);
   if (!src || failed) {
     return (
       <div
@@ -41,7 +58,7 @@ function Thumb({ src, alt, size = 44, dm }) {
       alt={alt || ''}
       loading="lazy"
       onError={() => setFailed(true)}
-      className="shrink-0 rounded-lg object-contain border"
+      className="shrink-0 rounded-lg border object-contain"
       style={{ width: size, height: size }}
     />
   );
@@ -65,15 +82,14 @@ function SkuPicker({ value, onChange, options, dm, disabled }) {
 
   const filtered = useMemo(() => {
     const q = needle.trim().toLowerCase();
-    const list = options || [];
-    if (!q) return list.slice(0, 40);
-    return list.filter((opt) => (
+    if (!q) return options.slice(0, 40);
+    return options.filter((opt) => (
       String(opt.tifawtSku || '').toLowerCase().includes(q)
       || String(opt.tifawtName || '').toLowerCase().includes(q)
     )).slice(0, 40);
   }, [needle, options]);
 
-  const selected = options?.find((o) => o.tifawtSku === value);
+  const selected = options.find((o) => o.tifawtSku === value);
 
   return (
     <div ref={wrapRef} className="relative min-w-[200px]">
@@ -119,40 +135,64 @@ function SkuPicker({ value, onChange, options, dm, disabled }) {
   );
 }
 
-function errorText(error) {
-  const api = error?.response?.data;
-  const code = api?.error || error?.message || '';
-  if (code === 'unauthorized') {
-    return 'تعذر التحقق من الأدمن. سجّل الخروج ثم ادخل من جديد.';
-  }
-  if (code === 'tifawt_unauthorized') {
-    return api?.hint || 'Tifawt رفض الدخول. راجع البريد وكلمة السر على السيرفر.';
-  }
-  return api?.hint || api?.error || error?.message || 'تعذر تحميل المطابقة';
-}
-
 const InventorySyncTab = ({ dm }) => {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState('loading');
   const [error, setError] = useState('');
   const [tab, setTab] = useState('unlinked');
   const [query, setQuery] = useState('');
   const [busyKey, setBusyKey] = useState('');
   const [linkDraft, setLinkDraft] = useState({});
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const aliveRef = useRef(true);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => {
+    aliveRef.current = false;
+    clearTimeout(timerRef.current);
+  }, []);
+
+  // The server builds the report in the background, so one request can answer
+  // `loading`. Poll until it flips to ready instead of holding a long request
+  // open behind the proxy.
+  const load = useCallback(async ({ force = false } = {}) => {
+    clearTimeout(timerRef.current);
     setError('');
-    try {
-      const result = await fetchInventoryReconcile();
-      if (!result?.ok) throw new Error(result?.error || 'load_failed');
-      setData(result);
-    } catch (e) {
-      setError(errorText(e));
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
+    setPhase('loading');
+
+    let attempt = 0;
+    const step = async (useForce) => {
+      if (!aliveRef.current) return;
+      try {
+        const payload = await fetchInventoryReconcile({ force: useForce });
+
+        if (payload?.status === 'loading') {
+          attempt += 1;
+          if (attempt > POLL_MAX_ATTEMPTS) {
+            setPhase('error');
+            setError('استغرقت المطابقة وقتاً طويلاً. اضغط تحديث للمحاولة مرة أخرى.');
+            return;
+          }
+          timerRef.current = setTimeout(() => step(false), POLL_INTERVAL_MS);
+          return;
+        }
+
+        if (payload?.ok === false || payload?.status === 'error') {
+          setPhase('error');
+          setError(messageFor(payload));
+          return;
+        }
+
+        setData(payload);
+        setPhase('ready');
+      } catch (e) {
+        if (!aliveRef.current) return;
+        setPhase('error');
+        setError(errorFrom(e));
+      }
+    };
+
+    await step(force);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -171,16 +211,21 @@ const InventorySyncTab = ({ dm }) => {
     setBusyKey(key);
     try {
       await fn();
-      await load();
+      await load({ force: true });
     } catch (e) {
-      alert(errorText(e));
+      alert(errorFrom(e));
     } finally {
       setBusyKey('');
     }
   };
 
+  const exportCsv = (kind) => {
+    downloadInventoryExport(kind).catch((e) => alert(errorFrom(e)));
+  };
+
   const card = dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200';
   const muted = dm ? 'text-gray-400' : 'text-slate-500';
+  const busy = phase === 'loading';
 
   return (
     <div className="space-y-4">
@@ -191,30 +236,39 @@ const InventorySyncTab = ({ dm }) => {
             <p className={`text-sm mt-1 ${muted}`}>
               اربط مرجع الموقع بمرجع Tifawt، أو أوقف المنتج على الموقع دون حذفه.
             </p>
+            {data?.generatedAt && (
+              <p className={`text-xs mt-1 ${muted}`}>
+                آخر تحديث: {new Date(data.generatedAt).toLocaleTimeString('ar-MA')}
+                {data.stale ? ' • يتم التحديث الآن...' : ''}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => downloadInventoryExport('noco-unlinked').catch((e) => alert(errorText(e)))}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-emerald-500/40 text-emerald-600"
+              onClick={() => exportCsv('noco-unlinked')}
+              disabled={!data}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-emerald-500/40 text-emerald-600 disabled:opacity-40"
             >
               <Download size={14} />
               CSV غير المربوط
             </button>
             <button
               type="button"
-              onClick={() => downloadInventoryExport('tifawt-not-noco').catch((e) => alert(errorText(e)))}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-600"
+              onClick={() => exportCsv('tifawt-not-noco')}
+              disabled={!data}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-600 disabled:opacity-40"
             >
               <Download size={14} />
               CSV Tifawt فقط
             </button>
             <button
               type="button"
-              onClick={load}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border ${dm ? 'border-gray-700' : 'border-slate-200'}`}
+              onClick={() => load({ force: true })}
+              disabled={busy}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border disabled:opacity-50 ${dm ? 'border-gray-700' : 'border-slate-200'}`}
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={busy ? 'animate-spin' : ''} />
               تحديث
             </button>
           </div>
@@ -223,8 +277,8 @@ const InventorySyncTab = ({ dm }) => {
         {data?.totals && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
             {[
-              ['مربوطة', data.totals.matchedOk, 'text-emerald-600'],
-              ['غير مربوطة', data.totals.nocoPosteblUnlinked, 'text-amber-600'],
+              ['مربوط', data.totals.matchedOk, 'text-emerald-600'],
+              ['غير مربوط', data.totals.nocoPosteblUnlinked, 'text-amber-600'],
               ['Tifawt فقط', data.totals.tifawtStockedNotInNoco, 'text-blue-600'],
               ['مخزون Tifawt', data.totals.tifawtInStock, muted],
             ].map(([label, value, color]) => (
@@ -238,7 +292,19 @@ const InventorySyncTab = ({ dm }) => {
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm border border-red-100">{error}</div>
+        <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm border border-red-100 flex items-start gap-2">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <div>{error}</div>
+            <button
+              type="button"
+              onClick={() => load({ force: true })}
+              className="mt-2 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold"
+            >
+              إعادة المحاولة
+            </button>
+          </div>
+        </div>
       )}
 
       <div className={`rounded-2xl border overflow-hidden ${card}`}>
@@ -269,14 +335,14 @@ const InventorySyncTab = ({ dm }) => {
           </div>
         </div>
 
-        {loading ? (
+        {busy && !data ? (
           <div className="p-16 flex flex-col items-center gap-2 text-primary">
             <Loader2 className="animate-spin" size={32} />
-            <span className={`text-xs ${muted}`}>جاري مطابقة المخزون...</span>
+            <span className={`text-xs ${muted}`}>جاري مطابقة المخزون مع Tifawt...</span>
           </div>
         ) : rows.length === 0 ? (
           <div className={`p-12 text-center text-sm ${muted}`}>
-            {error ? 'تعذر عرض القائمة.' : 'لا توجد عناصر في هذه القائمة.'}
+            {data ? 'لا توجد عناصر في هذه القائمة.' : 'لا توجد بيانات بعد.'}
           </div>
         ) : (
           <div className="overflow-x-auto">

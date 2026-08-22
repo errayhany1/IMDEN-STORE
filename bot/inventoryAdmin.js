@@ -98,26 +98,52 @@ export async function setNocoProductPostebl({ nocoId, postebl }) {
   return { ok: true, nocoId: id, postebl: status, record: data?.[0] || null };
 }
 
+/**
+ * Reported with HTTP 200 so a failed upstream never looks like the storefront
+ * itself is down; the page reads `status` instead of the transport code.
+ */
+function reconcileFailurePayload(error) {
+  const isTifawtAuth = error?.statusCode === 401 || error?.code === 'tifawt_unauthorized';
+  return {
+    ok: false,
+    status: 'error',
+    error: isTifawtAuth
+      ? 'tifawt_unauthorized'
+      : (error?.message || 'inventory_reconcile_failed'),
+    hint: isTifawtAuth
+      ? 'تحقق من TIFAWT_EMAIL و TIFAWT_PASSWORD على سيرفر البوت (EasyPanel).'
+      : '',
+  };
+}
+
 export function registerInventoryAdminRoutes(app, { requireAdmin }) {
   app.get('/api/admin/inventory/reconcile', async (req, res) => {
     if (!requireAdmin(req, res)) return;
+    const force = req.query.force === '1';
     try {
-      await refreshBotSettings();
-      const { loadInventoryReconcile } = await import('./inventoryReconcile.js');
-      const result = await loadInventoryReconcile();
+      // Polling requests must not re-read settings from NocoDB; that burst is
+      // what trips its rate limit and makes the report fail.
+      if (force) {
+        await refreshBotSettings().catch((e) => {
+          console.warn('[admin] settings refresh skipped:', e?.message || e);
+        });
+      }
+      const {
+        loadInventoryReconcile,
+        inventoryReconcileError,
+      } = await import('./inventoryReconcile.js');
+      const result = await loadInventoryReconcile({ background: true, force });
+
+      if (result.status === 'loading') {
+        const failure = inventoryReconcileError();
+        if (failure) return res.json(reconcileFailurePayload(failure));
+        return res.json({ ok: true, status: 'loading' });
+      }
+
       return res.json({ ok: true, ...result });
     } catch (error) {
       console.error('[admin] inventory reconcile failed:', error?.message || error);
-      const isTifawtAuth = error?.statusCode === 401 || error?.code === 'tifawt_unauthorized';
-      return res.status(error?.statusCode || 502).json({
-        ok: false,
-        error: isTifawtAuth
-          ? 'tifawt_unauthorized'
-          : (error?.message || 'inventory_reconcile_failed'),
-        hint: isTifawtAuth
-          ? 'تحقق من TIFAWT_EMAIL و TIFAWT_PASSWORD على سيرفر البوت (EasyPanel). احذف TIFAWT_ACCESS_TOKEN إن كان منتهياً.'
-          : undefined,
-      });
+      return res.json(reconcileFailurePayload(error));
     }
   });
 

@@ -85,6 +85,51 @@ export function nocoPublished(record) {
   return String(record?.POSTEBL || '').trim().toUpperCase() === 'POSTEBL';
 }
 
+const PAGE_SIZE = 100;
+const PAGE_CONCURRENCY = 2;
+const PAGE_RETRIES = 3;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isRetryableStatus(status) {
+  return status === 429 || status === 408 || (status >= 500 && status < 600);
+}
+
+/**
+ * NocoDB and Tifawt both rate-limit bursts, and a 429 here used to fail the
+ * whole report. Pages go out a couple at a time and back off on 429/5xx.
+ */
+async function fetchPages(count, fetchPage) {
+  const results = new Array(count);
+  let next = 0;
+
+  const worker = async () => {
+    while (next < count) {
+      const index = next;
+      next += 1;
+      let lastError = null;
+      for (let attempt = 1; attempt <= PAGE_RETRIES; attempt += 1) {
+        try {
+          results[index] = await fetchPage(index);
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          const status = error?.statusCode || error?.response?.status;
+          if (!isRetryableStatus(status) || attempt === PAGE_RETRIES) break;
+          await sleep(500 * (2 ** (attempt - 1)));
+        }
+      }
+      if (lastError) throw lastError;
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(PAGE_CONCURRENCY, count) }, worker),
+  );
+  return results.flatMap((list) => list || []);
+}
+
 export async function fetchAllNocoRecords() {
   const { url, token, table } = nocodbConfig();
   if (!url || !token || !table) {
@@ -93,45 +138,60 @@ export async function fetchAllNocoRecords() {
     throw error;
   }
 
-  let all = [];
-  let offset = 0;
-  while (true) {
-    const { data } = await axios.get(`${url}/api/v2/tables/${table}/records`, {
+  const fields = 'Id,SKU,SellerSKU,reference_clean,POSTEBL,Arabic_Title,French_Title,Title,Woo_Title,Image1,Image2,Image3,price';
+  const getPage = async (offset) => {
+    const { data, status } = await axios.get(`${url}/api/v2/tables/${table}/records`, {
       headers: { 'xc-token': token, accept: 'application/json' },
-      params: { limit: 100, offset, sort: '-Id' },
+      params: { limit: PAGE_SIZE, offset, fields },
       timeout: 30000,
+      validateStatus: () => true,
     });
-    const list = data?.list || [];
-    all = all.concat(list);
-    if (list.length < 100) break;
-    offset += 100;
-  }
-  return all;
+    if (status >= 400) {
+      const error = new Error(data?.msg || data?.message || `nocodb_http_${status}`);
+      error.statusCode = status;
+      throw error;
+    }
+    return data;
+  };
+
+  const firstPage = await getPage(0);
+  const total = firstPage?.pageInfo?.totalRows || 0;
+  const first = firstPage?.list || [];
+  if (total <= PAGE_SIZE) return first;
+
+  const remaining = Math.ceil((total - PAGE_SIZE) / PAGE_SIZE);
+  const rest = await fetchPages(remaining, async (i) => {
+    const page = await getPage(PAGE_SIZE * (i + 1));
+    return page?.list || [];
+  });
+  return first.concat(rest);
 }
 
 export async function fetchAllTifawtProducts() {
-  let page = 1;
-  let all = [];
-  while (true) {
+  const getPage = async (page) => {
     const { data, status } = await tifawtApiRequest('get', '/products', {
-      params: { limit: 100, page },
+      params: { limit: PAGE_SIZE, page },
       timeout: 30000,
     });
     if (status >= 400) {
       const error = new Error(data?.message || `tifawt_http_${status}`);
       error.statusCode = status;
-      error.code = status === 401 ? 'tifawt_unauthorized' : undefined;
+      if (status === 401) error.code = 'tifawt_unauthorized';
       throw error;
     }
-    const list = data?.data || [];
-    all = all.concat(list);
-    const totalPages = data?.meta?.totalPages || data?.pagination?.totalPages;
-    if (!list.length || (totalPages && page >= totalPages)) break;
-    if (list.length < 100) break;
-    page += 1;
-    if (page > 200) break;
-  }
-  return all;
+    return data;
+  };
+
+  const firstPage = await getPage(1);
+  const first = firstPage?.data || [];
+  const totalPages = firstPage?.meta?.totalPages || firstPage?.pagination?.totalPages || 1;
+  if (totalPages <= 1) return first;
+
+  const rest = await fetchPages(totalPages - 1, async (i) => {
+    const page = await getPage(i + 2);
+    return page?.data || [];
+  });
+  return first.concat(rest);
 }
 
 function buildTifawtIndex(tifawtProducts) {
@@ -266,12 +326,79 @@ export function reconcileInventory({ nocoRecords, tifawtProducts, aliasesRaw = '
   };
 }
 
-export async function loadInventoryReconcile() {
+const RECONCILE_TTL_MS = 5 * 60 * 1000;
+/** After a failure, report it instead of hammering the upstream on every poll. */
+const RECONCILE_RETRY_COOLDOWN_MS = 30 * 1000;
+
+let reconcileCache = null;
+let reconcileCacheTime = 0;
+let reconcileInFlight = null;
+let reconcileFailure = null;
+
+async function runReconcile() {
   const [nocoRecords, tifawtProducts] = await Promise.all([
     fetchAllNocoRecords(),
     fetchAllTifawtProducts(),
   ]);
-  return reconcileInventory({ nocoRecords, tifawtProducts });
+  reconcileCache = reconcileInventory({ nocoRecords, tifawtProducts });
+  reconcileCacheTime = Date.now();
+  reconcileFailure = null;
+  return reconcileCache;
+}
+
+function startReconcile() {
+  if (reconcileInFlight) return reconcileInFlight;
+  reconcileFailure = null;
+  reconcileInFlight = runReconcile().finally(() => { reconcileInFlight = null; });
+  // Background callers never await this chain. Without a handler attached here
+  // a failed refresh becomes an unhandled rejection, which kills the whole
+  // container (tracking API + nginx) instead of just failing this one request.
+  reconcileInFlight.catch((error) => {
+    console.error('[inventory] reconcile failed:', error?.message || error);
+    reconcileFailure = { error, at: Date.now() };
+  });
+  return reconcileInFlight;
+}
+
+function isReconcileFresh() {
+  return Boolean(reconcileCache) && (Date.now() - reconcileCacheTime) < RECONCILE_TTL_MS;
+}
+
+export function inventoryReconcileError() {
+  return reconcileFailure?.error || null;
+}
+
+/**
+ * `background` returns immediately: cached data when available, otherwise a
+ * `loading` marker the caller polls on. Foreground callers await the refresh.
+ */
+export async function loadInventoryReconcile({ background = false, force = false } = {}) {
+  if (force) {
+    reconcileCache = null;
+    reconcileCacheTime = 0;
+    reconcileFailure = null;
+  }
+
+  if (isReconcileFresh()) {
+    return { status: 'ready', stale: false, ...reconcileCache };
+  }
+
+  const cooling = reconcileFailure
+    && (Date.now() - reconcileFailure.at) < RECONCILE_RETRY_COOLDOWN_MS;
+  if (!reconcileInFlight && cooling) {
+    if (reconcileCache) return { status: 'ready', stale: true, ...reconcileCache };
+    throw reconcileFailure.error;
+  }
+
+  const run = startReconcile();
+
+  if (background) {
+    return reconcileCache
+      ? { status: 'ready', stale: true, ...reconcileCache }
+      : { status: 'loading' };
+  }
+
+  return { status: 'ready', stale: false, ...(await run) };
 }
 
 export function toCsv(rows, headers) {
