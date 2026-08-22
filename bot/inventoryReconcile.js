@@ -3,7 +3,7 @@
  * Used by CLI script and admin inventory sync API.
  */
 import axios from 'axios';
-import { getTifawtToken, API_BASE } from './tifawtClient.js';
+import { tifawtApiRequest } from './tifawtClient.js';
 import {
   toTifawtSku,
   parseTifawtSkuAliases,
@@ -110,19 +110,17 @@ export async function fetchAllNocoRecords() {
 }
 
 export async function fetchAllTifawtProducts() {
-  const token = await getTifawtToken();
   let page = 1;
   let all = [];
   while (true) {
-    const { data, status } = await axios.get(`${API_BASE}/products`, {
+    const { data, status } = await tifawtApiRequest('get', '/products', {
       params: { limit: 100, page },
-      headers: { Authorization: `Bearer ${token}`, accept: 'application/json' },
       timeout: 30000,
-      validateStatus: () => true,
     });
     if (status >= 400) {
       const error = new Error(data?.message || `tifawt_http_${status}`);
       error.statusCode = status;
+      error.code = status === 401 ? 'tifawt_unauthorized' : undefined;
       throw error;
     }
     const list = data?.data || [];

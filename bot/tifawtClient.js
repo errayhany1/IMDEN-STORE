@@ -27,6 +27,11 @@ let tokenFetchedAt = 0;
 /** Soft TTL — re-login after 6h or on 401. */
 const TOKEN_TTL_MS = Number(process.env.TIFAWT_TOKEN_TTL_MS || 6 * 60 * 60 * 1000);
 
+export function invalidateTifawtToken() {
+  cachedToken = '';
+  tokenFetchedAt = 0;
+}
+
 export function isTifawtApiConfigured() {
   return Boolean((tifawtEmail() && tifawtPassword()) || tifawtStaticToken() || cachedToken);
 }
@@ -60,6 +65,8 @@ export async function getTifawtToken({ force = false } = {}) {
   const password = tifawtPassword();
   const staticToken = tifawtStaticToken();
 
+  if (force) invalidateTifawtToken();
+
   if (email && password) {
     const fresh = cachedToken
       && !force
@@ -85,6 +92,48 @@ export async function getTifawtToken({ force = false } = {}) {
 }
 
 /**
+ * Authenticated Tifawt API call with one automatic token refresh on 401.
+ */
+export async function tifawtApiRequest(method, path, {
+  params,
+  data,
+  headers: extraHeaders,
+  timeout = 30000,
+  responseType,
+  maxBodyLength,
+  maxContentLength,
+} = {}) {
+  const url = `${API_BASE}${String(path).startsWith('/') ? path : `/${path}`}`;
+
+  const attempt = async (force) => {
+    const token = await getTifawtToken({ force });
+    return axios({
+      method,
+      url,
+      params,
+      data,
+      responseType,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        accept: 'application/json',
+        ...extraHeaders,
+      },
+      timeout,
+      maxBodyLength,
+      maxContentLength,
+      validateStatus: () => true,
+    });
+  };
+
+  let res = await attempt(false);
+  if (res.status === 401) {
+    invalidateTifawtToken();
+    res = await attempt(true);
+  }
+  return res;
+}
+
+/**
  * Run an authenticated request, retrying once with a fresh token on 401.
  * @param {(token: string) => Promise<any>} run
  */
@@ -93,6 +142,7 @@ export async function withTifawtToken(run) {
     return await run(await getTifawtToken());
   } catch (err) {
     if (err?.response?.status === 401) {
+      invalidateTifawtToken();
       return run(await getTifawtToken({ force: true }));
     }
     throw err;

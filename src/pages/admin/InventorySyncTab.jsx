@@ -145,7 +145,13 @@ const InventorySyncTab = ({ dm }) => {
       if (!result?.ok) throw new Error(result?.error || 'load_failed');
       setData(result);
     } catch (e) {
-      setError(e?.response?.data?.error || e.message || 'تعذر تحميل المطابقة');
+      const apiError = e?.response?.data;
+      setError(
+        apiError?.hint
+        || apiError?.error
+        || e.message
+        || 'تعذر تحميل المطابقة',
+      );
       setData(null);
     } finally {
       setLoading(false);

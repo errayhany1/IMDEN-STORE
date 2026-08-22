@@ -5,6 +5,7 @@ import axios from 'axios';
 import {
   getBotSetting,
   updateBotSettings,
+  refreshBotSettings,
 } from './runtimeSettings.js';
 import {
   parseTifawtSkuAliases,
@@ -101,14 +102,21 @@ export function registerInventoryAdminRoutes(app, { requireAdmin }) {
   app.get('/api/admin/inventory/reconcile', async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
+      await refreshBotSettings();
       const { loadInventoryReconcile } = await import('./inventoryReconcile.js');
       const result = await loadInventoryReconcile();
       return res.json({ ok: true, ...result });
     } catch (error) {
       console.error('[admin] inventory reconcile failed:', error?.message || error);
+      const isTifawtAuth = error?.statusCode === 401 || error?.code === 'tifawt_unauthorized';
       return res.status(error?.statusCode || 502).json({
         ok: false,
-        error: error?.message || 'inventory_reconcile_failed',
+        error: isTifawtAuth
+          ? 'tifawt_unauthorized'
+          : (error?.message || 'inventory_reconcile_failed'),
+        hint: isTifawtAuth
+          ? 'تحقق من TIFAWT_EMAIL و TIFAWT_PASSWORD على سيرفر البوت (EasyPanel). احذف TIFAWT_ACCESS_TOKEN إن كان منتهياً.'
+          : undefined,
       });
     }
   });
