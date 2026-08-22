@@ -151,6 +151,7 @@ const MAIN_KEYBOARD = {
     [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
     [{ text: '✨ إعادة توليد الوصف والصور' }],
+    [{ text: '📷 إضافة صور لمنتج' }],
     [{ text: '🎨 إضافة ألوان لمنتج موجود' }],
     [{ text: '🛒 إعادة بناء من Amazon' }],
     [{ text: '📦 تجهيز شحن Jumia' }, { text: '❌ إلغاء طلب Jumia' }],
@@ -470,6 +471,131 @@ async function downloadNocoImageBuffer(url) {
   return Buffer.from(data);
 }
 
+function collectExistingImageFiles(row) {
+  const files = [];
+  for (const key of IMAGE_SLOT_KEYS) {
+    const slot = row?.[key];
+    const file = Array.isArray(slot) ? slot[0] : slot;
+    if (file?.url || file?.path || file?.signedUrl) files.push(file);
+  }
+  return files;
+}
+
+function buildImageGalleryPatch(files) {
+  const capped = files.slice(0, IMAGE_SLOT_KEYS.length);
+  const patch = {};
+  for (let i = 0; i < IMAGE_SLOT_KEYS.length; i++) {
+    patch[IMAGE_SLOT_KEYS[i]] = capped[i] ? [capped[i]] : null;
+  }
+  for (let i = 2; i <= 5; i++) {
+    patch[`image${i}`] = capped[i - 1] ? [capped[i - 1]] : null;
+  }
+  return patch;
+}
+
+function reorderNewPhotosWithFront(newFiles, frontIndex) {
+  if (!newFiles.length) return [];
+  const idx = Math.max(0, Math.min(Number(frontIndex) || 0, newFiles.length - 1));
+  return [newFiles[idx], ...newFiles.filter((_, i) => i !== idx)];
+}
+
+function addImagesFrontKeyboard(token, count) {
+  const rows = [];
+  for (let i = 0; i < count; i += 3) {
+    const row = [];
+    for (let j = i; j < Math.min(i + 3, count); j++) {
+      row.push({
+        text: `⭐ واجهة: صورة ${j + 1}`,
+        callback_data: `addimg:${token}:front:${j}`,
+      });
+    }
+    rows.push(row);
+  }
+  rows.push([{ text: '✖️ إلغاء', callback_data: `addimg:${token}:cancel:x` }]);
+  return { inline_keyboard: rows };
+}
+
+async function beginAddImagesCollection(chatId, record) {
+  const rowId = record.Id || record.id;
+  const sellerSku = String(record.SKU || '').trim();
+  userState[chatId] = {
+    type: 'AWAITING_ADD_IMAGES_COLLECT',
+    rowId,
+    sellerSku,
+    existingFiles: collectExistingImageFiles(record),
+  };
+  await sendMessage(
+    chatId,
+    `✅ المنتج: ${sellerSku} (#${rowId})\n\n`
+    + '📷 أرسل الصور التي تريد إضافتها (صورة واحدة أو ألبوم).\n'
+    + '⚠️ سيُحفظ ترتيب الإرسال كما أرسلته.\n'
+    + 'بعدها سأسألك أي صورة تكون واجهة المنتج (الصورة الرئيسية في الموقع).\n\n'
+    + 'للإلغاء: 🔄 إعادة تشغيل البوت',
+  );
+}
+
+async function uploadAddImagesBatch(chatId, files, context) {
+  await sendMessage(chatId, `⏳ جاري رفع ${files.length} صورة...`);
+  const uploaded = [];
+  const stamp = Date.now().toString(36);
+  for (let i = 0; i < files.length; i++) {
+    try {
+      const { buffer } = await downloadTelegramFileData(files[i].fileId, files[i].extName);
+      const nocoFile = await uploadToNocoDB(buffer, `add-${context.sellerSku}-${stamp}-${i + 1}.jpg`);
+      if (nocoFile) uploaded.push(nocoFile);
+    } catch (e) {
+      console.error(`Add-image upload ${i + 1} failed:`, e.message);
+    }
+  }
+  if (!uploaded.length) {
+    await sendMessage(chatId, '❌ فشل رفع الصور. أعد المحاولة.');
+    delete userState[chatId];
+    return;
+  }
+
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  pendingAddImages.set(token, {
+    chatId,
+    rowId: context.rowId,
+    sellerSku: context.sellerSku,
+    existingFiles: context.existingFiles || [],
+    newFiles: uploaded,
+    expiresAt: Date.now() + (10 * 60 * 1000),
+  });
+  delete userState[chatId];
+
+  await sendMessage(
+    chatId,
+    `✅ تم رفع ${uploaded.length} صورة.\n\n`
+    + '⭐ أي صورة تريد أن تكون واجهة المنتج (Image1)؟\n'
+    + uploaded.map((_, i) => `${i + 1}) صورة ${i + 1}`).join('\n'),
+    addImagesFrontKeyboard(token, uploaded.length),
+  );
+}
+
+async function finalizeAddImagesWithFront(pending, frontIndex) {
+  const { chatId, rowId, sellerSku, existingFiles, newFiles } = pending;
+  const orderedNew = reorderNewPhotosWithFront(newFiles, frontIndex);
+  const gallery = [...orderedNew, ...(existingFiles || [])].slice(0, IMAGE_SLOT_KEYS.length);
+  const dropped = orderedNew.length + (existingFiles?.length || 0) - gallery.length;
+
+  const patch = buildImageGalleryPatch(gallery);
+  patch.Id = rowId;
+  const recordUrl = `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`;
+  await http.patch(recordUrl, patch, {
+    headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+  });
+
+  let note = `✅ تمت إضافة ${newFiles.length} صورة للمنتج ${sellerSku}.\n`
+    + `⭐ الواجهة: الصورة ${frontIndex + 1} من الدفعة الجديدة.\n`
+    + `🖼️ إجمالي المعرض: ${gallery.length} صورة.`;
+  if (dropped > 0) {
+    note += `\n⚠️ تم حذف ${dropped} صورة قديمة (الحد الأقصى ${IMAGE_SLOT_KEYS.length}).`;
+  }
+  note += `\n\n🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}`;
+  await sendMessage(chatId, note);
+}
+
 function collectSourceImagesFromRow(row) {
   return [row.Image1, row.Image2, row.Image3, row.Image4, row.Image5]
     .flatMap((slot) => (Array.isArray(slot) ? slot : slot ? [slot] : []))
@@ -497,6 +623,9 @@ const pendingImageRoles = new Map();
 const pendingGalleryApprovals = new Map();
 /** AI suggests visible color variants; seller confirms before paid color renders. */
 const pendingColorApprovals = new Map();
+/** Seller adds photos to an existing product; picks storefront front image. */
+const pendingAddImages = new Map();
+const IMAGE_SLOT_KEYS = ['Image1', 'Image2', 'Image3', 'Image4', 'Image5', 'Image6', 'Image7', 'Image8'];
 let productQueue = Promise.resolve();
 /** Serial AI polish queue — never blocks product create, max 1 enrich at a time. */
 let aiPolishQueue = Promise.resolve();
@@ -1971,6 +2100,11 @@ function isAddColorsCommand(text) {
     || text.startsWith('/add_colors');
 }
 
+function isAddImagesCommand(text) {
+  return text === '📷 إضافة صور لمنتج'
+    || text.startsWith('/add_images');
+}
+
 function isAmazonReenrichCommand(text) {
   return text === '🛒 إعادة بناء من Amazon'
     || text.startsWith('/amazon_rebuild');
@@ -2275,6 +2409,15 @@ async function handleUpdate(update) {
       return;
     }
 
+    if (isAddImagesCommand(text)) {
+      userState[chatId] = 'AWAITING_REF_ADD_IMAGES';
+      await sendMessage(
+        chatId,
+        '📷 إضافة صور لمنتج\n\nأرسل الآن مرجع المنتج (REF أو SKU).\nبعدها أرسل الصور بالترتيب الذي تريده، ثم اختر أي صورة تكون واجهة المنتج.\n\nللإلغاء: 🔄 إعادة تشغيل البوت',
+      );
+      return;
+    }
+
     if (isAmazonReenrichCommand(text)) {
       userState[chatId] = 'AWAITING_REF_AMAZON_REENRICH';
       await sendMessage(
@@ -2422,6 +2565,14 @@ async function handleUpdate(update) {
       return;
     }
 
+    if (userState[chatId]?.type === 'AWAITING_ADD_IMAGES_COLLECT') {
+      await sendMessage(
+        chatId,
+        `📷 أرسل صور المنتج (${userState[chatId].sellerSku}) كصورة واحدة أو ألبوم.\nللإلغاء: 🔄 إعادة تشغيل البوت`,
+      );
+      return;
+    }
+
     if (userState[chatId]) {
       const state = userState[chatId];
       const sku = text;
@@ -2479,6 +2630,8 @@ async function handleUpdate(update) {
             chatId,
             `✅ تم العثور على المنتج (${context.sellerSku}).\n\n📷 أرسل الآن صور الألوان كصورة واحدة أو ألبوم.\nسأكتشف الألوان ثم أطلب موافقتك قبل إنشاء صور ومنتجات Jumia.\n\n🔒 صور ووصف المنتج الأساسي لن يتغيرا.`,
           );
+        } else if (state === 'AWAITING_REF_ADD_IMAGES') {
+          await beginAddImagesCollection(chatId, record);
         }
       } else {
         await sendMessage(chatId, `❌ لم أجد منتج بمرجع: ${sku}\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`);
@@ -2503,17 +2656,28 @@ async function handleUpdate(update) {
     const colorPhotoState = userState[chatId]?.type === 'AWAITING_EXISTING_COLOR_PHOTOS'
       ? userState[chatId]
       : null;
+    const addImagesState = userState[chatId]?.type === 'AWAITING_ADD_IMAGES_COLLECT'
+      ? userState[chatId]
+      : null;
 
     if (groupId) {
       if (!albumBuffer[groupId]) {
         const colorContext = colorPhotoState?.context || null;
-        if (colorPhotoState) delete userState[chatId];
+        const addContext = addImagesState
+          ? {
+            rowId: addImagesState.rowId,
+            sellerSku: addImagesState.sellerSku,
+            existingFiles: addImagesState.existingFiles,
+          }
+          : null;
+        if (colorPhotoState || addImagesState) delete userState[chatId];
         albumBuffer[groupId] = {
           files: [],
           caption: '',
           chatId,
-          mode: colorContext ? 'existing-colors' : 'new-product',
+          mode: addContext ? 'add-images' : (colorContext ? 'existing-colors' : 'new-product'),
           colorContext,
+          addContext,
           timer: setTimeout(() => {
             const album = albumBuffer[groupId];
             delete albumBuffer[groupId];
@@ -2526,6 +2690,11 @@ async function handleUpdate(update) {
                   album.colorContext,
                 ),
               );
+            } else if (album.mode === 'add-images') {
+              uploadAddImagesBatch(album.chatId, album.files, album.addContext).catch((err) => {
+                console.error('Add-images album failed:', err.message);
+                sendMessage(album.chatId, `❌ فشل إضافة الصور: ${err.message}`).catch(() => {});
+              });
             } else {
               requestProductDestination(album.chatId, album.files, album.caption).catch((err) => {
                 console.error('Destination prompt failed:', err.message);
@@ -2545,6 +2714,12 @@ async function handleUpdate(update) {
           colorPhotoState.context,
         ),
       );
+    } else if (addImagesState) {
+      delete userState[chatId];
+      uploadAddImagesBatch(chatId, [{ fileId, extName }], addImagesState).catch((err) => {
+        console.error('Add-images single photo failed:', err.message);
+        sendMessage(chatId, `❌ فشل إضافة الصور: ${err.message}`).catch(() => {});
+      });
     } else {
       await requestProductDestination(chatId, [{ fileId, extName }], msg.caption);
     }
@@ -2984,6 +3159,36 @@ async function handleUpdate(update) {
         console.warn('editMessageText imgrole failed:', e.message);
       }
       return;
+    }
+
+    if (data.startsWith('addimg:')) {
+      const [, token, action, idxRaw] = data.split(':');
+      const pending = pendingAddImages.get(token);
+      if (!pending || pending.chatId !== chatId || pending.expiresAt < Date.now()) {
+        pendingAddImages.delete(token);
+        await answerCallback(cb.id, 'انتهت المهلة');
+        await editMessage(chatId, msgId, '⌛ انتهت مهلة اختيار الواجهة. أعد المحاولة من 📷 إضافة صور لمنتج.');
+        return;
+      }
+      if (action === 'cancel') {
+        pendingAddImages.delete(token);
+        await answerCallback(cb.id, 'تم الإلغاء');
+        await editMessage(chatId, msgId, '✖️ تم إلغاء إضافة الصور.');
+        return;
+      }
+      if (action === 'front') {
+        const frontIndex = parseInt(idxRaw, 10);
+        pendingAddImages.delete(token);
+        await answerCallback(cb.id, `الواجهة: صورة ${frontIndex + 1}`);
+        await editMessage(chatId, msgId, `⏳ جاري حفظ ${pending.newFiles.length} صورة...`);
+        try {
+          await finalizeAddImagesWithFront(pending, frontIndex);
+        } catch (e) {
+          console.error('finalizeAddImagesWithFront:', e?.response?.data || e.message);
+          await sendMessage(chatId, `❌ فشل حفظ الصور: ${e?.response?.data?.message || e.message}`);
+        }
+        return;
+      }
     }
 
     if (!data.startsWith('cat_')) {
