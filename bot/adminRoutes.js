@@ -44,7 +44,7 @@ function adminPassword() {
 }
 
 const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
-const ADMIN_COOKIE_PATH = '/bot-api';
+const ADMIN_COOKIE_PATH = '/';
 
 function sessionSecret() {
   return String(

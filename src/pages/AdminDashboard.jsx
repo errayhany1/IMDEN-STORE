@@ -13,6 +13,7 @@ import {
     createAdminSession,
     destroyAdminSession,
     publishProductToJumia,
+    setAdminPassword,
     verifyAdminSession,
 } from '../services/adminApi';
 import { initTelegramWebApp, adminTabFromQuery } from '../utils/telegramWebApp';
@@ -120,6 +121,7 @@ const AdminDashboard = () => {
         setError('');
         try {
             await createAdminSession(password);
+            setAdminPassword(password);
             setIsAuthenticated(true);
             sessionStorage.setItem('admin_auth', 'true');
             fetchOrders();
@@ -136,6 +138,7 @@ const AdminDashboard = () => {
             // Clear the local dashboard even if the server session already expired.
         }
         sessionStorage.removeItem('admin_auth');
+        setAdminPassword('');
         setIsAuthenticated(false);
         setOrders([]);
         setProducts([]);

@@ -1,17 +1,45 @@
 /**
- * Lightweight admin client for /bot-api admin routes.
+ * Admin client for /bot-api. Auth is the dashboard password sent as
+ * X-Admin-Password on every request (cookies alone die after each deploy).
  */
 import axios from 'axios';
+
+const ADMIN_PW_KEY = 'admin_pw';
+
+export function getAdminPassword() {
+  if (typeof sessionStorage === 'undefined') return '';
+  return (
+    sessionStorage.getItem(ADMIN_PW_KEY)
+    || import.meta.env.VITE_ADMIN_PASSWORD
+    || ''
+  );
+}
+
+export function setAdminPassword(password) {
+  if (typeof sessionStorage === 'undefined') return;
+  const value = String(password || '').trim();
+  if (value) sessionStorage.setItem(ADMIN_PW_KEY, value);
+  else sessionStorage.removeItem(ADMIN_PW_KEY);
+}
 
 const adminAxios = axios.create({
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
+adminAxios.interceptors.request.use((config) => {
+  const password = getAdminPassword();
+  if (password) {
+    config.headers['X-Admin-Password'] = password;
+  }
+  return config;
+});
+
 export async function createAdminSession(password) {
+  if (password) setAdminPassword(password);
   const { data } = await adminAxios.post(
     '/bot-api/api/admin/session',
-    { password },
+    { password: password || getAdminPassword() },
     { timeout: 30000 },
   );
   return data;
@@ -25,10 +53,15 @@ export async function verifyAdminSession() {
 }
 
 export async function destroyAdminSession() {
-  const { data } = await adminAxios.delete('/bot-api/api/admin/session', {
-    timeout: 15000,
-  });
-  return data;
+  try {
+    const { data } = await adminAxios.delete('/bot-api/api/admin/session', {
+      timeout: 15000,
+    });
+    return data;
+  } finally {
+    setAdminPassword('');
+    sessionStorage.removeItem('admin_auth');
+  }
 }
 
 export async function fetchTifawtOrders({ search = '', status = 'all', limit = 50 } = {}) {
@@ -118,7 +151,7 @@ export async function resetBotSettings() {
 
 export async function fetchInventoryReconcile() {
   const { data } = await adminAxios.get('/bot-api/api/admin/inventory/reconcile', {
-    timeout: 120000,
+    timeout: 180000,
   });
   return data;
 }
@@ -150,6 +183,24 @@ export async function setInventoryNocoStatus({ nocoId, postebl }) {
   return data;
 }
 
-export function inventoryExportUrl(kind) {
-  return `/bot-api/api/admin/inventory/export/${kind}`;
+export async function downloadInventoryExport(kind) {
+  const { data, headers } = await adminAxios.get(
+    `/bot-api/api/admin/inventory/export/${kind}`,
+    { timeout: 180000, responseType: 'blob' },
+  );
+  const name = {
+    'noco-unlinked': 'postebl-unlinked.csv',
+    'tifawt-not-noco': 'tifawt-without-nocodb.csv',
+    matched: 'matched.csv',
+  }[kind] || 'export.csv';
+  const type = headers['content-type'] || 'text/csv';
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }

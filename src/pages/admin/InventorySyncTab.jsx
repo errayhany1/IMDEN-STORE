@@ -10,51 +10,44 @@ import {
   Unlink,
 } from 'lucide-react';
 import {
+  downloadInventoryExport,
   fetchInventoryReconcile,
-  inventoryExportUrl,
   linkInventorySku,
   setInventoryNocoStatus,
   unlinkInventorySku,
 } from '../../services/adminApi';
 
 const TABS = [
-  { id: 'unlinked', label: 'POSTEBL غير مربوط', key: 'nocoPosteblUnlinked' },
-  { id: 'tifawt-only', label: 'Tifawt بدون NocoDB', key: 'tifawtStockedNotInNoco' },
-  { id: 'matched', label: 'مطابق', key: 'matchedOk' },
+  { id: 'unlinked', label: 'منتجات الموقع غير مربوطة', key: 'nocoPosteblUnlinked' },
+  { id: 'tifawt-only', label: 'في Tifawt فقط', key: 'tifawtStockedNotInNoco' },
+  { id: 'matched', label: 'مربوطة', key: 'matchedOk' },
 ];
 
-function ProductThumb({ src, alt, size = 44, dm }) {
+function Thumb({ src, alt, size = 44, dm }) {
   const [failed, setFailed] = useState(false);
-  const box = `w-[${size}px] h-[${size}px]`;
-  const cls = `shrink-0 rounded-lg border overflow-hidden flex items-center justify-center ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-100 border-slate-200'}`;
   if (!src || failed) {
     return (
-      <div className={cls} style={{ width: size, height: size }}>
+      <div
+        className={`shrink-0 rounded-lg border flex items-center justify-center ${dm ? 'bg-gray-800 border-gray-700' : 'bg-slate-100 border-slate-200'}`}
+        style={{ width: size, height: size }}
+      >
         <Package size={Math.round(size * 0.4)} className={dm ? 'text-gray-600' : 'text-slate-300'} />
       </div>
     );
   }
   return (
-    <div className={cls} style={{ width: size, height: size }}>
-      <img
-        src={src}
-        alt={alt || ''}
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className={`${box} object-contain`}
-        style={{ width: size, height: size }}
-      />
-    </div>
+    <img
+      src={src}
+      alt={alt || ''}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="shrink-0 rounded-lg object-contain border"
+      style={{ width: size, height: size }}
+    />
   );
 }
 
-function rowImage(row, tab) {
-  if (tab === 'unlinked') return row.nocoImage;
-  if (tab === 'tifawt-only') return row.tifawtImage;
-  return row.nocoImage || row.tifawtImage;
-}
-
-function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
+function SkuPicker({ value, onChange, options, dm, disabled }) {
   const wrapRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [needle, setNeedle] = useState(value || '');
@@ -63,11 +56,11 @@ function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
 
   useEffect(() => {
     if (!open) return undefined;
-    const onDoc = (e) => {
+    const close = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener('pointerdown', onDoc);
-    return () => document.removeEventListener('pointerdown', onDoc);
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
   }, [open]);
 
   const filtered = useMemo(() => {
@@ -85,7 +78,7 @@ function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
   return (
     <div ref={wrapRef} className="relative min-w-[200px]">
       <div className="flex items-center gap-2">
-        {selected?.tifawtImage && <ProductThumb src={selected.tifawtImage} alt={selected.tifawtSku} size={36} dm={dm} />}
+        {selected?.tifawtImage && <Thumb src={selected.tifawtImage} alt={selected.tifawtSku} size={36} dm={dm} />}
         <input
           value={needle}
           disabled={disabled}
@@ -95,14 +88,12 @@ function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
             onChange(e.target.value);
             setOpen(true);
           }}
-          placeholder="ابحث SKU أو اسم Tifawt..."
+          placeholder="SKU أو اسم Tifawt"
           className={`flex-1 px-2 py-1.5 rounded-lg text-xs border ${dm ? 'bg-gray-950 border-gray-800' : 'border-slate-200 bg-white'}`}
         />
       </div>
       {open && filtered.length > 0 && (
-        <div
-          className={`absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-xl border shadow-xl ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}
-        >
+        <div className={`absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-xl border shadow-xl ${dm ? 'bg-gray-900 border-gray-700' : 'bg-white border-slate-200'}`}>
           {filtered.map((opt) => (
             <button
               key={opt.tifawtSku}
@@ -114,7 +105,7 @@ function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
               }}
               className={`w-full flex items-center gap-2 px-2 py-2 text-right border-b last:border-b-0 ${dm ? 'border-gray-800 hover:bg-gray-800' : 'border-slate-100 hover:bg-slate-50'}`}
             >
-              <ProductThumb src={opt.tifawtImage} alt={opt.tifawtSku} size={40} dm={dm} />
+              <Thumb src={opt.tifawtImage} alt={opt.tifawtSku} size={40} dm={dm} />
               <div className="min-w-0 flex-1">
                 <div className="font-mono text-[11px] font-bold truncate">{opt.tifawtSku}</div>
                 <div className={`text-[11px] truncate ${dm ? 'text-gray-400' : 'text-slate-500'}`}>{opt.tifawtName}</div>
@@ -126,6 +117,18 @@ function TifawtSkuPicker({ value, onChange, options, dm, disabled }) {
       )}
     </div>
   );
+}
+
+function errorText(error) {
+  const api = error?.response?.data;
+  const code = api?.error || error?.message || '';
+  if (code === 'unauthorized') {
+    return 'تعذر التحقق من الأدمن. سجّل الخروج ثم ادخل من جديد.';
+  }
+  if (code === 'tifawt_unauthorized') {
+    return api?.hint || 'Tifawt رفض الدخول. راجع البريد وكلمة السر على السيرفر.';
+  }
+  return api?.hint || api?.error || error?.message || 'تعذر تحميل المطابقة';
 }
 
 const InventorySyncTab = ({ dm }) => {
@@ -145,16 +148,7 @@ const InventorySyncTab = ({ dm }) => {
       if (!result?.ok) throw new Error(result?.error || 'load_failed');
       setData(result);
     } catch (e) {
-      const apiError = e?.response?.data;
-      const code = apiError?.error || '';
-      setError(
-        code === 'unauthorized'
-          ? 'انتهت جلسة الأدمن — سجّل الخروج من اللوحة ثم ادخل من جديد.'
-          : (apiError?.hint
-            || apiError?.error
-            || e.message
-            || 'تعذر تحميل المطابقة'),
-      );
+      setError(errorText(e));
       setData(null);
     } finally {
       setLoading(false);
@@ -171,7 +165,7 @@ const InventorySyncTab = ({ dm }) => {
     return list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
   }, [data, tab, query]);
 
-  const tifawtPicker = useMemo(() => data?.tifawtPicker || [], [data]);
+  const picker = data?.tifawtPicker || [];
 
   const run = async (key, fn) => {
     setBusyKey(key);
@@ -179,7 +173,7 @@ const InventorySyncTab = ({ dm }) => {
       await fn();
       await load();
     } catch (e) {
-      alert(e?.response?.data?.error || e.message || 'فشلت العملية');
+      alert(errorText(e));
     } finally {
       setBusyKey('');
     }
@@ -193,26 +187,28 @@ const InventorySyncTab = ({ dm }) => {
       <div className={`rounded-2xl border p-4 ${card}`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="font-bold text-lg">مطابقة مخزون Tifawt ↔ NocoDB</h3>
+            <h3 className="font-bold text-lg">مطابقة مخزون Tifawt ↔ الموقع</h3>
             <p className={`text-sm mt-1 ${muted}`}>
-              اربط مرجع الموقع بمرجع Tifawt (alias) أو أوقف المنتج على الموقع دون حذفه من NocoDB.
+              اربط مرجع الموقع بمرجع Tifawt، أو أوقف المنتج على الموقع دون حذفه.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a
-              href={inventoryExportUrl('noco-unlinked')}
+            <button
+              type="button"
+              onClick={() => downloadInventoryExport('noco-unlinked').catch((e) => alert(errorText(e)))}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-emerald-500/40 text-emerald-600"
             >
               <Download size={14} />
-              POSTEBL غير مربوط
-            </a>
-            <a
-              href={inventoryExportUrl('tifawt-not-noco')}
+              CSV غير المربوط
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadInventoryExport('tifawt-not-noco').catch((e) => alert(errorText(e)))}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-600"
             >
               <Download size={14} />
-              Tifawt بدون NocoDB
-            </a>
+              CSV Tifawt فقط
+            </button>
             <button
               type="button"
               onClick={load}
@@ -227,14 +223,14 @@ const InventorySyncTab = ({ dm }) => {
         {data?.totals && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
             {[
-              ['مطابق', data.totals.matchedOk, 'text-emerald-600'],
-              ['POSTEBL غير مربوط', data.totals.nocoPosteblUnlinked, 'text-amber-600'],
-              ['Tifawt بدون NocoDB', data.totals.tifawtStockedNotInNoco, 'text-blue-600'],
-              ['Tifawt بمخزون', data.totals.tifawtInStock, muted],
+              ['مربوطة', data.totals.matchedOk, 'text-emerald-600'],
+              ['غير مربوطة', data.totals.nocoPosteblUnlinked, 'text-amber-600'],
+              ['Tifawt فقط', data.totals.tifawtStockedNotInNoco, 'text-blue-600'],
+              ['مخزون Tifawt', data.totals.tifawtInStock, muted],
             ].map(([label, value, color]) => (
               <div key={label} className={`rounded-xl border px-3 py-2 ${dm ? 'border-gray-800 bg-gray-950/40' : 'border-slate-100 bg-slate-50'}`}>
                 <div className={`text-xs ${muted}`}>{label}</div>
-                <div className={`text-xl font-black ${color}`}>{value}</div>
+                <div className={`text-xl font-black ${color}`}>{value ?? 0}</div>
               </div>
             ))}
           </div>
@@ -252,18 +248,14 @@ const InventorySyncTab = ({ dm }) => {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors
-                ${tab === t.id
+              className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                tab === t.id
                   ? 'bg-primary text-white'
                   : dm ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'
-                }`}
+              }`}
             >
               {t.label}
-              {data?.totals && (
-                <span className="opacity-80 mr-1">
-                  ({data.totals[t.key] ?? 0})
-                </span>
-              )}
+              {data?.totals ? ` (${data.totals[t.key] ?? 0})` : ''}
             </button>
           ))}
           <div className="relative mr-auto min-w-[180px] flex-1 max-w-xs">
@@ -277,25 +269,15 @@ const InventorySyncTab = ({ dm }) => {
           </div>
         </div>
 
-        {query.trim() && rows.length > 0 && (
-          <div className={`flex gap-2 p-3 overflow-x-auto border-b ${dm ? 'border-gray-800 bg-gray-950/30' : 'border-slate-100 bg-slate-50/80'}`}>
-            {rows.slice(0, 24).map((row, i) => {
-              const img = rowImage(row, tab);
-              const label = row.nocoSku || row.tifawtSku || `#${i + 1}`;
-              return (
-                <div key={`${label}-${i}`} className="shrink-0 w-16 text-center">
-                  <ProductThumb src={img} alt={label} size={56} dm={dm} />
-                  <div className={`mt-1 text-[9px] font-mono truncate ${muted}`} title={label}>{label}</div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         {loading ? (
-          <div className="p-16 flex justify-center text-primary"><Loader2 className="animate-spin" size={32} /></div>
+          <div className="p-16 flex flex-col items-center gap-2 text-primary">
+            <Loader2 className="animate-spin" size={32} />
+            <span className={`text-xs ${muted}`}>جاري مطابقة المخزون...</span>
+          </div>
         ) : rows.length === 0 ? (
-          <div className={`p-12 text-center text-sm ${muted}`}>لا توجد عناصر في هذه القائمة.</div>
+          <div className={`p-12 text-center text-sm ${muted}`}>
+            {error ? 'تعذر عرض القائمة.' : 'لا توجد عناصر في هذه القائمة.'}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -304,9 +286,9 @@ const InventorySyncTab = ({ dm }) => {
                   <th className="p-3 w-14 text-right">صورة</th>
                   {tab === 'unlinked' && (
                     <>
-                      <th className="p-3 text-right">NocoDB SKU</th>
+                      <th className="p-3 text-right">مرجع الموقع</th>
                       <th className="p-3 text-right">الاسم</th>
-                      <th className="p-3 text-right">ربط بـ Tifawt</th>
+                      <th className="p-3 text-right">مرجع Tifawt</th>
                       <th className="p-3 text-right">إجراء</th>
                     </>
                   )}
@@ -315,13 +297,13 @@ const InventorySyncTab = ({ dm }) => {
                       <th className="p-3 text-right">Tifawt SKU</th>
                       <th className="p-3 text-right">الاسم</th>
                       <th className="p-3 text-right">مخزون</th>
-                      <th className="p-3 text-right">SKU مقترح</th>
+                      <th className="p-3 text-right">اقتراح الموقع</th>
                     </>
                   )}
                   {tab === 'matched' && (
                     <>
                       <th className="p-3 text-right">Tifawt</th>
-                      <th className="p-3 text-right">NocoDB</th>
+                      <th className="p-3 text-right">الموقع</th>
                       <th className="p-3 text-right">مخزون</th>
                     </>
                   )}
@@ -333,15 +315,13 @@ const InventorySyncTab = ({ dm }) => {
                   const draft = linkDraft[row.nocoSku] || '';
                   return (
                     <tr key={key} className={`border-t ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
-                      <td className="p-3">
-                        <ProductThumb src={row.nocoImage} alt={row.nocoSku} dm={dm} />
-                      </td>
+                      <td className="p-3"><Thumb src={row.nocoImage} alt={row.nocoSku} dm={dm} /></td>
                       <td className="p-3 font-mono text-xs">{row.nocoSku}</td>
                       <td className="p-3 max-w-[220px] truncate" title={row.nocoName}>{row.nocoName || '—'}</td>
                       <td className="p-3">
-                        <TifawtSkuPicker
+                        <SkuPicker
                           value={draft}
-                          options={tifawtPicker}
+                          options={picker}
                           dm={dm}
                           disabled={busyKey === key}
                           onChange={(sku) => setLinkDraft((prev) => ({ ...prev, [row.nocoSku]: sku }))}
@@ -386,9 +366,7 @@ const InventorySyncTab = ({ dm }) => {
 
                 {tab === 'tifawt-only' && rows.map((row) => (
                   <tr key={row.tifawtSku} className={`border-t ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
-                    <td className="p-3">
-                      <ProductThumb src={row.tifawtImage} alt={row.tifawtSku} dm={dm} />
-                    </td>
+                    <td className="p-3"><Thumb src={row.tifawtImage} alt={row.tifawtSku} dm={dm} /></td>
                     <td className="p-3 font-mono text-xs">{row.tifawtSku}</td>
                     <td className="p-3 max-w-[260px] truncate" title={row.tifawtName}>{row.tifawtName}</td>
                     <td className="p-3 font-bold text-emerald-600">{row.tifawtStock}</td>
@@ -400,8 +378,8 @@ const InventorySyncTab = ({ dm }) => {
                   <tr key={`${row.tifawtSku}-${row.nocoId}`} className={`border-t ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
                     <td className="p-3">
                       <div className="flex gap-1">
-                        <ProductThumb src={row.tifawtImage} alt={row.tifawtSku} size={36} dm={dm} />
-                        <ProductThumb src={row.nocoImage} alt={row.nocoSku} size={36} dm={dm} />
+                        <Thumb src={row.tifawtImage} alt={row.tifawtSku} size={36} dm={dm} />
+                        <Thumb src={row.nocoImage} alt={row.nocoSku} size={36} dm={dm} />
                       </div>
                     </td>
                     <td className="p-3">
@@ -420,10 +398,6 @@ const InventorySyncTab = ({ dm }) => {
           </div>
         )}
       </div>
-
-      <p className={`text-xs ${muted}`}>
-        الربط يُحفظ في «مركز تحكم البوت → تيفاوت → مطابقة مراجع الموقع» ويُستخدم لطلبات Tifawt/Jumia.
-      </p>
     </div>
   );
 };
