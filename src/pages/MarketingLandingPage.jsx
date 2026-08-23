@@ -6,21 +6,26 @@ import {
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import { trackMeta, trackMetaCustom } from '../utils/metaPixel';
+import { trackTikTok } from '../utils/tiktokPixel';
 
 const WA_NUMBER = '212664630566';
 const TELEGRAM_URL = 'https://t.me/ERRAYHANY_GROSSISTE';
 const STORE_URL = '/catalog';
 
-/** Landing CTAs → Meta standard events (RR / website pixel only). */
+/** Landing CTAs → Meta + TikTok (RR / VIP pixel). */
 const trackPixelEvent = (eventName) => {
   if (eventName.includes('WhatsApp') || eventName.includes('Telegram')) {
     trackMeta('Contact');
+    trackTikTok('Contact');
   } else if (eventName.includes('EnterStore') || eventName.includes('Category') || eventName.includes('Product')) {
     trackMeta('Lead');
+    trackTikTok('ClickButton', {
+      contents: [{ content_id: 'vip-store', content_type: 'product' }],
+    });
   } else {
     trackMetaCustom(eventName);
+    trackTikTok(eventName);
   }
-  if (window.ttq) window.ttq.track(eventName);
 };
 
 const MarketingLandingPage = () => {
@@ -38,6 +43,10 @@ const MarketingLandingPage = () => {
       content_name: 'VIP Landing',
       content_category: 'landing',
       content_ids: ['vip'],
+    });
+    trackTikTok('ViewContent', {
+      contents: [{ content_id: 'vip', content_type: 'product', content_name: 'VIP Landing' }],
+      content_type: 'product',
     });
   }, []);
 
