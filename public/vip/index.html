@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 
-  <!-- Meta Pixel Code -->
+  <!-- Meta Pixel: VIP landing → Ad account RR only (dataset errayhany gro). Not RH.01. -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -20,6 +20,17 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '27623899353918795');
     fbq('track', 'PageView');
+    fbq('trackCustom', 'VIPLanding', {
+      content_name: 'Errayhany VIP Landing',
+      content_category: 'landing',
+      content_ids: ['vip'],
+      page_path: '/vip'
+    });
+    fbq('track', 'ViewContent', {
+      content_name: 'VIP Landing',
+      content_category: 'landing',
+      content_ids: ['vip']
+    });
   </script>
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=27623899353918795&ev=PageView&noscript=1"/></noscript>

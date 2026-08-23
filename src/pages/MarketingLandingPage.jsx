@@ -1,37 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   MessageCircle,
   Globe,
   Send,
-  Smartphone,
-  Headphones,
-  Watch,
-  BatteryCharging,
-  Star,
-  ChevronDown
 } from 'lucide-react';
 import useStore from '../store/useStore';
+import { trackMeta, trackMetaCustom } from '../utils/metaPixel';
 
 const WA_NUMBER = '212664630566';
 const TELEGRAM_URL = 'https://t.me/ERRAYHANY_GROSSISTE';
 const STORE_URL = '/catalog';
 
+/** Landing CTAs → Meta standard events (RR / website pixel only). */
 const trackPixelEvent = (eventName) => {
-  if (window.fbq) {
-    // Map to Standard Events for better Facebook Ads optimization
-    if (eventName.includes('WhatsApp') || eventName.includes('Telegram')) {
-      window.fbq('track', 'Contact');
-    } else if (eventName.includes('EnterStore')) {
-      window.fbq('track', 'Lead');
-    } else {
-      window.fbq('trackCustom', eventName);
-    }
+  if (eventName.includes('WhatsApp') || eventName.includes('Telegram')) {
+    trackMeta('Contact');
+  } else if (eventName.includes('EnterStore') || eventName.includes('Category') || eventName.includes('Product')) {
+    trackMeta('Lead');
+  } else {
+    trackMetaCustom(eventName);
   }
   if (window.ttq) window.ttq.track(eventName);
 };
 
 const MarketingLandingPage = () => {
   const { darkMode } = useStore();
+
+  useEffect(() => {
+    // Dedicated landing event for RR ads optimization (visible in Events Manager).
+    trackMetaCustom('VIPLanding', {
+      content_name: 'Errayhany VIP Landing',
+      content_category: 'landing',
+      content_ids: ['vip'],
+      page_path: '/vip',
+    });
+    trackMeta('ViewContent', {
+      content_name: 'VIP Landing',
+      content_category: 'landing',
+      content_ids: ['vip'],
+    });
+  }, []);
 
   return (
     <div className={`min-h-screen overflow-x-hidden ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-[#eef6ff] text-[#0f172a]'}`} style={{ direction: 'rtl', fontFamily: "'Tajawal', 'Inter', sans-serif" }}>
@@ -182,6 +190,7 @@ const MarketingLandingPage = () => {
                 <div className="text-2xl font-black text-blue-600 mb-4">{prod.price}</div>
                 <a 
                   href={STORE_URL}
+                  onClick={() => trackPixelEvent('EnterStore_Product')}
                   className="block text-center py-3 rounded-xl bg-gradient-to-r from-blue-600 to-sky-400 text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                 >
                   استعرض المنتج
@@ -197,8 +206,8 @@ const MarketingLandingPage = () => {
              <h2 className="text-4xl font-black mb-6 text-white">هل أنت مستعد للبدء؟</h2>
              <p className="text-blue-100 mb-10 max-w-2xl mx-auto text-lg">انضم إلى شبكة التجار المستفيدين من أفضل أسعار الإلكترونيات في المغرب.</p>
              <div className="flex flex-wrap justify-center gap-4">
-                <a href={`https://wa.me/${WA_NUMBER}`} className="px-8 py-4 rounded-xl bg-white text-blue-600 font-bold hover:scale-105 transition-transform shadow-lg">تواصل عبر واتساب</a>
-                <a href={STORE_URL} className="px-8 py-4 rounded-xl bg-white text-blue-600 font-bold hover:scale-105 transition-transform shadow-lg">الدخول للموقع</a>
+                <a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noopener noreferrer" onClick={() => trackPixelEvent('ContactWhatsApp_CTA')} className="px-8 py-4 rounded-xl bg-white text-blue-600 font-bold hover:scale-105 transition-transform shadow-lg">تواصل عبر واتساب</a>
+                <a href={STORE_URL} onClick={() => trackPixelEvent('EnterStore_CTA')} className="px-8 py-4 rounded-xl bg-white text-blue-600 font-bold hover:scale-105 transition-transform shadow-lg">الدخول للموقع</a>
              </div>
           </div>
         </section>
@@ -238,6 +247,7 @@ const MarketingLandingPage = () => {
         href={`https://wa.me/${WA_NUMBER}`} 
         target="_blank" 
         rel="noopener noreferrer"
+        onClick={() => trackPixelEvent('ContactWhatsApp_Float')}
         className="fixed right-6 bottom-6 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white shadow-[0_20px_40px_rgba(0,0,0,0.18)] hover:-translate-y-1 transition-transform z-50"
       >
         <MessageCircle size={32} />
