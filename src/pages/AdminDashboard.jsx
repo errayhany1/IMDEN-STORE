@@ -9,6 +9,7 @@ import JumiaOrdersTab from './admin/JumiaOrdersTab';
 import BotSettingsTab from './admin/BotSettingsTab';
 import InventorySyncTab from './admin/InventorySyncTab';
 import SocialPublishTab from './admin/SocialPublishTab';
+import DropshipAdmin from '../components/admin/DropshipAdmin';
 import { createStoreOrderId, syncOrderSideEffects } from '../services/tifawt';
 import {
     createAdminSession,
@@ -794,6 +795,7 @@ const AdminDashboard = () => {
                             products: 'المنتجات',
                             'inventory-sync': 'مطابقة Tifawt',
                             'social-publish': 'نشر المحتوى',
+                            dropship: 'الدروبشيبينغ',
                             returns: 'مرتجعات الموقع',
                             'bot-settings': 'مركز تحكم البوت',
                             settings: 'الإعدادات',
@@ -1424,6 +1426,10 @@ const AdminDashboard = () => {
                 {/* ══════ SOCIAL PUBLISH ══════ */}
                 {activeTab === 'social-publish' && (
                     <SocialPublishTab dm={dm} />
+                )}
+
+                {activeTab === 'dropship' && (
+                    <DropshipAdmin dm={dm} />
                 )}
 
                 {/* ══════ RETURNS (site/NocoDB) ══════ */}

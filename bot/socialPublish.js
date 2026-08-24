@@ -66,7 +66,15 @@ export function socialPlatformStatus() {
     process.env.META_PAGE_ID?.trim() && process.env.META_PAGE_ACCESS_TOKEN?.trim(),
   );
   const tiktokReady = Boolean(
-    process.env.TIKTOK_ACCESS_TOKEN?.trim() && process.env.TIKTOK_OPEN_ID?.trim(),
+    process.env.TIKTOK_OPEN_ID?.trim()
+    && (
+      process.env.TIKTOK_ACCESS_TOKEN?.trim()
+      || (
+        process.env.TIKTOK_REFRESH_TOKEN?.trim()
+        && process.env.TIKTOK_CLIENT_KEY?.trim()
+        && process.env.TIKTOK_CLIENT_SECRET?.trim()
+      )
+    ),
   );
   const youtubeReady = Boolean(
     process.env.YOUTUBE_REFRESH_TOKEN?.trim()
@@ -89,7 +97,7 @@ export function socialPlatformStatus() {
       ready: tiktokReady,
       hint: tiktokReady
         ? 'توكن TikTok موجود'
-        : 'يتطلب TIKTOK_ACCESS_TOKEN و TIKTOK_OPEN_ID (Content Posting API)',
+        : 'يتطلب TIKTOK_OPEN_ID + (ACCESS_TOKEN أو REFRESH_TOKEN مع CLIENT_KEY/SECRET)',
     },
     youtube: {
       id: 'youtube',
@@ -101,6 +109,49 @@ export function socialPlatformStatus() {
     },
     defaultLink: `${SITE_URL}/vip`,
   };
+}
+
+let tiktokAccessCache = { token: '', expiresAt: 0 };
+
+async function resolveTikTokAccessToken() {
+  const cached = tiktokAccessCache.token
+    && Date.now() < tiktokAccessCache.expiresAt - 60_000;
+  if (cached) return tiktokAccessCache.token;
+
+  const refresh = process.env.TIKTOK_REFRESH_TOKEN?.trim();
+  const clientKey = process.env.TIKTOK_CLIENT_KEY?.trim();
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET?.trim();
+  if (refresh && clientKey && clientSecret) {
+    const { data, status } = await axios.post(
+      'https://open.tiktokapis.com/v2/oauth/token/',
+      new URLSearchParams({
+        client_key: clientKey,
+        client_secret: clientSecret,
+        grant_type: 'refresh_token',
+        refresh_token: refresh,
+      }).toString(),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 30000,
+        validateStatus: () => true,
+      },
+    );
+    const access = data?.access_token || data?.data?.access_token;
+    const expiresIn = Number(data?.expires_in || data?.data?.expires_in || 86400);
+    if (status < 400 && access) {
+      tiktokAccessCache = {
+        token: access,
+        expiresAt: Date.now() + expiresIn * 1000,
+      };
+      if (data?.refresh_token || data?.data?.refresh_token) {
+        process.env.TIKTOK_REFRESH_TOKEN = data.refresh_token || data.data.refresh_token;
+      }
+      return access;
+    }
+    console.warn('[social] TikTok refresh failed:', data?.error || data || status);
+  }
+
+  return process.env.TIKTOK_ACCESS_TOKEN?.trim() || '';
 }
 
 async function publishMeta({ caption, link, mediaUrl, mime }) {
@@ -148,7 +199,7 @@ async function publishMeta({ caption, link, mediaUrl, mime }) {
 }
 
 async function publishTikTok({ caption, mediaPath, mime }) {
-  const token = process.env.TIKTOK_ACCESS_TOKEN?.trim();
+  const token = await resolveTikTokAccessToken();
   const openId = process.env.TIKTOK_OPEN_ID?.trim();
   if (!token || !openId) {
     return { ok: false, error: 'tiktok_not_configured', hint: socialPlatformStatus().tiktok.hint };
