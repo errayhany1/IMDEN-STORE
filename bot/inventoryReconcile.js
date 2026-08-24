@@ -86,8 +86,8 @@ export function nocoPublished(record) {
 }
 
 const PAGE_SIZE = 100;
-const PAGE_CONCURRENCY = 2;
-const PAGE_RETRIES = 3;
+const PAGE_CONCURRENCY = 1;
+const PAGE_RETRIES = 5;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -366,6 +366,13 @@ function isReconcileFresh() {
 
 export function inventoryReconcileError() {
   return reconcileFailure?.error || null;
+}
+
+/** Drop cached report so the next load rebuilds (e.g. after link/unlink). */
+export function invalidateInventoryReconcileCache() {
+  reconcileCache = null;
+  reconcileCacheTime = 0;
+  reconcileFailure = null;
 }
 
 /**

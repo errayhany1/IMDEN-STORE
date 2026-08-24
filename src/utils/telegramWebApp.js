@@ -43,6 +43,8 @@ export function adminTabFromQuery() {
     'tifawt-orders',
     'jumia-orders',
     'products',
+    'inventory-sync',
+    'social-publish',
     'returns',
     'bot-settings',
     'settings',

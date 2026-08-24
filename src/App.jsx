@@ -19,6 +19,7 @@ import CategoriesPage from './pages/CategoriesPage';
 import ProductLandingPage from './pages/ProductLandingPage';
 import PurchaseCountPage from './pages/PurchaseCountPage';
 import MarketingLandingPage from './pages/MarketingLandingPage';
+import DropshipDashboard from './pages/DropshipDashboard';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import InstallAppBanner from './components/InstallAppBanner';
 import useStore from './store/useStore';
@@ -359,6 +360,9 @@ function App() {
   }
   if (path === '/vip') {
       return <MarketingLandingPage />;
+  }
+  if (path === '/dropship') {
+      return <DropshipDashboard />;
   }
   // /family/:id and /catalog(/family/:id) are handled by the main storefront + store state
 

@@ -31,11 +31,23 @@ function messageFor(payload, fallback = 'تعذر تحميل المطابقة') 
   const code = payload?.error || '';
   if (code === 'unauthorized') return 'انتهت صلاحية الدخول. سجّل الخروج ثم ادخل من جديد.';
   if (code === 'tifawt_unauthorized') return payload?.hint || 'Tifawt رفض تسجيل الدخول.';
+  if (code === 'rate_limited' || code === 'too_many_attempts' || /nocodb_http_429/i.test(code)) {
+    return 'طلبات كثيرة جداً على NocoDB. انتظر دقيقة ثم أعد المحاولة.';
+  }
+  if (code === 'tifawt_product_not_found') return 'لم يُعثر على المنتج في Tifawt.';
+  if (code === 'noco_product_not_found') return 'لم يُعثر على صف المنتج في NocoDB.';
   return payload?.hint || code || fallback;
 }
 
 function errorFrom(e) {
+  const status = e?.response?.status;
+  if (status === 429) {
+    return messageFor(e.response?.data, 'طلبات كثيرة جداً (NocoDB/الخادم). انتظر دقيقة ثم حدّث الصفحة.');
+  }
   if (e?.response?.data) return messageFor(e.response.data);
+  if (/status code 429/i.test(e?.message || '')) {
+    return 'طلبات كثيرة جداً. انتظر دقيقة ثم أعد المحاولة.';
+  }
   return e?.message || 'تعذر الاتصال بالخادم';
 }
 
@@ -211,6 +223,8 @@ const InventorySyncTab = ({ dm }) => {
     setBusyKey(key);
     try {
       await fn();
+      // Give NocoDB a breath after the write, then rebuild the report.
+      await new Promise((r) => setTimeout(r, 1200));
       await load({ force: true });
     } catch (e) {
       alert(errorFrom(e));
@@ -398,7 +412,11 @@ const InventorySyncTab = ({ dm }) => {
                           <button
                             type="button"
                             disabled={!draft.trim() || busyKey === key}
-                            onClick={() => run(key, () => linkInventorySku({ nocoSku: row.nocoSku, tifawtSku: draft.trim() }))}
+                            onClick={() => run(key, () => linkInventorySku({
+                              nocoSku: row.nocoSku,
+                              nocoId: row.nocoId,
+                              tifawtSku: draft.trim(),
+                            }))}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold disabled:opacity-40"
                           >
                             <Link2 size={12} />

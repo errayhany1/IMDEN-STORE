@@ -43,6 +43,10 @@ public/**/*.apk
 data/jumia-public-images/
 bot/data/jumia-public-images/
 
+# Social publish uploads + post history
+bot/data/social-media/
+bot/data/social-posts.json
+
 # Local pipeline debug renders
 bot/data/debug/
 

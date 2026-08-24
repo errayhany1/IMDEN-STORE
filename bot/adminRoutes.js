@@ -32,6 +32,7 @@ import {
   updateBotSettings,
 } from './runtimeSettings.js';
 import { registerInventoryAdminRoutes } from './inventoryAdmin.js';
+import { registerSocialPublishRoutes } from './socialPublish.js';
 
 function adminPassword() {
   const configured = (
@@ -546,4 +547,5 @@ export function registerAdminRoutes(app) {
   });
 
   registerInventoryAdminRoutes(app, { requireAdmin });
+  registerSocialPublishRoutes(app, { requireAdmin });
 }

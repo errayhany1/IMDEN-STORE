@@ -32,6 +32,14 @@ adminAxios.interceptors.request.use((config) => {
   if (password) {
     config.headers['X-Admin-Password'] = password;
   }
+  // Let the browser set multipart boundary when sending FormData.
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (config.headers && typeof config.headers.delete === 'function') {
+      config.headers.delete('Content-Type');
+    } else if (config.headers) {
+      delete config.headers['Content-Type'];
+    }
+  }
   return config;
 });
 
@@ -157,11 +165,11 @@ export async function fetchInventoryReconcile({ force = false } = {}) {
   return data;
 }
 
-export async function linkInventorySku({ nocoSku, tifawtSku }) {
+export async function linkInventorySku({ nocoSku, tifawtSku, nocoId }) {
   const { data } = await adminAxios.post(
     '/bot-api/api/admin/inventory/link',
-    { nocoSku, tifawtSku },
-    { timeout: 30000 },
+    { nocoSku, tifawtSku, nocoId },
+    { timeout: 45000 },
   );
   return data;
 }
@@ -204,4 +212,37 @@ export async function downloadInventoryExport(kind) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+export async function fetchSocialPlatformStatus() {
+  const { data } = await adminAxios.get('/bot-api/api/admin/social/status', {
+    timeout: 20000,
+  });
+  return data;
+}
+
+export async function fetchSocialPosts(limit = 40) {
+  const { data } = await adminAxios.get('/bot-api/api/admin/social/posts', {
+    params: { limit },
+    timeout: 20000,
+  });
+  return data;
+}
+
+export async function uploadSocialMedia(file) {
+  const body = new FormData();
+  body.append('file', file);
+  const { data } = await adminAxios.post('/bot-api/api/admin/social/upload', body, {
+    timeout: 600000,
+  });
+  return data;
+}
+
+export async function publishSocialPost(payload) {
+  const { data } = await adminAxios.post(
+    '/bot-api/api/admin/social/publish',
+    payload,
+    { timeout: 600000 },
+  );
+  return data;
 }
