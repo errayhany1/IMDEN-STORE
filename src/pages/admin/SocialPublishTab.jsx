@@ -24,6 +24,28 @@ const PLATFORM_META = {
   youtube: { label: 'YouTube', Icon: Youtube, color: 'text-red-500' },
 };
 
+function metaResultLines(r) {
+  if (!r) return [];
+  const lines = [];
+  if (r.facebook) {
+    lines.push(r.facebook.ok
+      ? 'Facebook: نُشر'
+      : `Facebook: ${r.facebook.hint || r.facebook.error || 'فشل'}`);
+  }
+  if (r.instagram) {
+    if (r.instagram.skipped) {
+      lines.push(`Instagram: ${r.instagram.hint || 'تخطي'}`);
+    } else {
+      lines.push(r.instagram.ok
+        ? 'Instagram: نُشر'
+        : `Instagram: ${r.instagram.hint || r.instagram.error || 'فشل'}`);
+    }
+  } else if (!r.ok && (r.hint || r.error)) {
+    lines.push(r.hint || r.error);
+  }
+  return lines;
+}
+
 function formatBytes(n) {
   const v = Number(n) || 0;
   if (v < 1024) return `${v} B`;
@@ -41,8 +63,14 @@ function statusLabel(status) {
 
 function errorText(e) {
   const data = e?.response?.data;
+  const status = e?.response?.status;
+  if (status === 502 || status === 504) {
+    return 'انقطع الرفع بسبب مهلة السيرفر. ارفع فيديو أصغر قليلاً أو انتظر بعد تحديث الرفع المجزّأ، ثم أعد المحاولة.';
+  }
   if (data?.error === 'platforms_required') return 'اختر منصة واحدةً على الأقل.';
-  if (data?.error === 'media_required_for_video_platforms') return 'TikTok وYouTube يحتاجان فيديو.';
+  if (data?.error === 'media_required_for_video_platforms') {
+    return data.hint || 'TikTok وYouTube يحتاجان فيديو.';
+  }
   if (data?.error === 'unsupported_media_type') return 'نوع الملف غير مدعوم (صورة أو فيديو فقط).';
   if (data?.hint) return data.hint;
   if (data?.error) return String(data.error);
@@ -63,10 +91,11 @@ const SocialPublishTab = ({ dm }) => {
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('https://errayhany.com/vip');
-  const [platforms, setPlatforms] = useState({ meta: true, tiktok: true, youtube: true });
+  const [platforms, setPlatforms] = useState({ meta: true, tiktok: false, youtube: false });
   const [media, setMedia] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -75,6 +104,8 @@ const SocialPublishTab = ({ dm }) => {
     () => Object.entries(platforms).filter(([, on]) => on).map(([id]) => id),
     [platforms],
   );
+
+  const mediaIsVideo = Boolean(media?.mime?.startsWith('video/'));
 
   const load = useCallback(async () => {
     setError('');
@@ -104,17 +135,25 @@ const SocialPublishTab = ({ dm }) => {
     setError('');
     setMessage('');
     setUploading(true);
+    setUploadPct(0);
     try {
       if (previewUrl?.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(file));
-      const data = await uploadSocialMedia(file);
+      const data = await uploadSocialMedia(file, { onProgress: setUploadPct });
       setMedia(data.media);
-      setMessage(`تم رفع الملف (${formatBytes(data.media?.size)})`);
+      const isVideo = String(data.media?.mime || '').startsWith('video/');
+      if (!isVideo) {
+        setPlatforms((prev) => ({ ...prev, tiktok: false, youtube: false, meta: true }));
+        setMessage(`تم رفع الصورة (${formatBytes(data.media?.size)}) — Meta فقط (YouTube/TikTok يحتاجان فيديو).`);
+      } else {
+        setMessage(`تم رفع الفيديو (${formatBytes(data.media?.size)})`);
+      }
     } catch (e) {
       setMedia(null);
       setError(errorText(e));
     } finally {
       setUploading(false);
+      setUploadPct(0);
     }
   };
 
@@ -125,6 +164,10 @@ const SocialPublishTab = ({ dm }) => {
   };
 
   const togglePlatform = (id) => {
+    if ((id === 'tiktok' || id === 'youtube') && media && !mediaIsVideo) {
+      setError('TikTok وYouTube يحتاجان فيديو. ارفع mp4 أو اختر Meta فقط.');
+      return;
+    }
     setPlatforms((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -137,6 +180,10 @@ const SocialPublishTab = ({ dm }) => {
     }
     if (!caption.trim() && !media) {
       setError('أدخل نصاً أو ارفع صورة/فيديو.');
+      return;
+    }
+    if ((platforms.tiktok || platforms.youtube) && !mediaIsVideo) {
+      setError('TikTok وYouTube يحتاجان فيديو. للصورة اختر Meta فقط.');
       return;
     }
     setPublishing(true);
@@ -180,7 +227,7 @@ const SocialPublishTab = ({ dm }) => {
           <div>
             <h3 className="font-bold text-lg">نشر المحتوى للمنصات</h3>
             <p className={`text-sm mt-1 ${muted}`}>
-              ارفع فيديو أو صورة، اكتب النص، واختر المنصات — ثم انشر بضغطة واحدة.
+              صورة → Meta فقط. فيديو → Meta / TikTok / YouTube. TikTok يحتاج إكمال OAuth أولاً.
             </p>
           </div>
           <button
@@ -267,7 +314,12 @@ const SocialPublishTab = ({ dm }) => {
                 onChange={(e) => onPickFile(e.target.files?.[0])}
               />
               {uploading ? (
-                <Loader2 className="animate-spin text-blue-500" size={28} />
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="animate-spin text-blue-500" size={28} />
+                  <span className={`text-xs ${muted}`}>
+                    جارٍ الرفع{uploadPct > 0 ? ` ${uploadPct}%` : '…'}
+                  </span>
+                </div>
               ) : previewUrl ? (
                 media?.mime?.startsWith('video/') ? (
                   <video src={previewUrl} controls className="max-h-48 rounded-xl" />
@@ -364,13 +416,21 @@ const SocialPublishTab = ({ dm }) => {
                       {post.link}
                     </a>
                   )}
-                  {Object.entries(post.results || {}).map(([id, r]) => (
-                    !r?.ok && (r?.error || r?.hint) ? (
-                      <p key={id} className={`text-[11px] mt-1 ${muted}`}>
-                        {PLATFORM_META[id]?.label || id}: {r.hint || r.error}
-                      </p>
-                    ) : null
-                  ))}
+                  {Object.entries(post.results || {}).flatMap(([id, r]) => {
+                    if (id === 'meta') {
+                      return metaResultLines(r).map((line, i) => (
+                        <p key={`${id}-${i}`} className={`text-[11px] mt-1 ${muted}`}>{line}</p>
+                      ));
+                    }
+                    if (!r?.ok && (r?.error || r?.hint)) {
+                      return [
+                        <p key={id} className={`text-[11px] mt-1 ${muted}`}>
+                          {PLATFORM_META[id]?.label || id}: {r.hint || r.error}
+                        </p>,
+                      ];
+                    }
+                    return [];
+                  })}
                 </div>
               );
             })}

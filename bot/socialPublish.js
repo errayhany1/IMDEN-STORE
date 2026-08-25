@@ -65,6 +65,7 @@ export function socialPlatformStatus() {
   const metaReady = Boolean(
     process.env.META_PAGE_ID?.trim() && process.env.META_PAGE_ACCESS_TOKEN?.trim(),
   );
+  const igConfigured = Boolean(process.env.META_IG_USER_ID?.trim());
   const tiktokReady = Boolean(
     process.env.TIKTOK_OPEN_ID?.trim()
     && (
@@ -85,10 +86,13 @@ export function socialPlatformStatus() {
   return {
     meta: {
       id: 'meta',
-      label: 'Meta (Facebook)',
+      label: 'Meta (Facebook + Instagram)',
       ready: metaReady,
+      instagramConfigured: igConfigured,
       hint: metaReady
-        ? 'جاهز للنشر على صفحة فيسبوك'
+        ? (igConfigured
+          ? 'جاهز لفيسبوك + إنستغرام (صورة/فيديو)'
+          : 'فيسبوك جاهز — أضف META_IG_USER_ID وصلاحيات Instagram للنشر على إنستغرام')
         : 'أضف META_PAGE_ID و META_PAGE_ACCESS_TOKEN على سيرفر البوت',
     },
     tiktok: {
@@ -154,16 +158,148 @@ async function resolveTikTokAccessToken() {
   return process.env.TIKTOK_ACCESS_TOKEN?.trim() || '';
 }
 
-async function publishMeta({ caption, link, mediaUrl, mime }) {
-  const pageId = process.env.META_PAGE_ID?.trim();
-  const token = process.env.META_PAGE_ACCESS_TOKEN?.trim();
-  if (!pageId || !token) {
-    return { ok: false, error: 'meta_not_configured', hint: socialPlatformStatus().meta.hint };
+async function resolveInstagramUserId(pageId, token) {
+  const fromEnv = process.env.META_IG_USER_ID?.trim();
+  if (fromEnv) return fromEnv;
+
+  const { data } = await axios.get(`https://graph.facebook.com/v21.0/${pageId}`, {
+    params: {
+      fields: 'instagram_business_account{id},page_backed_instagram_accounts{id}',
+      access_token: token,
+    },
+    timeout: 30000,
+    validateStatus: () => true,
+  });
+
+  return (
+    data?.instagram_business_account?.id
+    || data?.page_backed_instagram_accounts?.data?.[0]?.id
+    || ''
+  );
+}
+
+async function waitIgContainerReady(containerId, token, { attempts = 24, delayMs = 2500 } = {}) {
+  for (let i = 0; i < attempts; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const { data, status } = await axios.get(`https://graph.facebook.com/v21.0/${containerId}`, {
+      params: { fields: 'status_code,status', access_token: token },
+      timeout: 30000,
+      validateStatus: () => true,
+    });
+    const code = String(data?.status_code || '').toUpperCase();
+    if (status < 400 && code === 'FINISHED') return { ok: true, data };
+    if (status < 400 && (code === 'ERROR' || code === 'EXPIRED')) {
+      return { ok: false, error: data?.status || 'instagram_container_failed', details: data };
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return { ok: false, error: 'instagram_container_timeout' };
+}
+
+async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }) {
+  if (!mediaUrl || (!isImageMime(mime) && !isVideoMime(mime))) {
+    return {
+      ok: false,
+      skipped: true,
+      error: 'instagram_media_required',
+      hint: 'إنستغرام يحتاج صورة أو فيديو عبر رابط عام (لا نص فقط).',
+    };
   }
 
-  const message = [caption, link].filter(Boolean).join('\n\n');
+  let igUserId = '';
+  try {
+    igUserId = await resolveInstagramUserId(pageId, token);
+  } catch (error) {
+    return { ok: false, error: error?.message || 'instagram_id_resolve_failed' };
+  }
+  if (!igUserId) {
+    return {
+      ok: false,
+      error: 'instagram_not_linked',
+      hint: 'اربط حساب Instagram Business بالصفحة أو عيّن META_IG_USER_ID',
+    };
+  }
 
-  if (isVideoMime(mime) && mediaUrl) {
+  const message = [caption, link].filter(Boolean).join('\n\n').slice(0, 2200);
+  const createBody = isVideoMime(mime)
+    ? {
+        media_type: 'REELS',
+        video_url: mediaUrl,
+        caption: message,
+        share_to_feed: true,
+        access_token: token,
+      }
+    : {
+        image_url: mediaUrl,
+        caption: message,
+        access_token: token,
+      };
+
+  const created = await axios.post(
+    `https://graph.facebook.com/v21.0/${igUserId}/media`,
+    createBody,
+    { timeout: 120000, validateStatus: () => true },
+  );
+  if (created.status >= 400 || created.data?.error || !created.data?.id) {
+    return {
+      ok: false,
+      error: created.data?.error?.message || 'instagram_container_failed',
+      details: created.data?.error || created.data,
+      hint: /permission|(#10)/i.test(String(created.data?.error?.message || ''))
+        ? 'التوكن يحتاج صلاحيات instagram_basic + instagram_content_publish'
+        : undefined,
+    };
+  }
+
+  const ready = await waitIgContainerReady(created.data.id, token);
+  if (!ready.ok) return ready;
+
+  const published = await axios.post(
+    `https://graph.facebook.com/v21.0/${igUserId}/media_publish`,
+    { creation_id: created.data.id, access_token: token },
+    { timeout: 120000, validateStatus: () => true },
+  );
+  if (published.status >= 400 || published.data?.error) {
+    return {
+      ok: false,
+      error: published.data?.error?.message || 'instagram_publish_failed',
+      details: published.data?.error || published.data,
+    };
+  }
+
+  return {
+    ok: true,
+    id: published.data?.id,
+    igUserId,
+    containerId: created.data.id,
+    raw: published.data,
+  };
+}
+
+async function publishFacebook({ caption, link, mediaUrl, mediaPath, mime, pageId, token }) {
+  const message = [caption, link].filter(Boolean).join('\n\n');
+  const hasLocal = mediaPath && fs.existsSync(mediaPath);
+
+  // Prefer multipart from disk so Meta never has to fetch our public URL
+  // (crawler timeouts / transient 404s caused "Missing or invalid image file").
+  if (isVideoMime(mime) && (hasLocal || mediaUrl)) {
+    if (hasLocal) {
+      const buf = fs.readFileSync(mediaPath);
+      const form = new FormData();
+      form.append('source', new Blob([buf], { type: mime || 'video/mp4' }), path.basename(mediaPath));
+      form.append('description', message);
+      form.append('access_token', token);
+      const { data, status } = await axios.post(
+        `https://graph.facebook.com/v21.0/${pageId}/videos`,
+        form,
+        { timeout: 300000, validateStatus: () => true, maxBodyLength: Infinity },
+      );
+      if (status >= 400 || data?.error) {
+        return { ok: false, error: data?.error?.message || 'meta_video_failed', details: data?.error || data };
+      }
+      return { ok: true, id: data?.id || data?.post_id, raw: data };
+    }
     const { data, status } = await axios.post(
       `https://graph.facebook.com/v21.0/${pageId}/videos`,
       { file_url: mediaUrl, description: message, access_token: token },
@@ -175,7 +311,23 @@ async function publishMeta({ caption, link, mediaUrl, mime }) {
     return { ok: true, id: data?.id || data?.post_id, raw: data };
   }
 
-  if (isImageMime(mime) && mediaUrl) {
+  if (isImageMime(mime) && (hasLocal || mediaUrl)) {
+    if (hasLocal) {
+      const buf = fs.readFileSync(mediaPath);
+      const form = new FormData();
+      form.append('source', new Blob([buf], { type: mime || 'image/jpeg' }), path.basename(mediaPath));
+      form.append('caption', message);
+      form.append('access_token', token);
+      const { data, status } = await axios.post(
+        `https://graph.facebook.com/v21.0/${pageId}/photos`,
+        form,
+        { timeout: 180000, validateStatus: () => true, maxBodyLength: Infinity },
+      );
+      if (status >= 400 || data?.error) {
+        return { ok: false, error: data?.error?.message || 'meta_photo_failed', details: data?.error || data };
+      }
+      return { ok: true, id: data?.post_id || data?.id, raw: data };
+    }
     const { data, status } = await axios.post(
       `https://graph.facebook.com/v21.0/${pageId}/photos`,
       { url: mediaUrl, caption: message, access_token: token },
@@ -196,6 +348,48 @@ async function publishMeta({ caption, link, mediaUrl, mime }) {
     return { ok: false, error: data?.error?.message || 'meta_feed_failed', details: data?.error || data };
   }
   return { ok: true, id: data?.id, raw: data };
+}
+
+async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
+  const pageId = process.env.META_PAGE_ID?.trim();
+  const token = process.env.META_PAGE_ACCESS_TOKEN?.trim();
+  if (!pageId || !token) {
+    return { ok: false, error: 'meta_not_configured', hint: socialPlatformStatus().meta.hint };
+  }
+
+  const facebook = await publishFacebook({
+    caption, link, mediaUrl, mediaPath, mime, pageId, token,
+  });
+
+  let instagram = null;
+  // Instagram Graph API requires a public URL (image_url / video_url).
+  if (mediaUrl && (isImageMime(mime) || isVideoMime(mime))) {
+    instagram = await publishInstagram({
+      caption, link, mediaUrl, mime, pageId, token,
+    });
+  } else if (facebook.ok) {
+    instagram = {
+      ok: false,
+      skipped: true,
+      error: 'instagram_media_required',
+      hint: 'نُشر على فيسبوك فقط — إنستغرام يحتاج صورة أو فيديو.',
+    };
+  }
+
+  const igOk = Boolean(instagram?.ok);
+  const fbOk = Boolean(facebook?.ok);
+  const ok = fbOk || igOk;
+
+  return {
+    ok,
+    id: facebook?.id || instagram?.id,
+    facebook,
+    instagram,
+    error: !ok ? (facebook?.error || instagram?.error) : undefined,
+    hint: !igOk && instagram
+      ? (instagram.hint || (fbOk ? 'نُشر على فيسبوك — إنستغرام لم يكتمل' : undefined))
+      : undefined,
+  };
 }
 
 async function publishTikTok({ caption, mediaPath, mime }) {
@@ -379,9 +573,11 @@ export async function createAndPublishSocialPost({
   const mediaPath = media?.filename ? path.join(MEDIA_DIR, media.filename) : null;
   const mime = media?.mime || '';
 
-  if ((selected.includes('tiktok') || selected.includes('youtube')) && !mediaPath) {
+  const needsVideo = selected.includes('tiktok') || selected.includes('youtube');
+  if (needsVideo && (!mediaPath || !isVideoMime(mime))) {
     const err = new Error('media_required_for_video_platforms');
     err.statusCode = 400;
+    err.hint = 'TikTok وYouTube يحتاجان ملف فيديو (mp4). للصورة اختر Meta فقط.';
     throw err;
   }
 
@@ -466,8 +662,33 @@ export const socialUpload = multer({
   },
 });
 
+/** Chunked uploads dodge the ~60s outer proxy timeout on EasyPanel/CDN. */
+const chunkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 3 * 1024 * 1024 },
+});
+
+const CHUNK_DIR = path.join(MEDIA_DIR, '_chunks');
+
+function safeUploadId(id) {
+  const v = String(id || '').trim();
+  if (!/^[a-zA-Z0-9_-]{8,80}$/.test(v)) return '';
+  return v;
+}
+
+function mediaFromFile(file, originalName) {
+  return {
+    filename: file.filename,
+    mime: file.mimetype,
+    size: file.size,
+    originalName: originalName || file.originalname,
+    url: publicMediaUrl(file.filename),
+  };
+}
+
 export function registerSocialPublishRoutes(app, { requireAdmin }) {
   ensureDirs();
+  fs.mkdirSync(CHUNK_DIR, { recursive: true });
 
   app.use('/social-media', express.static(MEDIA_DIR, {
     maxAge: '1d',
@@ -493,16 +714,111 @@ export function registerSocialPublishRoutes(app, { requireAdmin }) {
       if (!req.file) {
         return res.status(400).json({ ok: false, error: 'file_required' });
       }
-      return res.json({
-        ok: true,
-        media: {
-          filename: req.file.filename,
-          mime: req.file.mimetype,
-          size: req.file.size,
-          originalName: req.file.originalname,
-          url: publicMediaUrl(req.file.filename),
-        },
-      });
+      return res.json({ ok: true, media: mediaFromFile(req.file) });
+    });
+  });
+
+  app.post('/api/admin/social/upload/init', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const mime = String(req.body?.mime || '');
+    const size = Number(req.body?.size) || 0;
+    const originalName = String(req.body?.originalName || 'upload.bin').slice(0, 180);
+    const totalChunks = Math.max(1, Number(req.body?.totalChunks) || 1);
+    if (!isImageMime(mime) && !isVideoMime(mime)) {
+      return res.status(400).json({ ok: false, error: 'unsupported_media_type' });
+    }
+    if (size <= 0 || size > 200 * 1024 * 1024) {
+      return res.status(400).json({ ok: false, error: 'invalid_size' });
+    }
+    if (totalChunks > 400) {
+      return res.status(400).json({ ok: false, error: 'too_many_chunks' });
+    }
+    const uploadId = `${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+    const dir = path.join(CHUNK_DIR, uploadId);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'meta.json'),
+      JSON.stringify({ mime, size, originalName, totalChunks, createdAt: Date.now() }),
+      'utf8',
+    );
+    return res.json({ ok: true, uploadId, chunkBytes: 768 * 1024 });
+  });
+
+  app.post('/api/admin/social/upload/chunk', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    chunkUpload.single('chunk')(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ ok: false, error: err.message || 'chunk_failed' });
+      }
+      const uploadId = safeUploadId(req.body?.uploadId);
+      const index = Number(req.body?.index);
+      if (!uploadId || !Number.isInteger(index) || index < 0 || !req.file?.buffer) {
+        return res.status(400).json({ ok: false, error: 'invalid_chunk' });
+      }
+      const dir = path.join(CHUNK_DIR, uploadId);
+      if (!fs.existsSync(path.join(dir, 'meta.json'))) {
+        return res.status(404).json({ ok: false, error: 'upload_not_found' });
+      }
+      fs.writeFileSync(path.join(dir, `${String(index).padStart(5, '0')}.part`), req.file.buffer);
+      return res.json({ ok: true, index });
+    });
+  });
+
+  app.post('/api/admin/social/upload/complete', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const uploadId = safeUploadId(req.body?.uploadId);
+    if (!uploadId) {
+      return res.status(400).json({ ok: false, error: 'invalid_upload_id' });
+    }
+    const dir = path.join(CHUNK_DIR, uploadId);
+    const metaPath = path.join(dir, 'meta.json');
+    if (!fs.existsSync(metaPath)) {
+      return res.status(404).json({ ok: false, error: 'upload_not_found' });
+    }
+    let meta;
+    try {
+      meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    } catch {
+      return res.status(400).json({ ok: false, error: 'corrupt_upload_meta' });
+    }
+    const total = Number(meta.totalChunks) || 0;
+    const parts = [];
+    for (let i = 0; i < total; i += 1) {
+      const p = path.join(dir, `${String(i).padStart(5, '0')}.part`);
+      if (!fs.existsSync(p)) {
+        return res.status(400).json({ ok: false, error: `missing_chunk_${i}` });
+      }
+      parts.push(p);
+    }
+    const ext = path.extname(meta.originalName || '').slice(0, 12)
+      || (isVideoMime(meta.mime) ? '.mp4' : '.jpg');
+    const filename = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
+    const outPath = path.join(MEDIA_DIR, filename);
+    const fd = fs.openSync(outPath, 'w');
+    try {
+      for (const part of parts) {
+        fs.writeSync(fd, fs.readFileSync(part));
+      }
+    } finally {
+      fs.closeSync(fd);
+    }
+    // Cleanup chunk dir best-effort
+    try {
+      for (const f of fs.readdirSync(dir)) fs.unlinkSync(path.join(dir, f));
+      fs.rmdirSync(dir);
+    } catch {
+      /* ignore */
+    }
+    const size = fs.statSync(outPath).size;
+    return res.json({
+      ok: true,
+      media: {
+        filename,
+        mime: meta.mime,
+        size,
+        originalName: meta.originalName,
+        url: publicMediaUrl(filename),
+      },
     });
   });
 
@@ -515,6 +831,7 @@ export function registerSocialPublishRoutes(app, { requireAdmin }) {
       return res.status(error?.statusCode || 500).json({
         ok: false,
         error: error?.message || 'publish_failed',
+        hint: error?.hint || undefined,
       });
     }
   });

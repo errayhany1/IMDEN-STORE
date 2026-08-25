@@ -229,12 +229,50 @@ export async function fetchSocialPosts(limit = 40) {
   return data;
 }
 
-export async function uploadSocialMedia(file) {
-  const body = new FormData();
-  body.append('file', file);
-  const { data } = await adminAxios.post('/bot-api/api/admin/social/upload', body, {
-    timeout: 600000,
-  });
+export async function uploadSocialMedia(file, { onProgress } = {}) {
+  const size = Number(file?.size) || 0;
+  // Small files: single request. Larger: chunked (proxy kills ~60s uploads).
+  if (size > 0 && size <= 700 * 1024) {
+    const body = new FormData();
+    body.append('file', file);
+    const { data } = await adminAxios.post('/bot-api/api/admin/social/upload', body, {
+      timeout: 600000,
+    });
+    return data;
+  }
+
+  const chunkBytes = 768 * 1024;
+  const totalChunks = Math.max(1, Math.ceil(size / chunkBytes));
+  const { data: init } = await adminAxios.post(
+    '/bot-api/api/admin/social/upload/init',
+    {
+      mime: file.type || 'application/octet-stream',
+      size,
+      originalName: file.name || 'upload.bin',
+      totalChunks,
+    },
+    { timeout: 30000 },
+  );
+  const uploadId = init.uploadId;
+  for (let i = 0; i < totalChunks; i += 1) {
+    const start = i * chunkBytes;
+    const end = Math.min(size, start + chunkBytes);
+    const blob = file.slice(start, end);
+    const body = new FormData();
+    body.append('uploadId', uploadId);
+    body.append('index', String(i));
+    body.append('chunk', blob, `part-${i}`);
+    // eslint-disable-next-line no-await-in-loop
+    await adminAxios.post('/bot-api/api/admin/social/upload/chunk', body, {
+      timeout: 120000,
+    });
+    if (typeof onProgress === 'function') onProgress(Math.round(((i + 1) / totalChunks) * 100));
+  }
+  const { data } = await adminAxios.post(
+    '/bot-api/api/admin/social/upload/complete',
+    { uploadId },
+    { timeout: 120000 },
+  );
   return data;
 }
 
