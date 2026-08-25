@@ -75,6 +75,14 @@ import {
   deactivateRemovedProductVariants,
 } from './productVariants.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
+import { prepareVisionBuffers } from './imageNormalize.js';
+import {
+  cacheHasFacts,
+  readEnrichmentCache,
+  serializeEnrichmentCache,
+  sourceHash,
+  totalCost,
+} from './enrichmentCache.js';
 import {
   createBundledTifawtLead,
   isBundledTifawtLeadConfigured,
@@ -1493,6 +1501,51 @@ async function executeAiPolish({
     ? Number(getBotSetting('amazonTimeoutMs'))
     : Number(getBotSetting('aiBackgroundTimeoutMs'));
 
+  // Cache is stored on the NocoDB record when the optional enrichment columns
+  // exist. Older tables remain supported: their schema rejection is ignored.
+  let record = null;
+  try {
+    const { data } = await http.get(recordUrl, {
+      headers: { 'xc-token': NOCODB_TOKEN },
+      params: {
+        where: `(Id,eq,${Number(rowId)})`,
+        limit: 1,
+        fields: 'Id,Enrichment_Cache,Enrichment_State',
+      },
+      timeout: 20000,
+    });
+    record = data?.list?.[0] || data?.data || data;
+  } catch (error) {
+    console.warn(`Could not read enrichment cache #${rowId}:`, error.message);
+  }
+  const visionBuffers = await prepareVisionBuffers((originalBuffers || []).slice(0, 4));
+  const hash = sourceHash(visionBuffers);
+  const existingCache = readEnrichmentCache(record?.Enrichment_Cache);
+  const factsModel = getBotSetting('openrouterFactsModel');
+  const cachedFacts = cacheHasFacts(existingCache, hash, factsModel)
+    ? existingCache.facts.data
+    : null;
+  const priorCost = totalCost(existingCache?.usage || []);
+  const hardBudget = Number(getBotSetting('aiProductBudgetHardUsd'));
+  if (!cachedFacts && priorCost >= hardBudget) {
+    await sendMessage(chatId, `⚠️ أوقفت إعادة التحليل للمنتج #${rowId}: تجاوز ميزانية AI القصوى (${hardBudget}$).`);
+    return;
+  }
+  const patchState = async (state, cache = null, assets = null) => {
+    try {
+      const patch = { Id: rowId, Enrichment_State: state };
+      if (cache) patch.Enrichment_Cache = serializeEnrichmentCache(cache);
+      if (assets) patch.Enrichment_Assets = JSON.stringify(assets);
+      await http.patch(recordUrl, patch, {
+        headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
+        timeout: 20000,
+      });
+    } catch (error) {
+      // These columns are optional until the NocoDB schema is migrated.
+      console.warn(`Could not persist enrichment ${state} state #${rowId}:`, error.message);
+    }
+  };
+  await patchState('running');
   let enrichment;
   try {
     enrichment = await withTimeout(
@@ -1511,6 +1564,9 @@ async function executeAiPolish({
         syncJumia,
         postebl,
         publishRealOriginal,
+        cachedFacts,
+        cacheSourceHash: hash,
+        preparedVisionBuffers: visionBuffers,
       }),
       enrichTimeout,
       'AI polish'
@@ -1526,6 +1582,18 @@ async function executeAiPolish({
       `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId} (${sellerSku}).\n${e.message}\n📷 لم تُنشر صور خام غير مرغوبة على الموقع.`
     );
     return;
+  }
+  await patchState(
+    enrichment?.galleryCandidates?.length ? 'awaiting_approval' : 'approved',
+    enrichment?.enrichmentCache,
+    enrichment?.enrichmentAssets,
+  );
+  const runCost = totalCost(enrichment?.usage || []);
+  const softBudget = Number(getBotSetting('aiProductBudgetSoftUsd'));
+  if (runCost > softBudget) {
+    console.warn(
+      `AI soft budget exceeded #${rowId}: $${runCost.toFixed(4)} > $${softBudget.toFixed(4)}`,
+    );
   }
 
   if (!enrichment?.copy && !enrichment?.hasAiImages) {

@@ -9,6 +9,7 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // Gemini 2.5 produced the original AQ10/AQ3 professional studio results.
 const textModel = () => getBotSetting('openrouterTextModel');
 const imageModel = () => getBotSetting('openrouterImageModel');
+const factsModel = () => getBotSetting('openrouterFactsModel') || textModel();
 
 function apiKey() {
   return process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || '';
@@ -119,6 +120,7 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés:
   "barcode": "code-barres exact visible sur une photo, sinon chaîne vide",
   "packaging_specs": ["spec lue sur la boîte 1", "spec 2", "spec 3", "spec 4", "spec 5", "spec 6"]
 }
+
 Règles packaging_specs:
 - Lis le TEXTE visible sur l'emballage / la boîte / les étiquettes (modèle, RGB, USB-C, voltage, autonomie, dimensions, features…).
 - Français ou anglais court, max 6 lignes, factuelles uniquement.
@@ -158,6 +160,73 @@ Règles color_variants:
   const parsed = extractJson(typeof text === 'string' ? text : JSON.stringify(text));
   if (!parsed) throw new Error('OpenRouter text: invalid JSON');
   return parsed;
+}
+
+/**
+ * Single paid vision pass. Local templates render the final AR/FR copy, so
+ * product photos are not sent to a second paid text provider.
+ */
+export async function extractProductFacts({
+  imageBuffer,
+  imageBuffers,
+  name,
+  ref,
+  amazonMeta = null,
+}) {
+  if (!isOpenRouterConfigured()) throw new Error('OPENROUTER_API_KEY missing');
+  const amazonFacts = amazonMeta
+    ? `\nAmazon facts (technical corroboration only): ${JSON.stringify({
+      title: amazonMeta.title || '',
+      features: (amazonMeta.features || []).slice(0, 8),
+      description: String(amazonMeta.description || '').slice(0, 1200),
+    })}`
+    : '';
+  const prompt = `Read these product photos once and return only factual JSON.
+Seller name: ${name || ''}
+Reference: ${ref || ''}${amazonFacts}
+Return exactly:
+{"brand":"visible brand or Generic","model":"visible model or empty","color":"main visible color or Multicolore","title_fr":"short factual French title","title_ar":"short factual Arabic title","uses_fr":["facts"],"uses_ar":["facts"],"packaging_specs":["facts read from labels"],"color_variants":["only visible variants"],"barcode":"only if clearly readable","confidence":0}
+Never invent certifications, measurements, compatibility, barcode, or a brand.`;
+  const content = [{ type: 'text', text: prompt }];
+  const refs = (imageBuffers?.length ? imageBuffers : [imageBuffer])
+    .filter(Boolean)
+    .slice(0, 3);
+  for (const buffer of refs) {
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:image/jpeg;base64,${buffer.toString('base64')}` },
+    });
+  }
+  const { data } = await axios.post(
+    OPENROUTER_URL,
+    {
+      model: factsModel(),
+      messages: [{ role: 'user', content }],
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      max_tokens: 900,
+    },
+    { headers: headers(), timeout: 45000 },
+  );
+  const text = data?.choices?.[0]?.message?.content;
+  const facts = extractJson(typeof text === 'string' ? text : JSON.stringify(text));
+  if (!facts) throw new Error('OpenRouter facts: invalid JSON');
+  return {
+    facts,
+    usage: {
+      provider: 'openrouter',
+      model: factsModel(),
+      promptTokens: Number(data?.usage?.prompt_tokens || 0),
+      completionTokens: Number(data?.usage?.completion_tokens || 0),
+      totalTokens: Number(data?.usage?.total_tokens || 0),
+      // Conservative default for flash-lite-class text calls. Exact provider
+      // billing remains available in OpenRouter; this is a guardrail estimate.
+      cost: (
+        (Number(data?.usage?.prompt_tokens || 0) / 1_000_000) * 0.03
+        + (Number(data?.usage?.completion_tokens || 0) / 1_000_000) * 0.13
+      ),
+    },
+  };
 }
 
 /**

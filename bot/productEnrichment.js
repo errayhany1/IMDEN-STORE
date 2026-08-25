@@ -4,12 +4,13 @@
  * With Amazon URL: scrape Apify → AI copy from Amazon data → gallery = AI + Amazon + real last.
  */
 import {
-  generateProductCopy,
+  extractProductFacts,
   generateProductImages,
   generateJumiaColorImage,
   isOpenRouterConfigured,
 } from './openrouter.js';
-import { generateLandingPageCopy, isOpenAIConfigured } from './openai.js';
+import { factsToProductCopy } from './productFacts.js';
+import { buildEnrichmentCache } from './enrichmentCache.js';
 import {
   appendProductToSheet,
   isSheetWebhookConfigured,
@@ -30,7 +31,6 @@ import {
   bulletsFromHtml,
 } from './studioImage.js';
 import { createRealProductCutout } from './localBackground.js';
-import { generateQwenProductImage, isQwenImageConfigured } from './qwenImage.js';
 import { buildColorVariants, buildJumiaColorSku, parseColorList } from './colorVariants.js';
 import { getBotSetting } from './runtimeSettings.js';
 
@@ -182,38 +182,21 @@ export async function detectProductColorVariants({
   const refs = await prepareVisionBuffers((imageBuffers || []).filter(Boolean).slice(0, 4));
   if (!refs.length) throw new Error('No source images for color detection');
 
-  let lastError;
-  if (isOpenAIConfigured()) {
-    try {
-      const copy = await generateLandingPageCopy({
-        imageBuffers: refs,
-        name,
-        price,
-        ref,
-      });
-      return parseColorList(copy?.color_variants || []);
-    } catch (error) {
-      lastError = error;
-      console.warn('OpenAI color detection failed:', error.message);
-    }
-  }
-
   if (isOpenRouterConfigured()) {
     try {
-      const copy = await generateProductCopy({
+      const result = await extractProductFacts({
         imageBuffers: refs,
         name,
-        price,
         ref,
       });
-      return parseColorList(copy?.color_variants || []);
+      return parseColorList(result?.facts?.color_variants || []);
     } catch (error) {
-      lastError = error;
       console.warn('OpenRouter color detection failed:', error.message);
+      throw error;
     }
   }
 
-  throw lastError || new Error('No configured AI provider for color detection');
+  throw new Error('No configured AI provider for color detection');
 }
 
 /**
@@ -391,6 +374,9 @@ export async function enrichProduct({
   postebl = 'POSTEBL',
   /** When false, never put raw seller photos in Image1–5 (vision-only backs). */
   publishRealOriginal = true,
+  cachedFacts = null,
+  cacheSourceHash = '',
+  preparedVisionBuffers = null,
 }) {
   const requestedAmazonUrls = Array.from(new Set(
     [amazonUrl, ...(Array.isArray(amazonUrls) ? amazonUrls : [])]
@@ -503,7 +489,7 @@ export async function enrichProduct({
     }
   }
 
-  if (!enabled || (!isOpenAIConfigured() && !isOpenRouterConfigured())) {
+  if (!enabled || !isOpenRouterConfigured()) {
     if (!originalUploads.length && galleryRealBuffers[0]) {
       originalUploads = await uploadBuffers(
         uploadToNocoDB,
@@ -595,7 +581,7 @@ export async function enrichProduct({
       aiFailures: [
         !enabled
           ? 'PRODUCT_AI_ENRICHMENT=false'
-          : 'ai_disabled_or_unconfigured: set OPENROUTER_API_KEY (images) and optionally OPENAI_API_KEY (copy)',
+          : 'ai_disabled_or_unconfigured: set OPENROUTER_API_KEY',
       ],
       hasAiImages: false,
       amazonSourceBuffers: amazonUrl ? amazonBuffers : [],
@@ -617,25 +603,19 @@ export async function enrichProduct({
 
   // Downscale before any vision call — full source photos regularly blow
   // past the soft timeout and leave products with only the raw caption.
-  const visionBuffers = await prepareVisionBuffers(enrichmentBuffers.slice(0, 4));
+  const visionBuffers = preparedVisionBuffers?.length
+    ? preparedVisionBuffers
+    : await prepareVisionBuffers(enrichmentBuffers.slice(0, 4));
   const visionPrimary = visionBuffers[0] || enrichmentPrimary;
 
-  async function runCopyOnce() {
-    if (isOpenAIConfigured()) {
-      return generateLandingPageCopy({
-        imageBuffer: visionPrimary,
-        imageBuffers: visionBuffers,
-        name: displayName,
-        price,
-        ref: referenceClean,
-        amazonMeta,
-      });
+  async function runFactsOnce() {
+    if (cachedFacts) {
+      return { facts: cachedFacts, usage: { provider: 'cache', model: 'cached', totalTokens: 0, cost: 0 } };
     }
-    return generateProductCopy({
+    return extractProductFacts({
       imageBuffer: visionPrimary,
       imageBuffers: visionBuffers,
       name: displayName,
-      price,
       ref: referenceClean,
       amazonMeta,
     });
@@ -655,39 +635,28 @@ export async function enrichProduct({
     });
   }
 
-  // Copy and studio images can run in parallel — images only need a display
-  // title, not the finished SEO copy. That cuts wall-clock time roughly in half.
+  // One factual vision pass drives local templates. Do not send the same album
+  // to a second text model or retry paid text generation.
+  let facts = null;
+  const usage = [];
   const copyPromise = (async () => {
     try {
-      const first = await runCopyOnce();
-      console.log(`Landing copy: ${isOpenAIConfigured() ? 'OpenAI' : 'OpenRouter'} OK`);
-      return first;
+      const result = await runFactsOnce();
+      facts = result.facts;
+      usage.push(result.usage);
+      console.log('Product facts: OpenRouter OK');
+      return factsToProductCopy(result.facts, { name: displayName, price, ref: referenceClean });
     } catch (e) {
-      console.error('AI copy (primary) failed:', e.message);
-      if (isOpenAIConfigured() && isOpenRouterConfigured()) {
-        try {
-          const fallback = await generateProductCopy({
-            imageBuffer: visionPrimary,
-            imageBuffers: visionBuffers,
-            name: displayName,
-            price,
-            ref: referenceClean,
-            amazonMeta,
-          });
-          console.log('Landing copy: OpenRouter fallback OK');
-          return fallback;
-        } catch (e2) {
-          console.error('AI copy fallback failed:', e2.message);
-          aiFailures.push(`copy:${e2.message}`);
-          return null;
-        }
-      }
+      console.error('Product facts failed:', e.message);
       aiFailures.push(`copy:${e.message}`);
       return null;
     }
   })();
 
-  const imagesPromise = (async () => {
+  // Do not start a second paid vision request until the facts pass completed.
+  // The image model still receives references, but there is exactly one facts
+  // extraction and one studio generation per product.
+  const imagesPromise = copyPromise.then(async () => {
     if (amazonUrl) return [];
     try {
       const aiBuffers = await runImagesOnce(displayName);
@@ -728,51 +697,18 @@ export async function enrichProduct({
     }
   })();
 
-  // Qwen is an optional secondary render for every product. It never replaces
-  // Gemini and a missing/invalid key must not block product enrichment.
-  const qwenPromise = (async () => {
-    if (amazonUrl) return [];
-    if (!isQwenImageConfigured()) return [];
-    try {
-      const qwenBuffer = await generateQwenProductImage({
-        imageBuffers: visionBuffers,
-        title: displayName,
-      });
-      if (!qwenBuffer) return [];
-      const pairs = await uploadBufferPairs(uploadToNocoDB, [qwenBuffer], `qwen-${sellerSku}`);
-      console.log(`Qwen secondary image uploaded: ${pairs.length}`);
-      return pairs;
-    } catch (e) {
-      console.warn('Qwen secondary image skipped:', e.message);
-      aiFailures.push(`qwen:${e.message}`);
-      return [];
-    }
-  })();
-
-  const [copyResult, imagePairs, cutoutResult, qwenResult] = await Promise.all([
+  const [copyResult, imagePairs, cutoutResult] = await Promise.all([
     copyPromise,
     imagesPromise,
     cutoutPromise,
-    qwenPromise,
   ]);
 
   copy = copyResult;
   const aiPairs = imagePairs || [];
   const cutoutPairs = cutoutResult || [];
-  const qwenPairs = qwenResult || [];
   aiUploads = aiPairs.map((p) => p.file);
   const cutoutUploads = cutoutPairs.map((p) => p.file);
-  const qwenUploads = qwenPairs.map((p) => p.file);
-
-  // If copy still empty, one more dedicated retry after images finished.
-  if (!copy) {
-    try {
-      copy = await runCopyOnce();
-      console.log('Landing copy: late retry OK');
-    } catch (e) {
-      console.error('AI copy late retry failed:', e.message);
-    }
-  }
+  const qwenUploads = [];
 
   // No barcode reading — skip entirely.
   const barcode = '';
@@ -851,14 +787,6 @@ export async function enrichProduct({
       buffer: p.buffer,
       selected: false,
     })),
-    ...qwenPairs.map((p) => ({
-      id: 'qwen',
-      kind: 'qwen',
-      label: 'Qwen — صورة احترافية ثانوية',
-      file: p.file,
-      buffer: p.buffer,
-      selected: true,
-    })),
     ...amazonPairs.map((p, index) => ({
       id: `amazon-source-${index + 1}`,
       kind: 'amazon',
@@ -934,12 +862,44 @@ export async function enrichProduct({
     ? { skipped: true, reason: deferReason }
     : await maybeSyncJumia(productForSheet, syncJumia);
 
+  const enrichmentCache = buildEnrichmentCache({
+    hash: cacheSourceHash,
+    facts,
+    model: getBotSetting('openrouterFactsModel'),
+    copy,
+    usage,
+    gallery: {
+      status: galleryCandidates.length ? 'awaiting_approval' : 'no_candidates',
+      assetNames: finalImages.map((file) => file?.title || file?.name || '').filter(Boolean),
+    },
+    errors: aiFailures,
+  });
+  const enrichmentAssets = {
+    version: 1,
+    candidates: galleryCandidates.map((candidate) => ({
+      id: candidate.id,
+      kind: candidate.kind,
+      label: candidate.label,
+      fileId: candidate.file?.id || candidate.file?.Id || null,
+      fileName: candidate.file?.title || candidate.file?.name || null,
+      selected: Boolean(candidate.selected),
+      isPrimary: Boolean(candidate.isPrimary),
+    })),
+    amazonJumiaSources: amazonJumiaSources.map((source) => ({
+      index: source.index,
+      url: source.url,
+      title: source.title,
+      files: (source.files || []).map((file) => file?.id || file?.Id || file?.title || file?.name).filter(Boolean),
+    })),
+  };
   return {
     sellerSku,
     referenceClean,
     amazonUrl: amazonUrl || amazonMeta?.url || '',
     skippedAi: !copy,
     copy,
+    facts,
+    usage,
     barcode,
     nocoImages: finalImages,
     imageUrls,
@@ -949,13 +909,15 @@ export async function enrichProduct({
     galleryCandidates,
     nocodbUrl,
     aiFailures,
-    hasAiImages: aiUploads.length > 0 || cutoutUploads.length > 0 || qwenUploads.length > 0,
+    hasAiImages: aiUploads.length > 0 || cutoutUploads.length > 0,
     hasSpecsImage,
     detectedColorVariants: detectedColors,
     amazonSourceBuffers: amazonUrl ? amazonBuffers : [],
     amazonAiChoiceRequired: Boolean(amazonUrl),
     amazonDescriptionImageCount: amazonDescriptionImageUrls.length,
     amazonJumiaSources,
+    enrichmentCache,
+    enrichmentAssets,
   };
 }
 

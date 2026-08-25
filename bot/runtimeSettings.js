@@ -67,6 +67,11 @@ export const BOT_SETTINGS_SCHEMA = {
     description: 'النموذج الذي يقرأ الصور ويولد بيانات المنتج.',
     default: textEnv('OPENROUTER_TEXT_MODEL', 'google/gemini-2.5-flash'),
   },
+  openrouterFactsModel: {
+    group: 'ai', type: 'text', label: 'نموذج استخراج حقائق المنتج',
+    description: 'استدعاء رؤية واحد يقرأ الصور ويعيد حقائق JSON؛ القوالب المحلية تنشئ النص بعده دون تكلفة إضافية.',
+    default: textEnv('OPENROUTER_FACTS_MODEL', 'google/gemini-3.1-flash-lite'),
+  },
   openrouterImageModel: {
     group: 'ai', type: 'text', label: 'نموذج صور OpenRouter',
     description: 'النموذج الأساسي لإنشاء صور الاستوديو والألوان.',
@@ -76,6 +81,16 @@ export const BOT_SETTINGS_SCHEMA = {
     group: 'ai', type: 'text', label: 'نموذج OpenAI للنصوص',
     description: 'النموذج الاحتياطي/الأساسي لإنشاء المحتوى ثنائي اللغة.',
     default: textEnv('OPENAI_TEXT_MODEL', 'gpt-4o-mini'),
+  },
+  aiProductBudgetSoftUsd: {
+    group: 'ai', type: 'number', label: 'ميزانية AI المرنة لكل منتج (USD)',
+    description: 'يُسجَّل الاستهلاك ويُستخدم كحد تحذير للكاش؛ الصورة هي الجزء المدفوع الأكبر.',
+    default: numberEnv('AI_PRODUCT_BUDGET_SOFT_USD', 0.055), min: 0.01, max: 5, step: 0.005,
+  },
+  aiProductBudgetHardUsd: {
+    group: 'ai', type: 'number', label: 'ميزانية AI القصوى لكل منتج (USD)',
+    description: 'لا تبدأ مرحلة مدفوعة جديدة عندما يكشف الكاش تجاوز هذا الحد.',
+    default: numberEnv('AI_PRODUCT_BUDGET_HARD_USD', 0.08), min: 0.01, max: 10, step: 0.005,
   },
   qwenImageModel: {
     group: 'ai', type: 'text', label: 'نموذج Qwen للصور',
