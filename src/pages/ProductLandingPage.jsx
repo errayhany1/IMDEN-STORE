@@ -356,6 +356,25 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     }
   })();
 
+  const goBackToBrowse = (event) => {
+    event?.preventDefault?.();
+    // Prefer browser history so bfcache / prior URL (search, family) can return.
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.assign(backHref);
+  };
+
+  const openCatalogSearch = () => {
+    try {
+      sessionStorage.setItem('focusHeaderSearch', '1');
+    } catch {
+      /* ignore */
+    }
+    goBackToBrowse();
+  };
+
   useEffect(() => {
     if (!product) return undefined;
     const metaTitle = `${title} | ${BRAND}`;
@@ -566,21 +585,12 @@ const ProductLandingPage = ({ sku: skuProp }) => {
         <p className="text-xl font-bold">{t.notFound}</p>
         <p className={`text-sm ${muted}`}>{sku}</p>
         {loadError && <p className="text-xs text-red-500">{loadError}</p>}
-        <a href={backHref} className="font-bold text-primary flex items-center gap-2">
+        <button type="button" onClick={goBackToBrowse} className="font-bold text-primary flex items-center gap-2">
           <ArrowRight size={16} className={isFr ? 'rotate-180' : ''} /> {t.back}
-        </a>
+        </button>
       </div>
     );
   }
-
-  const openCatalogSearch = () => {
-    try {
-      sessionStorage.setItem('focusHeaderSearch', '1');
-    } catch {
-      /* ignore */
-    }
-    window.location.assign(backHref);
-  };
 
   const navBtnClass = dm
     ? 'bg-[#142038] border-white/10 text-gray-200 hover:bg-white/10'
@@ -598,18 +608,19 @@ const ProductLandingPage = ({ sku: skuProp }) => {
               ${dm ? 'bg-[#142038] border-white/5 shadow-black/30' : 'bg-white border-slate-100'}`}
           >
             {/* Back */}
-            <a
-              href={backHref}
+            <button
+              type="button"
+              onClick={goBackToBrowse}
               className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors
                 ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100'}`}
               aria-label={t.back}
               title={t.back}
             >
               <ArrowRight size={18} className={isFr ? 'rotate-180' : ''} />
-            </a>
+            </button>
 
             {/* Brand */}
-            <a href={backHref} className="flex items-center min-w-0 flex-1 gap-2.5">
+            <button type="button" onClick={goBackToBrowse} className="flex items-center min-w-0 flex-1 gap-2.5 text-start">
               <img
                 src={dm ? '/logo-dark.png' : '/logo.png'}
                 alt={BRAND}
@@ -619,7 +630,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
               <span className={`hidden sm:inline text-[11px] font-semibold truncate ${muted}`}>
                 {isFr ? 'Grossiste électronique' : 'إلكترونيات بالجملة'}
               </span>
-            </a>
+            </button>
 
             {/* Actions */}
             <div className="flex items-center gap-0.5 shrink-0">
@@ -651,15 +662,16 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 {isFr ? 'AR' : 'FR'}
               </button>
 
-              <a
-                href={backHref}
+              <button
+                type="button"
+                onClick={goBackToBrowse}
                 className={`hidden sm:inline-flex w-10 h-10 rounded-xl items-center justify-center transition-colors
                   ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100'}`}
                 aria-label={isFr ? 'Boutique' : 'المتجر'}
                 title={isFr ? 'Boutique' : 'المتجر'}
               >
                 <Home size={18} />
-              </a>
+              </button>
 
               <button
                 type="button"

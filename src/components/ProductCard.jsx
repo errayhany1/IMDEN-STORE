@@ -4,6 +4,7 @@ import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
 import ProductRatingStars from './ProductRatingStars';
 import { frenchProductTitle, isRtlText } from '../utils/productText';
+import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 import './ProductCard.css';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
@@ -41,6 +42,7 @@ const ProductCard = ({ product, priority = false }) => {
         } catch {
             /* ignore */
         }
+        saveBrowseRestoreFromStore(useStore.getState);
     };
 
     const openProductPage = () => {

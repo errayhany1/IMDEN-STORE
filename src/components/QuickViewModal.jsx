@@ -12,6 +12,7 @@ import {
     productDescriptionHtml,
     stripHtml,
 } from '../utils/productText';
+import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
@@ -327,6 +328,15 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                     readOnly
                                     onRequestRate={() => {
                                         onClose?.();
+                                        try {
+                                            sessionStorage.setItem(
+                                                'lastBrowseMode',
+                                                useStore.getState().browseMode === 'catalog' ? 'catalog' : 'shop'
+                                            );
+                                        } catch {
+                                            /* ignore */
+                                        }
+                                        saveBrowseRestoreFromStore(useStore.getState);
                                         window.location.assign(`/p/${encodeURIComponent(viewedProduct.ref || viewedProduct.id)}`);
                                     }}
                                 />

@@ -6,6 +6,7 @@ import { sendToTelegram } from '../utils/telegramApi';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import CheckoutModal from './CheckoutModal';
+import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 
 const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
 
@@ -50,6 +51,7 @@ const CartSidebar = () => {
         } catch {
             /* ignore */
         }
+        saveBrowseRestoreFromStore(useStore.getState);
         toggleCart();
         window.location.assign(`/p/${encodeURIComponent(ref)}`);
     };

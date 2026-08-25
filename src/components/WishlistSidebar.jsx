@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Trash2, ShoppingCart, Heart } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 
 const WishlistSidebar = () => {
     const {
@@ -38,6 +39,7 @@ const WishlistSidebar = () => {
         } catch {
             /* ignore */
         }
+        saveBrowseRestoreFromStore(useStore.getState);
         toggleWishlistSidebar();
         window.location.assign(`/p/${encodeURIComponent(ref)}`);
     };

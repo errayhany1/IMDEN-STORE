@@ -34,6 +34,7 @@ import { upsertOffersLead } from './services/offersLead';
 import { initNativeShell } from './services/nativeShell';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp, Loader2 } from 'lucide-react';
+import { applyBrowseRestore } from './utils/browseRestore';
 
 function App() {
   const {
@@ -53,6 +54,7 @@ function App() {
     setBrowseMode,
     browseMode,
     searchQuery,
+    setCategory,
   } = useStore();
   const isSearching = Boolean(String(searchQuery || '').trim());
   const [showLoginToast, setShowLoginToast] = useState(false);
@@ -107,6 +109,29 @@ function App() {
     window.addEventListener('popstate', syncFromPath);
     return () => window.removeEventListener('popstate', syncFromPath);
   }, [setFamily, clearFamily, setBrowseMode]);
+
+  // Restore search + scroll after leaving a product page
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/p/')) return undefined;
+
+    const run = () => {
+      applyBrowseRestore({
+        setSearchQuery,
+        setFamily,
+        clearFamily,
+        setCategory,
+        setBrowseMode,
+      });
+    };
+
+    run();
+    const onPageShow = (event) => {
+      if (event.persisted) run();
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, [setSearchQuery, setFamily, clearFamily, setCategory, setBrowseMode]);
 
   // Support /#categories-section deep links (e.g. from bottom nav on Account page)
   useEffect(() => {

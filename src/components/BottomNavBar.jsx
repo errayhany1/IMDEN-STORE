@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Home, BookOpen, ShoppingCart, Heart, LayoutGrid } from 'lucide-react';
 import useStore from '../store/useStore';
 
@@ -6,8 +6,12 @@ import useStore from '../store/useStore';
  * Floating bottom nav (all viewports).
  * RTL order (right → left): Catalog | Home | Categories | Cart | Favorites
  * Account lives in the sidebar menu only.
+ *
+ * Pins to the *visual* viewport bottom so zoom / WhatsApp WebView
+ * cannot leave the bar floating mid-screen.
  */
 const BottomNavBar = ({ activeOverride = null }) => {
+    const navRef = useRef(null);
     const {
         darkMode,
         cart,
@@ -18,8 +22,39 @@ const BottomNavBar = ({ activeOverride = null }) => {
         toggleWishlistSidebar,
         clearFamily,
         setBrowseMode,
-        browseMode,
     } = useStore();
+
+    useEffect(() => {
+        const nav = navRef.current;
+        if (!nav) return undefined;
+
+        const pinToVisualBottom = () => {
+            const vv = window.visualViewport;
+            if (!vv) {
+                nav.style.bottom = '0px';
+                nav.style.transform = '';
+                return;
+            }
+            // Distance from layout viewport bottom to visual viewport bottom
+            const inset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+            nav.style.bottom = `${inset}px`;
+            nav.style.transform = 'translateZ(0)';
+        };
+
+        pinToVisualBottom();
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', pinToVisualBottom);
+        vv?.addEventListener('scroll', pinToVisualBottom);
+        window.addEventListener('resize', pinToVisualBottom);
+        window.addEventListener('orientationchange', pinToVisualBottom);
+
+        return () => {
+            vv?.removeEventListener('resize', pinToVisualBottom);
+            vv?.removeEventListener('scroll', pinToVisualBottom);
+            window.removeEventListener('resize', pinToVisualBottom);
+            window.removeEventListener('orientationchange', pinToVisualBottom);
+        };
+    }, []);
 
     const path = window.location.pathname;
     const onCatalog = path === '/catalog' || path.startsWith('/catalog/');
@@ -126,7 +161,9 @@ const BottomNavBar = ({ activeOverride = null }) => {
 
     return (
         <nav
-            className="fixed bottom-0 inset-x-0 z-[60] pointer-events-none pb-[max(4px,env(safe-area-inset-bottom))] px-3 md:px-6"
+            ref={navRef}
+            className="fixed inset-x-0 bottom-0 z-[60] pointer-events-none pb-[max(4px,env(safe-area-inset-bottom))] px-3 md:px-6"
+            style={{ bottom: 0, left: 0, right: 0 }}
             aria-label="التنقل السفلي"
         >
             <div

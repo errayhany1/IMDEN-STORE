@@ -121,7 +121,7 @@ const Header = () => {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 dir="rtl"
-                                className={`block w-full h-10 sm:h-11 pl-10 pr-4 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow
+                                className={`block w-full h-10 sm:h-11 pl-10 pr-4 border rounded-full text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow
                                     ${dm
                                         ? 'bg-[#0f1a2e] border-slate-600 text-white placeholder-gray-400'
                                         : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
