@@ -1,6 +1,1631 @@
 [
   {
     "@type": "Product",
+    "name": "MOBILE GAME CONTROLLER K98",
+    "image": "https://errayhany.com/product-images/1962-1-b2a645c42e-1600.webp",
+    "description": "MOBILE GAME CONTROLLER K98 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-GAME-CONTROLLER-K98-L3-L7",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-GAME-CONTROLLER-K98-L3-L7",
+      "price": 45,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HOLDER M1-M13",
+    "image": "https://errayhany.com/product-images/1961-1-24f647dc58-1600.webp",
+    "description": "HOLDER M1-M13 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HOLDER-M1-M13",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HOLDER-M1-M13",
+      "price": 110,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MOBILE GAME CONTROLLER MEMO DL100",
+    "image": "https://errayhany.com/product-images/1960-1-7456b877b6-1600.webp",
+    "description": "MOBILE GAME CONTROLLER MEMO DL100 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MEMO-DL100",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MEMO-DL100",
+      "price": 200,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MOBILE GAME CONTROLLER MEMO DL88",
+    "image": "https://errayhany.com/product-images/1959-1-1b1b2bf2e4-1600.webp",
+    "description": "MOBILE GAME CONTROLLER MEMO DL88 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MEMO-DL88",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MEMO-DL88",
+      "price": 170,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ZIYOULANG T8",
+    "image": "https://errayhany.com/product-images/1958-1-a6807d062a-1600.webp",
+    "description": "CLAVIER ZIYOULANG T8 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CLAVIER-ZIYOULANG-T8",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CLAVIER-ZIYOULANG-T8",
+      "price": 170,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "TAPIS ATTAQUE SHARK CM02",
+    "image": "https://errayhany.com/product-images/1957-1-bdfac7b3ac-1600.webp",
+    "description": "TAPIS ATTAQUE SHARK CM02 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-TAPIS-CM02",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-TAPIS-CM02",
+      "price": 110,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CASQUE ATTAQUE SHARK G800",
+    "image": "https://errayhany.com/product-images/1956-1-b6c2de2caa-1600.webp",
+    "description": "CASQUE ATTAQUE SHARK G800 - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CASQUE-G800",
+    "category": "سماعات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CASQUE-G800",
+      "price": 350,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK X11",
+    "image": "https://errayhany.com/product-images/1955-1-9224075003-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK X11 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SOURIS-X11",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SOURIS-X11",
+      "price": 240,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK X11SE",
+    "image": "https://errayhany.com/product-images/1954-1-a82da9c892-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK X11SE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SOURIS-X11SE",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SOURIS-X11SE",
+      "price": 180,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK G3PRO",
+    "image": "https://errayhany.com/product-images/1953-1-c1ca24d2d9-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK G3PRO - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SOURIS-G3PRO",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SOURIS-G3PRO",
+      "price": 230,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK V6",
+    "image": "https://errayhany.com/product-images/1952-1-1a9e5117cf-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK V6 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SOURIS-V6",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SOURIS-V6",
+      "price": 250,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ATTAQUE SHARK X68 HE",
+    "image": "https://errayhany.com/product-images/1951-1-53bfd9a9e5-1600.webp",
+    "description": "CLAVIER ATTAQUE SHARK X68 HE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CLAVIER-X68HE",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CLAVIER-X68HE",
+      "price": 420,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ATTAQUE SHARK X68MAX",
+    "image": "https://errayhany.com/product-images/1950-1-bdb51ce22d-1600.webp",
+    "description": "CLAVIER ATTAQUE SHARK X68MAX - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CLAVIER-X68MAX",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CLAVIER-X68MAX",
+      "price": 570,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ATTAQUE SHARK R82HE",
+    "image": "https://errayhany.com/product-images/1949-1-56cada470f-1600.webp",
+    "description": "CLAVIER ATTAQUE SHARK R82HE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CLAVIER-R82HE",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CLAVIER-R82HE",
+      "price": 450,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ATTAQUE SHARK R85HE",
+    "image": "https://errayhany.com/product-images/1948-1-348b9d450f-1600.webp",
+    "description": "CLAVIER ATTAQUE SHARK R85HE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CLAVIER-R85HE",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CLAVIER-R85HE",
+      "price": 470,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT NB ERGONOMIQUE MONITOR MOUNT H00",
+    "image": "https://errayhany.com/product-images/1947-1-1954ae03e7-1600.webp",
+    "description": "SUPPORT NB ERGONOMIQUE MONITOR MOUNT H00 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-NB-H100",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-H100",
+      "price": 320,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT NB MONITOR MOUNT F80-XE",
+    "image": "https://errayhany.com/product-images/1946-1-ed232cfbc6-1600.webp",
+    "description": "SUPPORT NB MONITOR MOUNT F80-XE - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-NB-F80-XE",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-F80-XE",
+      "price": 270,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT NB MONITOR WALL MOUNT F160",
+    "image": "https://errayhany.com/product-images/1945-1-73b9f61ef6-1600.webp",
+    "description": "SUPPORT NB MONITOR WALL MOUNT F160 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-NB-F160",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-F160",
+      "price": 500,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT NB MONITOR WALL MOUNT F120",
+    "image": "https://errayhany.com/product-images/1944-1-c17e12e696-1600.webp",
+    "description": "SUPPORT NB MONITOR WALL MOUNT F120 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-NB-F120",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-F120",
+      "price": 270,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MEMO PHONE COOLER CX07",
+    "image": "https://errayhany.com/product-images/1943-1-54da78bac6-1600.webp",
+    "description": "MEMO PHONE COOLER CX07 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MEMO-PHONE-COOLER-CX07",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MEMO-PHONE-COOLER-CX07",
+      "price": 110,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MEMO PHONE COOLER DLA8",
+    "image": "https://errayhany.com/product-images/1942-1-e0cbd26a89-1600.webp",
+    "description": "MEMO PHONE COOLER DLA8 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MEMO-PHONE-COOLER-DLA8",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MEMO-PHONE-COOLER-DLA8",
+      "price": 90,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MEMO PHONE COOLER DL22",
+    "image": "https://errayhany.com/product-images/1941-1-e4977e4e31-1600.webp",
+    "description": "MEMO PHONE COOLER DL22 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MEMO-PHONE-COOLER-DL22",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MEMO-PHONE-COOLER-DL22",
+      "price": 95,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "EARBUDS WIRELESS X37 CYXG",
+    "image": "https://errayhany.com/product-images/1940-1-7d8f3b0373-1600.webp",
+    "description": "EARBUDS WIRELESS X37 CYXG - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-EARBUDS-X37-CYXG-C1-C3",
+    "category": "سماعات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-EARBUDS-X37-CYXG-C1-C3",
+      "price": 70,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MONITOR LIGHT C105",
+    "image": "https://errayhany.com/product-images/1939-1-d1482b49eb-1600.webp",
+    "description": "MONITOR LIGHT C105 - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MONITOR-LIGHT-C105-B26-B35",
+    "category": "إضاءة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MONITOR-LIGHT-C105-B26-B35",
+      "price": 130,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "LED LIGHT SMART SCREEN LAMP B21-B25",
+    "image": "https://errayhany.com/product-images/1938-1-0df6f0ffdd-1600.webp",
+    "description": "LED LIGHT SMART SCREEN LAMP B21-B25 - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "SMART-SCREEN-LAMP-B21-B25",
+    "category": "إضاءة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=SMART-SCREEN-LAMP-B21-B25",
+      "price": 180,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MANETTE 2500MAH H10 BATTERY",
+    "image": "https://errayhany.com/product-images/1937-1-b9f7018ee9-1600.webp",
+    "description": "MANETTE 2500MAH H10 BATTERY - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-H10-2500MAH-BATTERY",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-H10-2500MAH-BATTERY",
+      "price": 95,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MANETTE PLUG/IN/FUN H10 CHARGER",
+    "image": "https://errayhany.com/product-images/1936-1-fcb56fb505-1600.webp",
+    "description": "MANETTE PLUG/IN/FUN H10 CHARGER - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-H10-PLUG-IN-FUN-CHARGER",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-H10-PLUG-IN-FUN-CHARGER",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT HOLDER L33-L40",
+    "image": "https://errayhany.com/product-images/1935-1-826c2230fc-1600.webp",
+    "description": "SUPPORT HOLDER L33-L40 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HOLDER-L33-L40",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HOLDER-L33-L40",
+      "price": 170,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MANETTE WIRELESSM 613",
+    "image": "https://errayhany.com/product-images/1934-1-4f2a7e8bac-1600.webp",
+    "description": "MANETTE WIRELESSM 613 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-613",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-613",
+      "price": 90,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT VELO SPORTS ARMBAND Y305",
+    "image": "https://errayhany.com/product-images/1933-1-d4b5ae7feb-1600.webp",
+    "description": "SUPPORT VELO SPORTS ARMBAND Y305 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-VELO-Y305-L1-L2",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-VELO-Y305-L1-L2",
+      "price": 45,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HOLDER K82/K83",
+    "image": "https://errayhany.com/product-images/1932-1-527c87b38e-1600.webp",
+    "description": "HOLDER K82/K83 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-K82-K83-J85-J95",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-K82-K83-J85-J95",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MANETTE WIRLESS CONTROLLER V8",
+    "image": "https://errayhany.com/product-images/1931-1-46ac45968d-1600.webp",
+    "description": "MANETTE WIRLESS CONTROLLER V8 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-V8",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-V8",
+      "price": 75,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PHONE STICKER SUPPORT VENTOUSE PETIT TAILLE",
+    "image": "https://errayhany.com/product-images/1930-1-95f3053216-1600.webp",
+    "description": "PHONE STICKER SUPPORT VENTOUSE PETIT TAILLE - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-VENTOUSE-PETIT-I6-I5",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-VENTOUSE-PETIT-I6-I5",
+      "price": 5,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PHONE STICKER SUPPORT VENTOUSE GRAND TAILLE",
+    "image": "https://errayhany.com/product-images/1929-1-7ea41b1dad-1600.webp",
+    "description": "PHONE STICKER SUPPORT VENTOUSE GRAND TAILLE - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-VENTOUSE-GRANDT-I1-I5",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-VENTOUSE-GRANDT-I1-I5",
+      "price": 6,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HOLDER PHONE L28-L32",
+    "image": "https://errayhany.com/product-images/1928-1-00232d7f56-1600.webp",
+    "description": "HOLDER PHONE L28-L32 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HOLDER-PHONE-L28-L32",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HOLDER-PHONE-L28-L32",
+      "price": 70,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "BUKHOOR B008 U11-U12",
+    "image": "https://errayhany.com/product-images/1927-1-e43a9cea60-1600.webp",
+    "description": "BUKHOOR B008 U11-U12 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-BUKHOOR-B008-U11-U12",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-BUKHOOR-B008-U11-U12",
+      "price": 130,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "POINTER LASER WIRELESS PRESENTER L13-L14",
+    "image": "https://errayhany.com/product-images/1926-1-ed31948ae9-1600.webp",
+    "description": "POINTER LASER WIRELESS PRESENTER L13-L14 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-POINTER-LASER-PRESENTER-L13-L14",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-POINTER-LASER-PRESENTER-L13-L14",
+      "price": 70,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SELFIE STICK L15",
+    "image": "https://errayhany.com/product-images/1925-1-fdfbae1481-1600.webp",
+    "description": "SELFIE STICK L15 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SELFIE-L15",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SELFIE-L15",
+      "price": 90,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT HOLDER 2m J71-J80",
+    "image": "https://errayhany.com/product-images/1924-1-209d2bc615-1600.webp",
+    "description": "SUPPORT HOLDER 2m J71-J80 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "SUPPORT HOLDER 2m J71-J80",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=SUPPORT%20HOLDER%202m%20J71-J80",
+      "price": 200,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT HOLDER 1.5m J61-J70",
+    "image": "https://errayhany.com/product-images/1923-1-bd9eee23aa-1600.webp",
+    "description": "SUPPORT HOLDER 1.5m J61-J70 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-1-5M-J61-J70",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-1-5M-J61-J70",
+      "price": 180,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PHONE HOLDER M8S L8-L11",
+    "image": "https://errayhany.com/product-images/1922-1-07911ac069-1600.webp",
+    "description": "PHONE HOLDER M8S L8-L11 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-PHONE-HOLDER-M8S-L8-L11",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-PHONE-HOLDER-M8S-L8-L11",
+      "price": 75,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT HOLDER L26-L27",
+    "image": "https://errayhany.com/product-images/1921-1-b040883b58-1600.webp",
+    "description": "SUPPORT HOLDER L26-L27 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HOLDER-L26-L27",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HOLDER-L26-L27",
+      "price": 40,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT HOLDER L18-L25",
+    "image": "https://errayhany.com/product-images/1920-1-3e04611a97-1600.webp",
+    "description": "SUPPORT HOLDER L18-L25 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HOLDER-L18-L25",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HOLDER-L18-L25",
+      "price": 85,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "GAME CONSOLE R36S",
+    "image": "https://errayhany.com/product-images/1919-1-ed317a6987-1600.webp",
+    "description": "GAME CONSOLE R36S - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-R36S",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-R36S",
+      "price": 400,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MANETTE GAME PLAYER X12 PLUS",
+    "image": "https://errayhany.com/product-images/1918-1-8f882a94a4-1600.webp",
+    "description": "MANETTE GAME PLAYER X12 PLUS - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-X12-PLUS",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-X12-PLUS",
+      "price": 400,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "POWER ADAPTER P4",
+    "image": "https://errayhany.com/product-images/1917-1-2ef57ee3bf-1600.webp",
+    "description": "POWER ADAPTER P4 - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-POWER-ADAPTER-P4",
+    "category": "محولات وHUB",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-POWER-ADAPTER-P4",
+      "price": 10,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "THREE COLOR LIGHT",
+    "image": "https://errayhany.com/product-images/1916-1-1a56827cb0-1600.webp",
+    "description": "THREE COLOR LIGHT - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-THREE-COLOR-LIGHT",
+    "category": "إضاءة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-THREE-COLOR-LIGHT",
+      "price": 150,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "WIRELESS CARPLAY PLUG AND PLAY 05-06",
+    "image": "https://errayhany.com/product-images/1915-1-30bedc5338-1600.webp",
+    "description": "WIRELESS CARPLAY PLUG AND PLAY 05-06 - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CARPLAY-05-06",
+    "category": "إكسسوارات السيارة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CARPLAY-05-06",
+      "price": 550,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "WIRELESS USB ADAPTER CAPPLAY 02",
+    "image": "https://errayhany.com/product-images/1914-1-6cb4ba2b88-1600.webp",
+    "description": "WIRELESS USB ADAPTER CAPPLAY 02 - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CAPPLAY-02",
+    "category": "محولات وHUB",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CAPPLAY-02",
+      "price": 500,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HOLDER M14",
+    "image": "https://errayhany.com/product-images/1913-1-add990ddfb-1600.webp",
+    "description": "HOLDER M14 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HOLDER-M14",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HOLDER-M14",
+      "price": 85,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PHOMEMO LABEL MAKER M110",
+    "image": "https://errayhany.com/product-images/1912-1-6cd19a029d-1600.webp",
+    "description": "PHOMEMO LABEL MAKER M110 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-PHOMEMO-M110",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-PHOMEMO-M110",
+      "price": 480,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CAR MOUNTED SMART AROMA DIFFUSER",
+    "image": "https://errayhany.com/product-images/1911-1-8adcbf71a3-1600.webp",
+    "description": "CAR MOUNTED SMART AROMA DIFFUSER - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "BUKHOOR-AROMA-DIFFUSER-V1-V25",
+    "category": "إكسسوارات السيارة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=BUKHOOR-AROMA-DIFFUSER-V1-V25",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PROFESSIONAL HARDWARE TOOLS 6024",
+    "image": "https://errayhany.com/product-images/1910-1-8baf32b6a1-1600.webp",
+    "description": "PROFESSIONAL HARDWARE TOOLS 6024 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HARDWARE-TOOLS-6024",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HARDWARE-TOOLS-6024",
+      "price": 45,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "HANGING LUGGAGE SCALE",
+    "image": "https://errayhany.com/product-images/1909-1-4db4156ff1-1600.webp",
+    "description": "HANGING LUGGAGE SCALE - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-HANGING-LUGGAGE-SCALE",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-HANGING-LUGGAGE-SCALE",
+      "price": 45,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "USB/USB OTG CARD READER 4 IN 1 0.15m",
+    "image": "https://errayhany.com/product-images/1908-1-90cbc4ac4d-1600.webp",
+    "description": "USB/USB OTG CARD READER 4 IN 1 0.15m - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-OTG-CARD-READER-4-IN-1",
+    "category": "محولات وHUB",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-OTG-CARD-READER-4-IN-1",
+      "price": 60,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "WIRELESS MICROPHONE F11-2",
+    "image": "https://errayhany.com/product-images/1907-1-7579ec754a-1600.webp",
+    "description": "WIRELESS MICROPHONE F11-2 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MICROPHONE-F11-2",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MICROPHONE-F11-2",
+      "price": 100,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PODCAST MICROPHONE MV7",
+    "image": "https://errayhany.com/product-images/1906-1-0b5cc93fcd-1600.webp",
+    "description": "PODCAST MICROPHONE MV7 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-PODCAST-MICROPHONE-MV7",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-PODCAST-MICROPHONE-MV7",
+      "price": 270,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "PROFESSIONAL MICROPHONE M8",
+    "image": "https://errayhany.com/product-images/1905-1-1f77698d07-1600.webp",
+    "description": "PROFESSIONAL MICROPHONE M8 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MICROPHONE-M8",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MICROPHONE-M8",
+      "price": 270,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MICROPHONE RGB M8",
+    "image": "https://errayhany.com/product-images/1904-1-3166f45041-1600.webp",
+    "description": "MICROPHONE RGB M8 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "MICROPHONE-ME6S",
+    "category": "ميكروفونات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=MICROPHONE-ME6S",
+      "price": 270,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SUPPORT NB ERGONOMIQUE F80",
+    "image": "https://errayhany.com/product-images/1903-1-0cf547cad1-1600.webp",
+    "description": "SUPPORT NB ERGONOMIQUE F80 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SUPPORT-F80",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SUPPORT-F80",
+      "price": 280,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "MANETTE WIRELESS CONTROLLER X3",
+    "image": "https://errayhany.com/product-images/1902-1-8f0410cc2e-1600.webp",
+    "description": "MANETTE WIRELESS CONTROLLER X3 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-MANETTE-X3",
+    "category": "ألعاب",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-MANETTE-X3",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTACK SHARK X8-ULTRA PAW3950MA 8K",
+    "image": "https://errayhany.com/product-images/1900-1-f063227c6b-1600.webp",
+    "description": "SOURIS ATTACK SHARK X8-ULTRA PAW3950MA 8K - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-SOURIS-X8-ULTRA-PAW3950MA-8K",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-SOURIS-X8-ULTRA-PAW3950MA-8K",
+      "price": 550,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "سماعة ألعاب ATTACK SHARK L90 ثلاثية الأوضاع | 2.4G/بلوتوث/سلكي | شحن Type-C",
+    "image": "https://errayhany.com/product-images/1892-1-10318e478f-1600.webp",
+    "description": "سماعة ألعاب ATTACK SHARK L90 ثلاثية الأوضاع | 2.4G/بلوتوث/سلكي | شحن Type-C - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CASQUE-L90",
+    "category": "سماعات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CASQUE-L90",
+      "price": 300,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "سماعة رأس للألعاب Attack Shark L80PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) - شحن USB-C",
+    "image": "https://errayhany.com/product-images/1891-1-4d6719428d-1600.webp",
+    "description": "سماعة رأس للألعاب Attack Shark L80PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) - شحن USB-C - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CASQUE-L80PRO",
+    "category": "سماعات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CASQUE-L80PRO",
+      "price": 270,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "سماعة رأس للألعاب Attack Shark L30PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) مع شحن Type-C",
+    "image": "https://errayhany.com/product-images/1890-1-3f3b82d107-1600.webp",
+    "description": "سماعة رأس للألعاب Attack Shark L30PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) مع شحن Type-C - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "sku": "ERY-CASQUE-L30PRO",
+    "category": "سماعات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/?search=ERY-CASQUE-L30PRO",
+      "price": 350,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
     "name": "كابل USB-C إلى HDMI 4K Ultra HD - محول توصيل وتشغيل لأجهزة الكمبيوتر، Mac، الهواتف الذكية، الأجهزة اللوحية، وأجهزة الألعاب",
     "image": "https://errayhany.com/product-images/1888-1-a90f477c8d-1600.webp",
     "description": "كابل USB-C إلى HDMI 4K Ultra HD - محول توصيل وتشغيل لأجهزة الكمبيوتر، Mac، الهواتف الذكية، الأجهزة اللوحية، وأجهزة الألعاب - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
@@ -864,1631 +2489,6 @@
       "@type": "Offer",
       "url": "https://errayhany.com/?search=ERY-SAM-25W-ORI-RAS",
       "price": 65,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سامسونج أصلي 25 واط USB-C مع كابل Type-C إلى Type-C (1 متر) - شحن سريع",
-    "image": "https://errayhany.com/product-images/1848-1-7aa96f33b8-1600.webp",
-    "description": "شاحن سامسونج أصلي 25 واط USB-C مع كابل Type-C إلى Type-C (1 متر) - شحن سريع - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAMSUNG-25W-ORI-ADAPTER",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAMSUNG-25W-ORI-ADAPTER",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سامسونج أصلي 45 واط - محول طاقة USB-C شحن فائق السرعة للهواتف الذكية",
-    "image": "https://errayhany.com/product-images/1847-1-5debacdd4a-1600.webp",
-    "description": "شاحن سامسونج أصلي 45 واط - محول طاقة USB-C شحن فائق السرعة للهواتف الذكية - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAM-45W-ORI-RAS",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAM-45W-ORI-RAS",
-      "price": 80,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سيارة USB AC-DC محول عالمي للهاتف والتابلت - CAR SWITCH",
-    "image": "https://errayhany.com/product-images/1846-1-d30de82d53-1600.webp",
-    "description": "شاحن سيارة USB AC-DC محول عالمي للهاتف والتابلت - CAR SWITCH - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CAR-SWITCH",
-    "category": "إكسسوارات السيارة",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CAR-SWITCH",
-      "price": 22,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سامسونج أصلي 45 واط PD مع كابل USB-C إلى USB-C (5A/1.8m) - شحن سريع",
-    "image": "https://errayhany.com/product-images/1845-1-642e6ded47-1600.webp",
-    "description": "شاحن سامسونج أصلي 45 واط PD مع كابل USB-C إلى USB-C (5A/1.8m) - شحن سريع - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAMSUNG-45W-ORI-ADAPTE",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAMSUNG-45W-ORI-ADAPTE",
-      "price": 150,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل USB-C إلى Lightning بطول 1 متر للآيفون - شحن سريع ومزامنة TC Taiwan",
-    "image": "https://errayhany.com/product-images/1844-1-279823c1a1-1600.webp",
-    "description": "كابل USB-C إلى Lightning بطول 1 متر للآيفون - شحن سريع ومزامنة TC Taiwan - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-IPHONE-TC-TAIWAN",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-IPHONE-TC-TAIWAN",
-      "price": 35,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن ASUS أصلي مربع للكمبيوتر المحمول - طاقة موثوقة ومتينة",
-    "image": "https://errayhany.com/product-images/1843-1-e3542b0a55-1600.webp",
-    "description": "شاحن ASUS أصلي مربع للكمبيوتر المحمول - طاقة موثوقة ومتينة - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-ASUS-MSSMAR-CARRE-ORIGINAL",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-ASUS-MSSMAR-CARRE-ORIGINAL",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن ASUS MSSMAR 19V 2.37A لأجهزة الكمبيوتر المحمولة - محول طاقة",
-    "image": "https://errayhany.com/product-images/1842-1-e93d4fef5e-1600.webp",
-    "description": "شاحن ASUS MSSMAR 19V 2.37A لأجهزة الكمبيوتر المحمولة - محول طاقة - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-ASUS-MSSMAR-19V-2-37-TWIL",
-    "category": "شواحن حواسيب",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-ASUS-MSSMAR-19V-2-37-TWIL",
-      "price": 60,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن لينوفو تايب سي 65 واط مربع أصلي - شحن سريع لأجهزة اللابتوب",
-    "image": "https://errayhany.com/product-images/1841-1-8db69b4f8a-1600.webp",
-    "description": "شاحن لينوفو تايب سي 65 واط مربع أصلي - شحن سريع لأجهزة اللابتوب - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-LENOVO-TYPE-C-65W-CARRE",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-LENOVO-TYPE-C-65W-CARRE",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن لينوفو تايب سي 45 واط مربع أصلي للكمبيوتر المحمول - سريع وموثوق",
-    "image": "https://errayhany.com/product-images/1840-1-ce28595dca-1600.webp",
-    "description": "شاحن لينوفو تايب سي 45 واط مربع أصلي للكمبيوتر المحمول - سريع وموثوق - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-LENOVO-TYPE-C-45W-CARRE",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-LENOVO-TYPE-C-45W-CARRE",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن لينوفو 20 فولت مربع MSSMAR - محول طاقة متوافق لأجهزة الكمبيوتر المحمولة لينوفو",
-    "image": "https://errayhany.com/product-images/1839-1-189d59f41f-1600.webp",
-    "description": "شاحن لينوفو 20 فولت مربع MSSMAR - محول طاقة متوافق لأجهزة الكمبيوتر المحمولة لينوفو - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-LENOVO-20V-CARRE-MSSMAR",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-LENOVO-20V-CARRE-MSSMAR",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن محول طاقة للكمبيوتر المحمول توشيبا 19 فولت 3.42 أمبير - جودة عالية",
-    "image": "https://errayhany.com/product-images/1832-1-076c453c61-1600.webp",
-    "description": "شاحن محول طاقة للكمبيوتر المحمول توشيبا 19 فولت 3.42 أمبير - جودة عالية - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-TOSHIBA19V-342-R",
-    "category": "شواحن حواسيب",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-TOSHIBA19V-342-R",
-      "price": 60,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن محول طاقة 65 واط لجهاز مايكروسوفت سيرفس برو - شحن سريع وموثوق",
-    "image": "https://errayhany.com/product-images/1831-1-97b9c52a54-1600.webp",
-    "description": "شاحن محول طاقة 65 واط لجهاز مايكروسوفت سيرفس برو - شحن سريع وموثوق - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-SURFACE-65W",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-SURFACE-65W",
-      "price": 160,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن محول طاقة 60 واط T-Tip متوافق مع MacBook Pro/Air - بديل عالي الجودة",
-    "image": "https://errayhany.com/product-images/1828-1-c67be932cc-1600.webp",
-    "description": "شاحن محول طاقة 60 واط T-Tip متوافق مع MacBook Pro/Air - بديل عالي الجودة - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-MAC-60W-T",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-MAC-60W-T",
-      "price": 180,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "مضرب ناموس كهربائي قابل لإعادة الشحن Passde YD-296 - قاتل الحشرات المحمول",
-    "image": "https://errayhany.com/product-images/1827-1-d0179d8ecd-1600.webp",
-    "description": "مضرب ناموس كهربائي قابل لإعادة الشحن Passde YD-296 - قاتل الحشرات المحمول - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-MOSKITO-KILLER-YD-296",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MOSKITO-KILLER-YD-296",
-      "price": 100,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "حامل ثلاثي القوائم للإضاءة والتصوير الفوتوغرافي والفيديو 2.10 متر قابل للتعديل والطي من الألومنيوم المتين للاستوديو والخارج",
-    "image": "https://errayhany.com/product-images/1826-1-71b2768490-1600.webp",
-    "description": "حامل ثلاثي القوائم للإضاءة والتصوير الفوتوغرافي والفيديو 2.10 متر قابل للتعديل والطي من الألومنيوم المتين للاستوديو والخارج - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-TRIPI-2-10M",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-TRIPI-2-10M",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل HDMI عالي السرعة 10 متر 4K@60Hz UHD 2160P Deep Color - إصدار 2.0 للتلفزيون، الصندوق، المشغل",
-    "image": "https://errayhany.com/product-images/1825-1-768a366e9b-1600.webp",
-    "description": "كابل HDMI عالي السرعة 10 متر 4K@60Hz UHD 2160P Deep Color - إصدار 2.0 للتلفزيون، الصندوق، المشغل - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-HDTV-10M-4K",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-HDTV-10M-4K",
-      "price": 65,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل HDMI عالي السرعة 4K 5 متر - 60 هرتز UHD 2160P للتلفزيون، جهاز الاستقبال، المشغل - ألوان عميقة",
-    "image": "https://errayhany.com/product-images/1824-1-181df5b38b-1600.webp",
-    "description": "كابل HDMI عالي السرعة 4K 5 متر - 60 هرتز UHD 2160P للتلفزيون، جهاز الاستقبال، المشغل - ألوان عميقة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-HDTV-5M-4K",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-HDTV-5M-4K",
-      "price": 40,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل HDMI عالي السرعة 15 متر 4K@60Hz UHD 2160P 18Gbps Deep Color HW1910 للتلفزيون، مشغل، صندوق التلفزيون",
-    "image": "https://errayhany.com/product-images/1823-1-2d660dc0a9-1600.webp",
-    "description": "كابل HDMI عالي السرعة 15 متر 4K@60Hz UHD 2160P 18Gbps Deep Color HW1910 للتلفزيون، مشغل، صندوق التلفزيون - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-HDTV-15M-4K",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-HDTV-15M-4K",
-      "price": 100,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن كمبيوتر محمول ديل تايب سي 65 واط سوبا – محول طاقة عالمي لأجهزة ديل",
-    "image": "https://errayhany.com/product-images/1819-1-3e379982e4-1600.webp",
-    "description": "شاحن كمبيوتر محمول ديل تايب سي 65 واط سوبا – محول طاقة عالمي لأجهزة ديل - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-PC-DELL-TYPE-C-65W-SOBA",
-    "category": "شواحن حواسيب",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-PC-DELL-TYPE-C-65W-SOBA",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن ديل أصلي 65 واط تايب سي لأجهزة الكمبيوتر المحمولة - شحن سريع وموثوق",
-    "image": "https://errayhany.com/product-images/1818-1-23fff91ccc-1600.webp",
-    "description": "شاحن ديل أصلي 65 واط تايب سي لأجهزة الكمبيوتر المحمولة - شحن سريع وموثوق - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-DELL-65W-TPC-SABONA",
-    "category": "شواحن حواسيب",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-DELL-65W-TPC-SABONA",
-      "price": 150,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن PHIHONG 12V 5A - محول طاقة عالمي للأجهزة الإلكترونية",
-    "image": "https://errayhany.com/product-images/1817-1-dc8c047ce7-1600.webp",
-    "description": "شاحن PHIHONG 12V 5A - محول طاقة عالمي للأجهزة الإلكترونية - شواحن حواسيب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHARGEUR-PHIHONG-12V-5A",
-    "category": "شواحن حواسيب",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGEUR-PHIHONG-12V-5A",
-      "price": 70,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "موزع USB-C 4 في 1: 3x USB 3.0 + HDMI + USB-C PD - محول متعدد المنافذ من النوع C للكمبيوتر/الماك/الهاتف الذكي",
-    "image": "https://errayhany.com/product-images/1815-1-0c9c6ac4a8-1600.webp",
-    "description": "موزع USB-C 4 في 1: 3x USB 3.0 + HDMI + USB-C PD - محول متعدد المنافذ من النوع C للكمبيوتر/الماك/الهاتف الذكي - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-HUB-TC-30-4PORT",
-    "category": "محولات وHUB",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HUB-TC-30-4PORT",
-      "price": 25,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات أذن لاسلكية A8 Pro ANC مع كشف معدل ضربات القلب والأكسجين في الدم - أبيض",
-    "image": "https://errayhany.com/product-images/1814-1-19b8f5d454-1600.webp",
-    "description": "سماعات أذن لاسلكية A8 Pro ANC مع كشف معدل ضربات القلب والأكسجين في الدم - أبيض - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AIRPODS-A8-PRO",
-    "category": "سماعات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AIRPODS-A8-PRO",
-      "price": 120,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "حامل رقبة للهاتف والكاميرا - مثالي للمدونات المرئية، الرياضة، والاستخدام بدون استخدام اليدين",
-    "image": "https://errayhany.com/product-images/1813-1-b07c88caa9-1600.webp",
-    "description": "حامل رقبة للهاتف والكاميرا - مثالي للمدونات المرئية، الرياضة، والاستخدام بدون استخدام اليدين - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-NECK-BRACKET",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-NECK-BRACKET",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول طاقة سامسونج 60 واط USB-C أصلي - شحن سريع واستهلاك منخفض للطاقة",
-    "image": "https://errayhany.com/product-images/1812-1-450326a3be-1600.webp",
-    "description": "محول طاقة سامسونج 60 واط USB-C أصلي - شحن سريع واستهلاك منخفض للطاقة - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-ADAPTER-NOIR-SAMSUNG-COW-ORIGINAL",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTER-NOIR-SAMSUNG-COW-ORIGINAL",
-      "price": 130,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل USB-C إلى USB-C سامسونج S26 بطول 1.8 متر - شحن سريع 3 أمبير ونقل بيانات 480 ميجابت في الثانية",
-    "image": "https://errayhany.com/product-images/1811-1-b7e5f8538e-1600.webp",
-    "description": "كابل USB-C إلى USB-C سامسونج S26 بطول 1.8 متر - شحن سريع 3 أمبير ونقل بيانات 480 ميجابت في الثانية - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-SAMSUNG-C-C-S26",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-SAMSUNG-C-C-S26",
-      "price": 35,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل بيانات USB-C إلى USB-C بقوة 240 واط مع حامل هاتف قابل للطي - شحن سريع ونقل بيانات عالي السرعة",
-    "image": "https://errayhany.com/product-images/1810-1-9e4c83290b-1600.webp",
-    "description": "كابل بيانات USB-C إلى USB-C بقوة 240 واط مع حامل هاتف قابل للطي - شحن سريع ونقل بيانات عالي السرعة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-240W-SUPPORT",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-240W-SUPPORT",
-      "price": 35,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول USB بلوتوث 5.3 لاسلكي للكمبيوتر، اللابتوب، أندرويد - اتصال مستقر وسريع",
-    "image": "https://errayhany.com/product-images/1809-1-ca23f3231c-1600.webp",
-    "description": "محول USB بلوتوث 5.3 لاسلكي للكمبيوتر، اللابتوب، أندرويد - اتصال مستقر وسريع - تخزين بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CLE-BT--3",
-    "category": "تخزين",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLE-BT--3",
-      "price": 20,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول سفر عالمي ماركن - قابس دولي مدمج وآمن لأكثر من 150 دولة",
-    "image": "https://errayhany.com/product-images/1808-1-8ee2e60392-1600.webp",
-    "description": "محول سفر عالمي ماركن - قابس دولي مدمج وآمن لأكثر من 150 دولة - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-MARKEN-FICHE",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MARKEN-FICHE",
-      "price": 5,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات أذن سلكية USB-C من Flair - صوت واضح وميكروفون مدمج - توافق عالمي - أسود/أبيض",
-    "image": "https://errayhany.com/product-images/1807-1-9e3c7ebd20-1600.webp",
-    "description": "سماعات أذن سلكية USB-C من Flair - صوت واضح وميكروفون مدمج - توافق عالمي - أسود/أبيض - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-KIT-FLAIR-TPC",
-    "category": "سماعات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-KIT-FLAIR-TPC",
-      "price": 15,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "راوتر واي فاي محمول 5G LTE SL305 3000mAh - إنترنت عالي السرعة في كل مكان",
-    "image": "https://errayhany.com/product-images/1806-1-a401e87942-1600.webp",
-    "description": "راوتر واي فاي محمول 5G LTE SL305 3000mAh - إنترنت عالي السرعة في كل مكان - شبكات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-MOBILE-WIFI-SL305",
-    "category": "شبكات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MOBILE-WIFI-SL305",
-      "price": 130,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "علبة قرص صلب/SSD خارجي 2.5 بوصة SATA III USB 3.0/3.1 - محول قرص صلب محمول",
-    "image": "https://errayhany.com/product-images/1805-1-d9fc75abd1-1600.webp",
-    "description": "علبة قرص صلب/SSD خارجي 2.5 بوصة SATA III USB 3.0/3.1 - محول قرص صلب محمول - تخزين بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-BOITIER-MOVE-25-INCH-HDD",
-    "category": "تخزين",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-BOITIER-MOVE-25-INCH-HDD",
-      "price": 50,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل بيانات VIDVIE USB-C إلى USB-C عالي السرعة 6A 120W شحن سريع 1 متر",
-    "image": "https://errayhany.com/product-images/1804-1-2a98ab0b66-1600.webp",
-    "description": "كابل بيانات VIDVIE USB-C إلى USB-C عالي السرعة 6A 120W شحن سريع 1 متر - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-VIDVIE-TC-TC-6A",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-VIDVIE-TC-TC-6A",
-      "price": 15,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل بيانات VIDVIE CB4031i/V/T - شحن سريع 3 أمبير للآيفون، V8 وتايب سي",
-    "image": "https://errayhany.com/product-images/1803-1-c0a443764e-1600.webp",
-    "description": "كابل بيانات VIDVIE CB4031i/V/T - شحن سريع 3 أمبير للآيفون، V8 وتايب سي - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-VIDVIE-CB4031-IP-V8-TYPE-C",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-VIDVIE-CB4031-IP-V8-TYPE-C",
-      "price": 11,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "حقيبة حماية أنيقة HP للكمبيوتر المحمول حتى 15.6 بوصة - أسود",
-    "image": "https://errayhany.com/product-images/1802-1-c91172c66e-1600.webp",
-    "description": "حقيبة حماية أنيقة HP للكمبيوتر المحمول حتى 15.6 بوصة - أسود - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-HOUSS-HP",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOUSS-HP",
-      "price": 55,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "حقيبة ظهر متعددة الوظائف ZW 801 - مقاومة للماء، جيب كمبيوتر 15.6 بوصة، سعة كبيرة، مريحة",
-    "image": "https://errayhany.com/product-images/1801-1-0e96b25efb-1600.webp",
-    "description": "حقيبة ظهر متعددة الوظائف ZW 801 - مقاومة للماء، جيب كمبيوتر 15.6 بوصة، سعة كبيرة، مريحة - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CHKARA-ZW-801",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHKARA-ZW-801",
-      "price": 170,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "جراب هاتف مقاوم للماء عالمي Imden Technology - حماية قصوى ضد الانزلاق",
-    "image": "https://errayhany.com/product-images/1800-1-53355f8518-1600.webp",
-    "description": "جراب هاتف مقاوم للماء عالمي Imden Technology - حماية قصوى ضد الانزلاق - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-PUCHETTE-LMA",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-PUCHETTE-LMA",
-      "price": 9,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "حامل رقبة Jmary MG-01 2 في 1 للهاتف الذكي وكاميرا الحركة - تصوير POV بدون استخدام اليدين",
-    "image": "https://errayhany.com/product-images/1799-1-90eb206e25-1600.webp",
-    "description": "حامل رقبة Jmary MG-01 2 في 1 للهاتف الذكي وكاميرا الحركة - تصوير POV بدون استخدام اليدين - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SUPPORT-JMARY-MG-01",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-JMARY-MG-01",
-      "price": 150,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل AV SCNY 2 متر لجهاز PS2 - جودة صوت وفيديو عالية RCA لأجهزة الألعاب والتلفزيون",
-    "image": "https://errayhany.com/product-images/1798-1-d47db609c3-1600.webp",
-    "description": "كابل AV SCNY 2 متر لجهاز PS2 - جودة صوت وفيديو عالية RCA لأجهزة الألعاب والتلفزيون - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-PS2",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-PS2",
-      "price": 10,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات أذن SAMSUNG Type-C AKG Tuned - صوت لا مثيل له وراحة داخل الأذن - أبيض",
-    "image": "https://errayhany.com/product-images/1797-1-639af19b22-1600.webp",
-    "description": "سماعات أذن SAMSUNG Type-C AKG Tuned - صوت لا مثيل له وراحة داخل الأذن - أبيض - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-KIT-AKG-TPC",
-    "category": "سماعات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-KIT-AKG-TPC",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "BBC-9 ضوء سيلفي للهاتف مع حلقة إضاءة وشاتر بلوتوث - شحن Type-C، بطارية 750mAh",
-    "image": "https://errayhany.com/product-images/1796-1-6a5eb83b38-1600.webp",
-    "description": "BBC-9 ضوء سيلفي للهاتف مع حلقة إضاءة وشاتر بلوتوث - شحن Type-C، بطارية 750mAh - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-BBC-9",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-BBC-9",
-      "price": 130,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل بيانات سريع KONFULON DC32C Micro USB 3.0A - شحن ونقل بيانات 2 في 1",
-    "image": "https://errayhany.com/product-images/1795-1-e8b33abf1a-1600.webp",
-    "description": "كابل بيانات سريع KONFULON DC32C Micro USB 3.0A - شحن ونقل بيانات 2 في 1 - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-KONFULON-DC32C",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-KONFULON-DC32C",
-      "price": 18,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل بيانات سريع كونفولون DC32 ميكرو USB 3.0 أمبير - شحن ونقل بيانات سريع",
-    "image": "https://errayhany.com/product-images/1794-1-cb7068b71d-1600.webp",
-    "description": "كابل بيانات سريع كونفولون DC32 ميكرو USB 3.0 أمبير - شحن ونقل بيانات سريع - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-KONFULON-DC32",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-KONFULON-DC32",
-      "price": 13,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "ميكروفون عنقي أحادي الاتجاه AHUJA CTP-10DX - مكثف إلكتريت، كابل محمي 6 متر",
-    "image": "https://errayhany.com/product-images/1793-1-52fb69b3f0-1600.webp",
-    "description": "ميكروفون عنقي أحادي الاتجاه AHUJA CTP-10DX - مكثف إلكتريت، كابل محمي 6 متر - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-MICROPHONE-AHUJA-CTP-10DX",
-    "category": "ميكروفونات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MICROPHONE-AHUJA-CTP-10DX",
-      "price": 90,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل صوت بصري Toslink OLYGOS CASA BLANCA 3 متر أسود - ألياف رقمية عالية الجودة",
-    "image": "https://errayhany.com/product-images/1792-1-3e6576324b-1600.webp",
-    "description": "كابل صوت بصري Toslink OLYGOS CASA BLANCA 3 متر أسود - ألياف رقمية عالية الجودة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-FIBRE-AUDIO-3M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-FIBRE-AUDIO-3M",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل صوت بصري رقمي TOSLINK OLYGOS CASA BLANCA 5M - صوت عالي الدقة بدون فقدان",
-    "image": "https://errayhany.com/product-images/1791-1-90f19502e1-1600.webp",
-    "description": "كابل صوت بصري رقمي TOSLINK OLYGOS CASA BLANCA 5M - صوت عالي الدقة بدون فقدان - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-FIBRE-AUDIO-5M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-FIBRE-AUDIO-5M",
-      "price": 40,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل ألياف بصرية SC/APC - SC/APC أحادي الوضع 3 متر أصفر - أداء عالٍ لشبكة مستقرة",
-    "image": "https://errayhany.com/product-images/1790-1-635c43957f-1600.webp",
-    "description": "كابل ألياف بصرية SC/APC - SC/APC أحادي الوضع 3 متر أصفر - أداء عالٍ لشبكة مستقرة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-FIBRE-JAUNE-3M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-FIBRE-JAUNE-3M",
-      "price": 30,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل ألياف بصرية أحادي الوضع SC/APC-SC/APC أصفر 5 متر - أداء شبكة مستقر وعالي",
-    "image": "https://errayhany.com/product-images/1789-1-8bf4b6e45c-1600.webp",
-    "description": "كابل ألياف بصرية أحادي الوضع SC/APC-SC/APC أصفر 5 متر - أداء شبكة مستقر وعالي - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-FIBRE-JAUNE-5M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-FIBRE-JAUNE-5M",
-      "price": 35,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل ألياف بصرية جامبر SC/APC-SC/APC أحادي النمط OS2 أصفر 10 متر - أداء عالي",
-    "image": "https://errayhany.com/product-images/1788-1-0526355cc0-1600.webp",
-    "description": "كابل ألياف بصرية جامبر SC/APC-SC/APC أحادي النمط OS2 أصفر 10 متر - أداء عالي - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-FIBRE-JAUNE-10M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-FIBRE-JAUNE-10M",
-      "price": 45,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل ألياف بصرية أحادي الوضع SC/APC-SC/APC G.652D أصفر 15 متر - أداء عالي وفقدان منخفض",
-    "image": "https://errayhany.com/product-images/1787-1-f06797e3f5-1600.webp",
-    "description": "كابل ألياف بصرية أحادي الوضع SC/APC-SC/APC G.652D أصفر 15 متر - أداء عالي وفقدان منخفض - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-FIBRE-JAUNE-15M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-FIBRE-JAUNE-15M",
-      "price": 50,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل ألياف بصرية أحادي الوضع SC/APC-SC/APC 9/125µm 20 متر أصفر - أداء عالي لشبكات FTTH",
-    "image": "https://errayhany.com/product-images/1786-1-ec5038bb64-1600.webp",
-    "description": "كابل ألياف بصرية أحادي الوضع SC/APC-SC/APC 9/125µm 20 متر أصفر - أداء عالي لشبكات FTTH - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-FIBRE-JAUNE-20M",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-FIBRE-JAUNE-20M",
-      "price": 55,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل شحن سريع 3 أمبير USB-A إلى USB-C أبيض 1000 مم - متوافق مع جميع أجهزة Type-C",
-    "image": "https://errayhany.com/product-images/1785-1-44b026928c-1600.webp",
-    "description": "كابل شحن سريع 3 أمبير USB-A إلى USB-C أبيض 1000 مم - متوافق مع جميع أجهزة Type-C - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-SACHIE-SOBA-TC",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-SACHIE-SOBA-TC",
-      "price": 4,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "مكبر صوت بلوتوث محمول X-911 ديسكو سيريز - أضواء LED وصوت غامر - مثالي للحفلات والسفر",
-    "image": "https://errayhany.com/product-images/1784-1-802c56321f-1600.webp",
-    "description": "مكبر صوت بلوتوث محمول X-911 ديسكو سيريز - أضواء LED وصوت غامر - مثالي للحفلات والسفر - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-BAF-X-911",
-    "category": "سماعات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-BAF-X-911",
-      "price": 40,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل شحن USB-C بقوة 60 واط لهاتف آيفون 17 برو ماكس (1 متر) - برتقالي",
-    "image": "https://errayhany.com/product-images/1783-1-0e860c421c-1600.webp",
-    "description": "كابل شحن USB-C بقوة 60 واط لهاتف آيفون 17 برو ماكس (1 متر) - برتقالي - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-APPLE-17-PRO-MAX-60W-C-C",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-APPLE-17-PRO-MAX-60W-C-C",
-      "price": 13,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل USB-C إلى USB-C سامسونج S22 أصلي 3 أمبير (1 متر) – شحن سريع ومزامنة",
-    "image": "https://errayhany.com/product-images/1782-1-041fc12319-1600.webp",
-    "description": "كابل USB-C إلى USB-C سامسونج S22 أصلي 3 أمبير (1 متر) – شحن سريع ومزامنة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CABLE-SAMSUNG-S22-C-C",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-SAMSUNG-S22-C-C",
-      "price": 13,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات أذن لاسلكية AIRPODS PRO2 REDINGTON بلوتوث 5.3 بجودة صوت عالية وميكروفون مدمج",
-    "image": "https://errayhany.com/product-images/1780-1-13c8fda800-1600.webp",
-    "description": "سماعات أذن لاسلكية AIRPODS PRO2 REDINGTON بلوتوث 5.3 بجودة صوت عالية وميكروفون مدمج - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AIRPODS-PRO2-REDINGTON",
-    "category": "سماعات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AIRPODS-PRO2-REDINGTON",
-      "price": 50,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول OTG USB-A إلى USB-C - موصل ذكر إلى أنثى - نقل بيانات سريع",
-    "image": "https://errayhany.com/product-images/1779-1-5de7215946-1600.webp",
-    "description": "محول OTG USB-A إلى USB-C - موصل ذكر إلى أنثى - نقل بيانات سريع - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-OTG-TYPE-C-USB-SOBA",
-    "category": "محولات وHUB",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-OTG-TYPE-C-USB-SOBA",
-      "price": 4,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "WATCH BAND",
-    "image": "https://errayhany.com/product-images/1778-1-b3482962dc-1600.webp",
-    "description": "WATCH BAND - ساعات ذكية بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-WATCH-BAND",
-    "category": "ساعات ذكية",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-WATCH-BAND",
-      "price": 35,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سوار ساعة رياضي مثقوب 20 مم - سيليكون مسامي للرجال والنساء",
-    "image": "https://errayhany.com/product-images/1777-1-3e7b5533c8-1600.webp",
-    "description": "سوار ساعة رياضي مثقوب 20 مم - سيليكون مسامي للرجال والنساء - ساعات ذكية بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-BAND-WATCH-PERFORATED-MTKBA",
-    "category": "ساعات ذكية",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-BAND-WATCH-PERFORATED-MTKBA",
-      "price": 15,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سوار ساعة CREATCASE سيليكون ديزني لساعة أبل - أنماط وأحجام متنوعة",
-    "image": "https://errayhany.com/product-images/1776-1-b169dcde8b-1600.webp",
-    "description": "سوار ساعة CREATCASE سيليكون ديزني لساعة أبل - أنماط وأحجام متنوعة - ساعات ذكية بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CREATCASE-WATCH",
-    "category": "ساعات ذكية",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CREATCASE-WATCH",
-      "price": 35,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "RJ45 FICHE PLASTIQUE",
-    "image": "https://errayhany.com/product-images/1775-1-062752e968-1600.webp",
-    "description": "RJ45 FICHE PLASTIQUE - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-RJ45-FICHE-PLASTIQUE",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-RJ45-FICHE-PLASTIQUE",
-      "price": 1,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "RECHARGEABLE PILE ARCAS AA AKKU 800mAh",
-    "image": "https://errayhany.com/product-images/1774-1-29f71b9cc5-1600.webp",
-    "description": "RECHARGEABLE PILE ARCAS AA AKKU 800mAh - بطاريات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-PILE-ARCAS-AA",
-    "category": "بطاريات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-PILE-ARCAS-AA",
-      "price": 28,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "معجون حراري HALNZIYE HY-S10 عالي الأداء للمعالج/بطاقة الرسوميات - 7 درهم",
-    "image": "https://errayhany.com/product-images/1773-1-0a54cdb054-1600.webp",
-    "description": "معجون حراري HALNZIYE HY-S10 عالي الأداء للمعالج/بطاقة الرسوميات - 7 درهم - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-HY-S10",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HY-S10",
-      "price": 7,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول كابل صوت لايتنينج إلى 3.5 ملم AUX للآيفون/الآيباد - جودة صوت مثالية",
-    "image": "https://errayhany.com/product-images/1772-1-d6d30f7c33-1600.webp",
-    "description": "محول كابل صوت لايتنينج إلى 3.5 ملم AUX للآيفون/الآيباد - جودة صوت مثالية - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AUX-IOS-3-5A",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AUX-IOS-3-5A",
-      "price": 15,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول سيارة لاسلكي كار بلاي CXZ509 - اتصال سريع ونقل USB عالي السرعة",
-    "image": "https://errayhany.com/product-images/1771-1-ef2ee4b524-1600.webp",
-    "description": "محول سيارة لاسلكي كار بلاي CXZ509 - اتصال سريع ونقل USB عالي السرعة - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CAR-PLAY-CXZ-509",
-    "category": "إكسسوارات السيارة",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CAR-PLAY-CXZ-509",
-      "price": 300,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition",
