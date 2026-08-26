@@ -674,7 +674,7 @@ export async function enrichProduct({
       aiFailures.push(`images:${e.message}`);
       return [];
     }
-  })();
+  });
 
   const cutoutPromise = (async () => {
     if (amazonUrl) return [];
