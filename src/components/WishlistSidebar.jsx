@@ -3,6 +3,7 @@ import { X, Trash2, ShoppingCart, Heart } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
+import { slugify } from '../utils/slugify';
 
 const WishlistSidebar = () => {
     const {
@@ -41,7 +42,8 @@ const WishlistSidebar = () => {
         }
         saveBrowseRestoreFromStore(useStore.getState);
         toggleWishlistSidebar();
-        window.location.assign(`/p/${encodeURIComponent(ref)}`);
+        const slug = slugify(item.name || '');
+        window.location.assign(`/p/${encodeURIComponent(ref)}${slug ? `/${slug}` : ''}`);
     };
 
     const handleMoveToCart = (item) => {

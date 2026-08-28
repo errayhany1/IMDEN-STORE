@@ -5,6 +5,7 @@ import BottomNavBar from '../components/BottomNavBar';
 import useStore from '../store/useStore';
 import { productFamilies } from '../data/families';
 import { CATEGORY_LABEL_AR, getCategoryImage } from '../data/categories';
+import { useSEO } from '../hooks/useSEO';
 
 /**
  * Dedicated page: families + Template-2 category image grid.
@@ -24,6 +25,12 @@ const CategoriesPage = () => {
     const list = categories.filter((c) => c !== 'All' && c !== 'Out of Stock');
     const allSrc = getCategoryImage('All', categoryImages);
     const allLabel = CATEGORY_LABEL_AR.All || 'الكل';
+
+    useSEO({
+        title: 'التصنيفات | Grossiste Accessoires Téléphone au Maroc | Errayhany',
+        description: 'تصفح جميع تصنيفات المنتجات الإلكترونية وإكسسوارات الهواتف بالجملة في المغرب. Découvrez nos catégories de produits électroniques en gros au Maroc.',
+        canonicalPath: '/categories',
+    });
 
     const openShopWithCategory = (cat) => {
         clearFamily();

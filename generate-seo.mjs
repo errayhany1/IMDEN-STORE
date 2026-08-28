@@ -28,6 +28,18 @@ const categoryMapping = {
     18: 'محولات وHUB', 19: 'أجهزة بث', 20: 'تبريد', 21: 'هواتف',
 };
 
+function slugify(text) {
+  if (!text) return '';
+  return String(text)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/[\s-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 const categoryMappingEn = {
     1: 'Chargers', 2: 'Audio', 3: 'Smart Watches', 4: 'Gaming',
     5: 'Mouse & Keyboard', 6: 'Storage', 7: 'Laptop Chargers', 8: 'Stands',
@@ -346,7 +358,7 @@ async function generate() {
     <priority>1.0</priority>
     <image:image>
       <image:loc>${SITE_URL}/logo-512.png</image:loc>
-      <image:title>${escapeXml(BRAND)} - إلكترونيات وإكسسوارات هواتف بالجملة المغرب</image:title>
+      <image:title>${escapeXml(BRAND)} - Grossiste Électronique au Maroc</image:title>
       <image:caption>${escapeXml(`${BRAND} / ${BRAND_SHORT} - Wholesale electronics Casablanca Morocco`)}</image:caption>
     </image:image>
     <image:image>
@@ -357,11 +369,28 @@ async function generate() {
       <image:loc>${SITE_URL}/logo-dark.png</image:loc>
       <image:title>${escapeXml(BRAND)} dark logo</image:title>
     </image:image>
+  </url>
+  <url>
+    <loc>${SITE_URL}/categories</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
 `;
 
     let imageCount = 3;
     products.forEach(p => {
         const imgUrl = absoluteAssetUrl(primaryImageFor(p));
+        const slug = slugify(p.Title || '');
+        const productUrl = `${SITE_URL}/p/${encodeURIComponent(p.SKU || p.id)}${slug ? `/${slug}` : ''}`;
+        
+        sitemap += `  <url>
+    <loc>${escapeXml(productUrl)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+`;
+
         if (imgUrl && imageCount < 1000) {
             const title = escapeXml(p.Title || p.SKU || '');
             const catId = p.Category_ID || p.category_id || 12;
@@ -377,10 +406,10 @@ async function generate() {
 `;
             imageCount++;
         }
+        sitemap += `  </url>\n`;
     });
 
-    sitemap += `  </url>
-  <url>
+    sitemap += `  <url>
     <loc>${SITE_URL}/products.html</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
@@ -408,17 +437,19 @@ async function generate() {
         const imgUrl = absoluteAssetUrl(primaryImageFor(p));
         const catId = p.Category_ID || p.category_id || 12;
         const catName = categoryMapping[catId] || 'إلكترونيات';
+        const slug = slugify(p.Title || '');
+        const productUrl = `${SITE_URL}/p/${encodeURIComponent(p.SKU || p.id)}${slug ? `/${slug}` : ''}`;
         return {
             "@type": "Product",
             "name": p.Title || p.SKU || 'منتج',
             "image": imgUrl || `${SITE_URL}/logo-512.png`,
-            "description": `${p.Title || ''} - ${catName} بالجملة من ${BRAND} في الدار البيضاء والمغرب`,
+            "description": `${p.Title || ''} en gros au Maroc - ${p.price || ''} DH`,
             "sku": p.SKU || '',
             "category": catName,
             "brand": { "@type": "Brand", "name": BRAND_SHORT },
             "offers": {
                 "@type": "Offer",
-                "url": `${SITE_URL}/?search=${encodeURIComponent(p.SKU || p.Title || '')}`,
+                "url": productUrl,
                 "price": p.price || 0,
                 "priceCurrency": "MAD",
                 "availability": "https://schema.org/InStock",
@@ -497,10 +528,13 @@ async function generate() {
         const catId = p.Category_ID || p.category_id || 12;
         const catName = categoryMapping[catId] || 'إلكترونيات';
         const alt = escapeHtml(`${p.Title || p.SKU || ''} - ${catName} بالجملة ${BRAND} المغرب`);
+        const slug = slugify(p.Title || '');
+        const productUrl = `${SITE_URL}/p/${encodeURIComponent(p.SKU || p.id)}${slug ? `/${slug}` : ''}`;
         const imageLine = imgUrl
             ? `      <img src="${escapeHtml(imgUrl)}" alt="${alt}" itemprop="image" loading="lazy" width="200" height="200">\n`
             : '';
         seoHtml += `    <article class="card" itemscope itemtype="https://schema.org/Product">
+      <a href="${escapeHtml(productUrl)}" style="text-decoration:none;color:inherit;">
 ${imageLine}      <div class="name" itemprop="name">${title}</div>
       <div class="ref">REF: <span itemprop="sku">${escapeHtml(p.SKU || '')}</span></div>
       <div class="cat" itemprop="category">${escapeHtml(catName)}</div>
@@ -510,6 +544,7 @@ ${imageLine}      <div class="name" itemprop="name">${title}</div>
         <link itemprop="availability" href="https://schema.org/InStock">
       </div>
       <meta itemprop="brand" content="${escapeHtml(BRAND_SHORT)}">
+      </a>
     </article>
 `;
     });

@@ -13,6 +13,7 @@ import {
     stripHtml,
 } from '../utils/productText';
 import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
+import { slugify } from '../utils/slugify';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
@@ -336,9 +337,11 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                         } catch {
                                             /* ignore */
                                         }
-                                        saveBrowseRestoreFromStore(useStore.getState);
-                                        window.location.assign(`/p/${encodeURIComponent(viewedProduct.ref || viewedProduct.id)}`);
-                                    }}
+                                          saveBrowseRestoreFromStore(useStore.getState);
+                                          const sku = encodeURIComponent(viewedProduct.ref || viewedProduct.id);
+                                          const slug = slugify(viewedProduct.name || '');
+                                          window.location.assign(`/p/${sku}${slug ? `/${slug}` : ''}`);
+                                      }}
                                 />
                             </div>
 

@@ -46,6 +46,9 @@ const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.sv
 const SITE_URL = 'https://errayhany.com';
 const BRAND = 'Errayhany';
 
+import { useSEO } from '../hooks/useSEO';
+import { slugify } from '../utils/slugify';
+
 function getLang() {
   try {
     return localStorage.getItem('site_lang') === 'fr' ? 'fr' : 'ar';
@@ -375,57 +378,66 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     goBackToBrowse();
   };
 
-  useEffect(() => {
-    if (!product) return undefined;
-    const metaTitle = `${title} | ${BRAND}`;
-    const metaDesc = (plainDesc || `${title} — ${product.price} DH`).slice(0, 160);
-    document.title = metaTitle;
-    setMetaTag('name', 'description', metaDesc);
-    setMetaTag('property', 'og:title', metaTitle);
-    setMetaTag('property', 'og:description', metaDesc);
-    setMetaTag('property', 'og:type', 'product');
-    setMetaTag('property', 'og:url', `${SITE_URL}/p/${encodeURIComponent(product.ref || product.id)}`);
-    setMetaTag('property', 'og:site_name', `${BRAND} Store`);
-    if (images[0]) {
-      const imageUrl = images[0].startsWith('http') ? images[0] : `${SITE_URL}${images[0]}`;
-      setMetaTag('property', 'og:image', imageUrl);
-      setMetaTag('property', 'og:image:secure_url', imageUrl);
-      setMetaTag('name', 'twitter:card', 'summary_large_image');
-      setMetaTag('name', 'twitter:title', metaTitle);
-      setMetaTag('name', 'twitter:description', metaDesc);
-      setMetaTag('name', 'twitter:image', imageUrl);
-    }
+  const productSlug = slugify(title || '');
+  const productUrlPath = product ? `/p/${encodeURIComponent(product.ref || product.id)}${productSlug ? `/${productSlug}` : ''}` : '';
+  const productFullUrl = product ? `${SITE_URL}${productUrlPath}` : '';
 
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: title,
-      sku: product.ref,
-      image: images.map((src) => (src.startsWith('http') ? src : `${SITE_URL}${src}`)),
-      description: metaDesc,
-      brand: { '@type': 'Brand', name: BRAND },
-      offers: {
-        '@type': 'Offer',
-        url: window.location.href,
-        priceCurrency: 'MAD',
-        price: product.price,
-        availability: available
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
+  const jsonLd = useMemo(() => {
+    if (!product) return null;
+    const schemas = [];
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": title,
+      "image": images.map(img => img.startsWith('http') ? img : `${SITE_URL}${img}`),
+      "description": plainDesc || `${title} en gros au Maroc - ${product.price} DH`,
+      "sku": product.ref || product.id,
+      "brand": {
+        "@type": "Brand",
+        "name": BRAND
       },
-    };
-    let script = document.getElementById('product-jsonld');
-    if (!script) {
-      script = document.createElement('script');
-      script.id = 'product-jsonld';
-      script.type = 'application/ld+json';
-      document.head.appendChild(script);
-    }
-    script.textContent = JSON.stringify(jsonLd);
-    return () => {
-      script?.remove();
-    };
-  }, [product, title, plainDesc, images, available]);
+      "offers": {
+        "@type": "Offer",
+        "url": productFullUrl,
+        "priceCurrency": "MAD",
+        "price": product.price || 0,
+        "availability": available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {
+          "@type": "Organization",
+          "name": BRAND
+        }
+      }
+    });
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "الرئيسية",
+          "item": SITE_URL
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": title,
+          "item": productFullUrl
+        }
+      ]
+    });
+    return schemas;
+  }, [product, title, images, plainDesc, productFullUrl, available]);
+
+  useSEO({
+    title: product ? `${title} en gros au Maroc | ${BRAND}` : '',
+    description: product ? (plainDesc || `${title} en gros au Maroc - ${product.price} DH`).slice(0, 160) : '',
+    canonicalPath: productUrlPath,
+    ogImage: images[0],
+    ogType: 'product',
+    jsonLd
+  });
 
   const handleAdd = () => {
     if (!product || !available) return;

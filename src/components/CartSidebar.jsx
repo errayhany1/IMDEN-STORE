@@ -7,6 +7,7 @@ import { sendToTelegram } from '../utils/telegramApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import CheckoutModal from './CheckoutModal';
 import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
+import { slugify } from '../utils/slugify';
 
 const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
 
@@ -53,7 +54,8 @@ const CartSidebar = () => {
         }
         saveBrowseRestoreFromStore(useStore.getState);
         toggleCart();
-        window.location.assign(`/p/${encodeURIComponent(ref)}`);
+        const slug = slugify(item.name || '');
+        window.location.assign(`/p/${encodeURIComponent(ref)}${slug ? `/${slug}` : ''}`);
     };
 
     const handleQtyInput = (itemId, value) => {

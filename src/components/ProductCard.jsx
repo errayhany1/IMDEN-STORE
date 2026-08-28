@@ -4,6 +4,7 @@ import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
 import ProductRatingStars from './ProductRatingStars';
 import { frenchProductTitle, isRtlText } from '../utils/productText';
+import { slugify } from '../utils/slugify';
 import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 import './ProductCard.css';
 
@@ -27,7 +28,8 @@ const ProductCard = ({ product, priority = false }) => {
     // Cards always show the French copy, trimmed to a single line.
     const cardTitle = frenchProductTitle(product);
     const cardTitleRtl = isRtlText(cardTitle);
-    const productHref = `/p/${encodeURIComponent(product.ref || product.id)}`;
+    const productSlug = slugify(product.name || cardTitle || '');
+    const productHref = `/p/${encodeURIComponent(product.ref || product.id)}${productSlug ? `/${productSlug}` : ''}`;
 
     const dm = darkMode;
     const singleCol = gridColumns === 1;

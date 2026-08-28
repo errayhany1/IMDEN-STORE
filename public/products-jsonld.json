@@ -1,9 +1,259 @@
 [
   {
     "@type": "Product",
+    "name": "مقبض عائم لكاميرا رياضية",
+    "image": "https://errayhany.com/product-images/1975-1-7a57c2170f-1600.webp",
+    "description": "مقبض عائم لكاميرا رياضية en gros au Maroc - 80 DH",
+    "sku": "ERY-POIGNET-SELFIE-GO-PRO",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-POIGNET-SELFIE-GO-PRO",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "طقم إضاءة LED احترافي للتصوير الفوتوغرافي والفيديو",
+    "image": "https://errayhany.com/product-images/1974-1-faf1b929d3-1600.webp",
+    "description": "طقم إضاءة LED احترافي للتصوير الفوتوغرافي والفيديو en gros au Maroc - 95 DH",
+    "sku": "ERY-PRO-LED-RL-560RGB",
+    "category": "إضاءة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-PRO-LED-RL-560RGB/led",
+      "price": 95,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "جهاز عرض فيديو LED عالي الدقة",
+    "image": "https://errayhany.com/product-images/1973-1-baf108f3af-1600.webp",
+    "description": "جهاز عرض فيديو LED عالي الدقة en gros au Maroc - 700 DH",
+    "sku": "ERY-LED-PROJECTOR",
+    "category": "إضاءة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-LED-PROJECTOR/led",
+      "price": 700,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK X11",
+    "image": "https://errayhany.com/product-images/1969-1-f0ad377977-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK X11 en gros au Maroc - 240 DH",
+    "sku": "ERY-SOURIS-X11",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SOURIS-X11/souris-attaque-shark-x11",
+      "price": 240,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ATTAQUE SHARK X66RGB",
+    "image": "https://errayhany.com/product-images/1968-1-06c90a872c-1600.webp",
+    "description": "CLAVIER ATTAQUE SHARK X66RGB en gros au Maroc - 400 DH",
+    "sku": "ERY-CLAVIER-X66RGB",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-X66RGB/clavier-attaque-shark-x66rgb",
+      "price": 400,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "CLAVIER ATTAQUE SHARK X87 ULTRA",
+    "image": "https://errayhany.com/product-images/1967-1-c187a0b3c1-1600.webp",
+    "description": "CLAVIER ATTAQUE SHARK X87 ULTRA en gros au Maroc - 520 DH",
+    "sku": "ERY-CLAVIER-X87-ULTRA",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-X87-ULTRA/clavier-attaque-shark-x87-ultra",
+      "price": 520,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK PAW-3395 X3",
+    "image": "https://errayhany.com/product-images/1966-1-f3ebebe0c7-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK PAW-3395 X3 en gros au Maroc - 350 DH",
+    "sku": "ERY-SOURIS-X3",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SOURIS-X3/souris-attaque-shark-paw-3395-x3",
+      "price": 350,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK V3PRO",
+    "image": "https://errayhany.com/product-images/1965-1-42d1f03a72-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK V3PRO en gros au Maroc - 250 DH",
+    "sku": "ERY-SOURIS-V3PRO",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SOURIS-V3PRO/souris-attaque-shark-v3pro",
+      "price": 250,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK R1",
+    "image": "https://errayhany.com/product-images/1964-1-c796e35915-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK R1 en gros au Maroc - 180 DH",
+    "sku": "ERY-SOURIS-R1",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SOURIS-R1/souris-attaque-shark-r1",
+      "price": 180,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "SOURIS ATTAQUE SHARK R5 ULTRA",
+    "image": "https://errayhany.com/product-images/1963-1-7bc75b5aed-1600.webp",
+    "description": "SOURIS ATTAQUE SHARK R5 ULTRA en gros au Maroc - 600 DH",
+    "sku": "ERY-SOURIS-R5-ULTRA",
+    "category": "ماوس وكيبورد",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SOURIS-R5-ULTRA/souris-attaque-shark-r5-ultra",
+      "price": 600,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
     "name": "MOBILE GAME CONTROLLER K98",
     "image": "https://errayhany.com/product-images/1962-1-b2a645c42e-1600.webp",
-    "description": "MOBILE GAME CONTROLLER K98 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MOBILE GAME CONTROLLER K98 en gros au Maroc - 45 DH",
     "sku": "ERY-GAME-CONTROLLER-K98-L3-L7",
     "category": "ألعاب",
     "brand": {
@@ -12,7 +262,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-GAME-CONTROLLER-K98-L3-L7",
+      "url": "https://errayhany.com/p/ERY-GAME-CONTROLLER-K98-L3-L7/mobile-game-controller-k98",
       "price": 45,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -28,7 +278,7 @@
     "@type": "Product",
     "name": "HOLDER M1-M13",
     "image": "https://errayhany.com/product-images/1961-1-24f647dc58-1600.webp",
-    "description": "HOLDER M1-M13 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "HOLDER M1-M13 en gros au Maroc - 110 DH",
     "sku": "ERY-HOLDER-M1-M13",
     "category": "ستاندات",
     "brand": {
@@ -37,7 +287,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOLDER-M1-M13",
+      "url": "https://errayhany.com/p/ERY-HOLDER-M1-M13/holder-m1-m13",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -53,7 +303,7 @@
     "@type": "Product",
     "name": "MOBILE GAME CONTROLLER MEMO DL100",
     "image": "https://errayhany.com/product-images/1960-1-7456b877b6-1600.webp",
-    "description": "MOBILE GAME CONTROLLER MEMO DL100 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MOBILE GAME CONTROLLER MEMO DL100 en gros au Maroc - 200 DH",
     "sku": "ERY-MEMO-DL100",
     "category": "ألعاب",
     "brand": {
@@ -62,7 +312,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MEMO-DL100",
+      "url": "https://errayhany.com/p/ERY-MEMO-DL100/mobile-game-controller-memo-dl100",
       "price": 200,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -78,7 +328,7 @@
     "@type": "Product",
     "name": "MOBILE GAME CONTROLLER MEMO DL88",
     "image": "https://errayhany.com/product-images/1959-1-1b1b2bf2e4-1600.webp",
-    "description": "MOBILE GAME CONTROLLER MEMO DL88 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MOBILE GAME CONTROLLER MEMO DL88 en gros au Maroc - 170 DH",
     "sku": "ERY-MEMO-DL88",
     "category": "ألعاب",
     "brand": {
@@ -87,7 +337,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MEMO-DL88",
+      "url": "https://errayhany.com/p/ERY-MEMO-DL88/mobile-game-controller-memo-dl88",
       "price": 170,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -103,7 +353,7 @@
     "@type": "Product",
     "name": "CLAVIER ZIYOULANG T8",
     "image": "https://errayhany.com/product-images/1958-1-a6807d062a-1600.webp",
-    "description": "CLAVIER ZIYOULANG T8 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CLAVIER ZIYOULANG T8 en gros au Maroc - 170 DH",
     "sku": "ERY-CLAVIER-ZIYOULANG-T8",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -112,7 +362,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLAVIER-ZIYOULANG-T8",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-ZIYOULANG-T8/clavier-ziyoulang-t8",
       "price": 170,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -128,7 +378,7 @@
     "@type": "Product",
     "name": "TAPIS ATTAQUE SHARK CM02",
     "image": "https://errayhany.com/product-images/1957-1-bdfac7b3ac-1600.webp",
-    "description": "TAPIS ATTAQUE SHARK CM02 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "TAPIS ATTAQUE SHARK CM02 en gros au Maroc - 110 DH",
     "sku": "ERY-TAPIS-CM02",
     "category": "عام",
     "brand": {
@@ -137,7 +387,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-TAPIS-CM02",
+      "url": "https://errayhany.com/p/ERY-TAPIS-CM02/tapis-attaque-shark-cm02",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -153,7 +403,7 @@
     "@type": "Product",
     "name": "CASQUE ATTAQUE SHARK G800",
     "image": "https://errayhany.com/product-images/1956-1-b6c2de2caa-1600.webp",
-    "description": "CASQUE ATTAQUE SHARK G800 - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CASQUE ATTAQUE SHARK G800 en gros au Maroc - 350 DH",
     "sku": "ERY-CASQUE-G800",
     "category": "سماعات",
     "brand": {
@@ -162,7 +412,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CASQUE-G800",
+      "url": "https://errayhany.com/p/ERY-CASQUE-G800/casque-attaque-shark-g800",
       "price": 350,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -178,7 +428,7 @@
     "@type": "Product",
     "name": "SOURIS ATTAQUE SHARK X11",
     "image": "https://errayhany.com/product-images/1955-1-9224075003-1600.webp",
-    "description": "SOURIS ATTAQUE SHARK X11 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SOURIS ATTAQUE SHARK X11 en gros au Maroc - 240 DH",
     "sku": "ERY-SOURIS-X11",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -187,7 +437,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SOURIS-X11",
+      "url": "https://errayhany.com/p/ERY-SOURIS-X11/souris-attaque-shark-x11",
       "price": 240,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -203,7 +453,7 @@
     "@type": "Product",
     "name": "SOURIS ATTAQUE SHARK X11SE",
     "image": "https://errayhany.com/product-images/1954-1-a82da9c892-1600.webp",
-    "description": "SOURIS ATTAQUE SHARK X11SE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SOURIS ATTAQUE SHARK X11SE en gros au Maroc - 180 DH",
     "sku": "ERY-SOURIS-X11SE",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -212,7 +462,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SOURIS-X11SE",
+      "url": "https://errayhany.com/p/ERY-SOURIS-X11SE/souris-attaque-shark-x11se",
       "price": 180,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -228,7 +478,7 @@
     "@type": "Product",
     "name": "SOURIS ATTAQUE SHARK G3PRO",
     "image": "https://errayhany.com/product-images/1953-1-c1ca24d2d9-1600.webp",
-    "description": "SOURIS ATTAQUE SHARK G3PRO - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SOURIS ATTAQUE SHARK G3PRO en gros au Maroc - 230 DH",
     "sku": "ERY-SOURIS-G3PRO",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -237,7 +487,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SOURIS-G3PRO",
+      "url": "https://errayhany.com/p/ERY-SOURIS-G3PRO/souris-attaque-shark-g3pro",
       "price": 230,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -253,7 +503,7 @@
     "@type": "Product",
     "name": "SOURIS ATTAQUE SHARK V6",
     "image": "https://errayhany.com/product-images/1952-1-1a9e5117cf-1600.webp",
-    "description": "SOURIS ATTAQUE SHARK V6 - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SOURIS ATTAQUE SHARK V6 en gros au Maroc - 250 DH",
     "sku": "ERY-SOURIS-V6",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -262,7 +512,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SOURIS-V6",
+      "url": "https://errayhany.com/p/ERY-SOURIS-V6/souris-attaque-shark-v6",
       "price": 250,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -278,7 +528,7 @@
     "@type": "Product",
     "name": "CLAVIER ATTAQUE SHARK X68 HE",
     "image": "https://errayhany.com/product-images/1951-1-53bfd9a9e5-1600.webp",
-    "description": "CLAVIER ATTAQUE SHARK X68 HE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CLAVIER ATTAQUE SHARK X68 HE en gros au Maroc - 420 DH",
     "sku": "ERY-CLAVIER-X68HE",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -287,7 +537,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLAVIER-X68HE",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-X68HE/clavier-attaque-shark-x68-he",
       "price": 420,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -303,7 +553,7 @@
     "@type": "Product",
     "name": "CLAVIER ATTAQUE SHARK X68MAX",
     "image": "https://errayhany.com/product-images/1950-1-bdb51ce22d-1600.webp",
-    "description": "CLAVIER ATTAQUE SHARK X68MAX - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CLAVIER ATTAQUE SHARK X68MAX en gros au Maroc - 570 DH",
     "sku": "ERY-CLAVIER-X68MAX",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -312,7 +562,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLAVIER-X68MAX",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-X68MAX/clavier-attaque-shark-x68max",
       "price": 570,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -328,7 +578,7 @@
     "@type": "Product",
     "name": "CLAVIER ATTAQUE SHARK R82HE",
     "image": "https://errayhany.com/product-images/1949-1-56cada470f-1600.webp",
-    "description": "CLAVIER ATTAQUE SHARK R82HE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CLAVIER ATTAQUE SHARK R82HE en gros au Maroc - 450 DH",
     "sku": "ERY-CLAVIER-R82HE",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -337,7 +587,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLAVIER-R82HE",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-R82HE/clavier-attaque-shark-r82he",
       "price": 450,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -353,7 +603,7 @@
     "@type": "Product",
     "name": "CLAVIER ATTAQUE SHARK R85HE",
     "image": "https://errayhany.com/product-images/1948-1-348b9d450f-1600.webp",
-    "description": "CLAVIER ATTAQUE SHARK R85HE - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CLAVIER ATTAQUE SHARK R85HE en gros au Maroc - 470 DH",
     "sku": "ERY-CLAVIER-R85HE",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -362,7 +612,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLAVIER-R85HE",
+      "url": "https://errayhany.com/p/ERY-CLAVIER-R85HE/clavier-attaque-shark-r85he",
       "price": 470,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -376,9 +626,9 @@
   },
   {
     "@type": "Product",
-    "name": "SUPPORT NB ERGONOMIQUE MONITOR MOUNT H00",
+    "name": "SUPPORT NB ERGONOMIQUE MONITOR MOUNT H100",
     "image": "https://errayhany.com/product-images/1947-1-1954ae03e7-1600.webp",
-    "description": "SUPPORT NB ERGONOMIQUE MONITOR MOUNT H00 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT NB ERGONOMIQUE MONITOR MOUNT H100 en gros au Maroc - 320 DH",
     "sku": "ERY-SUPPORT-NB-H100",
     "category": "ستاندات",
     "brand": {
@@ -387,7 +637,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-H100",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-NB-H100/support-nb-ergonomique-monitor-mount-h100",
       "price": 320,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -403,7 +653,7 @@
     "@type": "Product",
     "name": "SUPPORT NB MONITOR MOUNT F80-XE",
     "image": "https://errayhany.com/product-images/1946-1-ed232cfbc6-1600.webp",
-    "description": "SUPPORT NB MONITOR MOUNT F80-XE - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT NB MONITOR MOUNT F80-XE en gros au Maroc - 270 DH",
     "sku": "ERY-SUPPORT-NB-F80-XE",
     "category": "ستاندات",
     "brand": {
@@ -412,7 +662,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-F80-XE",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-NB-F80-XE/support-nb-monitor-mount-f80-xe",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -428,7 +678,7 @@
     "@type": "Product",
     "name": "SUPPORT NB MONITOR WALL MOUNT F160",
     "image": "https://errayhany.com/product-images/1945-1-73b9f61ef6-1600.webp",
-    "description": "SUPPORT NB MONITOR WALL MOUNT F160 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT NB MONITOR WALL MOUNT F160 en gros au Maroc - 500 DH",
     "sku": "ERY-SUPPORT-NB-F160",
     "category": "ستاندات",
     "brand": {
@@ -437,7 +687,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-F160",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-NB-F160/support-nb-monitor-wall-mount-f160",
       "price": 500,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -453,7 +703,7 @@
     "@type": "Product",
     "name": "SUPPORT NB MONITOR WALL MOUNT F120",
     "image": "https://errayhany.com/product-images/1944-1-c17e12e696-1600.webp",
-    "description": "SUPPORT NB MONITOR WALL MOUNT F120 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT NB MONITOR WALL MOUNT F120 en gros au Maroc - 270 DH",
     "sku": "ERY-SUPPORT-NB-F120",
     "category": "ستاندات",
     "brand": {
@@ -462,7 +712,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-NB-F120",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-NB-F120/support-nb-monitor-wall-mount-f120",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -478,7 +728,7 @@
     "@type": "Product",
     "name": "MEMO PHONE COOLER CX07",
     "image": "https://errayhany.com/product-images/1943-1-54da78bac6-1600.webp",
-    "description": "MEMO PHONE COOLER CX07 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MEMO PHONE COOLER CX07 en gros au Maroc - 110 DH",
     "sku": "ERY-MEMO-PHONE-COOLER-CX07",
     "category": "عام",
     "brand": {
@@ -487,7 +737,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MEMO-PHONE-COOLER-CX07",
+      "url": "https://errayhany.com/p/ERY-MEMO-PHONE-COOLER-CX07/memo-phone-cooler-cx07",
       "price": 110,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -503,7 +753,7 @@
     "@type": "Product",
     "name": "MEMO PHONE COOLER DLA8",
     "image": "https://errayhany.com/product-images/1942-1-e0cbd26a89-1600.webp",
-    "description": "MEMO PHONE COOLER DLA8 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MEMO PHONE COOLER DLA8 en gros au Maroc - 90 DH",
     "sku": "ERY-MEMO-PHONE-COOLER-DLA8",
     "category": "عام",
     "brand": {
@@ -512,7 +762,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MEMO-PHONE-COOLER-DLA8",
+      "url": "https://errayhany.com/p/ERY-MEMO-PHONE-COOLER-DLA8/memo-phone-cooler-dla8",
       "price": 90,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -528,7 +778,7 @@
     "@type": "Product",
     "name": "MEMO PHONE COOLER DL22",
     "image": "https://errayhany.com/product-images/1941-1-e4977e4e31-1600.webp",
-    "description": "MEMO PHONE COOLER DL22 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MEMO PHONE COOLER DL22 en gros au Maroc - 95 DH",
     "sku": "ERY-MEMO-PHONE-COOLER-DL22",
     "category": "عام",
     "brand": {
@@ -537,7 +787,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MEMO-PHONE-COOLER-DL22",
+      "url": "https://errayhany.com/p/ERY-MEMO-PHONE-COOLER-DL22/memo-phone-cooler-dl22",
       "price": 95,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -553,7 +803,7 @@
     "@type": "Product",
     "name": "EARBUDS WIRELESS X37 CYXG",
     "image": "https://errayhany.com/product-images/1940-1-7d8f3b0373-1600.webp",
-    "description": "EARBUDS WIRELESS X37 CYXG - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "EARBUDS WIRELESS X37 CYXG en gros au Maroc - 70 DH",
     "sku": "ERY-EARBUDS-X37-CYXG-C1-C3",
     "category": "سماعات",
     "brand": {
@@ -562,7 +812,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-EARBUDS-X37-CYXG-C1-C3",
+      "url": "https://errayhany.com/p/ERY-EARBUDS-X37-CYXG-C1-C3/earbuds-wireless-x37-cyxg",
       "price": 70,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -578,7 +828,7 @@
     "@type": "Product",
     "name": "MONITOR LIGHT C105",
     "image": "https://errayhany.com/product-images/1939-1-d1482b49eb-1600.webp",
-    "description": "MONITOR LIGHT C105 - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MONITOR LIGHT C105 en gros au Maroc - 130 DH",
     "sku": "ERY-MONITOR-LIGHT-C105-B26-B35",
     "category": "إضاءة",
     "brand": {
@@ -587,7 +837,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MONITOR-LIGHT-C105-B26-B35",
+      "url": "https://errayhany.com/p/ERY-MONITOR-LIGHT-C105-B26-B35/monitor-light-c105",
       "price": 130,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -603,7 +853,7 @@
     "@type": "Product",
     "name": "LED LIGHT SMART SCREEN LAMP B21-B25",
     "image": "https://errayhany.com/product-images/1938-1-0df6f0ffdd-1600.webp",
-    "description": "LED LIGHT SMART SCREEN LAMP B21-B25 - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "LED LIGHT SMART SCREEN LAMP B21-B25 en gros au Maroc - 180 DH",
     "sku": "SMART-SCREEN-LAMP-B21-B25",
     "category": "إضاءة",
     "brand": {
@@ -612,7 +862,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=SMART-SCREEN-LAMP-B21-B25",
+      "url": "https://errayhany.com/p/SMART-SCREEN-LAMP-B21-B25/led-light-smart-screen-lamp-b21-b25",
       "price": 180,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -628,7 +878,7 @@
     "@type": "Product",
     "name": "MANETTE 2500MAH H10 BATTERY",
     "image": "https://errayhany.com/product-images/1937-1-b9f7018ee9-1600.webp",
-    "description": "MANETTE 2500MAH H10 BATTERY - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MANETTE 2500MAH H10 BATTERY en gros au Maroc - 95 DH",
     "sku": "ERY-MANETTE-H10-2500MAH-BATTERY",
     "category": "ألعاب",
     "brand": {
@@ -637,7 +887,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-H10-2500MAH-BATTERY",
+      "url": "https://errayhany.com/p/ERY-MANETTE-H10-2500MAH-BATTERY/manette-2500mah-h10-battery",
       "price": 95,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -653,7 +903,7 @@
     "@type": "Product",
     "name": "MANETTE PLUG/IN/FUN H10 CHARGER",
     "image": "https://errayhany.com/product-images/1936-1-fcb56fb505-1600.webp",
-    "description": "MANETTE PLUG/IN/FUN H10 CHARGER - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MANETTE PLUG/IN/FUN H10 CHARGER en gros au Maroc - 80 DH",
     "sku": "ERY-MANETTE-H10-PLUG-IN-FUN-CHARGER",
     "category": "ألعاب",
     "brand": {
@@ -662,7 +912,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-H10-PLUG-IN-FUN-CHARGER",
+      "url": "https://errayhany.com/p/ERY-MANETTE-H10-PLUG-IN-FUN-CHARGER/manette-plug-in-fun-h10-charger",
       "price": 80,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -676,10 +926,10 @@
   },
   {
     "@type": "Product",
-    "name": "SUPPORT HOLDER L33-L40",
+    "name": "SUPPORT MOTO INSTA 360",
     "image": "https://errayhany.com/product-images/1935-1-826c2230fc-1600.webp",
-    "description": "SUPPORT HOLDER L33-L40 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-HOLDER-L33-L40",
+    "description": "SUPPORT MOTO INSTA 360 en gros au Maroc - 170 DH",
+    "sku": "SUPPORT-MOTO-INSTA-360",
     "category": "ستاندات",
     "brand": {
       "@type": "Brand",
@@ -687,7 +937,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOLDER-L33-L40",
+      "url": "https://errayhany.com/p/SUPPORT-MOTO-INSTA-360/support-moto-insta-360",
       "price": 170,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -703,7 +953,7 @@
     "@type": "Product",
     "name": "MANETTE WIRELESSM 613",
     "image": "https://errayhany.com/product-images/1934-1-4f2a7e8bac-1600.webp",
-    "description": "MANETTE WIRELESSM 613 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MANETTE WIRELESSM 613 en gros au Maroc - 90 DH",
     "sku": "ERY-MANETTE-613",
     "category": "ألعاب",
     "brand": {
@@ -712,7 +962,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-613",
+      "url": "https://errayhany.com/p/ERY-MANETTE-613/manette-wirelessm-613",
       "price": 90,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -728,7 +978,7 @@
     "@type": "Product",
     "name": "SUPPORT VELO SPORTS ARMBAND Y305",
     "image": "https://errayhany.com/product-images/1933-1-d4b5ae7feb-1600.webp",
-    "description": "SUPPORT VELO SPORTS ARMBAND Y305 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT VELO SPORTS ARMBAND Y305 en gros au Maroc - 45 DH",
     "sku": "ERY-SUPPORT-VELO-Y305-L1-L2",
     "category": "ستاندات",
     "brand": {
@@ -737,7 +987,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-VELO-Y305-L1-L2",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-VELO-Y305-L1-L2/support-velo-sports-armband-y305",
       "price": 45,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -753,7 +1003,7 @@
     "@type": "Product",
     "name": "HOLDER K82/K83",
     "image": "https://errayhany.com/product-images/1932-1-527c87b38e-1600.webp",
-    "description": "HOLDER K82/K83 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "HOLDER K82/K83 en gros au Maroc - 80 DH",
     "sku": "ERY-SUPPORT-K82-K83-J85-J95",
     "category": "ستاندات",
     "brand": {
@@ -762,7 +1012,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-K82-K83-J85-J95",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-K82-K83-J85-J95/holder-k82-k83",
       "price": 80,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -778,7 +1028,7 @@
     "@type": "Product",
     "name": "MANETTE WIRLESS CONTROLLER V8",
     "image": "https://errayhany.com/product-images/1931-1-46ac45968d-1600.webp",
-    "description": "MANETTE WIRLESS CONTROLLER V8 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MANETTE WIRLESS CONTROLLER V8 en gros au Maroc - 75 DH",
     "sku": "ERY-MANETTE-V8",
     "category": "ألعاب",
     "brand": {
@@ -787,7 +1037,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-V8",
+      "url": "https://errayhany.com/p/ERY-MANETTE-V8/manette-wirless-controller-v8",
       "price": 75,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -803,7 +1053,7 @@
     "@type": "Product",
     "name": "PHONE STICKER SUPPORT VENTOUSE PETIT TAILLE",
     "image": "https://errayhany.com/product-images/1930-1-95f3053216-1600.webp",
-    "description": "PHONE STICKER SUPPORT VENTOUSE PETIT TAILLE - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PHONE STICKER SUPPORT VENTOUSE PETIT TAILLE en gros au Maroc - 5 DH",
     "sku": "ERY-SUPPORT-VENTOUSE-PETIT-I6-I5",
     "category": "ستاندات",
     "brand": {
@@ -812,7 +1062,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-VENTOUSE-PETIT-I6-I5",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-VENTOUSE-PETIT-I6-I5/phone-sticker-support-ventouse-petit-taille",
       "price": 5,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -828,7 +1078,7 @@
     "@type": "Product",
     "name": "PHONE STICKER SUPPORT VENTOUSE GRAND TAILLE",
     "image": "https://errayhany.com/product-images/1929-1-7ea41b1dad-1600.webp",
-    "description": "PHONE STICKER SUPPORT VENTOUSE GRAND TAILLE - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PHONE STICKER SUPPORT VENTOUSE GRAND TAILLE en gros au Maroc - 6 DH",
     "sku": "ERY-SUPPORT-VENTOUSE-GRANDT-I1-I5",
     "category": "ستاندات",
     "brand": {
@@ -837,7 +1087,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-VENTOUSE-GRANDT-I1-I5",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-VENTOUSE-GRANDT-I1-I5/phone-sticker-support-ventouse-grand-taille",
       "price": 6,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -853,7 +1103,7 @@
     "@type": "Product",
     "name": "HOLDER PHONE L28-L32",
     "image": "https://errayhany.com/product-images/1928-1-00232d7f56-1600.webp",
-    "description": "HOLDER PHONE L28-L32 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "HOLDER PHONE L28-L32 en gros au Maroc - 70 DH",
     "sku": "ERY-HOLDER-PHONE-L28-L32",
     "category": "ستاندات",
     "brand": {
@@ -862,7 +1112,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOLDER-PHONE-L28-L32",
+      "url": "https://errayhany.com/p/ERY-HOLDER-PHONE-L28-L32/holder-phone-l28-l32",
       "price": 70,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -878,7 +1128,7 @@
     "@type": "Product",
     "name": "BUKHOOR B008 U11-U12",
     "image": "https://errayhany.com/product-images/1927-1-e43a9cea60-1600.webp",
-    "description": "BUKHOOR B008 U11-U12 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "BUKHOOR B008 U11-U12 en gros au Maroc - 130 DH",
     "sku": "ERY-BUKHOOR-B008-U11-U12",
     "category": "عام",
     "brand": {
@@ -887,7 +1137,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-BUKHOOR-B008-U11-U12",
+      "url": "https://errayhany.com/p/ERY-BUKHOOR-B008-U11-U12/bukhoor-b008-u11-u12",
       "price": 130,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -903,7 +1153,7 @@
     "@type": "Product",
     "name": "POINTER LASER WIRELESS PRESENTER L13-L14",
     "image": "https://errayhany.com/product-images/1926-1-ed31948ae9-1600.webp",
-    "description": "POINTER LASER WIRELESS PRESENTER L13-L14 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "POINTER LASER WIRELESS PRESENTER L13-L14 en gros au Maroc - 70 DH",
     "sku": "ERY-POINTER-LASER-PRESENTER-L13-L14",
     "category": "عام",
     "brand": {
@@ -912,7 +1162,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-POINTER-LASER-PRESENTER-L13-L14",
+      "url": "https://errayhany.com/p/ERY-POINTER-LASER-PRESENTER-L13-L14/pointer-laser-wireless-presenter-l13-l14",
       "price": 70,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -928,7 +1178,7 @@
     "@type": "Product",
     "name": "SELFIE STICK L15",
     "image": "https://errayhany.com/product-images/1925-1-fdfbae1481-1600.webp",
-    "description": "SELFIE STICK L15 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SELFIE STICK L15 en gros au Maroc - 90 DH",
     "sku": "ERY-SELFIE-L15",
     "category": "ستاندات",
     "brand": {
@@ -937,7 +1187,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SELFIE-L15",
+      "url": "https://errayhany.com/p/ERY-SELFIE-L15/selfie-stick-l15",
       "price": 90,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -953,7 +1203,7 @@
     "@type": "Product",
     "name": "SUPPORT HOLDER 2m J71-J80",
     "image": "https://errayhany.com/product-images/1924-1-209d2bc615-1600.webp",
-    "description": "SUPPORT HOLDER 2m J71-J80 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT HOLDER 2m J71-J80 en gros au Maroc - 200 DH",
     "sku": "SUPPORT HOLDER 2m J71-J80",
     "category": "ستاندات",
     "brand": {
@@ -962,7 +1212,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=SUPPORT%20HOLDER%202m%20J71-J80",
+      "url": "https://errayhany.com/p/SUPPORT%20HOLDER%202m%20J71-J80/support-holder-2m-j71-j80",
       "price": 200,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -978,7 +1228,7 @@
     "@type": "Product",
     "name": "SUPPORT HOLDER 1.5m J61-J70",
     "image": "https://errayhany.com/product-images/1923-1-bd9eee23aa-1600.webp",
-    "description": "SUPPORT HOLDER 1.5m J61-J70 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT HOLDER 1.5m J61-J70 en gros au Maroc - 180 DH",
     "sku": "ERY-SUPPORT-1-5M-J61-J70",
     "category": "ستاندات",
     "brand": {
@@ -987,7 +1237,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-1-5M-J61-J70",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-1-5M-J61-J70/support-holder-1-5m-j61-j70",
       "price": 180,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1003,7 +1253,7 @@
     "@type": "Product",
     "name": "PHONE HOLDER M8S L8-L11",
     "image": "https://errayhany.com/product-images/1922-1-07911ac069-1600.webp",
-    "description": "PHONE HOLDER M8S L8-L11 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PHONE HOLDER M8S L8-L11 en gros au Maroc - 75 DH",
     "sku": "ERY-PHONE-HOLDER-M8S-L8-L11",
     "category": "ستاندات",
     "brand": {
@@ -1012,7 +1262,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-PHONE-HOLDER-M8S-L8-L11",
+      "url": "https://errayhany.com/p/ERY-PHONE-HOLDER-M8S-L8-L11/phone-holder-m8s-l8-l11",
       "price": 75,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1028,7 +1278,7 @@
     "@type": "Product",
     "name": "SUPPORT HOLDER L26-L27",
     "image": "https://errayhany.com/product-images/1921-1-b040883b58-1600.webp",
-    "description": "SUPPORT HOLDER L26-L27 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT HOLDER L26-L27 en gros au Maroc - 40 DH",
     "sku": "ERY-HOLDER-L26-L27",
     "category": "ستاندات",
     "brand": {
@@ -1037,7 +1287,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOLDER-L26-L27",
+      "url": "https://errayhany.com/p/ERY-HOLDER-L26-L27/support-holder-l26-l27",
       "price": 40,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1051,9 +1301,9 @@
   },
   {
     "@type": "Product",
-    "name": "SUPPORT HOLDER L18-L25",
+    "name": "SUPPORT FIXATION BUREAU L18-L25",
     "image": "https://errayhany.com/product-images/1920-1-3e04611a97-1600.webp",
-    "description": "SUPPORT HOLDER L18-L25 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT FIXATION BUREAU L18-L25 en gros au Maroc - 85 DH",
     "sku": "ERY-HOLDER-L18-L25",
     "category": "ستاندات",
     "brand": {
@@ -1062,7 +1312,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOLDER-L18-L25",
+      "url": "https://errayhany.com/p/ERY-HOLDER-L18-L25/support-fixation-bureau-l18-l25",
       "price": 85,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1078,7 +1328,7 @@
     "@type": "Product",
     "name": "GAME CONSOLE R36S",
     "image": "https://errayhany.com/product-images/1919-1-ed317a6987-1600.webp",
-    "description": "GAME CONSOLE R36S - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "GAME CONSOLE R36S en gros au Maroc - 400 DH",
     "sku": "ERY-MANETTE-R36S",
     "category": "ألعاب",
     "brand": {
@@ -1087,7 +1337,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-R36S",
+      "url": "https://errayhany.com/p/ERY-MANETTE-R36S/game-console-r36s",
       "price": 400,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1103,7 +1353,7 @@
     "@type": "Product",
     "name": "MANETTE GAME PLAYER X12 PLUS",
     "image": "https://errayhany.com/product-images/1918-1-8f882a94a4-1600.webp",
-    "description": "MANETTE GAME PLAYER X12 PLUS - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MANETTE GAME PLAYER X12 PLUS en gros au Maroc - 400 DH",
     "sku": "ERY-MANETTE-X12-PLUS",
     "category": "ألعاب",
     "brand": {
@@ -1112,7 +1362,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-X12-PLUS",
+      "url": "https://errayhany.com/p/ERY-MANETTE-X12-PLUS/manette-game-player-x12-plus",
       "price": 400,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1128,7 +1378,7 @@
     "@type": "Product",
     "name": "POWER ADAPTER P4",
     "image": "https://errayhany.com/product-images/1917-1-2ef57ee3bf-1600.webp",
-    "description": "POWER ADAPTER P4 - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "POWER ADAPTER P4 en gros au Maroc - 10 DH",
     "sku": "ERY-POWER-ADAPTER-P4",
     "category": "محولات وHUB",
     "brand": {
@@ -1137,7 +1387,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-POWER-ADAPTER-P4",
+      "url": "https://errayhany.com/p/ERY-POWER-ADAPTER-P4/power-adapter-p4",
       "price": 10,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1153,7 +1403,7 @@
     "@type": "Product",
     "name": "THREE COLOR LIGHT",
     "image": "https://errayhany.com/product-images/1916-1-1a56827cb0-1600.webp",
-    "description": "THREE COLOR LIGHT - إضاءة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "THREE COLOR LIGHT en gros au Maroc - 150 DH",
     "sku": "ERY-THREE-COLOR-LIGHT",
     "category": "إضاءة",
     "brand": {
@@ -1162,7 +1412,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-THREE-COLOR-LIGHT",
+      "url": "https://errayhany.com/p/ERY-THREE-COLOR-LIGHT/three-color-light",
       "price": 150,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1178,7 +1428,7 @@
     "@type": "Product",
     "name": "WIRELESS CARPLAY PLUG AND PLAY 05-06",
     "image": "https://errayhany.com/product-images/1915-1-30bedc5338-1600.webp",
-    "description": "WIRELESS CARPLAY PLUG AND PLAY 05-06 - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "WIRELESS CARPLAY PLUG AND PLAY 05-06 en gros au Maroc - 550 DH",
     "sku": "ERY-CARPLAY-05-06",
     "category": "إكسسوارات السيارة",
     "brand": {
@@ -1187,7 +1437,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CARPLAY-05-06",
+      "url": "https://errayhany.com/p/ERY-CARPLAY-05-06/wireless-carplay-plug-and-play-05-06",
       "price": 550,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1203,7 +1453,7 @@
     "@type": "Product",
     "name": "WIRELESS USB ADAPTER CAPPLAY 02",
     "image": "https://errayhany.com/product-images/1914-1-6cb4ba2b88-1600.webp",
-    "description": "WIRELESS USB ADAPTER CAPPLAY 02 - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "WIRELESS USB ADAPTER CAPPLAY 02 en gros au Maroc - 500 DH",
     "sku": "ERY-CAPPLAY-02",
     "category": "محولات وHUB",
     "brand": {
@@ -1212,7 +1462,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CAPPLAY-02",
+      "url": "https://errayhany.com/p/ERY-CAPPLAY-02/wireless-usb-adapter-capplay-02",
       "price": 500,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1228,7 +1478,7 @@
     "@type": "Product",
     "name": "HOLDER M14",
     "image": "https://errayhany.com/product-images/1913-1-add990ddfb-1600.webp",
-    "description": "HOLDER M14 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "HOLDER M14 en gros au Maroc - 85 DH",
     "sku": "ERY-HOLDER-M14",
     "category": "ستاندات",
     "brand": {
@@ -1237,7 +1487,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HOLDER-M14",
+      "url": "https://errayhany.com/p/ERY-HOLDER-M14/holder-m14",
       "price": 85,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1253,7 +1503,7 @@
     "@type": "Product",
     "name": "PHOMEMO LABEL MAKER M110",
     "image": "https://errayhany.com/product-images/1912-1-6cd19a029d-1600.webp",
-    "description": "PHOMEMO LABEL MAKER M110 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PHOMEMO LABEL MAKER M110 en gros au Maroc - 480 DH",
     "sku": "ERY-PHOMEMO-M110",
     "category": "عام",
     "brand": {
@@ -1262,7 +1512,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-PHOMEMO-M110",
+      "url": "https://errayhany.com/p/ERY-PHOMEMO-M110/phomemo-label-maker-m110",
       "price": 480,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1278,7 +1528,7 @@
     "@type": "Product",
     "name": "CAR MOUNTED SMART AROMA DIFFUSER",
     "image": "https://errayhany.com/product-images/1911-1-8adcbf71a3-1600.webp",
-    "description": "CAR MOUNTED SMART AROMA DIFFUSER - إكسسوارات السيارة بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "CAR MOUNTED SMART AROMA DIFFUSER en gros au Maroc - 80 DH",
     "sku": "BUKHOOR-AROMA-DIFFUSER-V1-V25",
     "category": "إكسسوارات السيارة",
     "brand": {
@@ -1287,7 +1537,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=BUKHOOR-AROMA-DIFFUSER-V1-V25",
+      "url": "https://errayhany.com/p/BUKHOOR-AROMA-DIFFUSER-V1-V25/car-mounted-smart-aroma-diffuser",
       "price": 80,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1303,7 +1553,7 @@
     "@type": "Product",
     "name": "PROFESSIONAL HARDWARE TOOLS 6024",
     "image": "https://errayhany.com/product-images/1910-1-8baf32b6a1-1600.webp",
-    "description": "PROFESSIONAL HARDWARE TOOLS 6024 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PROFESSIONAL HARDWARE TOOLS 6024 en gros au Maroc - 45 DH",
     "sku": "ERY-HARDWARE-TOOLS-6024",
     "category": "عام",
     "brand": {
@@ -1312,7 +1562,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HARDWARE-TOOLS-6024",
+      "url": "https://errayhany.com/p/ERY-HARDWARE-TOOLS-6024/professional-hardware-tools-6024",
       "price": 45,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1328,8 +1578,8 @@
     "@type": "Product",
     "name": "HANGING LUGGAGE SCALE",
     "image": "https://errayhany.com/product-images/1909-1-4db4156ff1-1600.webp",
-    "description": "HANGING LUGGAGE SCALE - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-HANGING-LUGGAGE-SCALE",
+    "description": "HANGING LUGGAGE SCALE en gros au Maroc - 45 DH",
+    "sku": "ELECTRONIC LUGGAGE SCALE",
     "category": "عام",
     "brand": {
       "@type": "Brand",
@@ -1337,7 +1587,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-HANGING-LUGGAGE-SCALE",
+      "url": "https://errayhany.com/p/ELECTRONIC%20LUGGAGE%20SCALE/hanging-luggage-scale",
       "price": 45,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1353,7 +1603,7 @@
     "@type": "Product",
     "name": "USB/USB OTG CARD READER 4 IN 1 0.15m",
     "image": "https://errayhany.com/product-images/1908-1-90cbc4ac4d-1600.webp",
-    "description": "USB/USB OTG CARD READER 4 IN 1 0.15m - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "USB/USB OTG CARD READER 4 IN 1 0.15m en gros au Maroc - 60 DH",
     "sku": "ERY-OTG-CARD-READER-4-IN-1",
     "category": "محولات وHUB",
     "brand": {
@@ -1362,7 +1612,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-OTG-CARD-READER-4-IN-1",
+      "url": "https://errayhany.com/p/ERY-OTG-CARD-READER-4-IN-1/usb-usb-otg-card-reader-4-in-1-0-15m",
       "price": 60,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1378,7 +1628,7 @@
     "@type": "Product",
     "name": "WIRELESS MICROPHONE F11-2",
     "image": "https://errayhany.com/product-images/1907-1-7579ec754a-1600.webp",
-    "description": "WIRELESS MICROPHONE F11-2 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "WIRELESS MICROPHONE F11-2 en gros au Maroc - 100 DH",
     "sku": "ERY-MICROPHONE-F11-2",
     "category": "ميكروفونات",
     "brand": {
@@ -1387,7 +1637,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MICROPHONE-F11-2",
+      "url": "https://errayhany.com/p/ERY-MICROPHONE-F11-2/wireless-microphone-f11-2",
       "price": 100,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1403,7 +1653,7 @@
     "@type": "Product",
     "name": "PODCAST MICROPHONE MV7",
     "image": "https://errayhany.com/product-images/1906-1-0b5cc93fcd-1600.webp",
-    "description": "PODCAST MICROPHONE MV7 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PODCAST MICROPHONE MV7 en gros au Maroc - 270 DH",
     "sku": "ERY-PODCAST-MICROPHONE-MV7",
     "category": "ميكروفونات",
     "brand": {
@@ -1412,7 +1662,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-PODCAST-MICROPHONE-MV7",
+      "url": "https://errayhany.com/p/ERY-PODCAST-MICROPHONE-MV7/podcast-microphone-mv7",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1428,7 +1678,7 @@
     "@type": "Product",
     "name": "PROFESSIONAL MICROPHONE M8",
     "image": "https://errayhany.com/product-images/1905-1-1f77698d07-1600.webp",
-    "description": "PROFESSIONAL MICROPHONE M8 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "PROFESSIONAL MICROPHONE M8 en gros au Maroc - 270 DH",
     "sku": "ERY-MICROPHONE-M8",
     "category": "ميكروفونات",
     "brand": {
@@ -1437,7 +1687,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MICROPHONE-M8",
+      "url": "https://errayhany.com/p/ERY-MICROPHONE-M8/professional-microphone-m8",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1453,7 +1703,7 @@
     "@type": "Product",
     "name": "MICROPHONE RGB M8",
     "image": "https://errayhany.com/product-images/1904-1-3166f45041-1600.webp",
-    "description": "MICROPHONE RGB M8 - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MICROPHONE RGB M8 en gros au Maroc - 270 DH",
     "sku": "MICROPHONE-ME6S",
     "category": "ميكروفونات",
     "brand": {
@@ -1462,7 +1712,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=MICROPHONE-ME6S",
+      "url": "https://errayhany.com/p/MICROPHONE-ME6S/microphone-rgb-m8",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1478,7 +1728,7 @@
     "@type": "Product",
     "name": "SUPPORT NB ERGONOMIQUE F80",
     "image": "https://errayhany.com/product-images/1903-1-0cf547cad1-1600.webp",
-    "description": "SUPPORT NB ERGONOMIQUE F80 - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SUPPORT NB ERGONOMIQUE F80 en gros au Maroc - 280 DH",
     "sku": "ERY-SUPPORT-F80",
     "category": "ستاندات",
     "brand": {
@@ -1487,7 +1737,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-F80",
+      "url": "https://errayhany.com/p/ERY-SUPPORT-F80/support-nb-ergonomique-f80",
       "price": 280,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1503,7 +1753,7 @@
     "@type": "Product",
     "name": "MANETTE WIRELESS CONTROLLER X3",
     "image": "https://errayhany.com/product-images/1902-1-8f0410cc2e-1600.webp",
-    "description": "MANETTE WIRELESS CONTROLLER X3 - ألعاب بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "MANETTE WIRELESS CONTROLLER X3 en gros au Maroc - 80 DH",
     "sku": "ERY-MANETTE-X3",
     "category": "ألعاب",
     "brand": {
@@ -1512,7 +1762,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MANETTE-X3",
+      "url": "https://errayhany.com/p/ERY-MANETTE-X3/manette-wireless-controller-x3",
       "price": 80,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1528,7 +1778,7 @@
     "@type": "Product",
     "name": "SOURIS ATTACK SHARK X8-ULTRA PAW3950MA 8K",
     "image": "https://errayhany.com/product-images/1900-1-f063227c6b-1600.webp",
-    "description": "SOURIS ATTACK SHARK X8-ULTRA PAW3950MA 8K - ماوس وكيبورد بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "SOURIS ATTACK SHARK X8-ULTRA PAW3950MA 8K en gros au Maroc - 550 DH",
     "sku": "ERY-SOURIS-X8-ULTRA-PAW3950MA-8K",
     "category": "ماوس وكيبورد",
     "brand": {
@@ -1537,8 +1787,183 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SOURIS-X8-ULTRA-PAW3950MA-8K",
+      "url": "https://errayhany.com/p/ERY-SOURIS-X8-ULTRA-PAW3950MA-8K/souris-attack-shark-x8-ultra-paw3950ma-8k",
       "price": 550,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "جهاز تعقب LOSHALL Smart Finder World Tag - متوافق مع Google Find My Device",
+    "image": "https://errayhany.com/product-images/1899-1-924469eb15-1600.webp",
+    "description": "جهاز تعقب LOSHALL Smart Finder World Tag - متوافق مع Google Find My Device en gros au Maroc - 80 DH",
+    "sku": "ERY-SMART-FINDER-WORLD-TAG",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SMART-FINDER-WORLD-TAG/loshall-smart-finder-world-tag-google-find-my-device",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "Smart Finder متوافق مع Apple Find My - محدد موقع الأشياء GPS لمفاتيحك، محفظتك، أمتعتك",
+    "image": "https://errayhany.com/product-images/1898-1-d9e6fe68cb-1600.webp",
+    "description": "Smart Finder متوافق مع Apple Find My - محدد موقع الأشياء GPS لمفاتيحك، محفظتك، أمتعتك en gros au Maroc - 80 DH",
+    "sku": "ERY-SMART-FINDER",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SMART-FINDER/smart-finder-apple-find-my-gps",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "جهاز تحديد المواقع الذكي Loshall Smart Finder Ring - متوافق مع أندرويد - حماية الخصوصية",
+    "image": "https://errayhany.com/product-images/1897-1-b44fb698db-1600.webp",
+    "description": "جهاز تحديد المواقع الذكي Loshall Smart Finder Ring - متوافق مع أندرويد - حماية الخصوصية en gros au Maroc - 110 DH",
+    "sku": "ERY-SMART-FINDER-LOSHALL-RING",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SMART-FINDER-LOSHALL-RING/loshall-smart-finder-ring",
+      "price": 110,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "جهاز تعقب ذكي One Tag - متوافق مع خاصية البحث عن جهازي من Apple",
+    "image": "https://errayhany.com/product-images/1896-1-bc2d2ce82f-1600.webp",
+    "description": "جهاز تعقب ذكي One Tag - متوافق مع خاصية البحث عن جهازي من Apple en gros au Maroc - 80 DH",
+    "sku": "ERY-SMART-FINDER-ONE-TAG",
+    "category": "ستاندات",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SMART-FINDER-ONE-TAG/one-tag-apple",
+      "price": 80,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "جهاز تعقب ذكي Loshall Tag F19 - متوافق مع Apple Find My",
+    "image": "https://errayhany.com/product-images/1895-1-93cdadff62-1600.webp",
+    "description": "جهاز تعقب ذكي Loshall Tag F19 - متوافق مع Apple Find My en gros au Maroc - 90 DH",
+    "sku": "ERY-SMART-FINDER-LOSHALL-TAG-F19",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-SMART-FINDER-LOSHALL-TAG-F19/loshall-tag-f19-apple-find-my",
+      "price": 90,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "حامل سقف عالمي لجهاز العرض - تثبيت قوي وقابل للتعديل لجهاز العرض",
+    "image": "https://errayhany.com/product-images/1894-1-3475e3a45c-1600.webp",
+    "description": "حامل سقف عالمي لجهاز العرض - تثبيت قوي وقابل للتعديل لجهاز العرض en gros au Maroc - 75 DH",
+    "sku": "ERY-PROJECTOR-CEILING-MOUNT",
+    "category": "إضاءة",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-PROJECTOR-CEILING-MOUNT",
+      "price": 75,
+      "priceCurrency": "MAD",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Errayhany Grossiste",
+        "url": "https://errayhany.com"
+      }
+    }
+  },
+  {
+    "@type": "Product",
+    "name": "مبخرة عود بخور BK-18 كهربائية محمولة - قابلة لإعادة الشحن للمنزل والسيارة",
+    "image": "https://errayhany.com/product-images/1893-1-2ac227fa72-1600.webp",
+    "description": "مبخرة عود بخور BK-18 كهربائية محمولة - قابلة لإعادة الشحن للمنزل والسيارة en gros au Maroc - 95 DH",
+    "sku": "ERY-OUD-BUKHOOR-BK-18",
+    "category": "عام",
+    "brand": {
+      "@type": "Brand",
+      "name": "Errayhany Store"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": "https://errayhany.com/p/ERY-OUD-BUKHOOR-BK-18/bk-18",
+      "price": 95,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition",
@@ -1553,7 +1978,7 @@
     "@type": "Product",
     "name": "سماعة ألعاب ATTACK SHARK L90 ثلاثية الأوضاع | 2.4G/بلوتوث/سلكي | شحن Type-C",
     "image": "https://errayhany.com/product-images/1892-1-10318e478f-1600.webp",
-    "description": "سماعة ألعاب ATTACK SHARK L90 ثلاثية الأوضاع | 2.4G/بلوتوث/سلكي | شحن Type-C - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "سماعة ألعاب ATTACK SHARK L90 ثلاثية الأوضاع | 2.4G/بلوتوث/سلكي | شحن Type-C en gros au Maroc - 300 DH",
     "sku": "ERY-CASQUE-L90",
     "category": "سماعات",
     "brand": {
@@ -1562,7 +1987,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CASQUE-L90",
+      "url": "https://errayhany.com/p/ERY-CASQUE-L90/attack-shark-l90-2-4g-type-c",
       "price": 300,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1578,7 +2003,7 @@
     "@type": "Product",
     "name": "سماعة رأس للألعاب Attack Shark L80PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) - شحن USB-C",
     "image": "https://errayhany.com/product-images/1891-1-4d6719428d-1600.webp",
-    "description": "سماعة رأس للألعاب Attack Shark L80PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) - شحن USB-C - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "سماعة رأس للألعاب Attack Shark L80PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) - شحن USB-C en gros au Maroc - 270 DH",
     "sku": "ERY-CASQUE-L80PRO",
     "category": "سماعات",
     "brand": {
@@ -1587,7 +2012,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CASQUE-L80PRO",
+      "url": "https://errayhany.com/p/ERY-CASQUE-L80PRO/attack-shark-l80pro-2-4g-usb-c",
       "price": 270,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1603,7 +2028,7 @@
     "@type": "Product",
     "name": "سماعة رأس للألعاب Attack Shark L30PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) مع شحن Type-C",
     "image": "https://errayhany.com/product-images/1890-1-3f3b82d107-1600.webp",
-    "description": "سماعة رأس للألعاب Attack Shark L30PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) مع شحن Type-C - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "سماعة رأس للألعاب Attack Shark L30PRO ثلاثية الأوضاع (2.4G/بلوتوث/سلكي) مع شحن Type-C en gros au Maroc - 350 DH",
     "sku": "ERY-CASQUE-L30PRO",
     "category": "سماعات",
     "brand": {
@@ -1612,7 +2037,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CASQUE-L30PRO",
+      "url": "https://errayhany.com/p/ERY-CASQUE-L30PRO/attack-shark-l30pro-2-4g-type-c",
       "price": 350,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1628,7 +2053,7 @@
     "@type": "Product",
     "name": "كابل USB-C إلى HDMI 4K Ultra HD - محول توصيل وتشغيل لأجهزة الكمبيوتر، Mac، الهواتف الذكية، الأجهزة اللوحية، وأجهزة الألعاب",
     "image": "https://errayhany.com/product-images/1888-1-a90f477c8d-1600.webp",
-    "description": "كابل USB-C إلى HDMI 4K Ultra HD - محول توصيل وتشغيل لأجهزة الكمبيوتر، Mac، الهواتف الذكية، الأجهزة اللوحية، وأجهزة الألعاب - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل USB-C إلى HDMI 4K Ultra HD - محول توصيل وتشغيل لأجهزة الكمبيوتر، Mac، الهواتف الذكية، الأجهزة اللوحية، وأجهزة الألعاب en gros au Maroc - 35 DH",
     "sku": "ERY-CABLE-TYPE-C-TO-HDMI",
     "category": "محولات وHUB",
     "brand": {
@@ -1637,7 +2062,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-TYPE-C-TO-HDMI",
+      "url": "https://errayhany.com/p/ERY-CABLE-TYPE-C-TO-HDMI/usb-c-hdmi-4k-ultra-hd-mac",
       "price": 35,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1653,7 +2078,7 @@
     "@type": "Product",
     "name": "كابل DisplayPort DP إلى DP بطول 1.8 متر - 4K UHD @60Hz، جودة عالية، مستقر ومتين للكمبيوتر، الشاشة، التلفزيون",
     "image": "https://errayhany.com/product-images/1887-1-ac9c68820c-1600.webp",
-    "description": "كابل DisplayPort DP إلى DP بطول 1.8 متر - 4K UHD @60Hz، جودة عالية، مستقر ومتين للكمبيوتر، الشاشة، التلفزيون - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل DisplayPort DP إلى DP بطول 1.8 متر - 4K UHD @60Hz، جودة عالية، مستقر ومتين للكمبيوتر، الشاشة، التلفزيون en gros au Maroc - 22 DH",
     "sku": "ERY-CABLE-DISPLAY-18M",
     "category": "محولات وHUB",
     "brand": {
@@ -1662,7 +2087,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-DISPLAY-18M",
+      "url": "https://errayhany.com/p/ERY-CABLE-DISPLAY-18M/displayport-dp-dp-1-8-4k-uhd-60hz",
       "price": 22,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1678,7 +2103,7 @@
     "@type": "Product",
     "name": "محول HDMI إلى VGA 1080P مع صوت 3.5 مم - محول فيديو للكمبيوتر، الكونسول، وصندوق التلفزيون",
     "image": "https://errayhany.com/product-images/1886-1-ddb8abd825-1600.webp",
-    "description": "محول HDMI إلى VGA 1080P مع صوت 3.5 مم - محول فيديو للكمبيوتر، الكونسول، وصندوق التلفزيون - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول HDMI إلى VGA 1080P مع صوت 3.5 مم - محول فيديو للكمبيوتر، الكونسول، وصندوق التلفزيون en gros au Maroc - 22 DH",
     "sku": "ERY-ADAPTATEUR-HDMI-TO-VGA-1080P",
     "category": "محولات وHUB",
     "brand": {
@@ -1687,7 +2112,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTATEUR-HDMI-TO-VGA-1080P",
+      "url": "https://errayhany.com/p/ERY-ADAPTATEUR-HDMI-TO-VGA-1080P/hdmi-vga-1080p-3-5",
       "price": 22,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1703,7 +2128,7 @@
     "@type": "Product",
     "name": "كابل محول USB-C إلى DisplayPort 4K Ultra HD 30Hz - اتصال مستقر وموثوق لأجهزة الكمبيوتر والتلفزيون والبروجيكتور",
     "image": "https://errayhany.com/product-images/1885-1-f5a562f177-1600.webp",
-    "description": "كابل محول USB-C إلى DisplayPort 4K Ultra HD 30Hz - اتصال مستقر وموثوق لأجهزة الكمبيوتر والتلفزيون والبروجيكتور - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل محول USB-C إلى DisplayPort 4K Ultra HD 30Hz - اتصال مستقر وموثوق لأجهزة الكمبيوتر والتلفزيون والبروجيكتور en gros au Maroc - 35 DH",
     "sku": "ERY-CABLE-TYPE-C-TO-DISPLAY",
     "category": "محولات وHUB",
     "brand": {
@@ -1712,7 +2137,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-TYPE-C-TO-DISPLAY",
+      "url": "https://errayhany.com/p/ERY-CABLE-TYPE-C-TO-DISPLAY/usb-c-displayport-4k-ultra-hd-30hz",
       "price": 35,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1728,7 +2153,7 @@
     "@type": "Product",
     "name": "كابل DisplayPort بطول 3 متر 4K Ultra HD 30Hz - موصل ذهبي للشاشات وأجهزة الكمبيوتر والتلفزيونات وأجهزة العرض",
     "image": "https://errayhany.com/product-images/1884-1-a74e91fa07-1600.webp",
-    "description": "كابل DisplayPort بطول 3 متر 4K Ultra HD 30Hz - موصل ذهبي للشاشات وأجهزة الكمبيوتر والتلفزيونات وأجهزة العرض - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل DisplayPort بطول 3 متر 4K Ultra HD 30Hz - موصل ذهبي للشاشات وأجهزة الكمبيوتر والتلفزيونات وأجهزة العرض en gros au Maroc - 30 DH",
     "sku": "ERY-CABLE-DISPLAY-3M",
     "category": "محولات وHUB",
     "brand": {
@@ -1737,7 +2162,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CABLE-DISPLAY-3M",
+      "url": "https://errayhany.com/p/ERY-CABLE-DISPLAY-3M/displayport-3-4k-ultra-hd-30hz",
       "price": 30,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1753,7 +2178,7 @@
     "@type": "Product",
     "name": "محول USB-C إلى VGA 4K - موصل Type C لشاشة VGA - توصيل وتشغيل متين ومضغوط",
     "image": "https://errayhany.com/product-images/1883-1-e1bc472d09-1600.webp",
-    "description": "محول USB-C إلى VGA 4K - موصل Type C لشاشة VGA - توصيل وتشغيل متين ومضغوط - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول USB-C إلى VGA 4K - موصل Type C لشاشة VGA - توصيل وتشغيل متين ومضغوط en gros au Maroc - 40 DH",
     "sku": "ERY-ADAPTUR-TYPE-C-TO-VGA",
     "category": "محولات وHUB",
     "brand": {
@@ -1762,7 +2187,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTUR-TYPE-C-TO-VGA",
+      "url": "https://errayhany.com/p/ERY-ADAPTUR-TYPE-C-TO-VGA/usb-c-vga-4k-type-c-vga",
       "price": 40,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1778,7 +2203,7 @@
     "@type": "Product",
     "name": "محول USB-C إلى HDMI بدقة 4K Ultra HD - موصل Type C لأجهزة MacBook والهواتف الذكية وأجهزة الكمبيوتر والأجهزة اللوحية",
     "image": "https://errayhany.com/product-images/1882-1-78ad28e578-1600.webp",
-    "description": "محول USB-C إلى HDMI بدقة 4K Ultra HD - موصل Type C لأجهزة MacBook والهواتف الذكية وأجهزة الكمبيوتر والأجهزة اللوحية - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول USB-C إلى HDMI بدقة 4K Ultra HD - موصل Type C لأجهزة MacBook والهواتف الذكية وأجهزة الكمبيوتر والأجهزة اللوحية en gros au Maroc - 40 DH",
     "sku": "ERY-ADAPTEUR-TYPE-C-TO-HDMI",
     "category": "محولات وHUB",
     "brand": {
@@ -1787,7 +2212,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTEUR-TYPE-C-TO-HDMI",
+      "url": "https://errayhany.com/p/ERY-ADAPTEUR-TYPE-C-TO-HDMI/usb-c-hdmi-4k-ultra-hd-type-c-macbook",
       "price": 40,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1803,7 +2228,7 @@
     "@type": "Product",
     "name": "محول Mini DisplayPort إلى VGA بطول 25 سم - محول فيديو Full HD للكمبيوتر، ماك، وجهاز العرض",
     "image": "https://errayhany.com/product-images/1881-1-f5aeb02c2a-1600.webp",
-    "description": "محول Mini DisplayPort إلى VGA بطول 25 سم - محول فيديو Full HD للكمبيوتر، ماك، وجهاز العرض - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول Mini DisplayPort إلى VGA بطول 25 سم - محول فيديو Full HD للكمبيوتر، ماك، وجهاز العرض en gros au Maroc - 30 DH",
     "sku": "ERY-MINI-DISPLAYPORT-TO-VGA-25CM",
     "category": "محولات وHUB",
     "brand": {
@@ -1812,7 +2237,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MINI-DISPLAYPORT-TO-VGA-25CM",
+      "url": "https://errayhany.com/p/ERY-MINI-DISPLAYPORT-TO-VGA-25CM/mini-displayport-vga-25-full-hd",
       "price": 30,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1828,7 +2253,7 @@
     "@type": "Product",
     "name": "محول Mini DisplayPort إلى HDMI 4Kx2K Ultra HD - محول DP إلى HDMI للكمبيوتر، ماك، الشاشة، التلفزيون",
     "image": "https://errayhany.com/product-images/1880-1-c08db8079e-1600.webp",
-    "description": "محول Mini DisplayPort إلى HDMI 4Kx2K Ultra HD - محول DP إلى HDMI للكمبيوتر، ماك، الشاشة، التلفزيون - محولات وHUB بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول Mini DisplayPort إلى HDMI 4Kx2K Ultra HD - محول DP إلى HDMI للكمبيوتر، ماك، الشاشة، التلفزيون en gros au Maroc - 27 DH",
     "sku": "ERY-MINI-DISPLAY-TO-HDMI",
     "category": "محولات وHUB",
     "brand": {
@@ -1837,7 +2262,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MINI-DISPLAY-TO-HDMI",
+      "url": "https://errayhany.com/p/ERY-MINI-DISPLAY-TO-HDMI/mini-displayport-hdmi-4kx2k-ultra-hd-dp-hdmi",
       "price": 27,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1853,7 +2278,7 @@
     "@type": "Product",
     "name": "لوحة كتابة LCD 8.5 بوصة AD-0010 للأطفال - صديقة للبيئة وقابلة لإعادة الاستخدام",
     "image": "https://errayhany.com/product-images/1878-1-921f3f32bc-1600.webp",
-    "description": "لوحة كتابة LCD 8.5 بوصة AD-0010 للأطفال - صديقة للبيئة وقابلة لإعادة الاستخدام - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "لوحة كتابة LCD 8.5 بوصة AD-0010 للأطفال - صديقة للبيئة وقابلة لإعادة الاستخدام en gros au Maroc - 15 DH",
     "sku": "ERY-TABLET-AD-0010",
     "category": "عام",
     "brand": {
@@ -1862,7 +2287,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-TABLET-AD-0010",
+      "url": "https://errayhany.com/p/ERY-TABLET-AD-0010/lcd-8-5-ad-0010",
       "price": 15,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1878,7 +2303,7 @@
     "@type": "Product",
     "name": "أدوات إخراج بطاقة SIM و Micro SD عالمية - مجموعة من 8 قطع للهواتف الذكية والأجهزة اللوحية",
     "image": "https://errayhany.com/product-images/1877-1-f27914edd0-1600.webp",
-    "description": "أدوات إخراج بطاقة SIM و Micro SD عالمية - مجموعة من 8 قطع للهواتف الذكية والأجهزة اللوحية - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "أدوات إخراج بطاقة SIM و Micro SD عالمية - مجموعة من 8 قطع للهواتف الذكية والأجهزة اللوحية en gros au Maroc - 1 DH",
     "sku": "ERY-IBRA-SIM",
     "category": "عام",
     "brand": {
@@ -1887,7 +2312,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-IBRA-SIM",
+      "url": "https://errayhany.com/p/ERY-IBRA-SIM/sim-micro-sd-8",
       "price": 1,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1903,7 +2328,7 @@
     "@type": "Product",
     "name": "شاحن سامسونج 45 واط PD محول طاقة USB-C مع كابل USB-C 5 أمبير - شحن سريع",
     "image": "https://errayhany.com/product-images/1876-1-2292f46f16-1600.webp",
-    "description": "شاحن سامسونج 45 واط PD محول طاقة USB-C مع كابل USB-C 5 أمبير - شحن سريع - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "شاحن سامسونج 45 واط PD محول طاقة USB-C مع كابل USB-C 5 أمبير - شحن سريع en gros au Maroc - 40 DH",
     "sku": "ERY-CHARGER-SAMSUNG-45W-AN",
     "category": "شواحن",
     "brand": {
@@ -1912,7 +2337,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CHARGER-SAMSUNG-45W-AN",
+      "url": "https://errayhany.com/p/ERY-CHARGER-SAMSUNG-45W-AN/45-pd-usb-c-usb-c-5",
       "price": 40,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1928,7 +2353,7 @@
     "@type": "Product",
     "name": "ميكروفون لاسلكي Jmary MW-15 2.4G مع علبة شحن - مثالي للفلوج والبث والمقابلات",
     "image": "https://errayhany.com/product-images/1875-1-2199618fe6-1600.webp",
-    "description": "ميكروفون لاسلكي Jmary MW-15 2.4G مع علبة شحن - مثالي للفلوج والبث والمقابلات - ميكروفونات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "ميكروفون لاسلكي Jmary MW-15 2.4G مع علبة شحن - مثالي للفلوج والبث والمقابلات en gros au Maroc - 280 DH",
     "sku": "ERY-MIC-JMARY-MW-15",
     "category": "ميكروفونات",
     "brand": {
@@ -1937,7 +2362,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-MIC-JMARY-MW-15",
+      "url": "https://errayhany.com/p/ERY-MIC-JMARY-MW-15/jmary-mw-15-2-4g",
       "price": 280,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1953,7 +2378,7 @@
     "@type": "Product",
     "name": "محول لايتنينج إلى جاك 3.5 ملم للايفون/الايباد - قم بتوصيل سماعاتك السلكية",
     "image": "https://errayhany.com/product-images/1874-1-61a8156461-1600.webp",
-    "description": "محول لايتنينج إلى جاك 3.5 ملم للايفون/الايباد - قم بتوصيل سماعاتك السلكية - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول لايتنينج إلى جاك 3.5 ملم للايفون/الايباد - قم بتوصيل سماعاتك السلكية en gros au Maroc - 35 DH",
     "sku": "ERY-ADAPTATEUR-IOS-OR",
     "category": "عام",
     "brand": {
@@ -1962,7 +2387,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTATEUR-IOS-OR",
+      "url": "https://errayhany.com/p/ERY-ADAPTATEUR-IOS-OR/3-5",
       "price": 35,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -1978,7 +2403,7 @@
     "@type": "Product",
     "name": "محول صوت Pop-Up Window 8 PIN إلى جاك 3.5 ملم للآيفون - JH-002",
     "image": "https://errayhany.com/product-images/1873-1-cb891c7cf8-1600.webp",
-    "description": "محول صوت Pop-Up Window 8 PIN إلى جاك 3.5 ملم للآيفون - JH-002 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول صوت Pop-Up Window 8 PIN إلى جاك 3.5 ملم للآيفون - JH-002 en gros au Maroc - 15 DH",
     "sku": "ERY-ADAPTATEUR-IOS-JH-002",
     "category": "عام",
     "brand": {
@@ -1987,7 +2412,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTATEUR-IOS-JH-002",
+      "url": "https://errayhany.com/p/ERY-ADAPTATEUR-IOS-JH-002/pop-up-window-8-pin-3-5-jh-002",
       "price": 15,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -2003,7 +2428,7 @@
     "@type": "Product",
     "name": "مفتاح واي فاي USB LB-LINK BL-WN155A 150Mbps مع هوائي عالي الكسب - محول لاسلكي",
     "image": "https://errayhany.com/product-images/1872-1-edcb7c66ed-1600.webp",
-    "description": "مفتاح واي فاي USB LB-LINK BL-WN155A 150Mbps مع هوائي عالي الكسب - محول لاسلكي - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "مفتاح واي فاي USB LB-LINK BL-WN155A 150Mbps مع هوائي عالي الكسب - محول لاسلكي en gros au Maroc - 30 DH",
     "sku": "ERY-CLE-WIFI-BL-WN155A",
     "category": "عام",
     "brand": {
@@ -2012,7 +2437,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLE-WIFI-BL-WN155A",
+      "url": "https://errayhany.com/p/ERY-CLE-WIFI-BL-WN155A/usb-lb-link-bl-wn155a-150mbps",
       "price": 30,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -2028,7 +2453,7 @@
     "@type": "Product",
     "name": "محول USB واي فاي LB-LINK 150M Nano BL-WN151 - مفتاح واي فاي عالي السرعة للكمبيوتر",
     "image": "https://errayhany.com/product-images/1871-1-596750c847-1600.webp",
-    "description": "محول USB واي فاي LB-LINK 150M Nano BL-WN151 - مفتاح واي فاي عالي السرعة للكمبيوتر - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "محول USB واي فاي LB-LINK 150M Nano BL-WN151 - مفتاح واي فاي عالي السرعة للكمبيوتر en gros au Maroc - 30 DH",
     "sku": "ERY-CLE-WIFI-BL-WN151",
     "category": "عام",
     "brand": {
@@ -2037,7 +2462,7 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLE-WIFI-BL-WN151",
+      "url": "https://errayhany.com/p/ERY-CLE-WIFI-BL-WN151/usb-lb-link-150m-nano-bl-wn151",
       "price": 30,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
@@ -2053,7 +2478,7 @@
     "@type": "Product",
     "name": "كابل محول USB 2.0 إلى RS232 DB9 تسلسلي للكمبيوتر | اتصال سهل وسريع",
     "image": "https://errayhany.com/product-images/1870-1-fa81c5e866-1600.webp",
-    "description": "كابل محول USB 2.0 إلى RS232 DB9 تسلسلي للكمبيوتر | اتصال سهل وسريع - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
+    "description": "كابل محول USB 2.0 إلى RS232 DB9 تسلسلي للكمبيوتر | اتصال سهل وسريع en gros au Maroc - 25 DH",
     "sku": "ERY-USB-TO-RS232-CABLE",
     "category": "عام",
     "brand": {
@@ -2062,433 +2487,8 @@
     },
     "offers": {
       "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-USB-TO-RS232-CABLE",
+      "url": "https://errayhany.com/p/ERY-USB-TO-RS232-CABLE/usb-2-0-rs232-db9",
       "price": 25,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول USB واي فاي ثنائي النطاق 600 ميجابت في الثانية – محول لاسلكي عالي السرعة 2.4/5 جيجاهرتز للكمبيوتر المحمول",
-    "image": "https://errayhany.com/product-images/1869-1-f417a9ddb1-1600.webp",
-    "description": "محول USB واي فاي ثنائي النطاق 600 ميجابت في الثانية – محول لاسلكي عالي السرعة 2.4/5 جيجاهرتز للكمبيوتر المحمول - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-CLE-WIFI-600MBPS",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-CLE-WIFI-600MBPS",
-      "price": 60,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات أذن لاسلكية ديباس OWS AP05 - صوت ستريو وباس فائق عالي الدقة",
-    "image": "https://errayhany.com/product-images/1868-1-2df716f4d5-1600.webp",
-    "description": "سماعات أذن لاسلكية ديباس OWS AP05 - صوت ستريو وباس فائق عالي الدقة - سماعات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AIRPODS-AP05",
-    "category": "سماعات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AIRPODS-AP05",
-      "price": 170,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات أذن لاسلكية AIRPODS DEEPBASS TWS-X6 True Wireless Hi-Res Audio - أبيض",
-    "image": "https://errayhany.com/product-images/1867-1-35483ca629-1600.webp",
-    "description": "سماعات أذن لاسلكية AIRPODS DEEPBASS TWS-X6 True Wireless Hi-Res Audio - أبيض - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AIRPODS-TWS-X6",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AIRPODS-TWS-X6",
-      "price": 80,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات بلوتوث Monster AC360 Open Ear - توصيل هوائي، راحة وجودة صوت عالية",
-    "image": "https://errayhany.com/product-images/1864-1-c45dba7832-1600.webp",
-    "description": "سماعات بلوتوث Monster AC360 Open Ear - توصيل هوائي، راحة وجودة صوت عالية - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AIRPODS-AC360",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AIRPODS-AC360",
-      "price": 170,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "سماعات بلوتوث مونستر Open Ear AC210 - توصيل هوائي، مقاومة للماء IPX5",
-    "image": "https://errayhany.com/product-images/1863-1-7069c44260-1600.webp",
-    "description": "سماعات بلوتوث مونستر Open Ear AC210 - توصيل هوائي، مقاومة للماء IPX5 - عام بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-AIRPODS-AC210",
-    "category": "عام",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-AIRPODS-AC210",
-      "price": 170,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "حامل مكتبي علوي للهاتف والكاميرا - مثالي للفلوجات والدروس التعليمية",
-    "image": "https://errayhany.com/product-images/1862-1-9a5a44e52e-1600.webp",
-    "description": "حامل مكتبي علوي للهاتف والكاميرا - مثالي للفلوجات والدروس التعليمية - ستاندات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SUPPORT-DESKTOP-OVERHEAD",
-    "category": "ستاندات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SUPPORT-DESKTOP-OVERHEAD",
-      "price": 90,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول طاقة USB-C بقوة 40 واط متوافق مع Apple - شحن سريع وفعال للآيفون والآيباد",
-    "image": "https://errayhany.com/product-images/1861-1-946063ec4f-1600.webp",
-    "description": "محول طاقة USB-C بقوة 40 واط متوافق مع Apple - شحن سريع وفعال للآيفون والآيباد - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-40W-DYNAMIC",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-40W-DYNAMIC",
-      "price": 110,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول طاقة USB-C أصلي من Apple بقوة 20 واط - شحن سريع للآيفون والآيباد",
-    "image": "https://errayhany.com/product-images/1860-1-3911389889-1600.webp",
-    "description": "محول طاقة USB-C أصلي من Apple بقوة 20 واط - شحن سريع للآيفون والآيباد - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-ADAPTER-APPLE-20W-CN-ORIGINAL",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTER-APPLE-20W-CN-ORIGINAL",
-      "price": 150,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول طاقة USB-C أصلي من Apple بقوة 20 واط للآيفون والآيباد - شحن سريع وفعال",
-    "image": "https://errayhany.com/product-images/1859-1-284d456d08-1600.webp",
-    "description": "محول طاقة USB-C أصلي من Apple بقوة 20 واط للآيفون والآيباد - شحن سريع وفعال - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-ADAPTER-APPLE-20W-AN",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTER-APPLE-20W-AN",
-      "price": 25,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "محول طاقة آبل ديناميكي 40W/60W - شاحن سريع عالمي لأجهزة آيفون/آيباد/ماك بوك",
-    "image": "https://errayhany.com/product-images/1858-1-d2d2481084-1600.webp",
-    "description": "محول طاقة آبل ديناميكي 40W/60W - شاحن سريع عالمي لأجهزة آيفون/آيباد/ماك بوك - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-ADAPTER-APPLE-40W/60W",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTER-APPLE-40W%2F60W",
-      "price": 130,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن حائط سريع SM M9AC SOBA - USB-C و USB-A - أبيض",
-    "image": "https://errayhany.com/product-images/1857-1-97bf692a62-1600.webp",
-    "description": "شاحن حائط سريع SM M9AC SOBA - USB-C و USB-A - أبيض - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-ADAPTER-SM-M9AC-SOBA",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTER-SM-M9AC-SOBA",
-      "price": 20,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن محول سامسونج EP-TA800 USB-C 25 واط شحن فائق السرعة أبيض",
-    "image": "https://errayhany.com/product-images/1856-1-6ac7e9aae6-1600.webp",
-    "description": "شاحن محول سامسونج EP-TA800 USB-C 25 واط شحن فائق السرعة أبيض - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAMS-TA800-SOBA",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAMS-TA800-SOBA",
-      "price": 19,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن حائط أصلي 35 واط من Apple - سريع وفعال",
-    "image": "https://errayhany.com/product-images/1855-1-a9775f7853-1600.webp",
-    "description": "شاحن حائط أصلي 35 واط من Apple - سريع وفعال - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-ADAPTER-APPLE-35W-SOBA",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-ADAPTER-APPLE-35W-SOBA",
-      "price": 17,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سامسونج سريع EP-T4510 بقوة 45 واط USB-C أبيض - محول طاقة أصلي للهواتف الذكية",
-    "image": "https://errayhany.com/product-images/1854-1-1831944041-1600.webp",
-    "description": "شاحن سامسونج سريع EP-T4510 بقوة 45 واط USB-C أبيض - محول طاقة أصلي للهواتف الذكية - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAMSUNG-EP-T4510",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAMSUNG-EP-T4510",
-      "price": 25,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "كابل USB-C إلى USB-C أصلي سامسونج 1 متر - شحن سريع ومزامنة",
-    "image": "https://errayhany.com/product-images/1853-1-f9f4a61aa4-1600.webp",
-    "description": "كابل USB-C إلى USB-C أصلي سامسونج 1 متر - شحن سريع ومزامنة - كابلات بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAM-C-C-ORI",
-    "category": "كابلات",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAM-C-C-ORI",
-      "price": 32,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سريع كونفولون C87 3.0 أمبير USB DC - حجم صغير، جودة عالية، ضمان سنة واحدة",
-    "image": "https://errayhany.com/product-images/1850-1-49a723ef5e-1600.webp",
-    "description": "شاحن سريع كونفولون C87 3.0 أمبير USB DC - حجم صغير، جودة عالية، ضمان سنة واحدة - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-KONFULON-C87",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-KONFULON-C87",
-      "price": 26,
-      "priceCurrency": "MAD",
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition",
-      "seller": {
-        "@type": "Organization",
-        "name": "Errayhany Grossiste",
-        "url": "https://errayhany.com"
-      }
-    }
-  },
-  {
-    "@type": "Product",
-    "name": "شاحن سامسونج 25 واط أصلي شحن فائق السرعة محول طاقة USB-C أبيض",
-    "image": "https://errayhany.com/product-images/1849-1-bc36ea0204-1600.webp",
-    "description": "شاحن سامسونج 25 واط أصلي شحن فائق السرعة محول طاقة USB-C أبيض - شواحن بالجملة من Errayhany Grossiste في الدار البيضاء والمغرب",
-    "sku": "ERY-SAM-25W-ORI-RAS",
-    "category": "شواحن",
-    "brand": {
-      "@type": "Brand",
-      "name": "Errayhany Store"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": "https://errayhany.com/?search=ERY-SAM-25W-ORI-RAS",
-      "price": 65,
       "priceCurrency": "MAD",
       "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition",

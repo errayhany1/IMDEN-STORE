@@ -35,6 +35,7 @@ import { initNativeShell } from './services/nativeShell';
 import { onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { User, X, ChevronUp, Loader2 } from 'lucide-react';
 import { applyBrowseRestore } from './utils/browseRestore';
+import { useSEO } from './hooks/useSEO';
 
 function App() {
   const {
@@ -364,6 +365,13 @@ function App() {
 
   // ── Simple Router ──
   const path = window.location.pathname;
+
+  useSEO({
+    title: path === '/' ? 'Grossiste Électronique au Maroc | Errayhany Grossiste' : '',
+    description: path === '/' ? 'Errayhany Store / Errayhany Grossiste: مستورد وموزع بالجملة للإلكترونيات وإكسسوارات الهواتف في المغرب والدار البيضاء. Grossiste électronique et accessoires GSM au Maroc.' : '',
+    canonicalPath: path === '/' ? '/' : '',
+  });
+
   if (path === '/admin') {
       return <AdminDashboard />;
   }
@@ -380,7 +388,8 @@ function App() {
       return <CategoriesPage />;
   }
   if (path.startsWith('/p/')) {
-      const sku = decodeURIComponent(path.slice(3));
+      const parts = path.split('/');
+      const sku = decodeURIComponent(parts[2] || '');
       return <ProductLandingPage sku={sku} />;
   }
   if (path === '/vip') {
