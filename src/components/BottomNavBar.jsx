@@ -164,7 +164,7 @@ const BottomNavBar = ({ activeOverride = null }) => {
             ref={navRef}
             className="fixed inset-x-0 bottom-0 z-[60] pointer-events-none pb-[max(4px,env(safe-area-inset-bottom))] px-3 md:px-6"
             style={{ bottom: 0, left: 0, right: 0 }}
-            aria-label="التنقل السفلي"
+            aria-label="Navigation principale"
         >
             <div
                 dir="rtl"

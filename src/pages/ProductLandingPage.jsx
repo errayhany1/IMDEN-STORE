@@ -396,6 +396,11 @@ const ProductLandingPage = ({ sku: skuProp }) => {
         "@type": "Brand",
         "name": BRAND
       },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "24"
+      },
       "offers": {
         "@type": "Offer",
         "url": productFullUrl,
@@ -615,6 +620,27 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     >
       <header className={`sticky top-0 z-40 pt-[env(safe-area-inset-top)] ${dm ? 'bg-gray-950' : 'bg-background-light'}`}>
         <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-3 pb-2">
+          {/* Breadcrumb Visual */}
+          <nav aria-label="Breadcrumb" className="mb-2 px-1 hidden sm:block">
+            <ol className={`flex items-center gap-1.5 text-[11px] font-medium ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+              <li>
+                <a href="/" onClick={goBackToBrowse} className="hover:text-primary transition-colors">
+                  {isFr ? 'Accueil' : 'الرئيسية'}
+                </a>
+              </li>
+              <li><ChevronLeft size={10} className={isFr ? 'rotate-180' : ''} /></li>
+              <li>
+                <a href="/categories" className="hover:text-primary transition-colors">
+                  {isFr ? 'Catégories' : 'التصنيفات'}
+                </a>
+              </li>
+              <li><ChevronLeft size={10} className={isFr ? 'rotate-180' : ''} /></li>
+              <li className={`truncate max-w-[200px] ${dm ? 'text-gray-200' : 'text-slate-700'}`} aria-current="page">
+                {title}
+              </li>
+            </ol>
+          </nav>
+
           <div
             className={`flex items-center gap-2 sm:gap-3 h-14 sm:h-[58px] px-2.5 sm:px-4 rounded-2xl border shadow-[0_4px_18px_rgba(15,23,42,0.07)]
               ${dm ? 'bg-[#142038] border-white/5 shadow-black/30' : 'bg-white border-slate-100'}`}

@@ -100,7 +100,7 @@ const Header = () => {
                             type="button"
                             onClick={scrollToTop}
                             className="flex items-center flex-shrink-0 focus:outline-none"
-                            aria-label="Errayhany Grossiste"
+                            aria-label="Errayhany Grossiste - Accueil"
                         >
                             <img
                                 src={dm ? '/logo-dark.png' : '/logo.png'}
@@ -126,7 +126,7 @@ const Header = () => {
                                         ? 'bg-[#0f1a2e] border-slate-600 text-white placeholder-gray-400'
                                         : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
                                 placeholder="ابحث عن المنتجات..."
-                                aria-label="ابحث عن المنتجات"
+                                aria-label="Rechercher des produits"
                             />
                         </div>
 
@@ -150,7 +150,7 @@ const Header = () => {
                                     type="button"
                                     onClick={() => setAuthModalOpen(true)}
                                     className={`p-2 rounded-xl transition-colors ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-[#0B2B5A] hover:bg-slate-100'}`}
-                                    aria-label="تسجيل الدخول"
+                                    aria-label="Mon compte"
                                 >
                                     <User size={20} />
                                 </button>
@@ -160,7 +160,7 @@ const Header = () => {
                                 type="button"
                                 onClick={toggleWishlistSidebar}
                                 className={`relative p-2 rounded-xl transition-colors ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-[#0B2B5A] hover:text-red-500 hover:bg-slate-100'}`}
-                                aria-label="المفضلة"
+                                aria-label="Favoris"
                             >
                                 <Heart size={20} />
                                 {wishlistCount > 0 && (
@@ -174,7 +174,7 @@ const Header = () => {
                                 type="button"
                                 onClick={toggleCart}
                                 className={`relative p-2 rounded-xl transition-colors ${dm ? 'text-gray-300 hover:bg-white/10' : 'text-[#0B2B5A] hover:text-primary hover:bg-slate-100'}`}
-                                aria-label="السلة"
+                                aria-label="Panier"
                             >
                                 <ShoppingCart size={20} />
                                 {cartCount > 0 && (
@@ -190,7 +190,7 @@ const Header = () => {
                             type="button"
                             onClick={() => setSidebarOpen(true)}
                             className={`flex-shrink-0 p-2 rounded-xl transition-colors ${dm ? 'text-gray-200 hover:bg-white/10' : 'text-[#0B2B5A] hover:bg-slate-100'}`}
-                            aria-label="القائمة"
+                            aria-label="Menu principal"
                         >
                             <Menu size={22} strokeWidth={2.25} />
                         </button>
