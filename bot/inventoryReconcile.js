@@ -85,7 +85,8 @@ export function nocoPublished(record) {
   return String(record?.POSTEBL || '').trim().toUpperCase() === 'POSTEBL';
 }
 
-const PAGE_SIZE = 100;
+const NOCO_PAGE_SIZE = 500;
+const TIFAWT_PAGE_SIZE = 100;
 const PAGE_CONCURRENCY = 1;
 const PAGE_RETRIES = 5;
 
@@ -110,6 +111,7 @@ async function fetchPages(count, fetchPage) {
       let lastError = null;
       for (let attempt = 1; attempt <= PAGE_RETRIES; attempt += 1) {
         try {
+          if (index > 0 && attempt === 1) await sleep(300); // Prevent burst
           results[index] = await fetchPage(index);
           lastError = null;
           break;
@@ -117,7 +119,7 @@ async function fetchPages(count, fetchPage) {
           lastError = error;
           const status = error?.statusCode || error?.response?.status;
           if (!isRetryableStatus(status) || attempt === PAGE_RETRIES) break;
-          await sleep(500 * (2 ** (attempt - 1)));
+          await sleep(1000 * (2 ** (attempt - 1))); // Increased backoff
         }
       }
       if (lastError) throw lastError;
@@ -142,7 +144,7 @@ export async function fetchAllNocoRecords() {
   const getPage = async (offset) => {
     const { data, status } = await axios.get(`${url}/api/v2/tables/${table}/records`, {
       headers: { 'xc-token': token, accept: 'application/json' },
-      params: { limit: PAGE_SIZE, offset, fields },
+      params: { limit: NOCO_PAGE_SIZE, offset, fields },
       timeout: 30000,
       validateStatus: () => true,
     });
@@ -157,11 +159,11 @@ export async function fetchAllNocoRecords() {
   const firstPage = await getPage(0);
   const total = firstPage?.pageInfo?.totalRows || 0;
   const first = firstPage?.list || [];
-  if (total <= PAGE_SIZE) return first;
+  if (total <= NOCO_PAGE_SIZE) return first;
 
-  const remaining = Math.ceil((total - PAGE_SIZE) / PAGE_SIZE);
+  const remaining = Math.ceil((total - NOCO_PAGE_SIZE) / NOCO_PAGE_SIZE);
   const rest = await fetchPages(remaining, async (i) => {
-    const page = await getPage(PAGE_SIZE * (i + 1));
+    const page = await getPage(NOCO_PAGE_SIZE * (i + 1));
     return page?.list || [];
   });
   return first.concat(rest);
@@ -170,7 +172,7 @@ export async function fetchAllNocoRecords() {
 export async function fetchAllTifawtProducts() {
   const getPage = async (page) => {
     const { data, status } = await tifawtApiRequest('get', '/products', {
-      params: { limit: PAGE_SIZE, page },
+      params: { limit: TIFAWT_PAGE_SIZE, page },
       timeout: 30000,
     });
     if (status >= 400) {
