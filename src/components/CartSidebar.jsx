@@ -248,9 +248,9 @@ const CartSidebar = () => {
                                                                     if (e.key === 'Enter') e.currentTarget.blur();
                                                                 }}
                                                                 aria-label="الكمية"
-                                                                className={`w-10 h-8 text-center text-sm font-medium outline-none bg-transparent
-                                                                    focus:ring-2 focus:ring-primary/40 rounded
-                                                                    ${dm ? 'text-white' : 'text-slate-900'}`}
+                                                                className={`w-12 h-8 text-center text-sm font-bold outline-none transition-colors
+                                                                    focus:ring-2 focus:ring-primary/40 focus:z-10
+                                                                    ${dm ? 'bg-gray-900 text-white' : 'bg-white text-slate-900 shadow-inner shadow-slate-100'}`}
                                                             />
                                                             {/* +1 */}
                                                             <button
