@@ -3,6 +3,7 @@ import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapP
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { upsertCustomerProfile } from '../services/customerAccount';
+import AnnouncementTicker from './AnnouncementTicker';
 
 const Header = () => {
     const { cart, toggleCart, wishlist, toggleWishlistSidebar, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo, clearCustomerInfo } = useStore();
@@ -196,6 +197,7 @@ const Header = () => {
                         </button>
                     </div>
                 </div>
+                <AnnouncementTicker />
             </header>
 
             {/* ─── Sidebar Drawer ─── */}

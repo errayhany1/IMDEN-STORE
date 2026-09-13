@@ -30,6 +30,7 @@ import AuthModal from '../components/AuthModal';
 import ImageModal from '../components/ImageModal';
 import ProductRatingStars from '../components/ProductRatingStars';
 import RelatedProducts from '../components/RelatedProducts';
+import AnnouncementTicker from '../components/AnnouncementTicker';
 import {
   listItemsFromHtml,
   productDescriptionHtml,
@@ -743,6 +744,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             </div>
           </div>
         </div>
+        <AnnouncementTicker />
       </header>
 
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 pt-4 md:pt-8">
