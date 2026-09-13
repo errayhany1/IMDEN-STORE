@@ -9,12 +9,14 @@ import JumiaOrdersTab from './admin/JumiaOrdersTab';
 import BotSettingsTab from './admin/BotSettingsTab';
 import InventorySyncTab from './admin/InventorySyncTab';
 import SocialPublishTab from './admin/SocialPublishTab';
+import TelegramCatalogTab from './admin/TelegramCatalogTab';
 import DropshipAdmin from '../components/admin/DropshipAdmin';
 import { createStoreOrderId, syncOrderSideEffects } from '../services/tifawt';
 import {
     createAdminSession,
     destroyAdminSession,
     publishProductToJumia,
+    publishProductToFacebook,
     setAdminPassword,
     verifyAdminSession,
 } from '../services/adminApi';
@@ -92,6 +94,7 @@ const AdminDashboard = () => {
     const [ozonFormData, setOzonFormData] = useState({ city: '', address: '', name: '', phone: '', price: '', note: '' });
     const [ozonLoading, setOzonLoading] = useState(false);
     const [publishingJumiaSku, setPublishingJumiaSku] = useState(null);
+    const [publishingFacebookSku, setPublishingFacebookSku] = useState(null);
 
     useEffect(() => {
         initTelegramWebApp();
@@ -1261,6 +1264,47 @@ const AdminDashboard = () => {
                                                             >
                                                                 {publishingJumiaSku === (p.SKU || p.Ref) ? '...' : 'Jumia'}
                                                             </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={publishingFacebookSku === (p.SKU || p.Ref)}
+                                                                onClick={async () => {
+                                                                    const sku = p.SKU || p.Ref;
+                                                                    if (!sku) return alert('لا يوجد مرجع للمنتج');
+                                                                    if (!window.confirm(`نشر ${sku} على صفحة فيسبوك بالعنوان والسعر والصورة الحالية؟\n\nسينشر أيضاً على إنستغرام إذا كان الحساب مربوطاً.`)) return;
+                                                                    setPublishingFacebookSku(sku);
+                                                                    try {
+                                                                        const result = await publishProductToFacebook(sku);
+                                                                        if (!result?.ok) {
+                                                                            throw new Error(
+                                                                                result?.hint
+                                                                                || result?.error
+                                                                                || 'publish_failed',
+                                                                            );
+                                                                        }
+                                                                        const fbOk = result.facebook?.ok !== false;
+                                                                        const ig = result.instagram;
+                                                                        const igLine = ig?.ok
+                                                                            ? '\nإنستغرام: نُشر'
+                                                                            : (ig?.skipped || !ig
+                                                                                ? ''
+                                                                                : `\nإنستغرام: ${ig.hint || ig.error || 'لم يكتمل'}`);
+                                                                        alert(
+                                                                            fbOk
+                                                                                ? `تم النشر على فيسبوك: ${result.sku || sku}${igLine}`
+                                                                                : `النشر الجزئي${igLine}`,
+                                                                        );
+                                                                    } catch (e) {
+                                                                        const data = e?.response?.data;
+                                                                        alert(data?.hint || data?.error || e.message || 'فشل النشر على فيسبوك');
+                                                                    } finally {
+                                                                        setPublishingFacebookSku(null);
+                                                                    }
+                                                                }}
+                                                                className="px-2 py-1.5 rounded-lg text-xs font-bold transition-all border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 whitespace-nowrap"
+                                                                title="إعادة نشر المنتج الحالي على فيسبوك"
+                                                            >
+                                                                {publishingFacebookSku === (p.SKU || p.Ref) ? '...' : 'فيسبوك'}
+                                                            </button>
                                                             <button 
                                                                 onClick={() => {
                                                                     setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId });
@@ -1426,6 +1470,10 @@ const AdminDashboard = () => {
                 {/* ══════ SOCIAL PUBLISH ══════ */}
                 {activeTab === 'social-publish' && (
                     <SocialPublishTab dm={dm} />
+                )}
+
+                {activeTab === 'telegram-catalog' && (
+                    <TelegramCatalogTab dm={dm} />
                 )}
 
                 {activeTab === 'dropship' && (

@@ -45,6 +45,7 @@ export function adminTabFromQuery() {
     'products',
     'inventory-sync',
     'social-publish',
+    'telegram-catalog',
     'dropship',
     'returns',
     'bot-settings',

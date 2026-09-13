@@ -22,6 +22,7 @@ import {
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
+import { startTelegramCatalogScheduler } from './telegramCatalogPoster.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { registerProductOgRoutes } from './productOgShare.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
@@ -369,7 +370,7 @@ app.post('/api/jumia/webhook', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'missing_order_id' });
     }
 
-    // StatusChanged etc. are acknowledged without creating a duplicate lead.
+    // Other status events are acknowledged without creating a duplicate lead.
     if (!isJumiaOrderCreatedEvent(body)) {
       return res.status(200).json({ ok: true, ignored: true, orderId });
     }
@@ -550,3 +551,5 @@ if (JUMIA_POLL_MS > 0 && isJumiaConfigured()) {
   setTimeout(poll, 15_000);
   setInterval(poll, JUMIA_POLL_MS);
 }
+
+startTelegramCatalogScheduler();

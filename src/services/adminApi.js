@@ -123,6 +123,15 @@ export async function publishProductToJumia(sku) {
   return data;
 }
 
+export async function publishProductToFacebook(sku) {
+  const { data } = await adminAxios.post(
+    `/bot-api/api/admin/products/${encodeURIComponent(sku)}/publish-facebook`,
+    {},
+    { timeout: 180000 },
+  );
+  return data;
+}
+
 export async function setJumiaProductStockAdmin(sku, stock = 100) {
   const { data } = await adminAxios.post(
     `/bot-api/api/admin/products/${encodeURIComponent(sku)}/jumia-stock`,
@@ -273,6 +282,27 @@ export async function uploadSocialMedia(file, { onProgress } = {}) {
     { uploadId },
     { timeout: 120000 },
   );
+  return data;
+}
+
+export async function fetchTelegramCatalogStatus() {
+  const { data } = await adminAxios.get('/bot-api/api/admin/telegram-catalog/status', {
+    timeout: 20000,
+  });
+  return data;
+}
+
+export async function saveTelegramCatalogSettings(settings) {
+  const { data } = await adminAxios.patch('/bot-api/api/admin/telegram-catalog/settings', {
+    settings,
+  }, { timeout: 30000 });
+  return data;
+}
+
+export async function runTelegramCatalogNow() {
+  const { data } = await adminAxios.post('/bot-api/api/admin/telegram-catalog/run', {}, {
+    timeout: 60000,
+  });
   return data;
 }
 
