@@ -122,6 +122,7 @@ function botToken(kind) {
       || process.env.TELEGRAM_CATALOG_IMDEN_BOT_TOKEN
       || process.env.TELEGRAM_BOT_TOKEN
       || process.env.VITE_TELEGRAM_BOT_TOKEN
+      || process.env.TELEGRAM_NOTIFY_BOT_TOKEN
       || ''
     ).trim();
   }
@@ -129,6 +130,7 @@ function botToken(kind) {
     process.env.TELEGRAM_CATALOG_IMDEN_BOT_TOKEN
     || process.env.TELEGRAM_BOT_TOKEN
     || process.env.VITE_TELEGRAM_BOT_TOKEN
+    || process.env.TELEGRAM_NOTIFY_BOT_TOKEN
     || ''
   ).trim();
 }
