@@ -26,6 +26,8 @@ import { startTelegramCatalogScheduler } from './telegramCatalogPoster.js';
 import { setupAdminWebAppMenus } from './adminWebApp.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { registerProductOgRoutes } from './productOgShare.js';
+import { registerImageSearchRoutes } from './imageSearch.js';
+import { startProductDigest } from './productDigestEmail.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
 import {
@@ -49,6 +51,7 @@ const app = express();
 // Public Jumia images: register before the small JSON body limit so uploads can be multi-MB.
 registerPublicImageRoutes(app);
 registerProductOgRoutes(app);
+registerImageSearchRoutes(app);
 app.use(express.json({ limit: '256kb' }));
 registerAdminRoutes(app);
 
@@ -242,7 +245,7 @@ async function notifyTelegramJumiaOrder(mapped, syncResult) {
     mapped.address ? `🏠 ${mapped.address}` : '',
     lines.length ? `📦 المنتجات:\n${lines.join('\n')}` : '',
     '',
-    'أوامر البوت: 📦 تجهيز شحن Jumia / ❌ إلغاء طلب Jumia',
+    'أوامر البوت: 📦 تجهيز شحن Jumia / 🏷️ ملصق شحن Jumia',
   ].filter(Boolean).join('\n');
 
   try {
@@ -554,6 +557,7 @@ if (JUMIA_POLL_MS > 0 && isJumiaConfigured()) {
 }
 
 startTelegramCatalogScheduler();
+startProductDigest();
 setupAdminWebAppMenus().catch((error) => {
   console.warn('[admin-webapp] setup failed:', error?.message || error);
 });

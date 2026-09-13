@@ -134,3 +134,59 @@ export async function markTifawtOrderReturned(orderId, opts = {}) {
     };
   }
 }
+
+/**
+ * Update a Tifawt order identified by the source platform's external ID.
+ * Marketplace orders use this to keep their fulfillment state in sync after
+ * a cancellation or a customer return is reported by the marketplace.
+ */
+export async function updateTifawtOrderByExternalId(externalOrderId, status, opts = {}) {
+  if (!isTifawtApiConfigured()) {
+    return { ok: false, error: 'tifawt_not_configured' };
+  }
+
+  const externalId = String(externalOrderId || '').trim();
+  const nextStatus = String(status || '').trim().toUpperCase();
+  if (!externalId || !nextStatus) {
+    return { ok: false, error: 'invalid_external_order_update' };
+  }
+
+  try {
+    return await withTifawtToken(async (token) => {
+      const lookup = await axios.get(`${API_BASE}/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { search: externalId, limit: 50 },
+        timeout: 30000,
+      });
+      const orders = Array.isArray(lookup.data?.data) ? lookup.data.data : [];
+      const order = orders.find((row) => (
+        String(row?.lead?.externalOrderId || '').trim() === externalId
+      ));
+      if (!order?.id) return { ok: true, updated: false, externalOrderId: externalId };
+
+      const body = { status: nextStatus };
+      const reason = String(opts.reason || '').trim();
+      if (reason) body.returnReason = reason;
+      const updated = await axios.patch(`${API_BASE}/orders/${order.id}/status`, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+      return {
+        ok: true,
+        updated: true,
+        externalOrderId: externalId,
+        order: mapTifawtOrderAdmin(updated.data),
+      };
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.response?.data?.message || error?.message || 'tifawt_status_update_failed',
+      statusCode: error?.response?.status || 502,
+      details: error?.response?.data || null,
+    };
+  }
+}

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart, Settings, ChevronDown, Globe2 } from 'lucide-react';
+import { Search, ShoppingCart, LayoutGrid, Columns2, User, Menu, X, LogOut, MapPin, Moon, Sun, Info, Truck, ShoppingBag, Heart, Settings, ChevronDown, Globe2, Camera, Loader2 } from 'lucide-react';
 import useStore from '../store/useStore';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { upsertCustomerProfile } from '../services/customerAccount';
 
 const Header = () => {
-    const { cart, toggleCart, wishlist, toggleWishlistSidebar, searchQuery, setSearchQuery, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo, clearCustomerInfo } = useStore();
+    const { cart, toggleCart, wishlist, toggleWishlistSidebar, searchQuery, setSearchQuery, imageSearchResults, setImageSearchResults, darkMode, toggleDarkMode, gridColumns, toggleGridColumns, user, setAuthModalOpen, setAboutModalOpen, customerInfo, setCustomerInfo, clearCustomerInfo } = useStore();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const wishlistCount = wishlist.length;
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,6 +15,9 @@ const Header = () => {
     const [langDropdownOpen, setLangDropdownOpen] = useState(false);
     const [additionalSettingsOpen, setAdditionalSettingsOpen] = useState(false);
     const searchInputRef = useRef(null);
+    const imageInputRef = useRef(null);
+    const [imageSearching, setImageSearching] = useState(false);
+    const [imageSearchError, setImageSearchError] = useState('');
 
     React.useEffect(() => {
         const match = document.cookie.match(/googtrans=\/ar\/([a-z]{2})/);
@@ -81,6 +84,33 @@ const Header = () => {
         setSidebarOpen(false);
     };
 
+    const handleImageSearch = async (event) => {
+        const image = event.target.files?.[0];
+        event.target.value = '';
+        if (!image) return;
+        if (!/^image\/(jpeg|png|webp)$/i.test(image.type) || image.size > 4 * 1024 * 1024) {
+            setImageSearchError('اختر صورة JPG أو PNG أو WebP بحجم أقل من 4MB.');
+            return;
+        }
+        setImageSearching(true);
+        setImageSearchError('');
+        try {
+            const form = new FormData();
+            form.append('image', image);
+            const response = await fetch('/bot-api/api/search/by-image', { method: 'POST', body: form });
+            const data = await response.json();
+            if (!response.ok || !data.ok) throw new Error(data.error || 'image_search_failed');
+            setImageSearchResults(data.matches || []);
+            setSearchQuery('');
+        } catch (error) {
+            console.error('Image search failed:', error);
+            setImageSearchResults(null);
+            setImageSearchError('تعذر البحث بالصورة حالياً. حاول بصورة أوضح.');
+        } finally {
+            setImageSearching(false);
+        }
+    };
+
     return (
         <>
             <header
@@ -119,15 +149,36 @@ const Header = () => {
                                 ref={searchInputRef}
                                 type="search"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setImageSearchResults(null);
+                                    setImageSearchError('');
+                                    setSearchQuery(e.target.value);
+                                }}
                                 dir="rtl"
-                                className={`block w-full h-10 sm:h-11 pl-10 pr-4 border rounded-full text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow
+                                className={`block w-full h-10 sm:h-11 pl-10 pr-10 border rounded-full text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow
                                     ${dm
                                         ? 'bg-[#0f1a2e] border-slate-600 text-white placeholder-gray-400'
                                         : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
                                 placeholder="ابحث عن المنتجات..."
                                 aria-label="Rechercher des produits"
                             />
+                            <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={handleImageSearch} className="hidden" />
+                            <button
+                                type="button"
+                                onClick={() => imageInputRef.current?.click()}
+                                disabled={imageSearching}
+                                className={`absolute inset-y-0 right-0 px-3 flex items-center rounded-r-full ${dm ? 'text-blue-300 hover:text-white' : 'text-blue-600 hover:text-blue-800'} disabled:opacity-60`}
+                                aria-label="البحث بصورة"
+                                title="البحث بصورة"
+                            >
+                                {imageSearching ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                            </button>
+                            {(imageSearchResults || imageSearchError) && (
+                                <div className={`absolute z-50 top-full mt-2 right-0 left-0 rounded-xl border px-3 py-2 text-xs shadow-lg ${imageSearchError ? 'border-red-200 bg-red-50 text-red-600' : dm ? 'border-slate-700 bg-slate-900 text-slate-200' : 'border-blue-100 bg-white text-slate-600'}`}>
+                                    {imageSearchError || `تم العثور على ${imageSearchResults.length} منتجات مشابهة بالصورة.`}
+                                    {imageSearchResults && <button type="button" onClick={() => setImageSearchResults(null)} className="mr-2 font-bold text-blue-600">إظهار الكل</button>}
+                                </div>
+                            )}
                         </div>
 
                         {/* Desktop actions (mobile uses bottom nav) */}

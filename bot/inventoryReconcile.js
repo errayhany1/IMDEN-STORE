@@ -85,7 +85,7 @@ export function nocoPublished(record) {
   return String(record?.POSTEBL || '').trim().toUpperCase() === 'POSTEBL';
 }
 
-const NOCO_PAGE_SIZE = 500;
+const NOCO_PAGE_SIZE = 100;
 const TIFAWT_PAGE_SIZE = 100;
 const PAGE_CONCURRENCY = 1;
 const PAGE_RETRIES = 5;
@@ -157,13 +157,14 @@ export async function fetchAllNocoRecords() {
   };
 
   const firstPage = await getPage(0);
-  const total = firstPage?.pageInfo?.totalRows || 0;
   const first = firstPage?.list || [];
-  if (total <= NOCO_PAGE_SIZE) return first;
+  const pageSize = firstPage?.pageInfo?.pageSize || first.length || NOCO_PAGE_SIZE;
+  const total = firstPage?.pageInfo?.totalRows || first.length;
+  if (first.length < pageSize || first.length >= total) return first;
 
-  const remaining = Math.ceil((total - NOCO_PAGE_SIZE) / NOCO_PAGE_SIZE);
+  const remaining = Math.ceil((total - first.length) / pageSize);
   const rest = await fetchPages(remaining, async (i) => {
-    const page = await getPage(NOCO_PAGE_SIZE * (i + 1));
+    const page = await getPage(first.length + pageSize * i);
     return page?.list || [];
   });
   return first.concat(rest);

@@ -156,15 +156,12 @@ const CATEGORIES = STORE_CATEGORY_LABEL_BOT;
 const MAIN_KEYBOARD = {
   keyboard: [
     [{ text: 'OPEN 🌐', web_app: { url: TELEGRAM_WEBAPP_URL } }],
-    [{ text: '❌ إيقاف منتج (نفد المخزون)' }, { text: '✅ جعل المنتج متوفر' }],
+    [{ text: '❌ إيقاف منتج (نفد المخزون)' }],
     [{ text: '📂 تغيير تصنيف منتج' }, { text: '💰 تغيير سعر المنتج' }],
-    [{ text: '✨ إعادة توليد الوصف والصور' }],
+    [{ text: '✨ إعادة توليد الوصف' }],
     [{ text: '📷 إضافة صور لمنتج' }],
     [{ text: '🎨 إضافة ألوان لمنتج موجود' }],
-    [{ text: '🛒 إعادة بناء من Amazon' }],
-    [{ text: '📦 تجهيز شحن Jumia' }, { text: '❌ إلغاء طلب Jumia' }],
-    [{ text: '🏷️ ملصق شحن Jumia' }],
-    [{ text: '🎨 خلفيات الموقع' }, { text: '🔥 خلفيات التخفيض' }],
+    [{ text: '📦 تجهيز شحن Jumia' }, { text: '🏷️ ملصق شحن Jumia' }],
     [{ text: '🔄 إعادة تشغيل البوت' }, { text: '🔽 إخفاء القائمة' }],
   ],
   resize_keyboard: true,
@@ -1000,7 +997,7 @@ async function requestGalleryApproval({
 
   await sendMessage(
     chatId,
-    `🖼️ صور المنتج #${rowId} (${sellerSku})\n${enrichment.amazonUrl ? 'هذه جميع صور Amazon التي تم كشطها. اختر ⭐ الصورة الأساسية، ثم قرر هل تريد إنشاء صورة إضافية بالذكاء أم الاكتفاء بصور Amazon.' : 'ستجد عند توفرها: Gemini، Qwen، إزالة الخلفية، والصورة الأصلية للمراجعة.'}${enrichment.syncJumia ? '\nعند اكتشاف عدة ألوان ستظهر أيضاً صورة مستقلة لكل لون في Jumia. الصورة الأصلية لا تُرسل إلى Jumia.' : '\nلم تختر Jumia، لذلك لن يُرسل إليها هذا المنتج.'}\n\n${galleryApprovalSummary(candidates)}`
+    `🖼️ صور المنتج #${rowId} (${sellerSku})\n${enrichment.amazonUrl ? 'هذه صور Amazon. اختر ⭐ الصورة الأساسية ثم انشر.' : 'راجع صور المنتج ثم اعتمد المعرض.'}${enrichment.syncJumia ? '\nعند اكتشاف عدة ألوان ستظهر أيضاً صورة مستقلة لكل لون في Jumia.' : '\nلم تختر Jumia، لذلك لن يُرسل إليها هذا المنتج.'}\n\n${galleryApprovalSummary(candidates)}`
   );
 
   for (let i = 0; i < candidates.length; i++) {
@@ -1383,7 +1380,7 @@ async function requestProductDestination(chatId, files, caption) {
     : '';
   await sendMessage(
     chatId,
-    `📍 اختر أين تريد نشر المنتج (يمكن اختيار أكثر من وجهة):\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH${saleNote}\n📋 ${parsed.sku}\n🖼️ ${imageNote}\n\n• NocoDB: يظهر في الموقع بعد اعتماد الصور.\n• Tifawt: الاسم والمرجع والصور الأصلية.\n• Jumia: وصف وصور احترافية؛ عند اختياره وحده يُستخدم سجل NocoDB مخفي لحفظ الصور دائماً.\n\nالاختيار الحالي: ${destinationSummary(selected)}`,
+    `📍 اختر أين تريد نشر المنتج (يمكن اختيار أكثر من وجهة):\n\n📦 ${parsed.name}\n💰 ${parsed.price} DH${saleNote}\n📋 ${parsed.sku}\n🖼️ ${imageNote}\n\n• NocoDB: يظهر في الموقع بعد اعتماد الصور.\n• Tifawt: الاسم والمرجع والصور الأصلية.\n• Jumia: العنوان والوصف والصور الحالية؛ عند اختياره وحده يُستخدم سجل NocoDB مخفي لحفظ الصور دائماً.\n\nالاختيار الحالي: ${destinationSummary(selected)}`,
     destinationKeyboard(token, selected)
   );
 }
@@ -1491,11 +1488,15 @@ async function executeAiPolish({
   syncSheet = true,
   catalogPublished = true,
   nocoPostebl = 'POSTEBL',
+  copyOnly = false,
+  skipAiImages = true,
 }) {
-  console.log(`✨ AI polish start #${rowId} ${sellerSku}`);
+  console.log(`✨ AI polish start #${rowId} ${sellerSku}${copyOnly ? ' (copy only)' : ''}`);
   await sendMessage(
     chatId,
-    startMessage || `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId}...`
+    startMessage || (copyOnly
+      ? `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId}...`
+      : `⏳ جاري توليد وصف المنتج #${rowId}...`)
   );
   const enrichTimeout = amazonUrl
     ? Number(getBotSetting('amazonTimeoutMs'))
@@ -1567,6 +1568,8 @@ async function executeAiPolish({
         cachedFacts,
         cacheSourceHash: hash,
         preparedVisionBuffers: visionBuffers,
+        skipAiImages,
+        copyOnly,
       }),
       enrichTimeout,
       'AI polish'
@@ -1579,7 +1582,7 @@ async function executeAiPolish({
     console.error(`AI polish timed out/failed #${rowId}:`, e.message);
     await sendMessage(
       chatId,
-      `⚠️ فشل توليد الوصف/الصور للمنتج #${rowId} (${sellerSku}).\n${e.message}\n📷 لم تُنشر صور خام غير مرغوبة على الموقع.`
+      `⚠️ فشل توليد الوصف للمنتج #${rowId} (${sellerSku}).\n${e.message}`
     );
     return;
   }
@@ -1600,11 +1603,11 @@ async function executeAiPolish({
     const failures = enrichment?.aiFailures || [];
     const detail = failures.slice(0, 2).join(' | ');
     const missingKeys = failures.some((f) => String(f).includes('ai_disabled_or_unconfigured') || String(f).includes('PRODUCT_AI_ENRICHMENT=false'))
-      ? '\n⚙️ السبب: مفاتيح الذكاء الاصطناعي غير مضبوطة على سيرفر البوت.\nأضف في EasyPanel (خدمة البوت):\n• OPENROUTER_API_KEY (إلزامي للصور)\n• OPENAI_API_KEY (اختياري للنصوص)\n• PRODUCT_AI_ENRICHMENT=true\nثم أعد تشغيل الخدمة وأعد المحاولة.'
+      ? '\n⚙️ السبب: مفاتيح الذكاء الاصطناعي غير مضبوطة على سيرفر البوت.\nأضف في EasyPanel (خدمة البوت):\n• OPENROUTER_API_KEY\n• PRODUCT_AI_ENRICHMENT=true\nثم أعد تشغيل الخدمة وأعد المحاولة.'
       : (detail ? `\n🛠️ ${detail}` : '');
     await sendMessage(
       chatId,
-      `⚠️ لم يكتمل التوليد للمنتج #${rowId} (${sellerSku}).${missingKeys}\n📷 لم تُنشر صور الوصف/الضهر الخام على الموقع.`
+      `⚠️ لم يكتمل توليد الوصف للمنتج #${rowId} (${sellerSku}).${missingKeys}`
     );
     return;
   }
@@ -1620,6 +1623,16 @@ async function executeAiPolish({
   await http.patch(recordUrl, textPatch, {
     headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' },
   });
+
+  if (copyOnly) {
+    await sendJumiaRepublishPrompt(chatId, {
+      rowId,
+      sellerSku,
+      title: enrichment.copy?.arabic_title || enrichment.copy?.french_title || name,
+    });
+    console.log(`✅ Description regen OK #${rowId}`);
+    return;
+  }
 
   const detectedColors = parseColorList(enrichment.detectedColorVariants || []);
   if (enrichment.syncJumia && detectedColors.length > 1) {
@@ -1755,8 +1768,9 @@ function scheduleAiPolish({
     catalogPublished,
     nocoPostebl,
     startMessage: amazonUrl
-      ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\n⭐ سأرسل جميع الصور لاختيار الأساسية\n🎨 لن أُنشئ صورة بالذكاء قبل موافقتك`
-      : `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} في الخلفية...\n🎨 ستوديو أبيض + زاوية إضافية\n📖 صور الوصف تُستخدم للقراءة فقط ولن تُنشر خام`,
+      ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\n⭐ سأرسل جميع الصور لاختيار الأساسية`
+      : `⏳ جاري توليد عنوان ووصف المنتج #${rowId} من الصور...`,
+    skipAiImages: true,
   }));
 }
 
@@ -1775,7 +1789,7 @@ async function scheduleReenrichByRef(
   if (!sourceFiles.length) {
     await sendMessage(
       chatId,
-      `❌ المنتج (${sellerSku}) لا يحتوي على صور لإعادة التوليد.\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`
+      `❌ المنتج (${sellerSku}) لا يحتوي على صور لقراءة الوصف.\n\n🔁 أرسل مرجع آخر أو اضغط 🔄 للخروج.`
     );
     return;
   }
@@ -1823,10 +1837,8 @@ async function scheduleReenrichByRef(
       price: Number(record.price) || 0,
       oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
       ref: cleanReference(record.SKU || rawRef),
-      amazonUrl: amazonUrl || record.Amazon_URL || '',
-      amazonUrls: amazonUrls.length
-        ? amazonUrls
-        : [amazonUrl || record.Amazon_URL || ''].filter(Boolean),
+      amazonUrl: amazonUrl || '',
+      amazonUrls: amazonUrls.length ? amazonUrls : [amazonUrl].filter(Boolean),
       sellerSku,
       postebl: record.POSTEBL || record.Postebl || 'POSTEBL',
       // Preserve Jumia-only technical rows: never unhide PAUSED on re-enrich.
@@ -1834,11 +1846,13 @@ async function scheduleReenrichByRef(
       catalogPublished: !['PAUSED', 'HIDDEN'].includes(
         String(record.POSTEBL || record.Postebl || 'POSTEBL').toUpperCase(),
       ),
-      syncJumia: true,
-      syncSheet: true,
+      syncJumia: Boolean(amazonUrl),
+      syncSheet: Boolean(amazonUrl),
+      copyOnly: !amazonUrl,
+      skipAiImages: true,
       startMessage: amazonUrl
-        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج ${amazonUrls.length || 1} رابط وصور Amazon\n⭐ سترسل لك الصور لاختيار الأساسية\n🎨 سأطلب منك اختيار إنشاء صورة بالذكاء أو الاكتفاء بصور Amazon\n🛒 ${amazonUrls.length > 1 ? `سيتم إنشاء ${amazonUrls.length} منشورات Jumia مرقّمة` : 'سيتم طلب موافقتك قبل النشر'}.`
-        : `⏳ جاري إعادة توليد الوصف والصور للمنتج #${rowId} (${sellerSku})...\n🎨 صورة احترافية أولاً، ثم الأصلية ثانياً — وبطاقة الوصف داخل قسم الوصف فقط.\n🛒 سيتم النشر على Jumia تلقائياً بعد الانتهاء.`,
+        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج ${amazonUrls.length || 1} رابط وصور Amazon\n⭐ سترسل لك الصور لاختيار الأساسية.`
+        : `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId} (${sellerSku})...\n📷 الصور الحالية لن تتغير.\n🛒 بعد الانتهاء سأقترح إعادة نشره في Jumia.`,
     });
   });
 
@@ -1849,7 +1863,7 @@ async function scheduleReenrichByRef(
     chatId,
     amazonUrl
       ? `✅ تم إدراج (${sellerSku}) لإعادة البناء من Amazon.${queueNote}\n⏳ سأرسل لك الصور والنتيجة عند الانتهاء.`
-      : `✅ تم إدراج (${sellerSku}) في قائمة التوليد.${queueNote}\n⏳ سأرسل لك رسالة عند الانتهاء.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
+      : `✅ تم إدراج (${sellerSku}) لإعادة توليد الوصف.${queueNote}\n⏳ سأرسل لك العنوان الجديد ثم أقترح Jumia.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
   );
 }
 
@@ -2033,7 +2047,7 @@ async function processProduct(
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم تجهيز المنتج #${rowId} بدون نشر صور خام!\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n${amazonUrl ? `🔎 سيتم كشط ${amazonUrls.length || 1} رابط Amazon، ثم تختار الصورة الأساسية وهل تريد توليد صورة بالذكاء.` : '✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.'}${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
+    `✅ تم تجهيز المنتج #${rowId}.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n${amazonUrl ? `🔎 سيتم كشط ${amazonUrls.length || 1} رابط Amazon ثم تختار الصورة الأساسية.` : '✨ سيتم توليد العنوان والوصف من الصور.'}${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
     publishNoco ? keyboard : undefined
   );
 
@@ -2159,7 +2173,8 @@ function isPriceCommand(text) {
 }
 
 function isReenrichCommand(text) {
-  return text === '✨ إعادة توليد الوصف والصور'
+  return text === '✨ إعادة توليد الوصف'
+    || text === '✨ إعادة توليد الوصف والصور'
     || text.startsWith('/reenrich');
 }
 
@@ -2323,6 +2338,73 @@ function formatJumiaVisibilityNote(jumiaResult, active) {
     : '\n🛒 Jumia: تم إيقاف المنتج (INACTIVE)';
 }
 
+async function findProductById(rowId) {
+  const id = Number(rowId);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const { data } = await http.get(`${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`, {
+    headers: { 'xc-token': NOCODB_TOKEN },
+    params: { where: `(Id,eq,${id})`, limit: 1 },
+    timeout: 20000,
+  });
+  return data?.list?.[0] || null;
+}
+
+function jumiaPayloadFromRecord(record) {
+  const sku = buildSellerSku(record?.SKU || record?.Ref || '');
+  const imageUrls = collectExistingImageFiles(record)
+    .map((file) => nocoImageUrl(file))
+    .filter((url) => /^https?:\/\//i.test(url));
+  return {
+    sellerSku: sku,
+    referenceClean: cleanReference(record?.SKU || record?.Ref || sku),
+    price: Number(record?.price || record?.Price || 0) || 0,
+    wholesalePrice: Number(record?.price || record?.Price || 0) || 0,
+    postebl: record?.POSTEBL || record?.Postebl || 'POSTEBL',
+    frenchTitle: record?.French_Title || record?.Title || sku,
+    arabicTitle: record?.Arabic_Title || record?.Title || sku,
+    shortFr: record?.short_description_fr || record?.Short_FR || '',
+    shortAr: record?.short_description_ar || record?.Short_AR || '',
+    descriptionFr: record?.description_french || record?.Description_FR || '',
+    descriptionAr: record?.description_arabic || record?.Description_AR || '',
+    imageUrls,
+  };
+}
+
+async function sendJumiaRepublishPrompt(chatId, { rowId, sellerSku, title }) {
+  const lines = [
+    `✨ تم تحديث العنوان والوصف #${rowId}`,
+    `📦 ${title || sellerSku}`,
+    `📋 ${sellerSku}`,
+    '📷 الصور لم تتغير.',
+    '',
+    'هل تريد إعادة نشر هذا المنتج في Jumia بالوصف الجديد؟',
+  ];
+  await sendMessage(chatId, lines.join('\n'), {
+    inline_keyboard: [
+      [{ text: '🛒 إعادة النشر في Jumia', callback_data: `jrep:${rowId}` }],
+      [{ text: 'لاحقاً', callback_data: `jrep:${rowId}:skip` }],
+    ],
+  });
+}
+
+async function republishRecordToJumia(record) {
+  if (!isJumiaConfigured()) {
+    return { ok: false, error: 'jumia_not_configured' };
+  }
+  const payload = jumiaPayloadFromRecord(record);
+  if (!payload.imageUrls.length) {
+    return { ok: false, error: 'missing_images' };
+  }
+  const result = await createJumiaProduct(payload);
+  if (result?.skipped) {
+    return { ok: false, error: result.reason || 'jumia_skipped', details: result };
+  }
+  if (result?.error) {
+    return { ok: false, error: result.error, details: result };
+  }
+  return { ok: true, jumia: result, sellerSku: payload.sellerSku };
+}
+
 async function handleUpdate(update) {
   const msg = update.message;
 
@@ -2336,7 +2418,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب (إضافة/تعديل المنتجات وجميع الإعدادات).\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\nرابط Amazon واحد أو حتى 4 روابط (اختياري)\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n\n✨ صور الموقع: ستوديو أبيض احترافي (تختارها قبل النشر)\n💡 Tifawt يستلم الاسم والمرجع والصور الأصلية كما أرسلتها.\n\n🎨 إضافة ألوان: اضغط «إضافة ألوان لمنتج موجود»، أرسل المرجع ثم صور الألوان.\n🔄 إعادة توليد عادي: زر «✨ إعادة توليد الوصف والصور» ثم أرسل المرجع.\n🛒 إعادة بناء من Amazon: الرابط الأول للمتجر، وكل رابط ينشئ منشور Jumia مرقّماً مستقلاً.',
+          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب.\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n💡 Tifawt يستلم الاسم والمرجع والصور كما أرسلتها.\n\n✨ إعادة توليد الوصف: يحدّث العنوان والوصف فقط، ثم يقترح إعادة النشر في Jumia.\n🎨 إضافة ألوان: أرسل المرجع ثم صور الألوان.',
         MAIN_KEYBOARD
       );
       return;
@@ -2499,7 +2581,7 @@ async function handleUpdate(update) {
       userState[chatId] = 'AWAITING_REF_REENRICH';
       await sendMessage(
         chatId,
-        '⚙️ تم تفعيل وضع إعادة التوليد.\n\nأرسل مرجع المنتج (REF أو SKU) لإعادة إنشاء الوصف والصور الاحترافية.\nمثال: AQ10 أو ERY-AQ10\n\nللخروج اضغط: 🔄 إعادة تشغيل البوت'
+        '⚙️ تم تفعيل وضع إعادة توليد الوصف.\n\nأرسل مرجع المنتج (REF أو SKU) لتحديث العنوان والوصف فقط.\nالصور الحالية لن تتغير.\nبعدها سأقترح إعادة نشره في Jumia.\nمثال: AQ10 أو ERY-AQ10\n\nللخروج اضغط: 🔄 إعادة تشغيل البوت'
       );
       return;
     }
@@ -2799,6 +2881,50 @@ async function handleUpdate(update) {
     const chatId = cb.message.chat.id;
     const msgId = cb.message.message_id;
     const data = cb.data;
+
+    if (data.startsWith('jrep:')) {
+      const [, rowId, action] = data.split(':');
+      if (action === 'skip') {
+        await answerCallback(cb.id, 'تم الإبقاء على الوصف فقط');
+        try {
+          await editMessage(chatId, msgId, `${cb.message.text || ''}\n\n⏭️ لم يُعاد النشر في Jumia.`);
+        } catch (_) {
+          // ignore stale keyboard
+        }
+        return;
+      }
+      const record = await findProductById(rowId);
+      if (!record) {
+        await answerCallback(cb.id, 'لم أجد المنتج', { showAlert: true });
+        return;
+      }
+      await answerCallback(cb.id, 'جاري إعادة النشر في Jumia');
+      try {
+        await editMessage(chatId, msgId, `⏳ جاري إعادة نشر ${record.SKU || rowId} في Jumia...`);
+        const result = await republishRecordToJumia(record);
+        if (!result.ok) {
+          const hint = result.error === 'jumia_not_configured'
+            ? 'Jumia غير مضبوط على البوت.'
+            : result.error === 'missing_images'
+              ? 'لا توجد صور للمنتج.'
+              : result.error;
+          await editMessage(chatId, msgId, `❌ فشل إعادة النشر في Jumia:\n${hint}`);
+          return;
+        }
+        await editMessage(
+          chatId,
+          msgId,
+          `🛒 تم إعادة نشر ${result.sellerSku || record.SKU} في Jumia بالوصف الجديد.`,
+        );
+      } catch (error) {
+        await editMessage(
+          chatId,
+          msgId,
+          `❌ فشل إعادة النشر في Jumia:\n${error.message || 'unknown'}`,
+        );
+      }
+      return;
+    }
 
     if (data.startsWith('tpl:')) {
       const [, kind, templateId] = data.split(':');

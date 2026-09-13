@@ -387,6 +387,9 @@ const SocialPublishTab = ({ dm }) => {
                     <span className={`text-[11px] ${muted}`}>
                       {post.createdAt ? new Date(post.createdAt).toLocaleString('ar-MA') : ''}
                     </span>
+                    {post.sku && (
+                      <span className={`text-[11px] font-mono ${muted}`}>{post.sku}</span>
+                    )}
                     <div className="flex gap-1 mr-auto">
                       {(post.platforms || []).map((id) => {
                         const Meta = PLATFORM_META[id];

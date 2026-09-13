@@ -255,6 +255,16 @@ export const BOT_SETTINGS_SCHEMA = {
     description: 'يُرسل أحياناً بعد صورة المنتج. اتركه فارغاً للنص الافتراضي.',
     default: '',
   },
+  tgCatalogMaxImages: {
+    group: 'telegramCatalog', type: 'number', label: 'عدد صور المنشور',
+    description: 'كم صورة تُرسل مع كل منتج (من 1 إلى 8).',
+    default: 3, min: 1, max: 8, step: 1,
+  },
+  tgCatalogIncludeName: {
+    group: 'telegramCatalog', type: 'boolean', label: 'إظهار اسم المنتج',
+    description: 'إن أُوقف يُنشر الثمن والمرجع فقط كما في n8n.',
+    default: false,
+  },
   tgCatalogLastRunAt: {
     group: 'telegramCatalog', type: 'text', label: 'آخر نشر تلقائي',
     description: 'يُحفظ تلقائياً حتى لا يتكرر النشر بعد إعادة تشغيل السيرفر.',

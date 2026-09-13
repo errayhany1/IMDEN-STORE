@@ -64,14 +64,40 @@ function casablancaDate(date = new Date()) {
   }).format(date);
 }
 
-export function formatCatalogCaption(record) {
+export function catalogProductName(record) {
+  return String(
+    record?.Arabic_Title
+    || record?.Title
+    || record?.title
+    || record?.French_Title
+    || record?.Woo_Title
+    || '',
+  ).trim();
+}
+
+export function catalogImageLimit(value) {
+  const raw = value ?? getBotSetting('tgCatalogMaxImages');
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 3;
+  return Math.min(8, Math.max(1, Math.round(n)));
+}
+
+export function formatCatalogCaption(record, options = {}) {
+  const includeName = options.includeName ?? Boolean(getBotSetting('tgCatalogIncludeName'));
   const rawPrice = record?.price ?? record?.Price ?? 0;
   const cleanPrice = Number(String(rawPrice).replace(/[^0-9.\-]+/g, '')) || 0;
   const fmtPrice = Number.isInteger(cleanPrice)
     ? `${cleanPrice}`
     : `${Math.round(cleanPrice * 100) / 100}`;
   const sku = String(record?.SKU || 'غير محدد').trim() || 'غير محدد';
-  return `💰 الثمن: ${fmtPrice} درهم\n📋 المرجع: ${sku}`;
+  const lines = [];
+  if (includeName) {
+    const name = catalogProductName(record);
+    if (name) lines.push(name);
+  }
+  lines.push(`💰 الثمن: ${fmtPrice} درهم`);
+  lines.push(`📋 المرجع: ${sku}`);
+  return lines.join('\n');
 }
 
 export function isHourInWindow(hour, start, end) {
@@ -106,8 +132,9 @@ function attachmentUrl(field) {
 function imageUrls(record) {
   const sku = encodeURIComponent(String(record?.SKU || '').trim());
   const site = storeSite();
+  const limit = catalogImageLimit();
   const urls = [];
-  for (let i = 1; i <= 3; i += 1) {
+  for (let i = 1; i <= limit; i += 1) {
     const fromNoco = attachmentUrl(record?.[`Image${i}`]);
     if (fromNoco) urls.push(fromNoco);
     else if (i === 1 && sku) urls.push(`${site}/bot-api/public-images/p/${sku}/1.jpg`);
@@ -195,7 +222,7 @@ async function fetchNextProduct() {
       limit: 20,
       where: '(POSTEBL,eq,POSTEBL)',
       sort: DATE_FIELD,
-      fields: `Id,SKU,price,POSTEBL,Image1,Image2,Image3,${DATE_FIELD}`,
+      fields: `Id,SKU,price,POSTEBL,Arabic_Title,Title,French_Title,Woo_Title,Image1,Image2,Image3,Image4,Image5,Image6,Image7,Image8,${DATE_FIELD}`,
     },
     timeout: 30000,
     validateStatus: () => true,
@@ -312,6 +339,8 @@ export function telegramCatalogStatus() {
     intervalHours: hours,
     startHour: Number(getBotSetting('tgCatalogStartHour')),
     endHour: Number(getBotSetting('tgCatalogEndHour')),
+    maxImages: catalogImageLimit(),
+    includeName: Boolean(getBotSetting('tgCatalogIncludeName')),
     imdenEnabled: Boolean(getBotSetting('tgCatalogImdenEnabled')),
     ecomEnabled: Boolean(getBotSetting('tgCatalogEcomEnabled')),
     lastRunAt: ranAt ? new Date(ranAt).toISOString() : null,
@@ -326,6 +355,8 @@ export function telegramCatalogStatus() {
       tgCatalogPromoText: getBotSetting('tgCatalogPromoText'),
       tgCatalogImdenChatId: getBotSetting('tgCatalogImdenChatId'),
       tgCatalogEcomChatId: getBotSetting('tgCatalogEcomChatId'),
+      tgCatalogMaxImages: catalogImageLimit(),
+      tgCatalogIncludeName: Boolean(getBotSetting('tgCatalogIncludeName')),
     },
   };
 }

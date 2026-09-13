@@ -1252,7 +1252,7 @@ const AdminDashboard = () => {
                                                                 onClick={async () => {
                                                                     const sku = p.SKU || p.Ref;
                                                                     if (!sku) return alert('لا يوجد مرجع للمنتج');
-                                                                    if (!window.confirm(`نشر ${sku} على Jumia بالوصف والصور الحالية؟\n\nملاحظة: إعادة التوليد من التيليجرام تنشر على Jumia تلقائياً أيضاً.`)) return;
+                                                                    if (!window.confirm(`نشر ${sku} على Jumia بالوصف والصور الحالية؟`)) return;
                                                                     setPublishingJumiaSku(sku);
                                                                     try {
                                                                         const result = await publishProductToJumia(sku);

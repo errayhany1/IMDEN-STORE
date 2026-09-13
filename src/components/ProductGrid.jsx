@@ -19,6 +19,7 @@ const ProductGrid = () => {
         selectedCategory,
         selectedFamily,
         searchQuery,
+        imageSearchResults,
         sortBy,
         stockFilter,
         gridColumns,
@@ -59,7 +60,7 @@ const ProductGrid = () => {
     // Reset display limit when category, family, search, or filters change
     useEffect(() => {
         setDisplayLimit(20);
-    }, [selectedCategory, selectedFamily, searchQuery, sortBy, stockFilter]);
+    }, [selectedCategory, selectedFamily, searchQuery, imageSearchResults, sortBy, stockFilter]);
 
     const activeFamily = selectedFamily ? getFamilyById(selectedFamily) : null;
     const familyCategories = activeFamily?.categories || null;
@@ -69,9 +70,16 @@ const ProductGrid = () => {
 
     const filteredProducts = products
         .filter(p => {
+            const imageMatches = imageSearchResults
+                ? imageSearchResults.some((match) => String(match.sku) === String(p.ref || p.SKU || p.id))
+                : true;
+            if (!imageMatches) return false;
             let matchesSearch = true;
 
-            if (searchQuery) {
+            if (imageSearchResults) {
+                // Image results deliberately ignore the active category tab.
+                // Availability filters below still apply.
+            } else if (searchQuery) {
                 const cleanQuery = searchQuery.toLowerCase()
                     .replace(/(جملة|بالجملة|للجملة|wholesale|gros|en gros)/g, '')
                     .trim();
@@ -118,6 +126,11 @@ const ProductGrid = () => {
             return true;
         })
         .sort((a, b) => {
+            if (imageSearchResults && sortBy === 'default') {
+                const score = new Map(imageSearchResults.map((match) => [String(match.sku), Number(match.score) || 0]));
+                return (score.get(String(b.ref || b.SKU || b.id)) || 0)
+                    - (score.get(String(a.ref || a.SKU || a.id)) || 0);
+            }
             if (sortBy === 'price-asc') return (Number(a.price) || 0) - (Number(b.price) || 0);
             if (sortBy === 'price-desc') return (Number(b.price) || 0) - (Number(a.price) || 0);
             if (sortBy === 'name-asc') {

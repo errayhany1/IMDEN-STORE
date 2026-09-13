@@ -56,6 +56,7 @@ const useStore = create(
 
             categoryImages: { ...LOCAL_CATEGORY_IMAGES }, // Template-2 artwork; NocoDB can merge on top then local overrides
             searchQuery: "",
+            imageSearchResults: null,
             sortBy: 'default', // default | price-asc | price-desc | name-asc
             stockFilter: 'all', // all | in-stock | out-of-stock
 
@@ -101,6 +102,9 @@ const useStore = create(
             }),
 
             setSearchQuery: (query) => set({ searchQuery: query }),
+            setImageSearchResults: (results) => set({
+                imageSearchResults: Array.isArray(results) && results.length ? results : null,
+            }),
             setSortBy: (sortBy) => set({ sortBy: sortBy || 'default' }),
             setStockFilter: (stockFilter) => set({ stockFilter: stockFilter || 'all' }),
             resetProductFilters: () => set({ sortBy: 'default', stockFilter: 'all' }),
@@ -145,6 +149,7 @@ const useStore = create(
                 selectedFamily: familyId || null,
                 selectedCategory: 'All',
                 searchQuery: '',
+                imageSearchResults: null,
             }),
 
             clearFamily: () => set({

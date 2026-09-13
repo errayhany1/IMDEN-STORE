@@ -71,6 +71,8 @@ export default function TelegramCatalogTab({ dm }) {
       tgCatalogWhatsapp: data.settings?.tgCatalogWhatsapp || '212664630566',
       tgCatalogSiteUrl: data.settings?.tgCatalogSiteUrl || 'https://errayhany.com',
       tgCatalogPromoText: data.settings?.tgCatalogPromoText || '',
+      tgCatalogMaxImages: data.maxImages ?? data.settings?.tgCatalogMaxImages ?? 3,
+      tgCatalogIncludeName: Boolean(data.includeName ?? data.settings?.tgCatalogIncludeName),
     });
   };
 
@@ -147,7 +149,7 @@ export default function TelegramCatalogTab({ dm }) {
           <div>
             <h3 className="font-bold text-lg">نشر الكتالوج على تيليغرام</h3>
             <p className={`text-sm mt-1 ${muted}`}>
-              نفس سير n8n: منتج منشور من NocoDB كل فترة، للصورتين أو لصورة واحدة، ثم تحديث تاريخ آخر نشر.
+              نفس سير n8n: منتج منشور من NocoDB كل فترة. من هنا تحدّد عدد الصور ونص المنشور.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -196,6 +198,66 @@ export default function TelegramCatalogTab({ dm }) {
 
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
         {ok && <p className="mt-3 text-sm text-emerald-600">{ok}</p>}
+      </div>
+
+      <div className={`rounded-2xl border p-5 space-y-4 ${card}`}>
+        <h4 className="font-bold">شكل المنشور</h4>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm">
+            <span className={muted}>عدد الصور</span>
+            <select
+              value={draft.tgCatalogMaxImages ?? 3}
+              onChange={(e) => setField('tgCatalogMaxImages', Number(e.target.value))}
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${input}`}
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <option key={n} value={n}>
+                  {n === 1 ? 'صورة واحدة' : `${n} صور`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <fieldset className="text-sm">
+            <legend className={muted}>نص المنشور</legend>
+            <div className="mt-2 space-y-2">
+              <label className="flex items-start gap-2">
+                <input
+                  type="radio"
+                  name="tg-catalog-caption"
+                  checked={!draft.tgCatalogIncludeName}
+                  onChange={() => setField('tgCatalogIncludeName', false)}
+                  className="mt-1"
+                />
+                <span>الثمن والمرجع فقط</span>
+              </label>
+              <label className="flex items-start gap-2">
+                <input
+                  type="radio"
+                  name="tg-catalog-caption"
+                  checked={Boolean(draft.tgCatalogIncludeName)}
+                  onChange={() => setField('tgCatalogIncludeName', true)}
+                  className="mt-1"
+                />
+                <span>اسم المنتج + الثمن + المرجع</span>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+        <div className={`rounded-xl border px-3 py-2 text-sm whitespace-pre-wrap ${dm ? 'border-gray-800 bg-gray-950' : 'border-slate-200 bg-slate-50'}`}>
+          {draft.tgCatalogIncludeName ? 'سماعة بلوتوث مثال\n' : ''}
+          {'💰 الثمن: 120 درهم\n📋 المرجع: ERY-S23'}
+        </div>
+        <p className={`text-xs ${muted}`}>
+          إن وُجدت صور أقل من العدد المختار يُرسل المتوفر فقط.
+        </p>
+        <button
+          type="button"
+          onClick={() => save()}
+          disabled={saving}
+          className="px-4 py-2 rounded-xl text-sm font-bold bg-slate-800 text-white disabled:opacity-50"
+        >
+          {saving ? 'جارٍ الحفظ…' : 'حفظ شكل المنشور'}
+        </button>
       </div>
 
       <div className={`rounded-2xl border p-5 space-y-4 ${card}`}>
@@ -272,7 +334,7 @@ export default function TelegramCatalogTab({ dm }) {
           disabled={saving}
           className="px-4 py-2 rounded-xl text-sm font-bold bg-slate-800 text-white disabled:opacity-50"
         >
-          {saving ? 'جارٍ الحفظ…' : 'حفظ الجدول والقنوات'}
+          {saving ? 'جارٍ الحفظ…' : 'حفظ شكل المنشور والجدول'}
         </button>
       </div>
 
