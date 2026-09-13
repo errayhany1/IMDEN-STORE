@@ -20,9 +20,12 @@ export function initTelegramWebApp() {
   try {
     tg.ready();
     tg.expand();
-    if (typeof tg.disableVerticalSwipes === 'function') {
-      tg.disableVerticalSwipes();
-    }
+    tg.requestFullscreen?.();
+    tg.disableVerticalSwipes?.();
+    tg.setHeaderColor?.(tg.themeParams?.bg_color || '#142038');
+    tg.setBackgroundColor?.(tg.themeParams?.bg_color || '#142038');
+    document.documentElement.classList.add('tg-webapp');
+    document.body.classList.add('tg-webapp');
     if (tg.themeParams?.bg_color) {
       document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color);
     }

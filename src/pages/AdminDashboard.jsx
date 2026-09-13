@@ -744,7 +744,11 @@ const AdminDashboard = () => {
                             <Lock size={36} className="text-white" />
                         </div>
                         <h2 className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>Errayhany Admin</h2>
-                        <p className={`text-sm mt-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لوحة إدارة الطلبات والمخازن</p>
+                        <p className={`text-sm mt-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                            {typeof window !== 'undefined' && window.Telegram?.WebApp?.initData
+                                ? 'ويب آب تيليغرام — لوحة الإدارة'
+                                : 'لوحة إدارة الطلبات والمخازن'}
+                        </p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -798,6 +802,7 @@ const AdminDashboard = () => {
                             products: 'المنتجات',
                             'inventory-sync': 'مطابقة Tifawt',
                             'social-publish': 'نشر المحتوى',
+                            'telegram-catalog': 'قناة تيليغرام',
                             dropship: 'الدروبشيبينغ',
                             returns: 'مرتجعات الموقع',
                             'bot-settings': 'مركز تحكم البوت',

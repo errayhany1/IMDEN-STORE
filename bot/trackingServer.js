@@ -23,6 +23,7 @@ import {
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
 import { startTelegramCatalogScheduler } from './telegramCatalogPoster.js';
+import { setupAdminWebAppMenus } from './adminWebApp.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { registerProductOgRoutes } from './productOgShare.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
@@ -553,3 +554,6 @@ if (JUMIA_POLL_MS > 0 && isJumiaConfigured()) {
 }
 
 startTelegramCatalogScheduler();
+setupAdminWebAppMenus().catch((error) => {
+  console.warn('[admin-webapp] setup failed:', error?.message || error);
+});

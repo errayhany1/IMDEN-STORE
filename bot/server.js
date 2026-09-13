@@ -130,7 +130,7 @@ const TELEGRAM_MODE = (process.env.TELEGRAM_MODE || '').toLowerCase()
 /** Mini App / OPEN button URL (must be HTTPS and allowed in BotFather). */
 const TELEGRAM_WEBAPP_URL = (
   process.env.TELEGRAM_WEBAPP_URL
-  || `${SITE_URL.replace(/\/$/, '')}/admin?from=tg&tab=products`
+  || `${SITE_URL.replace(/\/$/, '')}/admin?from=tg&tab=dashboard`
 ).trim();
 /** Reject oversized Telegram downloads before they OOM the process. */
 const MAX_TELEGRAM_IMAGE_BYTES = Number(getBotSetting('maxTelegramImageMb')) * 1024 * 1024;
