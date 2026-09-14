@@ -1489,14 +1489,14 @@ async function executeAiPolish({
   catalogPublished = true,
   nocoPostebl = 'POSTEBL',
   copyOnly = false,
-  skipAiImages = true,
+  skipAiImages = false,
 }) {
   console.log(`✨ AI polish start #${rowId} ${sellerSku}${copyOnly ? ' (copy only)' : ''}`);
   await sendMessage(
     chatId,
     startMessage || (copyOnly
       ? `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId}...`
-      : `⏳ جاري توليد وصف المنتج #${rowId}...`)
+      : `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId}...`)
   );
   const enrichTimeout = amazonUrl
     ? Number(getBotSetting('amazonTimeoutMs'))
@@ -1769,8 +1769,8 @@ function scheduleAiPolish({
     nocoPostebl,
     startMessage: amazonUrl
       ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\n⭐ سأرسل جميع الصور لاختيار الأساسية`
-      : `⏳ جاري توليد عنوان ووصف المنتج #${rowId} من الصور...`,
-    skipAiImages: true,
+      : `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} من الصور...`,
+    skipAiImages: false,
   }));
 }
 
@@ -2047,7 +2047,7 @@ async function processProduct(
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم تجهيز المنتج #${rowId}.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n${amazonUrl ? `🔎 سيتم كشط ${amazonUrls.length || 1} رابط Amazon ثم تختار الصورة الأساسية.` : '✨ سيتم توليد العنوان والوصف من الصور.'}${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
+    `✅ تم تجهيز المنتج #${rowId}.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n${amazonUrl ? `🔎 سيتم كشط ${amazonUrls.length || 1} رابط Amazon ثم تختار الصورة الأساسية.` : '✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.'}${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
     publishNoco ? keyboard : undefined
   );
 

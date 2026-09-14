@@ -378,7 +378,7 @@ export async function enrichProduct({
   cacheSourceHash = '',
   preparedVisionBuffers = null,
   /** Skip Gemini/Qwen studio images and local cutouts. Text agent still runs. */
-  skipAiImages = true,
+  skipAiImages = false,
   /** Regenerate title/description only; do not upload or replace gallery images. */
   copyOnly = false,
 }) {
@@ -809,7 +809,7 @@ export async function enrichProduct({
     qwenUploads,
     // Raw seller photos are review references only. Jumia forbids ordinary
     // backgrounds, so an AI/cutout failure must skip publishing instead.
-    realUploads: skipAiImages || copyOnly ? originalUploads : [],
+    realUploads: [],
   });
   // Fallback if ordering somehow empty
   const finalImages = nocoImages.length
