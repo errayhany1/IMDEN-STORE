@@ -28,6 +28,7 @@ import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { registerProductOgRoutes } from './productOgShare.js';
 import { registerImageSearchRoutes } from './imageSearch.js';
 import { startProductDigest } from './productDigestEmail.js';
+import { registerTifawtColorRoutes } from './tifawtProductColors.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
 import {
@@ -52,6 +53,7 @@ const app = express();
 registerPublicImageRoutes(app);
 registerProductOgRoutes(app);
 registerImageSearchRoutes(app);
+registerTifawtColorRoutes(app);
 app.use(express.json({ limit: '256kb' }));
 registerAdminRoutes(app);
 

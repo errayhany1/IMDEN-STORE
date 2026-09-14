@@ -14,20 +14,21 @@ const COLOR_ALIASES = new Map([
   ['فضي', 'Argenté'], ['فضيّة', 'Argenté'], ['argente', 'Argenté'], ['argenté', 'Argenté'], ['silver', 'Argenté'],
   ['بيج', 'Beige'], ['beige', 'Beige'],
   ['سماوي', 'Ciel'], ['cyan', 'Ciel'], ['ciel', 'Ciel'],
+  ['موف', 'Mauve'], ['mauve', 'Mauve'],
 ]);
 
 const SINGLE_COLOR_CODES = new Map([
   ['NOIR', 'NO'], ['BLANC', 'BC'], ['BLEU', 'BL'], ['ROUGE', 'RO'],
   ['ROSE', 'RS'], ['VERT', 'VE'], ['VIOLET', 'VI'], ['JAUNE', 'JA'],
   ['ORANGE', 'OR'], ['GRIS', 'GR'], ['MARRON', 'MA'], ['DORE', 'DO'],
-  ['ARGENTE', 'AR'], ['BEIGE', 'BE'], ['CIEL', 'CI'],
+  ['ARGENTE', 'AR'], ['BEIGE', 'BE'], ['CIEL', 'CI'], ['MAUVE', 'MV'],
 ]);
 
 const COLOR_AR = new Map([
   ['Noir', 'أسود'], ['Blanc', 'أبيض'], ['Bleu', 'أزرق'], ['Rouge', 'أحمر'],
   ['Rose', 'وردي'], ['Vert', 'أخضر'], ['Violet', 'بنفسجي'], ['Jaune', 'أصفر'],
   ['Orange', 'برتقالي'], ['Gris', 'رمادي'], ['Marron', 'بني'], ['Doré', 'ذهبي'],
-  ['Argenté', 'فضي'], ['Beige', 'بيج'], ['Ciel', 'سماوي'],
+  ['Argenté', 'فضي'], ['Beige', 'بيج'], ['Ciel', 'سماوي'], ['Mauve', 'موف'],
 ]);
 
 /** Explicit Jumia-color namespace: ERY-BASE-JCNO, never ambiguous -Cxx suffixes. */
@@ -88,6 +89,25 @@ export function colorLabelArabic(label) {
     .split(/\s+et\s+/i)
     .map((part) => COLOR_AR.get(part) || part)
     .join(' و');
+}
+
+export function isSkuColorToken(token) {
+  return COLOR_ALIASES.has(normalizedKey(token));
+}
+
+/** Strip trailing BLACK/WHITE/NOIR tokens so sibling Tifawt SKUs share one family. */
+export function stripTrailingSkuColorTokens(sku) {
+  const parts = String(sku || '').toUpperCase().split('-').filter(Boolean);
+  while (parts.length > 1 && isSkuColorToken(parts[parts.length - 1])) {
+    parts.pop();
+  }
+  return parts.join('-');
+}
+
+export function colorLabelFromSkuRemainder(remainder) {
+  const parts = String(remainder || '').split(/[-_]/).filter(Boolean);
+  if (!parts.length || parts.some((part) => !isSkuColorToken(part))) return '';
+  return normalizeColorLabel(parts.join(' et '));
 }
 
 function partCode(part) {

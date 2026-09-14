@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
   buildColorVariants,
   buildJumiaColorSku,
+  colorLabelFromSkuRemainder,
   parseColorList,
+  stripTrailingSkuColorTokens,
 } from './colorVariants.js';
 import { toTifawtSku } from './tifawtSku.js';
 
@@ -54,4 +56,13 @@ test('normalizes every color listing to the base Tifawt SKU', () => {
   assert.equal(toTifawtSku('ERY-WATCH-10-JCBL'), 'WATCH-10');
   assert.equal(toTifawtSku('WATCH-10-NO'), 'WATCH-10-NO');
   assert.equal(toTifawtSku('ERY-ABC-C31'), 'ABC-C31');
+});
+
+test('reads Tifawt color families from SKU suffixes', () => {
+  assert.equal(stripTrailingSkuColorTokens('SOURIS-R5-ULTRA-BLACK'), 'SOURIS-R5-ULTRA');
+  assert.equal(stripTrailingSkuColorTokens('SOURIS-R5-ULTRA-WHITE'), 'SOURIS-R5-ULTRA');
+  assert.equal(colorLabelFromSkuRemainder('BLACK'), 'Noir');
+  assert.equal(colorLabelFromSkuRemainder('WHITE'), 'Blanc');
+  assert.equal(colorLabelFromSkuRemainder('PLUS'), '');
+  assert.equal(colorLabelFromSkuRemainder('PRO-BLACK'), '');
 });
