@@ -45,7 +45,7 @@ const YT_DESC_TEMPLATE = `إلكترونيات بالجملة من Errayhany Gro
 
 اطلب الآن:
 https://errayhany.com/vip
-واتساب: +212 664 630 566
+واتساب: ‎0664 630 566
 
 اشترك في القناة ليصلك كل جديد.`;
 
@@ -220,7 +220,6 @@ const SocialPublishTab = ({ dm }) => {
       setThumbPreview(URL.createObjectURL(file));
       const data = await uploadSocialMedia(file);
       setThumbnail(data.media);
-      setThumbPreview(data.media?.url || URL.createObjectURL(file));
       setMessage('تم رفع المُصغّر — سيُستخدم ليوتيوب وفيسبوك.');
     } catch (e) {
       setThumbnail(null);
@@ -385,32 +384,38 @@ const SocialPublishTab = ({ dm }) => {
 
         <div className="grid lg:grid-cols-2 gap-4">
           <div className="space-y-3">
-            <label className={`block text-xs font-bold ${muted}`}>
-              عنوان الفيديو (يوتيوب وفيسبوك) · {title.length}/100
-            </label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value.slice(0, 100))}
-              placeholder="عنوان واضح فيه الكلمات المفتاحية — مثال: شواحن جملة الدارالبيضاء"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
-            />
+            <div>
+              <label className={`block text-xs font-bold mb-1 ${muted}`}>
+                عنوان الفيديو (يوتيوب وفيسبوك) · {title.length}/100
+              </label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value.slice(0, 100))}
+                placeholder="عنوان واضح فيه الكلمات المفتاحية — مثال: شواحن جملة الدارالبيضاء"
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+              />
+            </div>
 
-            <label className={`block text-xs font-bold ${muted}`}>نص المنشور (تيكتوك وإنستغرام)</label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              rows={5}
-              placeholder={'مثال:\nإلكترونيات بالجملة من Errayhany Grossiste\nشواحن · سماعات · كابلات\nاطلب الآن 👇'}
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[120px] ${input}`}
-            />
+            <div>
+              <label className={`block text-xs font-bold mb-1 ${muted}`}>نص المنشور (تيكتوك وإنستغرام)</label>
+              <textarea
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                rows={5}
+                placeholder={'مثال:\nإلكترونيات بالجملة من Errayhany Grossiste\nشواحن · سماعات · كابلات\nاطلب الآن 👇'}
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[120px] ${input}`}
+              />
+            </div>
 
-            <label className={`block text-xs font-bold ${muted}`}>رابط الدعوة</label>
-            <input
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://errayhany.com/vip"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
-            />
+            <div>
+              <label className={`block text-xs font-bold mb-1 ${muted}`}>رابط الدعوة</label>
+              <input
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://errayhany.com/vip"
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+              />
+            </div>
           </div>
 
           <div className="space-y-3">
