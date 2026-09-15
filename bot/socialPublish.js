@@ -61,6 +61,35 @@ function isImageMime(mime = '') {
   return String(mime).startsWith('image/');
 }
 
+function parseTagList(raw) {
+  return [...new Set(
+    String(raw || '')
+      .split(/[\s,#\n]+/)
+      .map((t) => t.trim().replace(/^#/, ''))
+      .filter((t) => t.length >= 2 && t.length <= 30),
+  )].slice(0, 15);
+}
+
+function withHashtags(text, tags) {
+  const body = String(text || '').trim();
+  const lower = body.toLowerCase();
+  const hashes = (tags || [])
+    .map((t) => String(t).replace(/\s+/g, ''))
+    .filter((t) => t && !lower.includes(`#${t.toLowerCase()}`))
+    .map((t) => `#${t}`)
+    .join(' ');
+  return [body, hashes].filter(Boolean).join('\n\n');
+}
+
+function resolveMediaFile(media) {
+  if (!media) return { mediaUrl: '', mediaPath: null, mime: '' };
+  const mediaUrl = String(media?.url || '').trim()
+    || (media?.filename ? publicMediaUrl(media.filename) : '');
+  const fromFilename = media?.filename ? path.join(MEDIA_DIR, media.filename) : '';
+  const mediaPath = [media?.path, fromFilename].find((p) => p && fs.existsSync(p)) || null;
+  return { mediaUrl, mediaPath, mime: media?.mime || '' };
+}
+
 export function socialPlatformStatus() {
   const metaReady = Boolean(
     process.env.META_PAGE_ID?.trim() && process.env.META_PAGE_ACCESS_TOKEN?.trim(),
@@ -277,9 +306,26 @@ async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }
   };
 }
 
-async function publishFacebook({ caption, link, mediaUrl, mediaPath, mime, pageId, token }) {
-  const message = [caption, link].filter(Boolean).join('\n\n');
+async function publishFacebook({
+  caption,
+  link,
+  mediaUrl,
+  mediaPath,
+  mime,
+  pageId,
+  token,
+  facebookDescription,
+  facebookTitle,
+  thumbnailPath,
+  thumbnailMime,
+  tags,
+}) {
+  const message = withHashtags(
+    [facebookDescription || caption, link].filter(Boolean).join('\n\n'),
+    tags,
+  );
   const hasLocal = mediaPath && fs.existsSync(mediaPath);
+  const hasThumb = thumbnailPath && fs.existsSync(thumbnailPath);
 
   // Prefer multipart from disk so Meta never has to fetch our public URL
   // (crawler timeouts / transient 404s caused "Missing or invalid image file").
@@ -289,6 +335,15 @@ async function publishFacebook({ caption, link, mediaUrl, mediaPath, mime, pageI
       const form = new FormData();
       form.append('source', new Blob([buf], { type: mime || 'video/mp4' }), path.basename(mediaPath));
       form.append('description', message);
+      if (facebookTitle) form.append('title', String(facebookTitle).slice(0, 255));
+      if (hasThumb) {
+        const thumbBuf = fs.readFileSync(thumbnailPath);
+        form.append(
+          'thumb',
+          new Blob([thumbBuf], { type: thumbnailMime || 'image/jpeg' }),
+          path.basename(thumbnailPath),
+        );
+      }
       form.append('access_token', token);
       const { data, status } = await axios.post(
         `https://graph.facebook.com/v21.0/${pageId}/videos`,
@@ -302,7 +357,12 @@ async function publishFacebook({ caption, link, mediaUrl, mediaPath, mime, pageI
     }
     const { data, status } = await axios.post(
       `https://graph.facebook.com/v21.0/${pageId}/videos`,
-      { file_url: mediaUrl, description: message, access_token: token },
+      {
+        file_url: mediaUrl,
+        description: message,
+        title: facebookTitle || undefined,
+        access_token: token,
+      },
       { timeout: 180000, validateStatus: () => true },
     );
     if (status >= 400 || data?.error) {
@@ -350,7 +410,18 @@ async function publishFacebook({ caption, link, mediaUrl, mediaPath, mime, pageI
   return { ok: true, id: data?.id, raw: data };
 }
 
-async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
+async function publishMeta({
+  caption,
+  link,
+  mediaUrl,
+  mediaPath,
+  mime,
+  facebookDescription,
+  facebookTitle,
+  thumbnailPath,
+  thumbnailMime,
+  tags,
+}) {
   const pageId = process.env.META_PAGE_ID?.trim();
   const token = process.env.META_PAGE_ACCESS_TOKEN?.trim();
   if (!pageId || !token) {
@@ -358,14 +429,26 @@ async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
   }
 
   const facebook = await publishFacebook({
-    caption, link, mediaUrl, mediaPath, mime, pageId, token,
+    caption,
+    link,
+    mediaUrl,
+    mediaPath,
+    mime,
+    pageId,
+    token,
+    facebookDescription,
+    facebookTitle,
+    thumbnailPath,
+    thumbnailMime,
+    tags,
   });
 
   let instagram = null;
+  const igCaption = withHashtags(facebookDescription || caption, tags);
   // Instagram Graph API requires a public URL (image_url / video_url).
   if (mediaUrl && (isImageMime(mime) || isVideoMime(mime))) {
     instagram = await publishInstagram({
-      caption, link, mediaUrl, mime, pageId, token,
+      caption: igCaption, link, mediaUrl, mime, pageId, token,
     });
   } else if (facebook.ok) {
     instagram = {
@@ -392,7 +475,17 @@ async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
   };
 }
 
-async function publishTikTok({ caption, mediaPath, mime }) {
+async function publishTikTok({
+  caption,
+  mediaPath,
+  mime,
+  tags,
+  tiktokPrivacy,
+  allowComments,
+  allowDuet,
+  allowStitch,
+  coverTimestampMs,
+}) {
   const token = await resolveTikTokAccessToken();
   const openId = process.env.TIKTOK_OPEN_ID?.trim();
   if (!token || !openId) {
@@ -403,16 +496,26 @@ async function publishTikTok({ caption, mediaPath, mime }) {
   }
 
   const size = fs.statSync(mediaPath).size;
+  const title = withHashtags(String(caption || 'Errayhany').slice(0, 120), tags).slice(0, 150);
+  const privacy = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY'].includes(tiktokPrivacy)
+    ? tiktokPrivacy
+    : (process.env.TIKTOK_PRIVACY_LEVEL || 'SELF_ONLY');
+  const postInfo = {
+    title,
+    privacy_level: privacy,
+    disable_duet: allowDuet === false,
+    disable_comment: allowComments === false,
+    disable_stitch: allowStitch === false,
+  };
+  const cover = Number(coverTimestampMs);
+  if (Number.isFinite(cover) && cover >= 0) {
+    postInfo.video_cover_timestamp_ms = Math.round(cover);
+  }
+
   const initRes = await axios.post(
     'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
     {
-      post_info: {
-        title: String(caption || 'Errayhany').slice(0, 150),
-        privacy_level: process.env.TIKTOK_PRIVACY_LEVEL || 'SELF_ONLY',
-        disable_duet: false,
-        disable_comment: false,
-        disable_stitch: false,
-      },
+      post_info: postInfo,
       source_info: {
         source: 'FILE_UPLOAD',
         video_size: size,
@@ -461,7 +564,51 @@ async function publishTikTok({ caption, mediaPath, mime }) {
   };
 }
 
-async function publishYouTube({ caption, mediaPath, mime, title, link }) {
+async function setYouTubeThumbnail(accessToken, videoId, thumbPath, mime) {
+  if (!videoId || !thumbPath || !fs.existsSync(thumbPath)) {
+    return { ok: false, skipped: true };
+  }
+  const buf = fs.readFileSync(thumbPath);
+  const { data, status } = await axios.post(
+    `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${encodeURIComponent(videoId)}`,
+    buf,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': mime || 'image/jpeg',
+        'Content-Length': buf.length,
+      },
+      maxBodyLength: Infinity,
+      timeout: 120000,
+      validateStatus: () => true,
+    },
+  );
+  if (status >= 400 || data?.error) {
+    return {
+      ok: false,
+      error: data?.error?.message || 'youtube_thumbnail_failed',
+      details: data?.error || data,
+    };
+  }
+  return { ok: true, raw: data };
+}
+
+async function publishYouTube({
+  caption,
+  mediaPath,
+  mime,
+  title,
+  link,
+  youtubeDescription,
+  tags,
+  categoryId,
+  privacyStatus,
+  madeForKids,
+  thumbnailPath,
+  thumbnailMime,
+  language,
+  notifySubscribers,
+}) {
   const refresh = process.env.YOUTUBE_REFRESH_TOKEN?.trim();
   const clientId = process.env.YOUTUBE_CLIENT_ID?.trim();
   const clientSecret = process.env.YOUTUBE_CLIENT_SECRET?.trim();
@@ -496,12 +643,33 @@ async function publishYouTube({ caption, mediaPath, mime, title, link }) {
   }
 
   const videoTitle = String(title || caption || 'Errayhany Grossiste').slice(0, 100);
-  const description = [caption, link].filter(Boolean).join('\n\n').slice(0, 5000);
+  const description = withHashtags(
+    [youtubeDescription || caption, link].filter(Boolean).join('\n\n'),
+    tags,
+  ).slice(0, 5000);
+  const privacy = ['public', 'unlisted', 'private'].includes(privacyStatus)
+    ? privacyStatus
+    : (process.env.YOUTUBE_PRIVACY_STATUS || 'public');
+  const cat = String(categoryId || '28').replace(/\D/g, '') || '28';
+  const snippet = {
+    title: videoTitle,
+    description,
+    categoryId: cat,
+    tags: (tags || []).slice(0, 15),
+  };
+  if (language) {
+    snippet.defaultLanguage = language;
+    snippet.defaultAudioLanguage = language;
+  }
   const metadata = {
-    snippet: { title: videoTitle, description, categoryId: '22' },
+    snippet,
     status: {
-      privacyStatus: process.env.YOUTUBE_PRIVACY_STATUS || 'unlisted',
-      selfDeclaredMadeForKids: false,
+      privacyStatus: privacy,
+      selfDeclaredMadeForKids: Boolean(madeForKids),
+      embeddable: true,
+      publicStatsViewable: true,
+      license: 'youtube',
+      notifySubscribers: notifySubscribers !== false,
     },
   };
 
@@ -539,10 +707,17 @@ async function publishYouTube({ caption, mediaPath, mime, title, link }) {
     };
   }
 
+  const videoId = upload.data?.id;
+  let thumbnail = { ok: false, skipped: true };
+  if (videoId && thumbnailPath) {
+    thumbnail = await setYouTubeThumbnail(accessToken, videoId, thumbnailPath, thumbnailMime);
+  }
+
   return {
     ok: true,
-    id: upload.data?.id,
-    url: upload.data?.id ? `https://youtu.be/${upload.data.id}` : null,
+    id: videoId,
+    url: videoId ? `https://youtu.be/${videoId}` : null,
+    thumbnail,
   };
 }
 
@@ -559,7 +734,22 @@ export async function createAndPublishSocialPost({
   title = '',
   platforms = [],
   media,
+  thumbnail,
   sku = '',
+  youtubeDescription = '',
+  facebookDescription = '',
+  facebookTitle = '',
+  tags = '',
+  categoryId = '28',
+  privacyStatus = 'public',
+  madeForKids = false,
+  language = 'ar',
+  tiktokPrivacy = '',
+  allowComments = true,
+  allowDuet = true,
+  allowStitch = true,
+  coverTimestampSec = '',
+  notifySubscribers = true,
 } = {}) {
   const selected = [...new Set((platforms || []).map(String).filter((p) => PLATFORMS.includes(p)))];
   if (!selected.length) {
@@ -568,11 +758,9 @@ export async function createAndPublishSocialPost({
     throw err;
   }
 
-  const mediaUrl = String(media?.url || '').trim()
-    || (media?.filename ? publicMediaUrl(media.filename) : '');
-  const fromFilename = media?.filename ? path.join(MEDIA_DIR, media.filename) : '';
-  const mediaPath = [media?.path, fromFilename].find((p) => p && fs.existsSync(p)) || null;
-  const mime = media?.mime || '';
+  const { mediaUrl, mediaPath, mime } = resolveMediaFile(media);
+  const thumb = resolveMediaFile(thumbnail);
+  const tagList = parseTagList(tags);
 
   const needsVideo = selected.includes('tiktok') || selected.includes('youtube');
   if (needsVideo && (!mediaPath || !isVideoMime(mime))) {
@@ -587,6 +775,13 @@ export async function createAndPublishSocialPost({
     createdAt: new Date().toISOString(),
     caption: String(caption || '').trim(),
     title: String(title || '').trim(),
+    youtubeDescription: String(youtubeDescription || '').trim() || null,
+    facebookDescription: String(facebookDescription || '').trim() || null,
+    tags: tagList,
+    privacyStatus: String(privacyStatus || 'public'),
+    categoryId: String(categoryId || '28'),
+    madeForKids: Boolean(madeForKids),
+    notifySubscribers: notifySubscribers !== false,
     link: String(link || `${SITE_URL}/vip`).trim(),
     sku: String(sku || '').trim() || null,
     platforms: selected,
@@ -597,6 +792,13 @@ export async function createAndPublishSocialPost({
           mime,
           size: media.size || null,
           originalName: media.originalName || null,
+        }
+      : null,
+    thumbnail: thumbnail?.filename
+      ? {
+          filename: thumbnail.filename,
+          url: thumb.mediaUrl,
+          mime: thumb.mime,
         }
       : null,
     results: {},
@@ -611,9 +813,27 @@ export async function createAndPublishSocialPost({
     caption: post.caption,
     link: post.link,
     title: post.title || post.caption,
+    youtubeDescription: post.youtubeDescription || '',
+    facebookDescription: post.facebookDescription || '',
+    facebookTitle: String(facebookTitle || title || '').trim(),
+    tags: tagList,
+    categoryId: post.categoryId,
+    privacyStatus: post.privacyStatus,
+    madeForKids: Boolean(madeForKids),
+    notifySubscribers: notifySubscribers !== false,
+    language: String(language || 'ar').slice(0, 8),
+    tiktokPrivacy: String(tiktokPrivacy || '').trim(),
+    allowComments: allowComments !== false,
+    allowDuet: allowDuet !== false,
+    allowStitch: allowStitch !== false,
+    coverTimestampMs: coverTimestampSec === '' || coverTimestampSec == null
+      ? undefined
+      : Number(coverTimestampSec) * 1000,
     mediaUrl,
     mediaPath,
     mime,
+    thumbnailPath: thumb.mediaPath,
+    thumbnailMime: thumb.mime,
   };
 
   for (const platform of selected) {
