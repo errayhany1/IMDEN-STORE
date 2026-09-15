@@ -2,8 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clapperboard,
   Facebook,
+  Film,
   ImagePlus,
   Loader2,
   RefreshCw,
@@ -24,12 +27,45 @@ const PLATFORM_META = {
   youtube: { label: 'YouTube', Icon: Youtube, color: 'text-red-500' },
 };
 
+const DEFAULT_TAGS = 'Errayhany, Grossiste, Maroc, جملة, إلكترونيات, الدارالبيضاء, شواحن, سماعات';
+
+const YT_CATEGORIES = [
+  { id: '28', label: 'علوم وتقنية — موصى به للإلكترونيات' },
+  { id: '22', label: 'مدونات الأشخاص' },
+  { id: '24', label: 'ترفيه' },
+  { id: '26', label: 'نمط حياة وأسلوب' },
+  { id: '27', label: 'تعليم' },
+  { id: '19', label: 'سفر وفعاليات' },
+];
+
+const YT_DESC_TEMPLATE = `إلكترونيات بالجملة من Errayhany Grossiste — كازا، المغرب.
+
+شواحن · سماعات · كابلات · إكسسوارات الهواتف
+البيع بالجملة فقط · التوصيل لجميع المدن في أقل من 48 ساعة
+
+اطلب الآن:
+https://errayhany.com/vip
+واتساب: ‎0664 630 566
+
+اشترك في القناة ليصلك كل جديد.`;
+
+const FR_DESC_TEMPLATE = `Grossiste électronique Errayhany — Casablanca, Maroc.
+
+Chargeurs · écouteurs · câbles · accessoires téléphone
+Vente en gros uniquement · livraison toutes villes en moins de 48h
+
+Commandez :
+https://errayhany.com/vip
+WhatsApp : ‎0664 630 566
+
+Abonnez-vous pour les nouveautés.`;
+
 function metaResultLines(r) {
   if (!r) return [];
   const lines = [];
   if (r.facebook) {
     lines.push(r.facebook.ok
-      ? 'Facebook: نُشر'
+      ? `Facebook: نُشر${r.facebook.hint ? ` — ${r.facebook.hint}` : ''}`
       : `Facebook: ${r.facebook.hint || r.facebook.error || 'فشل'}`);
   }
   if (r.instagram) {
@@ -90,15 +126,36 @@ const SocialPublishTab = ({ dm }) => {
   const [loading, setLoading] = useState(true);
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
+  const [youtubeDescription, setYoutubeDescription] = useState('');
+  const [facebookDescription, setFacebookDescription] = useState('');
+  const [titleFr, setTitleFr] = useState('');
+  const [youtubeDescriptionFr, setYoutubeDescriptionFr] = useState('');
+  const [facebookDescriptionFr, setFacebookDescriptionFr] = useState('');
+  const [callToAction, setCallToAction] = useState(true);
+  const [recordingLocation, setRecordingLocation] = useState('Casablanca, Morocco');
+  const [tags, setTags] = useState(DEFAULT_TAGS);
+  const [privacyStatus, setPrivacyStatus] = useState('public');
+  const [categoryId, setCategoryId] = useState('28');
+  const [madeForKids, setMadeForKids] = useState(false);
+  const [notifySubscribers, setNotifySubscribers] = useState(true);
+  const [tiktokPrivacy, setTiktokPrivacy] = useState('PUBLIC_TO_EVERYONE');
+  const [allowComments, setAllowComments] = useState(true);
+  const [allowDuet, setAllowDuet] = useState(true);
+  const [allowStitch, setAllowStitch] = useState(true);
+  const [coverTimestampSec, setCoverTimestampSec] = useState('1');
   const [link, setLink] = useState('https://errayhany.com/vip');
   const [platforms, setPlatforms] = useState({ meta: true, tiktok: false, youtube: false });
   const [media, setMedia] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [thumbnail, setThumbnail] = useState(null);
+  const [thumbPreview, setThumbPreview] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadingThumb, setUploadingThumb] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showReachSettings, setShowReachSettings] = useState(true);
 
   const selected = useMemo(
     () => Object.entries(platforms).filter(([, on]) => on).map(([id]) => id),
@@ -130,6 +187,10 @@ const SocialPublishTab = ({ dm }) => {
     if (previewUrl?.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
+  useEffect(() => () => {
+    if (thumbPreview?.startsWith('blob:')) URL.revokeObjectURL(thumbPreview);
+  }, [thumbPreview]);
+
   const onPickFile = async (file) => {
     if (!file) return;
     setError('');
@@ -157,10 +218,66 @@ const SocialPublishTab = ({ dm }) => {
     }
   };
 
+  const onPickThumb = async (file) => {
+    if (!file) return;
+    const mime = String(file.type || '').toLowerCase();
+    if (!/image\/(jpeg|jpg|png)/.test(mime)) {
+      setError('المُصغّر يجب أن يكون صورة JPG أو PNG (يفضّل 1280×720).');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('مُصغّر يوتيوب يجب أن يكون أقل من 2MB.');
+      return;
+    }
+    setError('');
+    setMessage('');
+    setUploadingThumb(true);
+    try {
+      if (thumbPreview?.startsWith('blob:')) URL.revokeObjectURL(thumbPreview);
+      setThumbPreview(URL.createObjectURL(file));
+      const data = await uploadSocialMedia(file);
+      setThumbnail(data.media);
+      setMessage('تم رفع المُصغّر — سيُستخدم ليوتيوب وفيسبوك.');
+    } catch (e) {
+      setThumbnail(null);
+      setThumbPreview('');
+      setError(errorText(e));
+    } finally {
+      setUploadingThumb(false);
+    }
+  };
+
   const clearMedia = () => {
     if (previewUrl?.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
     setMedia(null);
+  };
+
+  const clearThumbnail = () => {
+    if (thumbPreview?.startsWith('blob:')) URL.revokeObjectURL(thumbPreview);
+    setThumbPreview('');
+    setThumbnail(null);
+  };
+
+  const resetReachFields = () => {
+    setYoutubeDescription('');
+    setFacebookDescription('');
+    setTitleFr('');
+    setYoutubeDescriptionFr('');
+    setFacebookDescriptionFr('');
+    setCallToAction(true);
+    setRecordingLocation('Casablanca, Morocco');
+    setTags(DEFAULT_TAGS);
+    setPrivacyStatus('public');
+    setCategoryId('28');
+    setMadeForKids(false);
+    setNotifySubscribers(true);
+    setTiktokPrivacy('PUBLIC_TO_EVERYONE');
+    setAllowComments(true);
+    setAllowDuet(true);
+    setAllowStitch(true);
+    setCoverTimestampSec('1');
+    clearThumbnail();
   };
 
   const togglePlatform = (id) => {
@@ -194,6 +311,26 @@ const SocialPublishTab = ({ dm }) => {
         link: link.trim(),
         platforms: selected,
         media: media || undefined,
+        thumbnail: thumbnail || undefined,
+        youtubeDescription: youtubeDescription.trim(),
+        facebookDescription: facebookDescription.trim(),
+        facebookTitle: title.trim(),
+        titleFr: titleFr.trim(),
+        youtubeDescriptionFr: youtubeDescriptionFr.trim(),
+        facebookDescriptionFr: facebookDescriptionFr.trim(),
+        callToAction,
+        recordingLocation,
+        tags,
+        categoryId,
+        privacyStatus,
+        madeForKids,
+        notifySubscribers,
+        language: 'ar',
+        tiktokPrivacy,
+        allowComments,
+        allowDuet,
+        allowStitch,
+        coverTimestampSec,
       });
       const post = data.post;
       setPosts((prev) => [post, ...prev.filter((p) => p.id !== post.id)]);
@@ -203,6 +340,7 @@ const SocialPublishTab = ({ dm }) => {
       setCaption('');
       setTitle('');
       clearMedia();
+      resetReachFields();
       await load();
     } catch (e) {
       setError(errorText(e));
@@ -227,7 +365,7 @@ const SocialPublishTab = ({ dm }) => {
           <div>
             <h3 className="font-bold text-lg">نشر المحتوى للمنصات</h3>
             <p className={`text-sm mt-1 ${muted}`}>
-              صورة → Meta فقط. فيديو → Meta / TikTok / YouTube. TikTok يحتاج إكمال OAuth أولاً.
+              صورة → Meta فقط. فيديو → Meta / TikTok / YouTube. خصّص المُصغّر والأوصاف لتزيد المشاهدات.
             </p>
           </div>
           <button
@@ -273,36 +411,44 @@ const SocialPublishTab = ({ dm }) => {
 
         <div className="grid lg:grid-cols-2 gap-4">
           <div className="space-y-3">
-            <label className={`block text-xs font-bold ${muted}`}>عنوان YouTube (اختياري)</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="عنوان الفيديو على يوتيوب"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
-            />
+            <div>
+              <label className={`block text-xs font-bold mb-1 ${muted}`}>
+                عنوان الفيديو (يوتيوب وفيسبوك) · {title.length}/100
+              </label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value.slice(0, 100))}
+                placeholder="عنوان واضح فيه الكلمات المفتاحية — مثال: شواحن جملة الدارالبيضاء"
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+              />
+            </div>
 
-            <label className={`block text-xs font-bold ${muted}`}>نص المنشور</label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              rows={6}
-              placeholder={'مثال:\nإلكترونيات بالجملة من Errayhany Grossiste\nشواحن · سماعات · كابلات\nاطلب الآن 👇'}
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[140px] ${input}`}
-            />
+            <div>
+              <label className={`block text-xs font-bold mb-1 ${muted}`}>نص المنشور (تيكتوك وإنستغرام)</label>
+              <textarea
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                rows={5}
+                placeholder={'مثال:\nإلكترونيات بالجملة من Errayhany Grossiste\nشواحن · سماعات · كابلات\nاطلب الآن 👇'}
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[120px] ${input}`}
+              />
+            </div>
 
-            <label className={`block text-xs font-bold ${muted}`}>رابط الدعوة</label>
-            <input
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://errayhany.com/vip"
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
-            />
+            <div>
+              <label className={`block text-xs font-bold mb-1 ${muted}`}>رابط الدعوة</label>
+              <input
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://errayhany.com/vip"
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+              />
+            </div>
           </div>
 
           <div className="space-y-3">
             <label className={`block text-xs font-bold ${muted}`}>صورة أو فيديو</label>
             <label
-              className={`flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed min-h-[180px] cursor-pointer transition-colors ${
+              className={`flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed min-h-[160px] cursor-pointer transition-colors ${
                 dm ? 'border-gray-700 hover:border-blue-500/50 bg-gray-950' : 'border-slate-300 hover:border-blue-400 bg-slate-50'
               }`}
             >
@@ -322,9 +468,9 @@ const SocialPublishTab = ({ dm }) => {
                 </div>
               ) : previewUrl ? (
                 media?.mime?.startsWith('video/') ? (
-                  <video src={previewUrl} controls className="max-h-48 rounded-xl" />
+                  <video src={previewUrl} controls className="max-h-44 rounded-xl" />
                 ) : (
-                  <img src={previewUrl} alt="" className="max-h-48 rounded-xl object-contain" />
+                  <img src={previewUrl} alt="" className="max-h-44 rounded-xl object-contain" />
                 )
               ) : (
                 <>
@@ -343,17 +489,293 @@ const SocialPublishTab = ({ dm }) => {
               </div>
             )}
 
-            <button
-              type="button"
-              disabled={publishing || uploading}
-              onClick={onPublish}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-3 transition-colors"
+            <label className={`block text-xs font-bold ${muted}`}>مُصغّر مخصّص (يوتيوب + غلاف فيسبوك)</label>
+            <label
+              className={`flex items-center gap-3 rounded-2xl border border-dashed min-h-[88px] px-3 cursor-pointer transition-colors ${
+                dm ? 'border-gray-700 hover:border-blue-500/50 bg-gray-950' : 'border-slate-300 hover:border-blue-400 bg-slate-50'
+              }`}
             >
-              {publishing ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-              انشر على المنصات المختارة
-            </button>
+              <input
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                disabled={uploadingThumb || publishing}
+                onChange={(e) => onPickThumb(e.target.files?.[0])}
+              />
+              {uploadingThumb ? (
+                <Loader2 className="animate-spin text-blue-500" size={22} />
+              ) : thumbPreview ? (
+                <img src={thumbPreview} alt="" className="h-16 w-28 rounded-lg object-cover shrink-0" />
+              ) : (
+                <Film size={22} className={muted} />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-bold">اختر صورة الغلاف</p>
+                <p className={`text-[11px] ${muted}`}>JPG/PNG · 1280×720 · أقل من 2MB — يزيد الضغط على الفيديو</p>
+              </div>
+            </label>
+            {thumbnail && (
+              <div className={`flex items-center justify-between gap-2 text-xs rounded-xl border px-3 py-2 ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
+                <span className="truncate">{thumbnail.originalName || thumbnail.filename}</span>
+                <button type="button" onClick={clearThumbnail} className="text-red-400 p-1" title="إزالة المصغّر">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        <div className="grid lg:grid-cols-2 gap-4 mt-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className={`text-xs font-bold ${muted}`}>
+                وصف يوتيوب · {youtubeDescription.length}/5000
+              </label>
+              <button
+                type="button"
+                onClick={() => setYoutubeDescription(YT_DESC_TEMPLATE)}
+                className="text-[11px] font-bold text-blue-500 hover:underline"
+              >
+                املأ قالباً جاهزاً
+              </button>
+            </div>
+            <textarea
+              value={youtubeDescription}
+              onChange={(e) => setYoutubeDescription(e.target.value.slice(0, 5000))}
+              rows={7}
+              placeholder="وصف طويل: ماذا في الفيديو، الكلمات المفتاحية، رابط المتجر، واتساب، واشترك في القناة."
+              className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[140px] ${input}`}
+            />
+            <p className={`text-[11px] ${muted}`}>
+              إن تُرك فارغاً يُستخدم نص المنشور. الهاشتاغات تُضاف تلقائياً من الكلمات المفتاحية.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className={`block text-xs font-bold ${muted}`}>
+              وصف فيسبوك / إنستغرام · {facebookDescription.length}/2200
+            </label>
+            <textarea
+              value={facebookDescription}
+              onChange={(e) => setFacebookDescription(e.target.value.slice(0, 2200))}
+              rows={7}
+              placeholder="نص أقصر لمنشور فيسبوك وإنستغرام: عرض الجملة، التوصيل، رابط VIP."
+              className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[140px] ${input}`}
+            />
+            <p className={`text-[11px] ${muted}`}>
+              إن تُرك فارغاً يُستخدم نص المنشور. يُرفق الرابط والهاشتاغات تلقائياً.
+            </p>
+          </div>
+        </div>
+
+        <div className={`mt-4 rounded-2xl border p-4 space-y-3 ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
+          <div>
+            <p className="font-bold text-sm">النسخة الفرنسية — تزيد الظهور في بحث المغرب</p>
+            <p className={`text-[11px] mt-1 ${muted}`}>
+              يوتيوب يخزّنها كترجمة fr. فيسبوك وإنستغرام يضعانها تحت النص العربي.
+            </p>
+          </div>
+          <div>
+            <label className={`block text-xs font-bold mb-1 ${muted}`}>عنوان يوتيوب بالفرنسية · {titleFr.length}/100</label>
+            <input
+              value={titleFr}
+              onChange={(e) => setTitleFr(e.target.value.slice(0, 100))}
+              placeholder="Chargeurs en gros Casablanca — Errayhany Grossiste"
+              className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+              dir="ltr"
+            />
+          </div>
+          <div className="grid lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className={`text-xs font-bold ${muted}`}>وصف يوتيوب FR · {youtubeDescriptionFr.length}/5000</label>
+                <button
+                  type="button"
+                  onClick={() => setYoutubeDescriptionFr(FR_DESC_TEMPLATE)}
+                  className="text-[11px] font-bold text-blue-500 hover:underline"
+                >
+                  املأ قالباً جاهزاً
+                </button>
+              </div>
+              <textarea
+                value={youtubeDescriptionFr}
+                onChange={(e) => setYoutubeDescriptionFr(e.target.value.slice(0, 5000))}
+                rows={5}
+                placeholder="Description YouTube en français (recherche + suggestions)."
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[110px] ${input}`}
+                dir="ltr"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className={`text-xs font-bold ${muted}`}>وصف فيسبوك / إنستغرام FR · {facebookDescriptionFr.length}/2200</label>
+                <button
+                  type="button"
+                  onClick={() => setFacebookDescriptionFr(FR_DESC_TEMPLATE)}
+                  className="text-[11px] font-bold text-blue-500 hover:underline"
+                >
+                  املأ قالباً جاهزاً
+                </button>
+              </div>
+              <textarea
+                value={facebookDescriptionFr}
+                onChange={(e) => setFacebookDescriptionFr(e.target.value.slice(0, 2200))}
+                rows={5}
+                placeholder="Texte plus court pour Facebook et Instagram."
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[110px] ${input}`}
+                dir="ltr"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className={`mt-4 rounded-2xl border ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
+          <button
+            type="button"
+            onClick={() => setShowReachSettings((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-right"
+          >
+            <span className="font-bold text-sm">إعدادات الوصول والمشاهدات</span>
+            {showReachSettings ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+          {showReachSettings && (
+            <div className="px-4 pb-4 space-y-4">
+              <div>
+                <label className={`block text-xs font-bold mb-1 ${muted}`}>كلمات مفتاحية / هاشتاغات</label>
+                <input
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="Errayhany, Grossiste, جملة"
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                />
+                <p className={`text-[11px] mt-1 ${muted}`}>
+                  تُرسل كوسوم ليوتيوب وهاشتاغات لتيكتوك وفيسبوك وإنستغرام (حتى 15).
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={`block text-xs font-bold mb-1 ${muted}`}>خصوصية يوتيوب</label>
+                  <select
+                    value={privacyStatus}
+                    onChange={(e) => setPrivacyStatus(e.target.value)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                  >
+                    <option value="public">عام — يظهر للبحث والاقتراحات</option>
+                    <option value="unlisted">غير مدرج — من يملك الرابط فقط</option>
+                    <option value="private">خاص</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`block text-xs font-bold mb-1 ${muted}`}>تصنيف يوتيوب</label>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                  >
+                    {YT_CATEGORIES.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 text-sm">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifySubscribers}
+                    onChange={(e) => setNotifySubscribers(e.target.checked)}
+                  />
+                  إشعار مشتركي يوتيوب
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={madeForKids}
+                    onChange={(e) => setMadeForKids(e.target.checked)}
+                  />
+                  محتوى للأطفال (يقيّد التوصيات — اتركه مغلقاً)
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={callToAction}
+                    onChange={(e) => setCallToAction(e.target.checked)}
+                  />
+                  زر «تسوّق الآن» على فيسبوك (صورة أو فيديو)
+                </label>
+              </div>
+
+              <div>
+                <label className={`block text-xs font-bold mb-1 ${muted}`}>موقع تصوير يوتيوب</label>
+                <input
+                  value={recordingLocation}
+                  onChange={(e) => setRecordingLocation(e.target.value)}
+                  placeholder="Casablanca, Morocco"
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                  dir="ltr"
+                />
+                <p className={`text-[11px] mt-1 ${muted}`}>يساعد البحث المحلي. اتركه فارغاً لتعطيله.</p>
+              </div>
+
+              <div className={`h-px ${dm ? 'bg-gray-800' : 'bg-slate-200'}`} />
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={`block text-xs font-bold mb-1 ${muted}`}>خصوصية تيكتوك</label>
+                  <select
+                    value={tiktokPrivacy}
+                    onChange={(e) => setTiktokPrivacy(e.target.value)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                  >
+                    <option value="PUBLIC_TO_EVERYONE">عام للجميع</option>
+                    <option value="MUTUAL_FOLLOW_FRIENDS">الأصدقاء فقط</option>
+                    <option value="SELF_ONLY">خاص</option>
+                  </select>
+                  <p className={`text-[11px] mt-1 ${muted}`}>
+                    إن كان تطبيق تيكتوك في الوضع التجريبي قد يُفرض الخاص أو المسودّة.
+                  </p>
+                </div>
+                <div>
+                  <label className={`block text-xs font-bold mb-1 ${muted}`}>غلاف تيكتوك (ثانية)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={coverTimestampSec}
+                    onChange={(e) => setCoverTimestampSec(e.target.value)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 text-sm">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} />
+                  تعليقات تيكتوك
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={allowDuet} onChange={(e) => setAllowDuet(e.target.checked)} />
+                  Duet
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={allowStitch} onChange={(e) => setAllowStitch(e.target.checked)} />
+                  Stitch
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          disabled={publishing || uploading || uploadingThumb}
+          onClick={onPublish}
+          className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-3 transition-colors"
+        >
+          {publishing ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+          انشر على المنصات المختارة
+        </button>
 
         {message && (
           <div className="mt-4 flex items-start gap-2 text-sm text-emerald-500">
@@ -377,6 +799,7 @@ const SocialPublishTab = ({ dm }) => {
           <div className="space-y-3">
             {posts.map((post) => {
               const st = statusLabel(post.status);
+              const yt = post.results?.youtube;
               return (
                 <div
                   key={post.id}
@@ -413,11 +836,39 @@ const SocialPublishTab = ({ dm }) => {
                       })}
                     </div>
                   </div>
+                  {post.title && (
+                    <p className="text-sm font-bold mb-1">{post.title}</p>
+                  )}
                   <p className="text-sm whitespace-pre-wrap line-clamp-3">{post.caption || '(بدون نص)'}</p>
                   {post.link && (
                     <a href={post.link} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-500 break-all">
                       {post.link}
                     </a>
+                  )}
+                  {yt?.ok && yt?.url && (
+                    <a href={yt.url} target="_blank" rel="noopener noreferrer" className="block text-[11px] text-red-500 mt-1">
+                      يوتيوب: {yt.url}
+                    </a>
+                  )}
+                  {yt?.thumbnail && !yt.thumbnail.skipped && (
+                    <p className={`text-[11px] mt-1 ${yt.thumbnail.ok ? 'text-emerald-500' : muted}`}>
+                      المُصغّر: {yt.thumbnail.ok ? 'رُفع' : (yt.thumbnail.error || 'فشل')}
+                    </p>
+                  )}
+                  {yt?.localizations && !yt.localizations.skipped && (
+                    <p className={`text-[11px] mt-1 ${yt.localizations.ok ? 'text-emerald-500' : muted}`}>
+                      الترجمة الفرنسية: {yt.localizations.ok ? 'أُضيفت' : (yt.localizations.error || 'فشلت')}
+                    </p>
+                  )}
+                  {yt?.recordingDetails && !yt.recordingDetails.skipped && !yt.recordingDetails.ok && (
+                    <p className={`text-[11px] mt-1 ${muted}`}>
+                      موقع التصوير: {yt.recordingDetails.error || 'فشل'}
+                    </p>
+                  )}
+                  {post.results?.tiktok?.mode === 'inbox' && (
+                    <p className={`text-[11px] mt-1 ${muted}`}>
+                      تيكتوك: {post.results.tiktok.hint || 'رُفع كمسودّة في الوارد'}
+                    </p>
                   )}
                   {Object.entries(post.results || {}).flatMap(([id, r]) => {
                     if (id === 'meta') {

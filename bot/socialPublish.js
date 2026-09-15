@@ -61,6 +61,93 @@ function isImageMime(mime = '') {
   return String(mime).startsWith('image/');
 }
 
+export function parseTagList(raw) {
+  return [...new Set(
+    String(raw || '')
+      .split(/[\s,#\n]+/)
+      .map((t) => t.trim().replace(/^#/, ''))
+      .filter((t) => t.length >= 2 && t.length <= 30),
+  )].slice(0, 15);
+}
+
+export function withHashtags(text, tags) {
+  const body = String(text || '').trim();
+  const lower = body.toLowerCase();
+  const hashes = (tags || [])
+    .map((t) => String(t).replace(/\s+/g, ''))
+    .filter((t) => t && !lower.includes(`#${t.toLowerCase()}`))
+    .map((t) => `#${t}`)
+    .join(' ');
+  return [body, hashes].filter(Boolean).join('\n\n');
+}
+
+export function bilingualText(primary, secondary) {
+  const a = String(primary || '').trim();
+  const b = String(secondary || '').trim();
+  if (a && b) return `${a}\n\n---\n\n${b}`;
+  return a || b;
+}
+
+export function withInlineHashtags(text, tags) {
+  const body = String(text || '').trim();
+  const lower = body.toLowerCase();
+  const hashes = (tags || [])
+    .map((t) => String(t).replace(/\s+/g, ''))
+    .filter((t) => t && !lower.includes(`#${t.toLowerCase()}`))
+    .map((t) => `#${t}`)
+    .join(' ');
+  return [body, hashes].filter(Boolean).join(' ');
+}
+
+export function shopNowCta(link, enabled) {
+  const href = String(link || '').trim();
+  if (!enabled || !href) return null;
+  return { type: 'SHOP_NOW', value: { link: href } };
+}
+
+const TIKTOK_PRIVACY = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY'];
+
+export function pickTikTokPrivacy(requested, allowed = []) {
+  const want = TIKTOK_PRIVACY.includes(requested) ? requested : 'PUBLIC_TO_EVERYONE';
+  if (!Array.isArray(allowed) || !allowed.length) return want;
+  if (allowed.includes(want)) return want;
+  return TIKTOK_PRIVACY.find((p) => allowed.includes(p)) || allowed[0];
+}
+
+const RECORDING_COORDS = [
+  { keys: ['casablanca', 'الدار البيضاء', 'الدارالبيضاء', 'كازا'], latitude: 33.5731, longitude: -7.5898 },
+  { keys: ['rabat', 'الرباط'], latitude: 34.0209, longitude: -6.8416 },
+  { keys: ['marrakech', 'marrakesh', 'مراكش'], latitude: 31.6295, longitude: -7.9811 },
+  { keys: ['tanger', 'tangier', 'طنجة'], latitude: 35.7595, longitude: -5.8340 },
+  { keys: ['fes', 'fez', 'فاس'], latitude: 34.0181, longitude: -5.0078 },
+  { keys: ['agadir', 'أكادير'], latitude: 30.4278, longitude: -9.5981 },
+];
+
+export function recordingLocationPayload(raw) {
+  const loc = String(raw || '').trim();
+  if (!loc) return null;
+  const payload = { locationDescription: loc.slice(0, 120) };
+  const lower = loc.toLowerCase();
+  const hit = RECORDING_COORDS.find((c) => c.keys.some((k) => lower.includes(k)));
+  if (hit) {
+    payload.location = {
+      latitude: hit.latitude,
+      longitude: hit.longitude,
+      altitude: 0,
+    };
+  }
+  return payload;
+}
+
+function resolveMediaFile(media) {
+  if (!media) return { mediaUrl: '', mediaPath: null, mime: '' };
+  const mediaUrl = String(media?.url || '').trim()
+    || (media?.filename ? publicMediaUrl(media.filename) : '');
+  const fromFilename = media?.filename ? path.join(MEDIA_DIR, media.filename) : '';
+  const mediaPath = [media?.path, fromFilename].find((p) => p && fs.existsSync(p)) || null;
+  return { mediaUrl, mediaPath, mime: media?.mime || '' };
+}
+
 export function socialPlatformStatus() {
   const metaReady = Boolean(
     process.env.META_PAGE_ID?.trim() && process.env.META_PAGE_ACCESS_TOKEN?.trim(),
@@ -197,7 +284,7 @@ async function waitIgContainerReady(containerId, token, { attempts = 24, delayMs
   return { ok: false, error: 'instagram_container_timeout' };
 }
 
-async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }) {
+async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token, coverTimestampMs }) {
   if (!mediaUrl || (!isImageMime(mime) && !isVideoMime(mime))) {
     return {
       ok: false,
@@ -221,7 +308,13 @@ async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }
     };
   }
 
-  const message = [caption, link].filter(Boolean).join('\n\n').slice(0, 2200);
+  const captionText = String(caption || '').trim();
+  const href = String(link || '').trim();
+  const message = [
+    captionText,
+    href && !captionText.includes(href) ? href : '',
+  ].filter(Boolean).join('\n\n').slice(0, 2200);
+  const thumbOffset = Number(coverTimestampMs);
   const createBody = isVideoMime(mime)
     ? {
         media_type: 'REELS',
@@ -235,6 +328,9 @@ async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }
         caption: message,
         access_token: token,
       };
+  if (isVideoMime(mime) && Number.isFinite(thumbOffset) && thumbOffset >= 0) {
+    createBody.thumb_offset = Math.round(thumbOffset);
+  }
 
   const created = await axios.post(
     `https://graph.facebook.com/v21.0/${igUserId}/media`,
@@ -277,80 +373,168 @@ async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }
   };
 }
 
-async function publishFacebook({ caption, link, mediaUrl, mediaPath, mime, pageId, token }) {
-  const message = [caption, link].filter(Boolean).join('\n\n');
-  const hasLocal = mediaPath && fs.existsSync(mediaPath);
+async function facebookGraphPost(url, body, extra = {}) {
+  const { data, status } = await axios.post(url, body, {
+    timeout: extra.timeout || 180000,
+    validateStatus: () => true,
+    maxBodyLength: Infinity,
+    ...extra,
+  });
+  if (status >= 400 || data?.error) {
+    return { ok: false, error: data?.error?.message || 'meta_request_failed', details: data?.error || data };
+  }
+  return { ok: true, id: data?.id || data?.post_id, raw: data };
+}
 
-  // Prefer multipart from disk so Meta never has to fetch our public URL
-  // (crawler timeouts / transient 404s caused "Missing or invalid image file").
-  if (isVideoMime(mime) && (hasLocal || mediaUrl)) {
+function appendFacebookThumb(form, thumbnailPath, thumbnailMime) {
+  if (!thumbnailPath || !fs.existsSync(thumbnailPath)) return;
+  const thumbBuf = fs.readFileSync(thumbnailPath);
+  form.append(
+    'thumb',
+    new Blob([thumbBuf], { type: thumbnailMime || 'image/jpeg' }),
+    path.basename(thumbnailPath),
+  );
+}
+
+async function publishFacebook({
+  caption,
+  link,
+  mediaUrl,
+  mediaPath,
+  mime,
+  pageId,
+  token,
+  facebookDescription,
+  facebookTitle,
+  thumbnailPath,
+  thumbnailMime,
+  tags,
+  facebookDescriptionFr,
+  callToAction,
+}) {
+  const href = String(link || '').trim();
+  const primary = [facebookDescription || caption, href].filter(Boolean).join('\n\n');
+  const message = withHashtags(bilingualText(primary, facebookDescriptionFr), tags);
+  const hasLocal = mediaPath && fs.existsSync(mediaPath);
+  const cta = shopNowCta(href, callToAction !== false);
+  const videoUrl = `https://graph.facebook.com/v21.0/${pageId}/videos`;
+  const photoUrl = `https://graph.facebook.com/v21.0/${pageId}/photos`;
+  const feedUrl = `https://graph.facebook.com/v21.0/${pageId}/feed`;
+
+  async function postVideo(includeCta) {
+    const form = new FormData();
     if (hasLocal) {
       const buf = fs.readFileSync(mediaPath);
-      const form = new FormData();
       form.append('source', new Blob([buf], { type: mime || 'video/mp4' }), path.basename(mediaPath));
-      form.append('description', message);
-      form.append('access_token', token);
-      const { data, status } = await axios.post(
-        `https://graph.facebook.com/v21.0/${pageId}/videos`,
-        form,
-        { timeout: 300000, validateStatus: () => true, maxBodyLength: Infinity },
-      );
-      if (status >= 400 || data?.error) {
-        return { ok: false, error: data?.error?.message || 'meta_video_failed', details: data?.error || data };
-      }
-      return { ok: true, id: data?.id || data?.post_id, raw: data };
+    } else {
+      form.append('file_url', mediaUrl);
     }
-    const { data, status } = await axios.post(
-      `https://graph.facebook.com/v21.0/${pageId}/videos`,
-      { file_url: mediaUrl, description: message, access_token: token },
-      { timeout: 180000, validateStatus: () => true },
-    );
-    if (status >= 400 || data?.error) {
-      return { ok: false, error: data?.error?.message || 'meta_video_failed', details: data?.error || data };
-    }
-    return { ok: true, id: data?.id || data?.post_id, raw: data };
+    form.append('description', message);
+    if (facebookTitle) form.append('title', String(facebookTitle).slice(0, 255));
+    if (includeCta && cta) form.append('call_to_action', JSON.stringify(cta));
+    appendFacebookThumb(form, thumbnailPath, thumbnailMime);
+    form.append('access_token', token);
+    return facebookGraphPost(videoUrl, form, { timeout: 300000 });
   }
 
-  if (isImageMime(mime) && (hasLocal || mediaUrl)) {
+  async function postPublishedPhoto() {
     if (hasLocal) {
       const buf = fs.readFileSync(mediaPath);
       const form = new FormData();
       form.append('source', new Blob([buf], { type: mime || 'image/jpeg' }), path.basename(mediaPath));
       form.append('caption', message);
       form.append('access_token', token);
-      const { data, status } = await axios.post(
-        `https://graph.facebook.com/v21.0/${pageId}/photos`,
-        form,
-        { timeout: 180000, validateStatus: () => true, maxBodyLength: Infinity },
-      );
-      if (status >= 400 || data?.error) {
-        return { ok: false, error: data?.error?.message || 'meta_photo_failed', details: data?.error || data };
-      }
-      return { ok: true, id: data?.post_id || data?.id, raw: data };
+      return facebookGraphPost(photoUrl, form);
     }
-    const { data, status } = await axios.post(
-      `https://graph.facebook.com/v21.0/${pageId}/photos`,
-      { url: mediaUrl, caption: message, access_token: token },
-      { timeout: 120000, validateStatus: () => true },
-    );
-    if (status >= 400 || data?.error) {
-      return { ok: false, error: data?.error?.message || 'meta_photo_failed', details: data?.error || data };
-    }
-    return { ok: true, id: data?.post_id || data?.id, raw: data };
+    return facebookGraphPost(photoUrl, { url: mediaUrl, caption: message, access_token: token }, { timeout: 120000 });
   }
 
-  const { data, status } = await axios.post(
-    `https://graph.facebook.com/v21.0/${pageId}/feed`,
-    { message, link: link || undefined, access_token: token },
-    { timeout: 60000, validateStatus: () => true },
-  );
-  if (status >= 400 || data?.error) {
-    return { ok: false, error: data?.error?.message || 'meta_feed_failed', details: data?.error || data };
+  async function postPhotoWithCta() {
+    let photo;
+    if (hasLocal) {
+      const buf = fs.readFileSync(mediaPath);
+      const form = new FormData();
+      form.append('source', new Blob([buf], { type: mime || 'image/jpeg' }), path.basename(mediaPath));
+      form.append('published', 'false');
+      form.append('access_token', token);
+      photo = await facebookGraphPost(photoUrl, form);
+    } else {
+      photo = await facebookGraphPost(
+        photoUrl,
+        { url: mediaUrl, published: false, access_token: token },
+        { timeout: 120000 },
+      );
+    }
+    if (!photo.ok || !photo.id) return photo;
+    const feed = await facebookGraphPost(
+      feedUrl,
+      {
+        message,
+        attached_media: JSON.stringify([{ media_fbid: photo.id }]),
+        call_to_action: JSON.stringify(cta),
+        access_token: token,
+      },
+      { timeout: 60000 },
+    );
+    if (feed.ok) return { ...feed, cta: true };
+    const fallback = await postPublishedPhoto();
+    if (fallback.ok) {
+      return {
+        ...fallback,
+        cta: false,
+        hint: 'نُشرت الصورة بدون زر التسوّق (الصفحة لا تدعم SHOP_NOW).',
+      };
+    }
+    return feed;
   }
-  return { ok: true, id: data?.id, raw: data };
+
+  // Prefer multipart from disk so Meta never has to fetch our public URL
+  // (crawler timeouts / transient 404s caused "Missing or invalid image file").
+  if (isVideoMime(mime) && (hasLocal || mediaUrl)) {
+    const first = await postVideo(Boolean(cta));
+    if (first.ok) return { ...first, cta: Boolean(cta) };
+    if (cta) {
+      const retry = await postVideo(false);
+      if (retry.ok) {
+        return { ...retry, cta: false, hint: 'نُشر الفيديو بدون زر التسوّق.' };
+      }
+    }
+    return first;
+  }
+
+  if (isImageMime(mime) && (hasLocal || mediaUrl)) {
+    if (cta) return postPhotoWithCta();
+    return postPublishedPhoto();
+  }
+
+  const feedBody = { message, link: href || undefined, access_token: token };
+  if (cta) feedBody.call_to_action = cta;
+  const feed = await facebookGraphPost(feedUrl, feedBody, { timeout: 60000 });
+  if (feed.ok || !cta) return feed;
+  const retry = await facebookGraphPost(
+    feedUrl,
+    { message, link: href || undefined, access_token: token },
+    { timeout: 60000 },
+  );
+  if (retry.ok) return { ...retry, hint: 'نُشر النص بدون زر التسوّق.' };
+  return feed;
 }
 
-async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
+async function publishMeta({
+  caption,
+  link,
+  mediaUrl,
+  mediaPath,
+  mime,
+  facebookDescription,
+  facebookTitle,
+  thumbnailPath,
+  thumbnailMime,
+  tags,
+  facebookDescriptionFr,
+  callToAction,
+  coverTimestampMs,
+}) {
   const pageId = process.env.META_PAGE_ID?.trim();
   const token = process.env.META_PAGE_ACCESS_TOKEN?.trim();
   if (!pageId || !token) {
@@ -358,14 +542,31 @@ async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
   }
 
   const facebook = await publishFacebook({
-    caption, link, mediaUrl, mediaPath, mime, pageId, token,
+    caption,
+    link,
+    mediaUrl,
+    mediaPath,
+    mime,
+    pageId,
+    token,
+    facebookDescription,
+    facebookTitle,
+    thumbnailPath,
+    thumbnailMime,
+    tags,
+    facebookDescriptionFr,
+    callToAction,
   });
 
   let instagram = null;
+  const igCaption = withHashtags(
+    bilingualText(facebookDescription || caption, facebookDescriptionFr),
+    tags,
+  );
   // Instagram Graph API requires a public URL (image_url / video_url).
   if (mediaUrl && (isImageMime(mime) || isVideoMime(mime))) {
     instagram = await publishInstagram({
-      caption, link, mediaUrl, mime, pageId, token,
+      caption: igCaption, link, mediaUrl, mime, pageId, token, coverTimestampMs,
     });
   } else if (facebook.ok) {
     instagram = {
@@ -392,44 +593,42 @@ async function publishMeta({ caption, link, mediaUrl, mediaPath, mime }) {
   };
 }
 
-async function publishTikTok({ caption, mediaPath, mime }) {
-  const token = await resolveTikTokAccessToken();
-  const openId = process.env.TIKTOK_OPEN_ID?.trim();
-  if (!token || !openId) {
-    return { ok: false, error: 'tiktok_not_configured', hint: socialPlatformStatus().tiktok.hint };
-  }
-  if (!isVideoMime(mime) || !mediaPath) {
-    return { ok: false, error: 'tiktok_video_required', hint: 'TikTok يقبل فيديو فقط.' };
-  }
-
-  const size = fs.statSync(mediaPath).size;
-  const initRes = await axios.post(
-    'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
-    {
-      post_info: {
-        title: String(caption || 'Errayhany').slice(0, 150),
-        privacy_level: process.env.TIKTOK_PRIVACY_LEVEL || 'SELF_ONLY',
-        disable_duet: false,
-        disable_comment: false,
-        disable_stitch: false,
-      },
-      source_info: {
-        source: 'FILE_UPLOAD',
-        video_size: size,
-        chunk_size: size,
-        total_chunk_count: 1,
-      },
-    },
+async function queryTikTokCreator(token) {
+  const { data, status } = await axios.post(
+    'https://open.tiktokapis.com/v2/post/publish/creator_info/query/',
+    {},
     {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      timeout: 60000,
+      timeout: 30000,
       validateStatus: () => true,
     },
   );
+  const code = String(data?.error?.code || '').toLowerCase();
+  if (status >= 400 || (code && code !== 'ok')) return { ok: false, data };
+  return { ok: true, data: data?.data || {} };
+}
 
+async function tiktokInitAndUpload({ token, endpoint, postInfo, mediaPath, mime, size }) {
+  const payload = {
+    source_info: {
+      source: 'FILE_UPLOAD',
+      video_size: size,
+      chunk_size: size,
+      total_chunk_count: 1,
+    },
+  };
+  if (postInfo) payload.post_info = postInfo;
+  const initRes = await axios.post(endpoint, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    timeout: 60000,
+    validateStatus: () => true,
+  });
   const uploadUrl = initRes.data?.data?.upload_url;
   const publishId = initRes.data?.data?.publish_id;
   if (initRes.status >= 400 || !uploadUrl) {
@@ -445,6 +644,7 @@ async function publishTikTok({ caption, mediaPath, mime }) {
     headers: {
       'Content-Type': mime || 'video/mp4',
       'Content-Length': buf.length,
+      'Content-Range': `bytes 0-${buf.length - 1}/${buf.length}`,
     },
     maxBodyLength: Infinity,
     timeout: 300000,
@@ -453,15 +653,164 @@ async function publishTikTok({ caption, mediaPath, mime }) {
   if (put.status >= 400) {
     return { ok: false, error: 'tiktok_upload_failed', details: { status: put.status } };
   }
+  return { ok: true, id: publishId };
+}
 
+async function publishTikTok({
+  caption,
+  mediaPath,
+  mime,
+  tags,
+  tiktokPrivacy,
+  allowComments,
+  allowDuet,
+  allowStitch,
+  coverTimestampMs,
+}) {
+  const token = await resolveTikTokAccessToken();
+  const openId = process.env.TIKTOK_OPEN_ID?.trim();
+  if (!token || !openId) {
+    return { ok: false, error: 'tiktok_not_configured', hint: socialPlatformStatus().tiktok.hint };
+  }
+  if (!isVideoMime(mime) || !mediaPath) {
+    return { ok: false, error: 'tiktok_video_required', hint: 'TikTok يقبل فيديو فقط.' };
+  }
+
+  const size = fs.statSync(mediaPath).size;
+  const title = withInlineHashtags(String(caption || 'Errayhany').slice(0, 2100), tags).slice(0, 2200);
+  const creator = await queryTikTokCreator(token);
+  const creatorInfo = creator.ok ? creator.data : {};
+  const allowed = creatorInfo.privacy_level_options || [];
+  const privacy = pickTikTokPrivacy(tiktokPrivacy, allowed);
+  const postInfo = {
+    title,
+    privacy_level: privacy,
+    disable_duet: allowDuet === false || Boolean(creatorInfo.duet_disabled),
+    disable_comment: allowComments === false || Boolean(creatorInfo.comment_disabled),
+    disable_stitch: allowStitch === false || Boolean(creatorInfo.stitch_disabled),
+    brand_content_toggle: false,
+    brand_organic_toggle: false,
+  };
+  const cover = Number(coverTimestampMs);
+  if (Number.isFinite(cover) && cover >= 0) {
+    postInfo.video_cover_timestamp_ms = Math.round(cover);
+  }
+
+  const direct = await tiktokInitAndUpload({
+    token,
+    endpoint: 'https://open.tiktokapis.com/v2/post/publish/video/init/',
+    postInfo,
+    mediaPath,
+    mime,
+    size,
+  });
+  if (direct.ok) {
+    return {
+      ok: true,
+      id: direct.id,
+      mode: 'direct',
+      privacy,
+    };
+  }
+
+  const inbox = await tiktokInitAndUpload({
+    token,
+    endpoint: 'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
+    postInfo: null,
+    mediaPath,
+    mime,
+    size,
+  });
+  if (inbox.ok) {
+    return {
+      ok: true,
+      id: inbox.id,
+      mode: 'inbox',
+      hint: 'رُفع كمسودّة إلى وارد TikTok — أكمل النشر من التطبيق (التطبيق غير مراجع للنشر المباشر).',
+    };
+  }
   return {
-    ok: true,
-    id: publishId,
-    hint: 'رُفع إلى وارد TikTok — أكمل من التطبيق إن لزم.',
+    ok: false,
+    error: direct.error || inbox.error || 'tiktok_publish_failed',
+    details: { direct: direct.details, inbox: inbox.details },
   };
 }
 
-async function publishYouTube({ caption, mediaPath, mime, title, link }) {
+async function youtubeVideosUpdate(accessToken, videoId, part, fields) {
+  const { data, status } = await axios.put(
+    `https://www.googleapis.com/youtube/v3/videos?part=${encodeURIComponent(part)}`,
+    { id: videoId, ...fields },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      timeout: 60000,
+      validateStatus: () => true,
+    },
+  );
+  if (status >= 400 || data?.error) {
+    return {
+      ok: false,
+      error: data?.error?.message || 'youtube_update_failed',
+      details: data?.error || data,
+    };
+  }
+  return { ok: true, raw: data };
+}
+
+async function setYouTubeThumbnail(accessToken, videoId, thumbPath, mime) {
+  if (!videoId || !thumbPath || !fs.existsSync(thumbPath)) {
+    return { ok: false, skipped: true };
+  }
+  const type = String(mime || '').toLowerCase();
+  if (type && !/jpeg|jpg|png/.test(type)) {
+    return { ok: false, error: 'youtube_thumbnail_must_be_jpeg_or_png' };
+  }
+  const buf = fs.readFileSync(thumbPath);
+  const { data, status } = await axios.post(
+    `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${encodeURIComponent(videoId)}&uploadType=media`,
+    buf,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': mime || 'image/jpeg',
+        'Content-Length': buf.length,
+      },
+      maxBodyLength: Infinity,
+      timeout: 120000,
+      validateStatus: () => true,
+    },
+  );
+  if (status >= 400 || data?.error) {
+    return {
+      ok: false,
+      error: data?.error?.message || 'youtube_thumbnail_failed',
+      details: data?.error || data,
+    };
+  }
+  return { ok: true, raw: data };
+}
+
+async function publishYouTube({
+  caption,
+  mediaPath,
+  mime,
+  title,
+  link,
+  youtubeDescription,
+  tags,
+  categoryId,
+  privacyStatus,
+  madeForKids,
+  thumbnailPath,
+  thumbnailMime,
+  language,
+  notifySubscribers,
+  titleFr,
+  youtubeDescriptionFr,
+  recordingLocation,
+}) {
   const refresh = process.env.YOUTUBE_REFRESH_TOKEN?.trim();
   const clientId = process.env.YOUTUBE_CLIENT_ID?.trim();
   const clientSecret = process.env.YOUTUBE_CLIENT_SECRET?.trim();
@@ -496,18 +845,62 @@ async function publishYouTube({ caption, mediaPath, mime, title, link }) {
   }
 
   const videoTitle = String(title || caption || 'Errayhany Grossiste').slice(0, 100);
-  const description = [caption, link].filter(Boolean).join('\n\n').slice(0, 5000);
+  const description = withHashtags(
+    [youtubeDescription || caption, link].filter(Boolean).join('\n\n'),
+    tags,
+  ).slice(0, 5000);
+  const privacy = ['public', 'unlisted', 'private'].includes(privacyStatus)
+    ? privacyStatus
+    : (process.env.YOUTUBE_PRIVACY_STATUS || 'public');
+  const cat = String(categoryId || '28').replace(/\D/g, '') || '28';
+  const snippet = {
+    title: videoTitle,
+    description,
+    categoryId: cat,
+    tags: (tags || []).slice(0, 15),
+  };
+  if (language) {
+    snippet.defaultLanguage = language;
+    snippet.defaultAudioLanguage = language;
+  }
   const metadata = {
-    snippet: { title: videoTitle, description, categoryId: '22' },
+    snippet,
     status: {
-      privacyStatus: process.env.YOUTUBE_PRIVACY_STATUS || 'unlisted',
-      selfDeclaredMadeForKids: false,
+      privacyStatus: privacy,
+      selfDeclaredMadeForKids: Boolean(madeForKids),
+      embeddable: true,
+      publicStatsViewable: true,
+      license: 'youtube',
+      notifySubscribers: notifySubscribers !== false,
     },
+  };
+  const loc = recordingLocationPayload(recordingLocation);
+  if (loc) {
+    metadata.recordingDetails = loc;
+  }
+  const frTitle = String(titleFr || '').trim().slice(0, 100);
+  const frDesc = withHashtags(
+    [youtubeDescriptionFr, link].filter(Boolean).join('\n\n'),
+    tags,
+  ).slice(0, 5000);
+  if (frTitle || String(youtubeDescriptionFr || '').trim()) {
+    metadata.localizations = {
+      fr: {
+        title: frTitle || videoTitle,
+        description: frDesc || description,
+      },
+    };
+  }
+
+  const uploadParts = ['snippet', 'status'];
+  const insertMeta = {
+    snippet: metadata.snippet,
+    status: metadata.status,
   };
 
   const boundary = `errayhany_${crypto.randomBytes(8).toString('hex')}`;
   const metaPart = Buffer.from(
-    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(insertMeta)}\r\n`,
   );
   const filePartHeader = Buffer.from(
     `--${boundary}\r\nContent-Type: ${mime || 'video/mp4'}\r\n\r\n`,
@@ -517,7 +910,7 @@ async function publishYouTube({ caption, mediaPath, mime, title, link }) {
   const body = Buffer.concat([metaPart, filePartHeader, filePart, end]);
 
   const upload = await axios.post(
-    'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status',
+    `https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=${uploadParts.join(',')}`,
     body,
     {
       headers: {
@@ -539,10 +932,34 @@ async function publishYouTube({ caption, mediaPath, mime, title, link }) {
     };
   }
 
+  const videoId = upload.data?.id;
+  const extras = {};
+  if (videoId && metadata.localizations) {
+    extras.localizations = await youtubeVideosUpdate(accessToken, videoId, 'localizations', {
+      localizations: metadata.localizations,
+    });
+  } else {
+    extras.localizations = { ok: false, skipped: true };
+  }
+  if (videoId && metadata.recordingDetails) {
+    extras.recordingDetails = await youtubeVideosUpdate(accessToken, videoId, 'recordingDetails', {
+      recordingDetails: metadata.recordingDetails,
+    });
+  } else {
+    extras.recordingDetails = { ok: false, skipped: true };
+  }
+
+  let thumbnail = { ok: false, skipped: true };
+  if (videoId && thumbnailPath) {
+    thumbnail = await setYouTubeThumbnail(accessToken, videoId, thumbnailPath, thumbnailMime);
+  }
+
   return {
     ok: true,
-    id: upload.data?.id,
-    url: upload.data?.id ? `https://youtu.be/${upload.data.id}` : null,
+    id: videoId,
+    url: videoId ? `https://youtu.be/${videoId}` : null,
+    thumbnail,
+    ...extras,
   };
 }
 
@@ -559,7 +976,27 @@ export async function createAndPublishSocialPost({
   title = '',
   platforms = [],
   media,
+  thumbnail,
   sku = '',
+  youtubeDescription = '',
+  facebookDescription = '',
+  facebookTitle = '',
+  tags = '',
+  categoryId = '28',
+  privacyStatus = 'public',
+  madeForKids = false,
+  language = 'ar',
+  tiktokPrivacy = '',
+  allowComments = true,
+  allowDuet = true,
+  allowStitch = true,
+  coverTimestampSec = '',
+  notifySubscribers = true,
+  titleFr = '',
+  youtubeDescriptionFr = '',
+  facebookDescriptionFr = '',
+  callToAction = true,
+  recordingLocation = 'Casablanca, Morocco',
 } = {}) {
   const selected = [...new Set((platforms || []).map(String).filter((p) => PLATFORMS.includes(p)))];
   if (!selected.length) {
@@ -568,11 +1005,9 @@ export async function createAndPublishSocialPost({
     throw err;
   }
 
-  const mediaUrl = String(media?.url || '').trim()
-    || (media?.filename ? publicMediaUrl(media.filename) : '');
-  const fromFilename = media?.filename ? path.join(MEDIA_DIR, media.filename) : '';
-  const mediaPath = [media?.path, fromFilename].find((p) => p && fs.existsSync(p)) || null;
-  const mime = media?.mime || '';
+  const { mediaUrl, mediaPath, mime } = resolveMediaFile(media);
+  const thumb = resolveMediaFile(thumbnail);
+  const tagList = parseTagList(tags);
 
   const needsVideo = selected.includes('tiktok') || selected.includes('youtube');
   if (needsVideo && (!mediaPath || !isVideoMime(mime))) {
@@ -587,6 +1022,19 @@ export async function createAndPublishSocialPost({
     createdAt: new Date().toISOString(),
     caption: String(caption || '').trim(),
     title: String(title || '').trim(),
+    youtubeDescription: String(youtubeDescription || '').trim() || null,
+    facebookDescription: String(facebookDescription || '').trim() || null,
+    titleFr: String(titleFr || '').trim() || null,
+    youtubeDescriptionFr: String(youtubeDescriptionFr || '').trim() || null,
+    facebookDescriptionFr: String(facebookDescriptionFr || '').trim() || null,
+    tags: tagList,
+    privacyStatus: String(privacyStatus || 'public'),
+    categoryId: String(categoryId || '28'),
+    madeForKids: Boolean(madeForKids),
+    notifySubscribers: notifySubscribers !== false,
+    callToAction: callToAction !== false,
+    recordingLocation: String(recordingLocation || '').trim() || null,
+    tiktokPrivacy: String(tiktokPrivacy || '').trim() || null,
     link: String(link || `${SITE_URL}/vip`).trim(),
     sku: String(sku || '').trim() || null,
     platforms: selected,
@@ -597,6 +1045,13 @@ export async function createAndPublishSocialPost({
           mime,
           size: media.size || null,
           originalName: media.originalName || null,
+        }
+      : null,
+    thumbnail: thumbnail?.filename
+      ? {
+          filename: thumbnail.filename,
+          url: thumb.mediaUrl,
+          mime: thumb.mime,
         }
       : null,
     results: {},
@@ -611,9 +1066,32 @@ export async function createAndPublishSocialPost({
     caption: post.caption,
     link: post.link,
     title: post.title || post.caption,
+    youtubeDescription: post.youtubeDescription || '',
+    facebookDescription: post.facebookDescription || '',
+    facebookTitle: String(facebookTitle || title || '').trim(),
+    tags: tagList,
+    categoryId: post.categoryId,
+    privacyStatus: post.privacyStatus,
+    madeForKids: Boolean(madeForKids),
+    notifySubscribers: notifySubscribers !== false,
+    language: String(language || 'ar').slice(0, 8),
+    tiktokPrivacy: String(tiktokPrivacy || '').trim(),
+    allowComments: allowComments !== false,
+    allowDuet: allowDuet !== false,
+    allowStitch: allowStitch !== false,
+    coverTimestampMs: coverTimestampSec === '' || coverTimestampSec == null
+      ? undefined
+      : Number(coverTimestampSec) * 1000,
     mediaUrl,
     mediaPath,
     mime,
+    thumbnailPath: thumb.mediaPath,
+    thumbnailMime: thumb.mime,
+    titleFr: String(titleFr || '').trim(),
+    youtubeDescriptionFr: String(youtubeDescriptionFr || '').trim(),
+    facebookDescriptionFr: String(facebookDescriptionFr || '').trim(),
+    callToAction: callToAction !== false,
+    recordingLocation: String(recordingLocation || '').trim(),
   };
 
   for (const platform of selected) {
