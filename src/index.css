@@ -78,3 +78,23 @@ html.translated-ltr { direction: ltr !important; }
 html.translated-ltr * { direction: ltr !important; }
 html.translated-ltr body { font-family: 'Inter', sans-serif !important; }
 
+/* Infinite announcement ticker under the header */
+@keyframes announcement-ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+.announcement-ticker-track {
+    animation: announcement-ticker 28s linear infinite;
+}
+
+.announcement-ticker-track:hover {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .announcement-ticker-track {
+        animation: none;
+    }
+}
+
