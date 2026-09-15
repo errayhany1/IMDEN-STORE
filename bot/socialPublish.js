@@ -61,7 +61,7 @@ function isImageMime(mime = '') {
   return String(mime).startsWith('image/');
 }
 
-function parseTagList(raw) {
+export function parseTagList(raw) {
   return [...new Set(
     String(raw || '')
       .split(/[\s,#\n]+/)
@@ -70,7 +70,7 @@ function parseTagList(raw) {
   )].slice(0, 15);
 }
 
-function withHashtags(text, tags) {
+export function withHashtags(text, tags) {
   const body = String(text || '').trim();
   const lower = body.toLowerCase();
   const hashes = (tags || [])
