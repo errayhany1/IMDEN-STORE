@@ -39,6 +39,13 @@ html[lang="ar"] body, html[dir="rtl"] body {
     font-family: 'Tajawal', sans-serif;
 }
 
+html.tg-webapp,
+body.tg-webapp {
+    background-color: var(--tg-bg, #142038);
+    padding-top: env(safe-area-inset-top, var(--tg-safe-area-inset-top, 0px));
+    padding-bottom: env(safe-area-inset-bottom, var(--tg-safe-area-inset-bottom, 0px));
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;

@@ -14,6 +14,8 @@ import {
 } from '../utils/productText';
 import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 import { slugify } from '../utils/slugify';
+import ProductColorPicker, { cartProductFromVariant } from './ProductColorPicker';
+import { fetchTifawtColors } from '../services/api';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
@@ -32,6 +34,9 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     const [quantity, setQuantity] = useState(1);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [colorVariants, setColorVariants] = useState([]);
+    const [selectedVariantId, setSelectedVariantId] = useState(null);
+    const [colorSource, setColorSource] = useState('');
 
     // Small scroll helper for the details pane (long descriptions + related strip).
     const infoRef = useRef(null);
@@ -56,10 +61,17 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     };
 
     const viewedProduct = selectedProduct || product;
-    const allImages = viewedProduct?.images && viewedProduct.images.length > 0
-        ? viewedProduct.images
-        : (viewedProduct?.image ? [viewedProduct.image] : []);
-    const isOutOfStock = viewedProduct?.category === 'Out of Stock' || viewedProduct?.isAvailable === false;
+    const selectedVariant = colorVariants.find(
+        (variant) => String(variant.id) === String(selectedVariantId),
+    ) || null;
+    const allImages = (selectedVariant?.images?.length
+        ? selectedVariant.images
+        : (viewedProduct?.images && viewedProduct.images.length > 0
+            ? viewedProduct.images
+            : (viewedProduct?.image ? [viewedProduct.image] : [])));
+    const isOutOfStock = viewedProduct?.category === 'Out of Stock'
+        || viewedProduct?.isAvailable === false
+        || selectedVariant?.inStock === false;
     const isWishlisted = wishlist.some((item) => item.id === viewedProduct?.id);
     const isWatchingRestock = restockSubscriptions.some(
         (item) => String(item.id || item.ref) === String(viewedProduct?.id || viewedProduct?.ref)
@@ -95,15 +107,15 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     };
 
     const handleAddToCart = () => {
-        if (!isOutOfStock) {
-            const qty = Math.max(1, Number(quantity) || 1);
-            setQuantity(qty);
-            addToCart(viewedProduct, qty);
-            setAddedToCart(true);
-            setTimeout(() => {
-                setAddedToCart(false);
-            }, 1500);
-        }
+        if (isOutOfStock) return;
+        if (colorSource === 'tifawt' && colorVariants.length && !selectedVariant) return;
+        const qty = Math.max(1, Number(quantity) || 1);
+        setQuantity(qty);
+        addToCart(cartProductFromVariant(viewedProduct, selectedVariant, false), qty);
+        setAddedToCart(true);
+        setTimeout(() => {
+            setAddedToCart(false);
+        }, 1500);
     };
 
     const updateQty = (delta) => {
@@ -133,6 +145,29 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
             setQuantity(1);
             setSelectedProduct(null);
             setLightboxOpen(false);
+            setSelectedVariantId(null);
+            const existing = Array.isArray(product?.variants) ? product.variants : [];
+            if (existing.length) {
+                setColorVariants(existing);
+                setColorSource(product.colorSource || 'noco');
+                if (product.colorSource === 'tifawt') {
+                    const first = existing.find((row) => row.inStock !== false) || existing[0];
+                    if (first?.id != null) setSelectedVariantId(first.id);
+                }
+            } else {
+                setColorVariants([]);
+                setColorSource('');
+                const sku = product?.ref || product?.SKU;
+                if (sku) {
+                    fetchTifawtColors(sku).then((rows) => {
+                        if (!rows.length) return;
+                        setColorVariants(rows);
+                        setColorSource('tifawt');
+                        const first = rows.find((row) => row.inStock !== false) || rows[0];
+                        if (first?.id != null) setSelectedVariantId(first.id);
+                    }).catch(() => {});
+                }
+            }
         }
     }, [isOpen]);
 
@@ -316,6 +351,17 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                                     {arabicTitle}
                                 </p>
                             )}
+
+                            <ProductColorPicker
+                                variants={colorVariants}
+                                selectedId={selectedVariantId}
+                                onSelect={(id) => {
+                                    setSelectedVariantId(id);
+                                    setCurrentIndex(0);
+                                }}
+                                allowAll={colorSource !== 'tifawt'}
+                                dm={dm}
+                            />
 
                             {/* Rating display only — voting happens on the product page */}
                             <div className={`flex items-center justify-between gap-3 py-2 px-3 rounded-xl ${dm ? 'bg-gray-800/60' : 'bg-slate-50'}`}>

@@ -4,6 +4,7 @@
  */
 import axios from 'axios';
 import crypto from 'crypto';
+import fs from 'fs';
 import {
   listTifawtOrdersAdmin,
   markTifawtOrderReturned,
@@ -22,7 +23,7 @@ import {
   setJumiaProductActive,
   setJumiaProductStock,
 } from './jumiaClient.js';
-import { ensurePublicImagesForSku } from './jumiaPublicImages.js';
+import { ensurePublicImagesForSku, localPublicImagePath } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
 import {
   getBotSetting,
@@ -32,7 +33,12 @@ import {
   updateBotSettings,
 } from './runtimeSettings.js';
 import { registerInventoryAdminRoutes } from './inventoryAdmin.js';
-import { registerSocialPublishRoutes } from './socialPublish.js';
+import {
+  createAndPublishSocialPost,
+  registerSocialPublishRoutes,
+  socialPlatformStatus,
+} from './socialPublish.js';
+import { registerTelegramCatalogRoutes } from './telegramCatalogPoster.js';
 
 function adminPassword() {
   const configured = (
@@ -200,6 +206,67 @@ function buildSellerSku(raw) {
   const clean = String(raw || '').trim().replace(/^ERY[-_]?/i, '');
   if (!clean) return '';
   return clean.toUpperCase().startsWith('ERY-') ? clean.toUpperCase() : `ERY-${clean.toUpperCase()}`;
+}
+
+function publicSiteUrl() {
+  return (
+    process.env.PUBLIC_SITE_URL
+    || process.env.VITE_SITE_URL
+    || process.env.SITE_URL
+    || 'https://errayhany.com'
+  ).replace(/\/+$/, '');
+}
+
+function slugifyProductName(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .trim()
+    .replace(/[\s-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function stripHtml(value) {
+  return String(value || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function productDisplayTitle(row) {
+  return String(
+    row?.Arabic_Title
+    || row?.Title
+    || row?.title
+    || row?.French_Title
+    || row?.Woo_Title
+    || row?.SKU
+    || '',
+  ).trim();
+}
+
+function productLandingUrl(row) {
+  const sku = String(row?.SKU || row?.Ref || '').trim();
+  const title = productDisplayTitle(row) || sku;
+  const slug = slugifyProductName(title);
+  const encoded = encodeURIComponent(sku);
+  return slug
+    ? `${publicSiteUrl()}/p/${encoded}/${slug}`
+    : `${publicSiteUrl()}/p/${encoded}`;
+}
+
+function facebookCaptionFromRow(row) {
+  const title = productDisplayTitle(row);
+  const price = Number(row?.price || row?.Price || 0) || 0;
+  const short = stripHtml(row?.Short_AR || row?.short_ar || '').slice(0, 500);
+  const parts = [];
+  if (title) parts.push(title);
+  if (price > 0) parts.push(`السعر: ${price} DH`);
+  if (short && short !== title) parts.push(short);
+  parts.push('اطلب الآن من الموقع 👇');
+  return parts.join('\n\n');
 }
 
 function rowToJumiaPayload(row, nocodbUrl) {
@@ -507,6 +574,76 @@ export function registerAdminRoutes(app) {
     }
   });
 
+  /** Republish a current NocoDB product to the Facebook Page (and Instagram when configured). */
+  app.post('/api/admin/products/:sku/publish-facebook', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      const meta = socialPlatformStatus().meta;
+      if (!meta?.ready) {
+        return res.status(503).json({
+          ok: false,
+          error: 'meta_not_configured',
+          hint: meta?.hint || 'أضف META_PAGE_ID و META_PAGE_ACCESS_TOKEN على سيرفر البوت',
+        });
+      }
+      const row = await findNocoProductBySku(req.params.sku);
+      if (!row) {
+        return res.status(404).json({ ok: false, error: 'product_not_found' });
+      }
+      const sku = String(row.SKU || row.Ref || req.params.sku).trim();
+      const images = await ensurePublicImagesForSku(sku);
+      if (!images?.ok || !images.urls?.length) {
+        return res.status(400).json({
+          ok: false,
+          error: images?.error || 'missing_images',
+          hint: 'المنتج يحتاج صورة منشورة قبل النشر على فيسبوك.',
+        });
+      }
+      const imageUrl = images.urls[0];
+      const localPath = localPublicImagePath(sku, 1);
+      const landing = productLandingUrl(row);
+      const post = await createAndPublishSocialPost({
+        caption: facebookCaptionFromRow(row),
+        title: productDisplayTitle(row),
+        link: landing,
+        platforms: ['meta'],
+        sku,
+        media: {
+          url: imageUrl,
+          mime: 'image/jpeg',
+          path: fs.existsSync(localPath) ? localPath : undefined,
+        },
+      });
+      const facebook = post?.results?.meta?.facebook;
+      const instagram = post?.results?.meta?.instagram;
+      if (!post?.results?.meta?.ok && !facebook?.ok) {
+        return res.status(502).json({
+          ok: false,
+          error: post?.results?.meta?.error || facebook?.error || 'facebook_publish_failed',
+          hint: post?.results?.meta?.hint || facebook?.hint || meta.hint,
+          post,
+        });
+      }
+      return res.json({
+        ok: true,
+        sku,
+        link: landing,
+        facebook,
+        instagram,
+        postId: facebook?.id || post?.results?.meta?.id || post?.id,
+        post,
+      });
+    } catch (error) {
+      console.error('[admin] publish facebook failed:', error?.response?.data || error.details || error.message);
+      return res.status(error?.statusCode || 502).json({
+        ok: false,
+        error: error?.message || 'publish_failed',
+        hint: error?.hint,
+        details: error?.details || error?.response?.data || null,
+      });
+    }
+  });
+
   app.post('/api/admin/products/:sku/jumia-stock', async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
@@ -548,4 +685,5 @@ export function registerAdminRoutes(app) {
 
   registerInventoryAdminRoutes(app, { requireAdmin });
   registerSocialPublishRoutes(app, { requireAdmin });
+  registerTelegramCatalogRoutes(app, { requireAdmin });
 }

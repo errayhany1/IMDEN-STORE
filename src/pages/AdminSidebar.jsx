@@ -45,6 +45,12 @@ const sidebarGroups = [
         children: null,
     },
     {
+        id: 'telegram-catalog',
+        label: 'قناة تيليغرام',
+        icon: Bot,
+        children: null,
+    },
+    {
         id: 'bot-settings',
         label: 'مركز تحكم البوت',
         icon: Bot,

@@ -559,6 +559,7 @@ export async function createAndPublishSocialPost({
   title = '',
   platforms = [],
   media,
+  sku = '',
 } = {}) {
   const selected = [...new Set((platforms || []).map(String).filter((p) => PLATFORMS.includes(p)))];
   if (!selected.length) {
@@ -567,10 +568,10 @@ export async function createAndPublishSocialPost({
     throw err;
   }
 
-  const mediaUrl = media?.filename
-    ? publicMediaUrl(media.filename)
-    : (media?.url || '');
-  const mediaPath = media?.filename ? path.join(MEDIA_DIR, media.filename) : null;
+  const mediaUrl = String(media?.url || '').trim()
+    || (media?.filename ? publicMediaUrl(media.filename) : '');
+  const fromFilename = media?.filename ? path.join(MEDIA_DIR, media.filename) : '';
+  const mediaPath = [media?.path, fromFilename].find((p) => p && fs.existsSync(p)) || null;
   const mime = media?.mime || '';
 
   const needsVideo = selected.includes('tiktok') || selected.includes('youtube');
@@ -587,6 +588,7 @@ export async function createAndPublishSocialPost({
     caption: String(caption || '').trim(),
     title: String(title || '').trim(),
     link: String(link || `${SITE_URL}/vip`).trim(),
+    sku: String(sku || '').trim() || null,
     platforms: selected,
     media: media
       ? {

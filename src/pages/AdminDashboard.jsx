@@ -9,12 +9,14 @@ import JumiaOrdersTab from './admin/JumiaOrdersTab';
 import BotSettingsTab from './admin/BotSettingsTab';
 import InventorySyncTab from './admin/InventorySyncTab';
 import SocialPublishTab from './admin/SocialPublishTab';
+import TelegramCatalogTab from './admin/TelegramCatalogTab';
 import DropshipAdmin from '../components/admin/DropshipAdmin';
 import { createStoreOrderId, syncOrderSideEffects } from '../services/tifawt';
 import {
     createAdminSession,
     destroyAdminSession,
     publishProductToJumia,
+    publishProductToFacebook,
     setAdminPassword,
     verifyAdminSession,
 } from '../services/adminApi';
@@ -92,6 +94,7 @@ const AdminDashboard = () => {
     const [ozonFormData, setOzonFormData] = useState({ city: '', address: '', name: '', phone: '', price: '', note: '' });
     const [ozonLoading, setOzonLoading] = useState(false);
     const [publishingJumiaSku, setPublishingJumiaSku] = useState(null);
+    const [publishingFacebookSku, setPublishingFacebookSku] = useState(null);
 
     useEffect(() => {
         initTelegramWebApp();
@@ -741,7 +744,11 @@ const AdminDashboard = () => {
                             <Lock size={36} className="text-white" />
                         </div>
                         <h2 className={`text-2xl font-bold ${dm ? 'text-white' : 'text-slate-900'}`}>Errayhany Admin</h2>
-                        <p className={`text-sm mt-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>لوحة إدارة الطلبات والمخازن</p>
+                        <p className={`text-sm mt-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                            {typeof window !== 'undefined' && window.Telegram?.WebApp?.initData
+                                ? 'ويب آب تيليغرام — لوحة الإدارة'
+                                : 'لوحة إدارة الطلبات والمخازن'}
+                        </p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -795,6 +802,7 @@ const AdminDashboard = () => {
                             products: 'المنتجات',
                             'inventory-sync': 'مطابقة Tifawt',
                             'social-publish': 'نشر المحتوى',
+                            'telegram-catalog': 'قناة تيليغرام',
                             dropship: 'الدروبشيبينغ',
                             returns: 'مرتجعات الموقع',
                             'bot-settings': 'مركز تحكم البوت',
@@ -1244,7 +1252,7 @@ const AdminDashboard = () => {
                                                                 onClick={async () => {
                                                                     const sku = p.SKU || p.Ref;
                                                                     if (!sku) return alert('لا يوجد مرجع للمنتج');
-                                                                    if (!window.confirm(`نشر ${sku} على Jumia بالوصف والصور الحالية؟\n\nملاحظة: إعادة التوليد من التيليجرام تنشر على Jumia تلقائياً أيضاً.`)) return;
+                                                                    if (!window.confirm(`نشر ${sku} على Jumia بالوصف والصور الحالية؟`)) return;
                                                                     setPublishingJumiaSku(sku);
                                                                     try {
                                                                         const result = await publishProductToJumia(sku);
@@ -1260,6 +1268,47 @@ const AdminDashboard = () => {
                                                                 title="نشر المنتج الحالي على Jumia"
                                                             >
                                                                 {publishingJumiaSku === (p.SKU || p.Ref) ? '...' : 'Jumia'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={publishingFacebookSku === (p.SKU || p.Ref)}
+                                                                onClick={async () => {
+                                                                    const sku = p.SKU || p.Ref;
+                                                                    if (!sku) return alert('لا يوجد مرجع للمنتج');
+                                                                    if (!window.confirm(`نشر ${sku} على صفحة فيسبوك بالعنوان والسعر والصورة الحالية؟\n\nسينشر أيضاً على إنستغرام إذا كان الحساب مربوطاً.`)) return;
+                                                                    setPublishingFacebookSku(sku);
+                                                                    try {
+                                                                        const result = await publishProductToFacebook(sku);
+                                                                        if (!result?.ok) {
+                                                                            throw new Error(
+                                                                                result?.hint
+                                                                                || result?.error
+                                                                                || 'publish_failed',
+                                                                            );
+                                                                        }
+                                                                        const fbOk = result.facebook?.ok !== false;
+                                                                        const ig = result.instagram;
+                                                                        const igLine = ig?.ok
+                                                                            ? '\nإنستغرام: نُشر'
+                                                                            : (ig?.skipped || !ig
+                                                                                ? ''
+                                                                                : `\nإنستغرام: ${ig.hint || ig.error || 'لم يكتمل'}`);
+                                                                        alert(
+                                                                            fbOk
+                                                                                ? `تم النشر على فيسبوك: ${result.sku || sku}${igLine}`
+                                                                                : `النشر الجزئي${igLine}`,
+                                                                        );
+                                                                    } catch (e) {
+                                                                        const data = e?.response?.data;
+                                                                        alert(data?.hint || data?.error || e.message || 'فشل النشر على فيسبوك');
+                                                                    } finally {
+                                                                        setPublishingFacebookSku(null);
+                                                                    }
+                                                                }}
+                                                                className="px-2 py-1.5 rounded-lg text-xs font-bold transition-all border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 whitespace-nowrap"
+                                                                title="إعادة نشر المنتج الحالي على فيسبوك"
+                                                            >
+                                                                {publishingFacebookSku === (p.SKU || p.Ref) ? '...' : 'فيسبوك'}
                                                             </button>
                                                             <button 
                                                                 onClick={() => {
@@ -1426,6 +1475,10 @@ const AdminDashboard = () => {
                 {/* ══════ SOCIAL PUBLISH ══════ */}
                 {activeTab === 'social-publish' && (
                     <SocialPublishTab dm={dm} />
+                )}
+
+                {activeTab === 'telegram-catalog' && (
+                    <TelegramCatalogTab dm={dm} />
                 )}
 
                 {activeTab === 'dropship' && (

@@ -377,6 +377,10 @@ export async function enrichProduct({
   cachedFacts = null,
   cacheSourceHash = '',
   preparedVisionBuffers = null,
+  /** Skip Gemini/Qwen studio images and local cutouts. Text agent still runs. */
+  skipAiImages = false,
+  /** Regenerate title/description only; do not upload or replace gallery images. */
+  copyOnly = false,
 }) {
   const requestedAmazonUrls = Array.from(new Set(
     [amazonUrl, ...(Array.isArray(amazonUrls) ? amazonUrls : [])]
@@ -398,7 +402,7 @@ export async function enrichProduct({
   // Upload at most one DISPLAY original for gallery Image2 — never packaging backs.
   let originalUploads = [];
   let realPairs = [];
-  if (publishRealOriginal && galleryRealBuffers[0]) {
+  if (!copyOnly && publishRealOriginal && galleryRealBuffers[0]) {
     realPairs = await uploadBufferPairs(
       uploadToNocoDB,
       galleryRealBuffers.slice(0, 1),
@@ -585,7 +589,7 @@ export async function enrichProduct({
       ],
       hasAiImages: false,
       amazonSourceBuffers: amazonUrl ? amazonBuffers : [],
-      amazonAiChoiceRequired: Boolean(amazonUrl),
+      amazonAiChoiceRequired: Boolean(amazonUrl) && !skipAiImages && !copyOnly,
       amazonDescriptionImageCount: amazonDescriptionImageUrls.length,
       amazonJumiaSources,
     };
@@ -657,7 +661,7 @@ export async function enrichProduct({
   // The image model still receives references, but there is exactly one facts
   // extraction and one studio generation per product.
   const imagesPromise = copyPromise.then(async () => {
-    if (amazonUrl) return [];
+    if (skipAiImages || copyOnly || amazonUrl) return [];
     try {
       const aiBuffers = await runImagesOnce(displayName);
       const aiOnly = (aiBuffers || []).filter(Boolean).slice(0, 1);
@@ -677,7 +681,7 @@ export async function enrichProduct({
   });
 
   const cutoutPromise = (async () => {
-    if (amazonUrl) return [];
+    if (skipAiImages || copyOnly || amazonUrl) return [];
     try {
       const source = amazonBuffers[0] || galleryRealBuffers[0] || visionPrimary;
       const cutout = await createRealProductCutout(source, { price, oldPrice });
@@ -913,7 +917,7 @@ export async function enrichProduct({
     hasSpecsImage,
     detectedColorVariants: detectedColors,
     amazonSourceBuffers: amazonUrl ? amazonBuffers : [],
-    amazonAiChoiceRequired: Boolean(amazonUrl),
+    amazonAiChoiceRequired: Boolean(amazonUrl) && !skipAiImages && !copyOnly,
     amazonDescriptionImageCount: amazonDescriptionImageUrls.length,
     amazonJumiaSources,
     enrichmentCache,

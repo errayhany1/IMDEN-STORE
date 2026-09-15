@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Package, Clock, Truck, CheckCircle, XCircle, ArrowRight, Loader2,
     ShoppingBag, User, LogOut, ChevronDown, ChevronUp, ShieldCheck,
-    RotateCcw, MapPin,
+    RotateCcw, MapPin, Mail,
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import { auth } from '../services/firebase';
@@ -19,6 +19,7 @@ import {
 } from '../services/customerAccount';
 import { saveCloudAccount } from '../services/cloudAccount';
 import { fetchAccountOrders } from '../services/orderTracking';
+import { upsertOffersLead } from '../services/offersLead';
 
 const statusStyles = {
     pending: { icon: Clock, border: 'border-yellow-500/30', bg: 'from-yellow-500/20 to-amber-500/20', text: 'text-yellow-500', label: 'قيد المراجعة', step: 1 },
@@ -206,6 +207,28 @@ const AccountPage = () => {
         window.location.href = '/';
     };
 
+    const setOffersOptIn = async (offersOptIn) => {
+        const nextInfo = { ...customerInfo, uid: user.uid, offersOptIn };
+        setCustomerInfo(nextInfo);
+        try {
+            await Promise.all([
+                saveCloudAccount(user, {
+                    ...useStore.getState(),
+                    customerInfo: nextInfo,
+                }),
+                upsertOffersLead(user, {
+                    name: nextInfo.name,
+                    phone: nextInfo.phone,
+                    source: 'account_preference',
+                    offersOptIn,
+                }),
+            ]);
+        } catch (error) {
+            console.error('Could not save offer preference:', error);
+            setAccountError('تعذر حفظ تفضيل الرسائل حالياً. حاول مرة أخرى.');
+        }
+    };
+
     if (!user) {
         return (
             <div className={`min-h-screen ${dm ? 'bg-gray-950 text-white' : 'bg-gradient-to-br from-slate-50 to-blue-50 text-slate-900'}`}>
@@ -327,6 +350,20 @@ const AccountPage = () => {
                         </div>
                     ))}
                 </div>
+
+                <label className={`flex items-center gap-3 rounded-2xl border p-4 cursor-pointer ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
+                    <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-blue-600"
+                        checked={customerInfo?.offersOptIn !== false}
+                        onChange={(event) => setOffersOptIn(event.target.checked)}
+                    />
+                    <Mail size={18} className="text-blue-500 shrink-0" />
+                    <span className="min-w-0">
+                        <span className="block text-sm font-bold">أرسل لي المنتجات والعروض الجديدة</span>
+                        <span className={`block mt-0.5 text-[11px] ${dm ? 'text-gray-500' : 'text-slate-400'}`}>رسالة واحدة كل 3 أيام كحد أقصى. يمكنك إيقافها في أي وقت.</span>
+                    </span>
+                </label>
 
                 <div className="flex items-center justify-between">
                     <h3 className="text-base font-bold flex items-center gap-2">

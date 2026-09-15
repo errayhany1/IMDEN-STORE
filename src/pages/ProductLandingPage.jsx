@@ -31,6 +31,7 @@ import ImageModal from '../components/ImageModal';
 import ProductRatingStars from '../components/ProductRatingStars';
 import RelatedProducts from '../components/RelatedProducts';
 import AnnouncementTicker from '../components/AnnouncementTicker';
+import ProductColorPicker, { cartProductFromVariant } from '../components/ProductColorPicker';
 import {
   listItemsFromHtml,
   productDescriptionHtml,
@@ -221,6 +222,14 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const selectedVariant = variants.find(
     (variant) => String(variant.id) === String(selectedVariantId),
   ) || null;
+
+  useEffect(() => {
+    if (!variants.length || selectedVariantId != null) return undefined;
+    if (product?.colorSource !== 'tifawt') return undefined;
+    const first = variants.find((variant) => variant.inStock !== false) || variants[0];
+    if (first?.id != null) setSelectedVariantId(first.id);
+    return undefined;
+  }, [variants, selectedVariantId, product?.colorSource]);
   const title = isFr
     ? (od.French_Title || od.Woo_Title || product?.name || sku)
     : (od.Arabic_Title || od.Title || product?.name || sku);
@@ -349,7 +358,8 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     return rows;
   }, [product, od, isFr]);
 
-  const available = product?.isAvailable !== false;
+  const available = product?.isAvailable !== false
+    && (selectedVariant ? selectedVariant.inStock !== false : true);
   const dm = darkMode;
 
   const backHref = (() => {
@@ -447,18 +457,8 @@ const ProductLandingPage = ({ sku: skuProp }) => {
 
   const handleAdd = () => {
     if (!product || !available) return;
-    const cartProduct = selectedVariant
-      ? {
-        ...product,
-        id: `${product.id}-color-${selectedVariant.code || selectedVariant.id}`,
-        ref: product.ref,
-        name: `${product.name} — ${isFr ? selectedVariant.colorFr : selectedVariant.colorAr}`,
-        image: selectedVariant.images[0] || product.image,
-        images: selectedVariant.images,
-        selectedColor: isFr ? selectedVariant.colorFr : selectedVariant.colorAr,
-        colorCode: selectedVariant.code,
-      }
-      : product;
+    if (product.colorSource === 'tifawt' && variants.length && !selectedVariant) return;
+    const cartProduct = cartProductFromVariant(product, selectedVariant, isFr);
     addToCart(cartProduct);
     setAddedFlash(true);
     setTimeout(() => setAddedFlash(false), 1600);
@@ -835,44 +835,17 @@ const ProductLandingPage = ({ sku: skuProp }) => {
             )}
 
             {variants.length > 0 && (
-              <div className="mt-4">
-                <p className={`text-xs font-semibold mb-2 ${muted}`}>
-                  {isFr ? 'Choisir la couleur' : 'اختر اللون'}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedVariantId(null);
-                      setActiveImg(0);
-                    }}
-                    className={`px-3 py-2 rounded-xl border text-xs font-semibold transition ${
-                      selectedVariantId == null
-                        ? 'border-primary text-primary bg-primary/10'
-                        : `${line} ${muted}`
-                    }`}
-                  >
-                    {isFr ? 'Toutes les couleurs' : 'كل الألوان'}
-                  </button>
-                  {variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedVariantId(variant.id);
-                        setActiveImg(0);
-                      }}
-                      className={`px-3 py-2 rounded-xl border text-xs font-semibold transition ${
-                        String(selectedVariantId) === String(variant.id)
-                          ? 'border-primary text-primary bg-primary/10'
-                          : `${line} ${muted}`
-                      }`}
-                    >
-                      {isFr ? variant.colorFr : variant.colorAr}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ProductColorPicker
+                variants={variants}
+                selectedId={selectedVariantId}
+                onSelect={(id) => {
+                  setSelectedVariantId(id);
+                  setActiveImg(0);
+                }}
+                allowAll={product?.colorSource !== 'tifawt'}
+                isFr={isFr}
+                dm={dm}
+              />
             )}
           </section>
 

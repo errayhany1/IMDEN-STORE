@@ -250,7 +250,8 @@ function App() {
           name: merged.customerInfo?.name,
           phone: merged.customerInfo?.phone,
           source: 'auth',
-          offersOptIn: true,
+          // Never overwrite a shopper's previous unsubscribe choice on login.
+          offersOptIn: merged.customerInfo?.offersOptIn !== false,
         }).catch((error) => {
           console.error('Offers lead save failed:', error);
         });

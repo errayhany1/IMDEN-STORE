@@ -190,6 +190,91 @@ export const BOT_SETTINGS_SCHEMA = {
     description: 'الكمية المرسلة عند جعل المنتج متوفراً.',
     default: numberEnv('JUMIA_DEFAULT_STOCK', 100), min: 0, max: 10000, step: 1,
   },
+  tgCatalogEnabled: {
+    group: 'telegramCatalog', type: 'boolean', label: 'تشغيل نشر قناة تيليغرام',
+    description: 'نشر منتج منشور من NocoDB تلقائياً على قنوات الجملة.',
+    default: false,
+  },
+  tgCatalogIntervalHours: {
+    group: 'telegramCatalog', type: 'number', label: 'الفترة بين منشورين (ساعات)',
+    description: 'كم ساعة بين كل منتج والآخر.',
+    default: 1, min: 1, max: 24, step: 1,
+  },
+  tgCatalogStartHour: {
+    group: 'telegramCatalog', type: 'number', label: 'ساعة البداية',
+    description: 'لا يُنشر قبل هذه الساعة (توقيت الدار البيضاء).',
+    default: 8, min: 0, max: 23, step: 1,
+  },
+  tgCatalogEndHour: {
+    group: 'telegramCatalog', type: 'number', label: 'ساعة التوقف',
+    description: 'لا يُنشر بعد هذه الساعة (توقيت الدار البيضاء).',
+    default: 23, min: 0, max: 23, step: 1,
+  },
+  tgCatalogImdenEnabled: {
+    group: 'telegramCatalog', type: 'boolean', label: 'قناة IMDEN',
+    description: 'إرسال المنشور إلى قناة IMDEN TECNOLOGY.',
+    default: true,
+  },
+  tgCatalogEcomEnabled: {
+    group: 'telegramCatalog', type: 'boolean', label: 'قناة ECOM BJMLA',
+    description: 'إرسال المنشور إلى قناة ECOM BJMLA.',
+    default: true,
+  },
+  tgCatalogImdenChatId: {
+    group: 'telegramCatalog', type: 'text', label: 'معرف قناة IMDEN',
+    description: 'Chat ID لقناة IMDEN TECNOLOGY.',
+    default: textEnv('TELEGRAM_CATALOG_IMDEN_CHAT_ID', '-1003623949813'),
+  },
+  tgCatalogEcomChatId: {
+    group: 'telegramCatalog', type: 'text', label: 'معرف قناة ECOM',
+    description: 'Chat ID لقناة ECOM BJMLA.',
+    default: textEnv('TELEGRAM_CATALOG_ECOM_CHAT_ID', '-1001175162895'),
+  },
+  tgCatalogImdenPromoEvery: {
+    group: 'telegramCatalog', type: 'number', label: 'رسالة الجملة IMDEN كل',
+    description: 'إرسال نص الجملة عندما يكون رقم الصف قابلاً للقسمة على هذا العدد.',
+    default: 12, min: 0, max: 100, step: 1,
+  },
+  tgCatalogEcomPromoEvery: {
+    group: 'telegramCatalog', type: 'number', label: 'رسالة الجملة ECOM كل',
+    description: 'إرسال نص الجملة عندما يكون رقم الصف قابلاً للقسمة على هذا العدد.',
+    default: 8, min: 0, max: 100, step: 1,
+  },
+  tgCatalogWhatsapp: {
+    group: 'telegramCatalog', type: 'text', label: 'واتساب الجملة',
+    description: 'رقم واتساب في رسالة الجملة، دون +. مثال: 212664630566',
+    default: textEnv('TELEGRAM_CATALOG_WHATSAPP', '212664630566'),
+  },
+  tgCatalogSiteUrl: {
+    group: 'telegramCatalog', type: 'text', label: 'رابط الموقع في الرسالة',
+    description: 'الرابط الظاهر تحت صورة المنتج وفي رسالة الجملة.',
+    default: textEnv('PUBLIC_SITE_URL', 'https://errayhany.com'),
+  },
+  tgCatalogPromoText: {
+    group: 'telegramCatalog', type: 'textarea', label: 'نص رسالة الجملة',
+    description: 'يُرسل أحياناً بعد صورة المنتج. اتركه فارغاً للنص الافتراضي.',
+    default: '',
+  },
+  tgCatalogMaxImages: {
+    group: 'telegramCatalog', type: 'number', label: 'عدد صور المنشور',
+    description: 'كم صورة تُرسل مع كل منتج (من 1 إلى 8).',
+    default: 3, min: 1, max: 8, step: 1,
+  },
+  tgCatalogIncludeName: {
+    group: 'telegramCatalog', type: 'boolean', label: 'إظهار اسم المنتج',
+    description: 'إن أُوقف يُنشر الثمن والمرجع فقط كما في n8n.',
+    default: false,
+  },
+  tgCatalogLastRunAt: {
+    group: 'telegramCatalog', type: 'text', label: 'آخر نشر تلقائي',
+    description: 'يُحفظ تلقائياً حتى لا يتكرر النشر بعد إعادة تشغيل السيرفر.',
+    default: '',
+  },
+  tgCatalogLastSku: {
+    group: 'telegramCatalog', type: 'text', label: 'آخر مرجع نُشر',
+    description: 'آخر SKU أُرسل إلى قنوات تيليغرام.',
+    default: '',
+  },
 };
 
 let cache = null;
@@ -423,6 +508,12 @@ export function startBotSettingsSync({ publishConnections = false, intervalMs = 
 export function getBotConnectionStatus() {
   return {
     telegram: Boolean(process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN),
+    telegramCatalog: Boolean(
+      process.env.TELEGRAM_CATALOG_IMDEN_BOT_TOKEN
+      || process.env.TELEGRAM_CATALOG_ECOM_BOT_TOKEN
+      || process.env.TELEGRAM_BOT_TOKEN
+      || process.env.VITE_TELEGRAM_BOT_TOKEN
+    ),
     nocodb: Boolean(
       (process.env.NOCODB_URL || process.env.VITE_NOCODB_URL)
       && (process.env.NOCODB_API_TOKEN || process.env.VITE_NOCODB_API_TOKEN)

@@ -116,10 +116,26 @@ export const fetchProductVariants = async (productId) => {
     }
 };
 
+export const fetchTifawtColors = async (sku) => {
+    if (!sku) return [];
+    try {
+        const response = await fetch(`/bot-api/api/catalog/colors?sku=${encodeURIComponent(sku)}`);
+        const data = await response.json();
+        return Array.isArray(data?.variants) ? data.variants : [];
+    } catch (error) {
+        console.warn('fetchTifawtColors failed', error?.message || error);
+        return [];
+    }
+};
+
 const withProductVariants = async (product) => {
-    if (!product?.id) return product;
-    const variants = await fetchProductVariants(product.id);
-    return variants.length ? { ...product, variants } : product;
+    if (!product?.id && !product?.ref) return product;
+    const [tifawt, noco] = await Promise.all([
+        fetchTifawtColors(product.ref || product.SKU || ''),
+        product?.id ? fetchProductVariants(product.id) : Promise.resolve([]),
+    ]);
+    if (tifawt.length) return { ...product, variants: tifawt, colorSource: 'tifawt' };
+    return noco.length ? { ...product, variants: noco, colorSource: 'noco' } : product;
 };
 
 const PRIMARY_IMAGE_MODE_KEY = 'ery_primary_image_mode';

@@ -112,6 +112,7 @@ export const loadCloudAccount = async user => {
             address: data.address || '',
             normalizedPhone: data.normalizedPhone || '',
             phoneVerified: Boolean(data.phoneVerified || user.phoneNumber),
+            offersOptIn: data.offersOptIn !== false,
         },
         cart: parseItems(data.cartJson),
         wishlist: parseItems(data.wishlistJson),

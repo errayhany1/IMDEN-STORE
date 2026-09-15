@@ -91,6 +91,11 @@ function stableCacheFileName(sku, index) {
   return `p-${safeSkuPart(sku)}-${Math.max(1, Number(index) || 1)}.jpg`;
 }
 
+/** Local JPEG cache path used by /public-images/p/{sku}/{n}.jpg */
+export function localPublicImagePath(sku, index = 1) {
+  return path.join(CACHE_DIR, stableCacheFileName(sku, index));
+}
+
 async function ensureCacheDir() {
   await fs.mkdir(CACHE_DIR, { recursive: true });
 }

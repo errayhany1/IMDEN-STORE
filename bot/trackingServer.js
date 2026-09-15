@@ -22,8 +22,13 @@ import {
   normalizeJumiaOrderId,
 } from './jumiaClient.js';
 import { registerAdminRoutes } from './adminRoutes.js';
+import { startTelegramCatalogScheduler } from './telegramCatalogPoster.js';
+import { setupAdminWebAppMenus } from './adminWebApp.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { registerProductOgRoutes } from './productOgShare.js';
+import { registerImageSearchRoutes } from './imageSearch.js';
+import { startProductDigest } from './productDigestEmail.js';
+import { registerTifawtColorRoutes } from './tifawtProductColors.js';
 import { resolveTifawtOrderSku } from './tifawtSku.js';
 import { getBotSetting, startBotSettingsSync } from './runtimeSettings.js';
 import {
@@ -47,6 +52,8 @@ const app = express();
 // Public Jumia images: register before the small JSON body limit so uploads can be multi-MB.
 registerPublicImageRoutes(app);
 registerProductOgRoutes(app);
+registerImageSearchRoutes(app);
+registerTifawtColorRoutes(app);
 app.use(express.json({ limit: '256kb' }));
 registerAdminRoutes(app);
 
@@ -240,7 +247,7 @@ async function notifyTelegramJumiaOrder(mapped, syncResult) {
     mapped.address ? `🏠 ${mapped.address}` : '',
     lines.length ? `📦 المنتجات:\n${lines.join('\n')}` : '',
     '',
-    'أوامر البوت: 📦 تجهيز شحن Jumia / ❌ إلغاء طلب Jumia',
+    'أوامر البوت: 📦 تجهيز شحن Jumia / 🏷️ ملصق شحن Jumia',
   ].filter(Boolean).join('\n');
 
   try {
@@ -369,7 +376,7 @@ app.post('/api/jumia/webhook', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'missing_order_id' });
     }
 
-    // StatusChanged etc. are acknowledged without creating a duplicate lead.
+    // Other status events are acknowledged without creating a duplicate lead.
     if (!isJumiaOrderCreatedEvent(body)) {
       return res.status(200).json({ ok: true, ignored: true, orderId });
     }
@@ -550,3 +557,9 @@ if (JUMIA_POLL_MS > 0 && isJumiaConfigured()) {
   setTimeout(poll, 15_000);
   setInterval(poll, JUMIA_POLL_MS);
 }
+
+startTelegramCatalogScheduler();
+startProductDigest();
+setupAdminWebAppMenus().catch((error) => {
+  console.warn('[admin-webapp] setup failed:', error?.message || error);
+});
