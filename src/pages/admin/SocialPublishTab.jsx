@@ -49,6 +49,17 @@ https://errayhany.com/vip
 
 اشترك في القناة ليصلك كل جديد.`;
 
+const FR_DESC_TEMPLATE = `Grossiste électronique Errayhany — Casablanca, Maroc.
+
+Chargeurs · écouteurs · câbles · accessoires téléphone
+Vente en gros uniquement · livraison toutes villes en moins de 48h
+
+Commandez :
+https://errayhany.com/vip
+WhatsApp : ‎0664 630 566
+
+Abonnez-vous pour les nouveautés.`;
+
 function metaResultLines(r) {
   if (!r) return [];
   const lines = [];
@@ -117,6 +128,11 @@ const SocialPublishTab = ({ dm }) => {
   const [title, setTitle] = useState('');
   const [youtubeDescription, setYoutubeDescription] = useState('');
   const [facebookDescription, setFacebookDescription] = useState('');
+  const [titleFr, setTitleFr] = useState('');
+  const [youtubeDescriptionFr, setYoutubeDescriptionFr] = useState('');
+  const [facebookDescriptionFr, setFacebookDescriptionFr] = useState('');
+  const [callToAction, setCallToAction] = useState(true);
+  const [recordingLocation, setRecordingLocation] = useState('Casablanca, Morocco');
   const [tags, setTags] = useState(DEFAULT_TAGS);
   const [privacyStatus, setPrivacyStatus] = useState('public');
   const [categoryId, setCategoryId] = useState('28');
@@ -245,6 +261,11 @@ const SocialPublishTab = ({ dm }) => {
   const resetReachFields = () => {
     setYoutubeDescription('');
     setFacebookDescription('');
+    setTitleFr('');
+    setYoutubeDescriptionFr('');
+    setFacebookDescriptionFr('');
+    setCallToAction(true);
+    setRecordingLocation('Casablanca, Morocco');
     setTags(DEFAULT_TAGS);
     setPrivacyStatus('public');
     setCategoryId('28');
@@ -293,6 +314,11 @@ const SocialPublishTab = ({ dm }) => {
         youtubeDescription: youtubeDescription.trim(),
         facebookDescription: facebookDescription.trim(),
         facebookTitle: title.trim(),
+        titleFr: titleFr.trim(),
+        youtubeDescriptionFr: youtubeDescriptionFr.trim(),
+        facebookDescriptionFr: facebookDescriptionFr.trim(),
+        callToAction,
+        recordingLocation,
         tags,
         categoryId,
         privacyStatus,
@@ -540,6 +566,58 @@ const SocialPublishTab = ({ dm }) => {
           </div>
         </div>
 
+        <div className={`mt-4 rounded-2xl border p-4 space-y-3 ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
+          <div>
+            <p className="font-bold text-sm">النسخة الفرنسية — تزيد الظهور في بحث المغرب</p>
+            <p className={`text-[11px] mt-1 ${muted}`}>
+              يوتيوب يخزّنها كترجمة fr. فيسبوك وإنستغرام يضعانها تحت النص العربي.
+            </p>
+          </div>
+          <div>
+            <label className={`block text-xs font-bold mb-1 ${muted}`}>عنوان يوتيوب بالفرنسية · {titleFr.length}/100</label>
+            <input
+              value={titleFr}
+              onChange={(e) => setTitleFr(e.target.value.slice(0, 100))}
+              placeholder="Chargeurs en gros Casablanca — Errayhany Grossiste"
+              className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+              dir="ltr"
+            />
+          </div>
+          <div className="grid lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className={`text-xs font-bold ${muted}`}>وصف يوتيوب FR · {youtubeDescriptionFr.length}/5000</label>
+                <button
+                  type="button"
+                  onClick={() => setYoutubeDescriptionFr(FR_DESC_TEMPLATE)}
+                  className="text-[11px] font-bold text-blue-500 hover:underline"
+                >
+                  املأ قالباً جاهزاً
+                </button>
+              </div>
+              <textarea
+                value={youtubeDescriptionFr}
+                onChange={(e) => setYoutubeDescriptionFr(e.target.value.slice(0, 5000))}
+                rows={5}
+                placeholder="Description YouTube en français (recherche + suggestions)."
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[110px] ${input}`}
+                dir="ltr"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className={`block text-xs font-bold ${muted}`}>وصف فيسبوك / إنستغرام FR · {facebookDescriptionFr.length}/2200</label>
+              <textarea
+                value={facebookDescriptionFr}
+                onChange={(e) => setFacebookDescriptionFr(e.target.value.slice(0, 2200))}
+                rows={5}
+                placeholder="Texte plus court pour Facebook et Instagram."
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm resize-y min-h-[110px] ${input}`}
+                dir="ltr"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className={`mt-4 rounded-2xl border ${dm ? 'border-gray-800' : 'border-slate-200'}`}>
           <button
             type="button"
@@ -608,6 +686,26 @@ const SocialPublishTab = ({ dm }) => {
                   />
                   محتوى للأطفال (يقيّد التوصيات — اتركه مغلقاً)
                 </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={callToAction}
+                    onChange={(e) => setCallToAction(e.target.checked)}
+                  />
+                  زر «تسوّق الآن» على فيسبوك
+                </label>
+              </div>
+
+              <div>
+                <label className={`block text-xs font-bold mb-1 ${muted}`}>موقع تصوير يوتيوب</label>
+                <input
+                  value={recordingLocation}
+                  onChange={(e) => setRecordingLocation(e.target.value)}
+                  placeholder="Casablanca, Morocco"
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm ${input}`}
+                  dir="ltr"
+                />
+                <p className={`text-[11px] mt-1 ${muted}`}>يساعد البحث المحلي. اتركه فارغاً لتعطيله.</p>
               </div>
 
               <div className={`h-px ${dm ? 'bg-gray-800' : 'bg-slate-200'}`} />

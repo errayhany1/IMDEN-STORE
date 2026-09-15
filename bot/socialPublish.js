@@ -81,6 +81,19 @@ export function withHashtags(text, tags) {
   return [body, hashes].filter(Boolean).join('\n\n');
 }
 
+export function bilingualText(primary, secondary) {
+  const a = String(primary || '').trim();
+  const b = String(secondary || '').trim();
+  if (a && b) return `${a}\n\n---\n\n${b}`;
+  return a || b;
+}
+
+function shopNowCta(link, enabled) {
+  const href = String(link || '').trim();
+  if (!enabled || !href) return null;
+  return { type: 'SHOP_NOW', value: { link: href } };
+}
+
 function resolveMediaFile(media) {
   if (!media) return { mediaUrl: '', mediaPath: null, mime: '' };
   const mediaUrl = String(media?.url || '').trim()
@@ -226,7 +239,7 @@ async function waitIgContainerReady(containerId, token, { attempts = 24, delayMs
   return { ok: false, error: 'instagram_container_timeout' };
 }
 
-async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }) {
+async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token, coverTimestampMs }) {
   if (!mediaUrl || (!isImageMime(mime) && !isVideoMime(mime))) {
     return {
       ok: false,
@@ -251,6 +264,7 @@ async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }
   }
 
   const message = [caption, link].filter(Boolean).join('\n\n').slice(0, 2200);
+  const thumbOffset = Number(coverTimestampMs);
   const createBody = isVideoMime(mime)
     ? {
         media_type: 'REELS',
@@ -264,6 +278,9 @@ async function publishInstagram({ caption, link, mediaUrl, mime, pageId, token }
         caption: message,
         access_token: token,
       };
+  if (isVideoMime(mime) && Number.isFinite(thumbOffset) && thumbOffset >= 0) {
+    createBody.thumb_offset = Math.round(thumbOffset);
+  }
 
   const created = await axios.post(
     `https://graph.facebook.com/v21.0/${igUserId}/media`,
@@ -319,13 +336,19 @@ async function publishFacebook({
   thumbnailPath,
   thumbnailMime,
   tags,
+  facebookDescriptionFr,
+  callToAction,
 }) {
   const message = withHashtags(
-    [facebookDescription || caption, link].filter(Boolean).join('\n\n'),
+    bilingualText(
+      [facebookDescription || caption, link].filter(Boolean).join('\n\n'),
+      facebookDescriptionFr,
+    ),
     tags,
   );
   const hasLocal = mediaPath && fs.existsSync(mediaPath);
   const hasThumb = thumbnailPath && fs.existsSync(thumbnailPath);
+  const cta = shopNowCta(link, callToAction !== false);
 
   // Prefer multipart from disk so Meta never has to fetch our public URL
   // (crawler timeouts / transient 404s caused "Missing or invalid image file").
@@ -336,6 +359,7 @@ async function publishFacebook({
       form.append('source', new Blob([buf], { type: mime || 'video/mp4' }), path.basename(mediaPath));
       form.append('description', message);
       if (facebookTitle) form.append('title', String(facebookTitle).slice(0, 255));
+      if (cta) form.append('call_to_action', JSON.stringify(cta));
       if (hasThumb) {
         const thumbBuf = fs.readFileSync(thumbnailPath);
         form.append(
@@ -361,6 +385,7 @@ async function publishFacebook({
         file_url: mediaUrl,
         description: message,
         title: facebookTitle || undefined,
+        call_to_action: cta || undefined,
         access_token: token,
       },
       { timeout: 180000, validateStatus: () => true },
@@ -421,6 +446,9 @@ async function publishMeta({
   thumbnailPath,
   thumbnailMime,
   tags,
+  facebookDescriptionFr,
+  callToAction,
+  coverTimestampMs,
 }) {
   const pageId = process.env.META_PAGE_ID?.trim();
   const token = process.env.META_PAGE_ACCESS_TOKEN?.trim();
@@ -441,14 +469,19 @@ async function publishMeta({
     thumbnailPath,
     thumbnailMime,
     tags,
+    facebookDescriptionFr,
+    callToAction,
   });
 
   let instagram = null;
-  const igCaption = withHashtags(facebookDescription || caption, tags);
+  const igCaption = withHashtags(
+    bilingualText(facebookDescription || caption, facebookDescriptionFr),
+    tags,
+  );
   // Instagram Graph API requires a public URL (image_url / video_url).
   if (mediaUrl && (isImageMime(mime) || isVideoMime(mime))) {
     instagram = await publishInstagram({
-      caption: igCaption, link, mediaUrl, mime, pageId, token,
+      caption: igCaption, link, mediaUrl, mime, pageId, token, coverTimestampMs,
     });
   } else if (facebook.ok) {
     instagram = {
@@ -608,6 +641,9 @@ async function publishYouTube({
   thumbnailMime,
   language,
   notifySubscribers,
+  titleFr,
+  youtubeDescriptionFr,
+  recordingLocation,
 }) {
   const refresh = process.env.YOUTUBE_REFRESH_TOKEN?.trim();
   const clientId = process.env.YOUTUBE_CLIENT_ID?.trim();
@@ -672,6 +708,27 @@ async function publishYouTube({
       notifySubscribers: notifySubscribers !== false,
     },
   };
+  const loc = String(recordingLocation || '').trim();
+  if (loc) {
+    metadata.recordingDetails = { locationDescription: loc.slice(0, 120) };
+  }
+  const frTitle = String(titleFr || '').trim().slice(0, 100);
+  const frDesc = withHashtags(
+    [youtubeDescriptionFr, link].filter(Boolean).join('\n\n'),
+    tags,
+  ).slice(0, 5000);
+  if (frTitle || String(youtubeDescriptionFr || '').trim()) {
+    metadata.localizations = {
+      fr: {
+        title: frTitle || videoTitle,
+        description: frDesc || description,
+      },
+    };
+  }
+
+  const parts = ['snippet', 'status'];
+  if (metadata.localizations) parts.push('localizations');
+  if (metadata.recordingDetails) parts.push('recordingDetails');
 
   const boundary = `errayhany_${crypto.randomBytes(8).toString('hex')}`;
   const metaPart = Buffer.from(
@@ -685,7 +742,7 @@ async function publishYouTube({
   const body = Buffer.concat([metaPart, filePartHeader, filePart, end]);
 
   const upload = await axios.post(
-    'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status',
+    `https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=${parts.join(',')}`,
     body,
     {
       headers: {
@@ -750,6 +807,11 @@ export async function createAndPublishSocialPost({
   allowStitch = true,
   coverTimestampSec = '',
   notifySubscribers = true,
+  titleFr = '',
+  youtubeDescriptionFr = '',
+  facebookDescriptionFr = '',
+  callToAction = true,
+  recordingLocation = 'Casablanca, Morocco',
 } = {}) {
   const selected = [...new Set((platforms || []).map(String).filter((p) => PLATFORMS.includes(p)))];
   if (!selected.length) {
@@ -777,6 +839,9 @@ export async function createAndPublishSocialPost({
     title: String(title || '').trim(),
     youtubeDescription: String(youtubeDescription || '').trim() || null,
     facebookDescription: String(facebookDescription || '').trim() || null,
+    titleFr: String(titleFr || '').trim() || null,
+    youtubeDescriptionFr: String(youtubeDescriptionFr || '').trim() || null,
+    facebookDescriptionFr: String(facebookDescriptionFr || '').trim() || null,
     tags: tagList,
     privacyStatus: String(privacyStatus || 'public'),
     categoryId: String(categoryId || '28'),
@@ -834,6 +899,11 @@ export async function createAndPublishSocialPost({
     mime,
     thumbnailPath: thumb.mediaPath,
     thumbnailMime: thumb.mime,
+    titleFr: String(titleFr || '').trim(),
+    youtubeDescriptionFr: String(youtubeDescriptionFr || '').trim(),
+    facebookDescriptionFr: String(facebookDescriptionFr || '').trim(),
+    callToAction: callToAction !== false,
+    recordingLocation: String(recordingLocation || '').trim(),
   };
 
   for (const platform of selected) {
