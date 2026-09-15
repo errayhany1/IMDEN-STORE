@@ -834,19 +834,6 @@ const ProductLandingPage = ({ sku: skuProp }) => {
               </div>
             )}
 
-            {variants.length > 0 && (
-              <ProductColorPicker
-                variants={variants}
-                selectedId={selectedVariantId}
-                onSelect={(id) => {
-                  setSelectedVariantId(id);
-                  setActiveImg(0);
-                }}
-                allowAll={product?.colorSource !== 'tifawt'}
-                isFr={isFr}
-                dm={dm}
-              />
-            )}
           </section>
 
           {/* Buy column */}
@@ -894,6 +881,19 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 <p className={`mt-2 text-sm md:text-base leading-relaxed ${soft}`}>
                   {heroLine}
                 </p>
+              )}
+              {variants.length > 0 && (
+                <ProductColorPicker
+                  variants={variants}
+                  selectedId={selectedVariantId}
+                  onSelect={(id) => {
+                    setSelectedVariantId(id);
+                    setActiveImg(0);
+                  }}
+                  allowAll={product?.colorSource !== 'tifawt'}
+                  isFr={isFr}
+                  dm={dm}
+                />
               )}
             </div>
 

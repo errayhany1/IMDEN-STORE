@@ -6,6 +6,7 @@ import {
   colorLabelFromSkuRemainder,
   parseColorList,
   stripTrailingSkuColorTokens,
+  colorSwatchHex,
 } from './colorVariants.js';
 import { toTifawtSku } from './tifawtSku.js';
 
@@ -65,4 +66,9 @@ test('reads Tifawt color families from SKU suffixes', () => {
   assert.equal(colorLabelFromSkuRemainder('WHITE'), 'Blanc');
   assert.equal(colorLabelFromSkuRemainder('PLUS'), '');
   assert.equal(colorLabelFromSkuRemainder('PRO-BLACK'), '');
+});
+
+test('maps color labels to swatch hex values', () => {
+  assert.deepEqual(colorSwatchHex('Noir'), ['#1a1a1a']);
+  assert.deepEqual(colorSwatchHex('Blanc et Noir'), ['#f8fafc', '#1a1a1a']);
 });

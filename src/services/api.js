@@ -128,6 +128,49 @@ export const fetchTifawtColors = async (sku) => {
     }
 };
 
+let tifawtColorMapPromise = null;
+
+export const fetchTifawtColorMap = async () => {
+    if (!tifawtColorMapPromise) {
+        tifawtColorMapPromise = fetch('/bot-api/api/catalog/color-map')
+            .then((response) => response.json())
+            .then((data) => ({
+                families: data?.families || {},
+                bySku: data?.bySku || {},
+            }))
+            .catch((error) => {
+                console.warn('fetchTifawtColorMap failed', error?.message || error);
+                tifawtColorMapPromise = null;
+                return { families: {}, bySku: {} };
+            });
+    }
+    return tifawtColorMapPromise;
+};
+
+export const attachTifawtColors = (product, colorMap) => {
+    if (!product) return product;
+    if (product.colorSource === 'tifawt' && product.variants?.length) return product;
+    const keys = [...new Set([
+        String(product.ref || product.SKU || '').trim().toUpperCase(),
+        String(product.ref || product.SKU || '').trim().toUpperCase().replace(/^ERY-/, ''),
+    ].filter(Boolean))];
+    let family = '';
+    for (const key of keys) {
+        family = colorMap?.bySku?.[key] || (colorMap?.families?.[key] ? key : '');
+        if (family) break;
+    }
+    const variants = family ? colorMap?.families?.[family] : null;
+    if (!variants?.length) return product;
+    return { ...product, variants, colorSource: 'tifawt' };
+};
+
+const withTifawtColorMap = async (products) => {
+    if (!products?.length) return products;
+    const map = await fetchTifawtColorMap();
+    if (!map?.families || !Object.keys(map.families).length) return products;
+    return products.map((product) => attachTifawtColors(product, map));
+};
+
 const withProductVariants = async (product) => {
     if (!product?.id && !product?.ref) return product;
     const [tifawt, noco] = await Promise.all([
@@ -344,6 +387,14 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
             staticCatalog.categoryImages || {},
             { replace: true, source: 'static-cache' }
         );
+        withTifawtColorMap(staticCatalog.products).then((colored) => {
+            if (colored !== staticCatalog.products && onChunk) {
+                onChunk(colored, staticCatalog.categoryImages || {}, {
+                    replace: true,
+                    source: 'static-colors',
+                });
+            }
+        }).catch(() => {});
     }
 
     // 4. Refresh from NocoDB in the background
@@ -501,14 +552,12 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
 
             cache.isFetched = true;
             cache.fetchPromise = null;
-            if (onChunk && hasStaticCatalog) {
-                onChunk(
-                    allRecords,
-                    collectedCategoryImages,
-                    { replace: true, source: 'live' }
-                );
+            const colored = await withTifawtColorMap(allRecords);
+            cache.products = colored;
+            if (onChunk) {
+                onChunk(colored, collectedCategoryImages, { replace: true, source: 'live-colors' });
             }
-            return allRecords;
+            return colored;
 
         } catch (error) {
             console.error("Error fetching products:", error);

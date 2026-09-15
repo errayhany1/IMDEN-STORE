@@ -31,6 +31,13 @@ const COLOR_AR = new Map([
   ['Argenté', 'فضي'], ['Beige', 'بيج'], ['Ciel', 'سماوي'], ['Mauve', 'موف'],
 ]);
 
+const COLOR_HEX = new Map([
+  ['Noir', '#1a1a1a'], ['Blanc', '#f8fafc'], ['Bleu', '#2563eb'], ['Rouge', '#dc2626'],
+  ['Rose', '#ec4899'], ['Vert', '#16a34a'], ['Violet', '#7c3aed'], ['Jaune', '#eab308'],
+  ['Orange', '#ea580c'], ['Gris', '#64748b'], ['Marron', '#92400e'], ['Doré', '#d4a017'],
+  ['Argenté', '#94a3b8'], ['Beige', '#d6c4a8'], ['Ciel', '#38bdf8'], ['Mauve', '#c084fc'],
+]);
+
 /** Explicit Jumia-color namespace: ERY-BASE-JCNO, never ambiguous -Cxx suffixes. */
 const JUMIA_COLOR_SUFFIX_RE = /-JC[A-Z0-9]{2,4}$/i;
 
@@ -89,6 +96,13 @@ export function colorLabelArabic(label) {
     .split(/\s+et\s+/i)
     .map((part) => COLOR_AR.get(part) || part)
     .join(' و');
+}
+
+export function colorSwatchHex(label) {
+  return normalizeColorLabel(label)
+    .split(/\s+et\s+/i)
+    .map((part) => COLOR_HEX.get(part) || '#94a3b8')
+    .filter(Boolean);
 }
 
 export function isSkuColorToken(token) {

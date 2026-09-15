@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Check, Heart, Bell, BellRing, Eye } from 'lucide-react';
 import useStore from '../store/useStore';
 import QuickViewModal from './QuickViewModal';
+import { ProductColorDots } from './ProductColorPicker';
 import ProductRatingStars from './ProductRatingStars';
 import { frenchProductTitle, isRtlText } from '../utils/productText';
 import { slugify } from '../utils/slugify';
@@ -34,6 +35,7 @@ const ProductCard = ({ product, priority = false }) => {
     const dm = darkMode;
     const singleCol = gridColumns === 1;
     const isOutOfStock = product.category === 'Out of Stock' || product.isAvailable === false;
+    const hasColors = Array.isArray(product.variants) && product.variants.length > 1;
     const isWatchingRestock = restockSubscriptions.some(
         (item) => String(item.id || item.ref) === String(product.id || product.ref)
     );
@@ -213,14 +215,20 @@ const ProductCard = ({ product, priority = false }) => {
                         </div>
                     )}
 
+                    {hasColors && <ProductColorDots variants={product.variants} />}
+
                     <div className="flex gap-2 flex-row-reverse" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={() => {
-                                if (!isOutOfStock && !addedToCart) {
-                                    addToCart(product);
-                                    setAddedToCart(true);
-                                    setTimeout(() => setAddedToCart(false), 1500);
+                                if (isOutOfStock || addedToCart) return;
+                                if (hasColors) {
+                                    if (isCatalog) setIsModalOpen(true);
+                                    else openProductPage();
+                                    return;
                                 }
+                                addToCart(product);
+                                setAddedToCart(true);
+                                setTimeout(() => setAddedToCart(false), 1500);
                             }}
                             disabled={isOutOfStock}
                             className={`flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white transition-all duration-300 active:scale-[0.96]
