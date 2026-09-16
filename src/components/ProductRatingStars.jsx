@@ -22,6 +22,8 @@ const ProductRatingStars = ({
   size = 14,
   className = '',
   emptyHint = 'أضف تقييمك',
+  heroMeta = false,
+  reviewsLabel = 'avis',
 }) => {
   const user = useStore((state) => state.user);
   const setAuthModalOpen = useStore((state) => state.setAuthModalOpen);
@@ -107,9 +109,11 @@ const ProductRatingStars = ({
             'aria-label': 'افتح المنتج لإضافة تقييم',
           }
           : {})}
-        className={`flex items-center gap-1.5 flex-row-reverse min-w-0 ${onRequestRate ? 'cursor-pointer' : ''} ${className}`}
+        className={`flex items-center gap-1.5 min-w-0 ${onRequestRate ? 'cursor-pointer' : ''} ${
+          heroMeta ? 'flex-row' : 'flex-row-reverse'
+        } ${className}`}
       >
-        <div className="flex items-center gap-0.5 flex-row-reverse shrink-0" dir="ltr" aria-hidden="true">
+        <div className="flex items-center gap-0.5 shrink-0" dir="ltr" aria-hidden="true">
           {[1, 2, 3, 4, 5].map((star) => (
             <Star
               key={star}
@@ -119,7 +123,14 @@ const ProductRatingStars = ({
             />
           ))}
         </div>
-        {scoreLabel}
+        {heroMeta && count > 0 ? (
+          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-slate-700'}`} dir="ltr">
+            <strong className="font-bold">{avg.toFixed(1)}</strong>
+            <span className={darkMode ? 'text-gray-500' : 'text-slate-400'}>
+              {' '}({count} {reviewsLabel})
+            </span>
+          </span>
+        ) : scoreLabel}
       </Wrapper>
     );
   }

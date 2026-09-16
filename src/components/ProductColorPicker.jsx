@@ -43,15 +43,67 @@ export default function ProductColorPicker({
   allowAll = false,
   isFr = false,
   dm = false,
+  appearance = 'pills',
 }) {
   if (!variants.length) return null;
   const muted = dm ? 'text-gray-400' : 'text-slate-500';
   const line = dm ? 'border-white/10' : 'border-slate-200';
+  const label = isFr ? 'Choisir la couleur' : 'اختر اللون';
+
+  if (appearance === 'swatches') {
+    return (
+      <div>
+        <p className={`text-sm font-semibold mb-2.5 ${dm ? 'text-gray-200' : 'text-slate-700'}`}>
+          {label} :
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {allowAll && (
+            <button
+              type="button"
+              onClick={() => onSelect(null)}
+              className={`h-10 px-3 rounded-full border text-xs font-semibold transition ${
+                selectedId == null
+                  ? 'border-primary text-primary bg-white ring-2 ring-primary/20'
+                  : `${line} ${muted}`
+              }`}
+            >
+              {isFr ? 'Toutes' : 'الكل'}
+            </button>
+          )}
+          {variants.map((variant) => {
+            const selected = String(selectedId) === String(variant.id);
+            const out = variant.inStock === false;
+            const name = isFr ? variant.colorFr : variant.colorAr;
+            return (
+              <button
+                key={variant.id || variant.sku}
+                type="button"
+                onClick={() => onSelect(variant.id)}
+                title={name}
+                className={`inline-flex items-center gap-2 rounded-full border transition-all ${
+                  selected
+                    ? 'h-10 pe-3 ps-1.5 border-primary bg-white text-slate-800 shadow-sm ring-2 ring-primary/15'
+                    : 'h-10 w-10 justify-center border-slate-200 bg-white hover:border-slate-300'
+                } ${out ? 'opacity-45' : ''} ${dm && selected ? 'bg-gray-800 text-white border-primary' : ''} ${
+                  dm && !selected ? 'bg-gray-800 border-gray-600' : ''
+                }`}
+              >
+                <SwatchDot variant={variant} size="w-7 h-7" />
+                {selected && (
+                  <span className="text-sm font-medium pe-0.5">{name}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4">
       <p className={`text-xs font-semibold mb-2 ${muted}`}>
-        {isFr ? 'Choisir la couleur' : 'اختر اللون'}
+        {label}
       </p>
       <div className="flex flex-wrap gap-2">
         {allowAll && (

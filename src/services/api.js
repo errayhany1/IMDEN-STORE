@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { extraCategoryNamesForRecord } from '../utils/productCategories.js';
 
 const API_URL = import.meta.env.VITE_NOCODB_URL;
 const API_TOKEN = import.meta.env.VITE_NOCODB_API_TOKEN;
@@ -518,6 +519,7 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         ref: record.SKU || "",
                         name: fallbackName,
                         price: record.price || 0,
+                        oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
                         image: imageUrl,
                         thumbnail: primary.thumbnail || imageUrl,
                         images: allImages,
@@ -526,6 +528,7 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         amazonUrl: record.Amazon_URL || record.amazon_url || '',
                         category: categoryName,
                         baseCategory,
+                        extraCategories: extraCategoryNamesForRecord(record, baseCategory),
                         isAvailable: !isOutOfStock,
                         originalData: record
                     };
@@ -622,6 +625,7 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
         ref: record.SKU || '',
         name: fallbackName,
         price: record.price || 0,
+        oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
         image: imageUrl,
         thumbnail: primary.thumbnail || imageUrl,
         images: allImages.length ? allImages : (imageUrl ? [imageUrl] : []),
@@ -630,6 +634,7 @@ const mapNocoRecordToProduct = (record, localImagesByProduct = {}) => {
         amazonUrl: record.Amazon_URL || record.amazon_url || '',
         category: categoryName,
         baseCategory,
+        extraCategories: extraCategoryNamesForRecord(record, baseCategory),
         isAvailable: !isOutOfStock,
         originalData: record,
     };

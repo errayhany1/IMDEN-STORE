@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
+import { extraCategoryNamesForRecord } from './src/utils/productCategories.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -316,12 +317,17 @@ async function generate() {
             ref: product.SKU || '',
             name: product.Title || product.Arabic_Title || product.Woo_Title || product.French_Title || product.SKU || '',
             price: product.price || 0,
+            oldPrice: Number(product.old_price || product.Old_Price || 0) || 0,
             image: optimized[0]?.full || originalImages[0] || null,
             thumbnail: optimized[0]?.thumbnail || originalImages[0] || null,
             images: originalImages.map((original, index) => optimized[index]?.full || original),
             originalImage: optimized[0] ? null : (originalImages[0] || null),
             category: categoryMappingEn[categoryId] || 'General',
             baseCategory: categoryMappingEn[categoryId] || 'General',
+            extraCategories: extraCategoryNamesForRecord(
+                product,
+                categoryMappingEn[categoryId] || 'General',
+            ),
             isAvailable: true,
             originalData: {
                 Arabic_Title: product.Arabic_Title || '',
@@ -330,7 +336,12 @@ async function generate() {
                 French_Title: product.French_Title || '',
                 Woo_Title: product.Woo_Title || '',
                 short_description_fr: product.short_description_fr || '',
-                description_french: product.description_french || ''
+                description_french: product.description_french || '',
+                Title: product.Title || '',
+                SKU: product.SKU || '',
+                Extra_Categories: product.Extra_Categories || product.extra_categories || '',
+                Category_ID_2: product.Category_ID_2 || product.category_id_2 || '',
+                old_price: product.old_price || product.Old_Price || 0,
             }
         };
     });

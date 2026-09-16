@@ -1,15 +1,64 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Check, Heart, Bell, BellRing, Eye } from 'lucide-react';
+import {
+    ShoppingCart,
+    Check,
+    Heart,
+    Bell,
+    BellRing,
+    Eye,
+    Mouse,
+    Headphones,
+    Keyboard,
+    Gamepad2,
+    Watch,
+    Cable,
+    Smartphone,
+    Fan,
+    Tag,
+    BatteryCharging,
+    Camera,
+    Wifi,
+    Mic,
+    Box,
+    Lightbulb,
+    Monitor,
+    Car,
+    Usb,
+} from 'lucide-react';
 import useStore from '../store/useStore';
+import { useTranslation } from '../hooks/useTranslation';
 import QuickViewModal from './QuickViewModal';
 import { ProductColorDots } from './ProductColorPicker';
 import ProductRatingStars from './ProductRatingStars';
 import { frenchProductTitle, isRtlText } from '../utils/productText';
+import { productDiscount, productTypeChip } from '../utils/productOffer';
 import { slugify } from '../utils/slugify';
 import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 import './ProductCard.css';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
+
+const CHIP_ICONS = {
+    mouse: Mouse,
+    headphones: Headphones,
+    keyboard: Keyboard,
+    gamepad: Gamepad2,
+    watch: Watch,
+    cable: Cable,
+    phone: Smartphone,
+    fan: Fan,
+    tag: Tag,
+    battery: BatteryCharging,
+    camera: Camera,
+    wifi: Wifi,
+    mic: Mic,
+    storage: Box,
+    light: Lightbulb,
+    stand: Monitor,
+    car: Car,
+    hub: Usb,
+    tv: Monitor,
+};
 
 const ProductCard = ({ product, priority = false }) => {
     const addToCart = useStore((state) => state.addToCart);
@@ -20,25 +69,30 @@ const ProductCard = ({ product, priority = false }) => {
     const toggleWishlistItem = useStore((state) => state.toggleWishlistItem);
     const restockSubscriptions = useStore((state) => state.restockSubscriptions);
     const toggleRestockSubscription = useStore((state) => state.toggleRestockSubscription);
+    const language = useTranslation((state) => state.language);
+    const t = useTranslation((state) => state.t);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hoveredThumb, setHoveredThumb] = useState(null);
     const [addedToCart, setAddedToCart] = useState(false);
 
     const isWishlisted = wishlist.some((item) => item.id === product.id);
     const isCatalog = browseMode === 'catalog';
-    // Cards always show the French copy, trimmed to a single line.
     const cardTitle = frenchProductTitle(product);
     const cardTitleRtl = isRtlText(cardTitle);
     const productSlug = slugify(product.name || cardTitle || '');
     const productHref = `/p/${encodeURIComponent(product.ref || product.id)}${productSlug ? `/${productSlug}` : ''}`;
 
     const dm = darkMode;
+    const isFr = language === 'fr';
     const singleCol = gridColumns === 1;
     const isOutOfStock = product.category === 'Out of Stock' || product.isAvailable === false;
     const hasColors = Array.isArray(product.variants) && product.variants.length > 1;
     const isWatchingRestock = restockSubscriptions.some(
         (item) => String(item.id || item.ref) === String(product.id || product.ref)
     );
+    const discount = productDiscount(product);
+    const typeChip = productTypeChip(product, isFr);
+    const ChipIcon = CHIP_ICONS[typeChip.icon] || Tag;
 
     const rememberBrowseMode = () => {
         try {
@@ -71,43 +125,63 @@ const ProductCard = ({ product, priority = false }) => {
         toggleRestockSubscription(product);
     };
 
-    // Multi-image support
+    const handleAddToCart = () => {
+        if (isOutOfStock || addedToCart) return;
+        if (hasColors) {
+            if (isCatalog) setIsModalOpen(true);
+            else openProductPage();
+            return;
+        }
+        addToCart(product);
+        setAddedToCart(true);
+        setTimeout(() => setAddedToCart(false), 1500);
+    };
+
     const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
     const displayImage = hoveredThumb !== null
         ? allImages[hoveredThumb]
         : (product.thumbnail || product.image || null);
-    const extraThumbs = allImages.length > 1 ? allImages.slice(1, 3) : []; // max 2 thumbnails
+    const extraThumbs = allImages.length > 1 ? allImages.slice(1, 3) : [];
+    const overlayBtn = `w-8 h-8 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm transition-all duration-300 active:scale-90 ${
+        dm ? 'bg-gray-900/70 text-gray-200' : 'bg-white text-slate-500 hover:text-slate-800'
+    }`;
 
     return (
         <>
-        <article className={`rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
-                ${dm ? 'bg-gray-800 border-gray-700' : 'bg-surface-light border-slate-100'}`}>
-
-                {/* Out of Stock Overlay */}
+        <article
+            dir="ltr"
+            className={`rounded-2xl hover:shadow-[0_16px_36px_rgba(15,23,42,0.10)] shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition-all duration-300 border flex flex-col overflow-hidden group h-full relative
+                ${dm ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-100'}`}
+        >
                 {isOutOfStock && (
                     <div className="absolute inset-0 z-20 pointer-events-none bg-black/5 flex items-center justify-center">
                         <div className="bg-red-600/90 text-white font-bold px-4 py-1 rounded-md transform -rotate-12 border border-red-200 shadow-xl text-sm">
-                            نفد من المخزون
+                            {t('outOfStock')}
                         </div>
                     </div>
                 )}
 
-                <div className={`relative aspect-[3/4] overflow-hidden cursor-pointer ${dm ? 'bg-gray-900' : 'bg-white'}`} onClick={handleMediaClick}>
+                <div
+                    className={`relative aspect-[4/5] overflow-hidden cursor-pointer ${dm ? 'bg-gray-950' : 'bg-[#f4f7fb]'}`}
+                    onClick={handleMediaClick}
+                >
+                    {discount.percent > 0 && !isOutOfStock && (
+                        <span className="absolute top-2.5 start-2.5 z-30 bg-red-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg">
+                            -{discount.percent}%
+                        </span>
+                    )}
 
-                    {/* Wishlist Toggle */}
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); toggleWishlistItem(product); }}
-                        className={`absolute top-2 right-2 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm transition-all duration-300 active:scale-90
-                            ${isWishlisted
-                                ? 'bg-red-500 text-white'
-                                : dm ? 'bg-gray-900/60 text-gray-300 hover:text-red-400' : 'bg-white/85 text-slate-400 hover:text-red-500'}`}
+                        className={`absolute top-2.5 end-2.5 z-30 ${overlayBtn}
+                            ${isWishlisted ? '!bg-red-500 !text-white' : 'hover:text-red-500'}`}
                         title={isWishlisted ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
                         aria-label="المفضلة"
                     >
                         <Heart size={15} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
                     </button>
 
-                    {/* Catalog only: eye opens the dedicated product page */}
                     {isCatalog && (
                         <a
                             href={productHref}
@@ -115,8 +189,7 @@ const ProductCard = ({ product, priority = false }) => {
                                 e.stopPropagation();
                                 rememberBrowseMode();
                             }}
-                            className={`absolute top-12 right-2 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm shadow-sm transition-all duration-300 active:scale-90
-                                ${dm ? 'bg-gray-900/60 text-sky-300 hover:text-sky-200' : 'bg-white/85 text-sky-600 hover:text-sky-700'}`}
+                            className={`absolute top-12 end-2.5 z-30 ${overlayBtn} ${dm ? 'text-sky-300' : 'text-sky-600 hover:text-sky-700'}`}
                             title="صفحة المنتج"
                             aria-label="صفحة المنتج"
                         >
@@ -128,7 +201,7 @@ const ProductCard = ({ product, priority = false }) => {
                         <button
                             type="button"
                             onClick={handleRestockAlert}
-                            className={`absolute top-2 left-2 z-30 h-8 px-2 rounded-full flex items-center gap-1 backdrop-blur-sm shadow-sm transition-all active:scale-95 text-[10px] font-bold
+                            className={`absolute top-2.5 start-2.5 z-30 h-8 px-2 rounded-full flex items-center gap-1 backdrop-blur-sm shadow-sm transition-all active:scale-95 text-[10px] font-bold
                                 ${isWatchingRestock
                                     ? 'bg-amber-500 text-white'
                                     : dm ? 'bg-gray-900/75 text-amber-400' : 'bg-white/90 text-amber-600'}`}
@@ -144,12 +217,12 @@ const ProductCard = ({ product, priority = false }) => {
                             src={displayImage}
                             alt={`${product.name || product.ref} - ${product.price} DH - إلكترونيات بالجملة Errayhany Store`}
                             title={product.name || product.ref}
-                            className={`w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
+                            className={`w-full h-full object-contain p-2 transform group-hover:scale-105 transition-transform duration-500 ${isOutOfStock ? 'opacity-90' : ''}`}
                             loading={priority ? 'eager' : 'lazy'}
                             fetchPriority={priority ? 'high' : 'auto'}
                             decoding="async"
                             width="300"
-                            height="400"
+                            height="375"
                             onError={(e) => {
                                 if (product.originalImage && e.target.src !== product.originalImage) {
                                     e.target.src = product.originalImage;
@@ -166,7 +239,6 @@ const ProductCard = ({ product, priority = false }) => {
                         </div>
                     )}
 
-                    {/* Thumbnails for extra images */}
                     {extraThumbs.length > 0 && (
                         <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                             {extraThumbs.map((thumb, idx) => (
@@ -183,70 +255,84 @@ const ProductCard = ({ product, priority = false }) => {
                             ))}
                         </div>
                     )}
-
                 </div>
 
                 <div
-                    className={`p-3 flex flex-col gap-3 ${isOutOfStock ? 'opacity-80' : ''} ${!isCatalog ? 'cursor-pointer' : ''}`}
+                    className={`p-3 md:p-3.5 flex flex-col gap-2 flex-1 ${isOutOfStock ? 'opacity-80' : ''} ${!isCatalog ? 'cursor-pointer' : ''}`}
                     onClick={!isCatalog ? openProductPage : undefined}
                 >
-                    {/* Price and rating row */}
-                    <div className="flex items-center justify-between flex-row-reverse gap-2">
-                        <div className="text-right flex-shrink-0">
-                            <span className={`text-lg font-bold text-primary`}>{product.price} DH</span>
-                        </div>
-                        <ProductRatingStars
-                            product={product}
-                            darkMode={dm}
-                            readOnly
-                            size={singleCol ? 15 : 13}
-                            onRequestRate={handleMediaClick}
-                            className="flex-1"
-                        />
-                    </div>
+                    <span className={`inline-flex items-center gap-1 self-start max-w-full text-[11px] font-medium px-2 py-0.5 rounded-full
+                        ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-500'}`}>
+                        <ChipIcon size={12} className="shrink-0 opacity-80" />
+                        <span className="truncate">{typeChip.label}</span>
+                    </span>
 
                     {cardTitle && cardTitle !== 'Unnamed Product' && (
-                        <div
-                            className={`text-xs font-medium truncate leading-relaxed ${cardTitleRtl ? 'text-right' : 'text-left'} ${dm ? 'text-gray-300' : 'text-slate-600'}`}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleMediaClick();
+                            }}
+                            className={`text-[13px] sm:text-sm font-bold leading-snug line-clamp-2 min-h-[2.5rem] text-start ${cardTitleRtl ? 'text-right' : 'text-left'} ${dm ? 'text-white' : 'text-slate-900'}`}
                             dir={cardTitleRtl ? 'rtl' : 'ltr'}
                             title={cardTitle}
                         >
                             {cardTitle}
-                        </div>
+                        </button>
                     )}
+
+                    <ProductRatingStars
+                        product={product}
+                        darkMode={dm}
+                        readOnly
+                        size={singleCol ? 15 : 13}
+                        onRequestRate={handleMediaClick}
+                        className="!flex-row !justify-start"
+                    />
+
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-baseline gap-1.5 min-w-0">
+                            <strong className={`text-base sm:text-lg font-extrabold leading-none ${dm ? 'text-white' : 'text-slate-900'}`}>
+                                DH {product.price}
+                            </strong>
+                            {discount.percent > 0 && (
+                                <span className={`text-xs line-through ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
+                                    DH {discount.oldPrice}
+                                </span>
+                            )}
+                        </div>
+                        {!isOutOfStock && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {isFr ? 'En stock' : 'متوفر'}
+                            </span>
+                        )}
+                    </div>
 
                     {hasColors && <ProductColorDots variants={product.variants} />}
 
-                    <div className="flex gap-2 flex-row-reverse" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-auto flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                         <button
-                            onClick={() => {
-                                if (isOutOfStock || addedToCart) return;
-                                if (hasColors) {
-                                    if (isCatalog) setIsModalOpen(true);
-                                    else openProductPage();
-                                    return;
-                                }
-                                addToCart(product);
-                                setAddedToCart(true);
-                                setTimeout(() => setAddedToCart(false), 1500);
-                            }}
+                            type="button"
+                            onClick={handleAddToCart}
                             disabled={isOutOfStock}
-                            className={`flex-1 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-white transition-all duration-300 active:scale-[0.96]
-                                ${addedToCart ? 'bg-green-500 shadow-lg shadow-green-500/30' 
-                                    : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none' 
-                                    : 'btn-add-cart'}`}
+                            className={`flex-1 min-w-0 font-semibold h-10 px-2 rounded-xl flex items-center justify-center gap-1.5 text-white text-[12px] sm:text-sm transition-all duration-300 active:scale-[0.96]
+                                ${addedToCart ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30'
+                                    : isOutOfStock ? 'bg-gray-400 cursor-not-allowed shadow-none'
+                                    : 'bg-primary hover:bg-primary-dark shadow-sm'}`}
                         >
                             {addedToCart ? (
-                                <><Check size={18} /> تمت الإضافة</>  
+                                <><Check size={16} className="shrink-0" /> {t('added')}</>
                             ) : (
-                                <><ShoppingCart size={18} /> إضافة</>
+                                <><ShoppingCart size={16} className="shrink-0" /> <span className="truncate">{t('addToCart')}</span></>
                             )}
                         </button>
                         <a
                             href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${product.name || 'بدون اسم'}%0A*المرجع:* ${product.ref}%0A*الثمن:* ${product.price} DH`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-sm"
+                            className="flex items-center justify-center w-10 h-10 shrink-0 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-sm"
                         >
                             <img src={WA_ICON} alt="WhatsApp" className="w-5 h-5" />
                         </a>
@@ -254,7 +340,6 @@ const ProductCard = ({ product, priority = false }) => {
                 </div>
             </article>
 
-            {/* Quick View Modal — catalog mode only */}
             {isCatalog && (
                 <QuickViewModal
                     isOpen={isModalOpen}

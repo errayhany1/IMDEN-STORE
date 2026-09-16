@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShoppingCart, Copy, Check, Minus, Plus, Heart, Bell, BellRing } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShoppingCart, Check, Minus, Plus, Heart, Bell, BellRing, Share2, Truck, ShieldCheck, BadgeCheck, Headset, CreditCard } from 'lucide-react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 import RelatedProducts from './RelatedProducts';
@@ -16,6 +16,7 @@ import { saveBrowseRestoreFromStore } from '../utils/browseRestore';
 import { slugify } from '../utils/slugify';
 import ProductColorPicker, { cartProductFromVariant } from './ProductColorPicker';
 import { fetchTifawtColors } from '../services/api';
+import { productBrand, productDiscount, productFeatureChips } from '../utils/productOffer';
 
 const WA_ICON = "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
 
@@ -199,6 +200,149 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
     const descriptionHtml = productDescriptionHtml(viewedProduct);
     const descriptionBullets = listItemsFromHtml(descriptionHtml);
     const descriptionText = descriptionBullets.length ? '' : stripHtml(descriptionHtml);
+    let isFr = false;
+    try { isFr = localStorage.getItem('site_lang') === 'fr'; } catch { /* ignore */ }
+    const od = viewedProduct.originalData || {};
+    const discount = productDiscount(viewedProduct);
+    const brand = productBrand(viewedProduct);
+    const subtitle = String(
+        isFr
+            ? (od.Hero_Line_FR || od.hero_line_fr || od.short_description_fr || '')
+            : (od.Hero_Line_AR || od.hero_line_ar || od.short_description_ar || ''),
+    ).trim();
+    const chips = productFeatureChips(
+        `${fullTitle} ${arabicTitle} ${descriptionText} ${descriptionBullets.join(' ')}`,
+        isFr,
+        descriptionBullets,
+    );
+    const t = isFr
+        ? {
+            add: 'Ajouter au panier',
+            added: 'Ajouté !',
+            qty: 'Quantité',
+            stock: 'En stock',
+            out: 'Rupture de stock',
+            share: 'Partager',
+            reviews: 'avis',
+            ship: 'Livraison gratuite partout au Maroc',
+            shipMeta: 'Paiement à la livraison  |  24 – 48 heures',
+            trustShip: 'Livraison gratuite dans tout le Maroc',
+            trustPay: 'Paiement à la livraison',
+            trustOrig: 'Produit original Garantie qualité',
+            trustHelp: 'Support client 7j/7',
+            restock: 'Me prévenir',
+            watching: 'Alerte activée',
+            related: 'Vous aimerez aussi',
+        }
+        : {
+            add: 'إضافة للسلة',
+            added: 'تمت الإضافة!',
+            qty: 'الكمية',
+            stock: 'متوفر',
+            out: 'نفد من المخزون',
+            share: 'مشاركة',
+            reviews: 'تقييم',
+            ship: 'توصيل مجاني لجميع مدن المغرب',
+            shipMeta: 'الدفع عند الاستلام  |  24 – 48 ساعة',
+            trustShip: 'توصيل مجاني في كل المغرب',
+            trustPay: 'الدفع عند الاستلام',
+            trustOrig: 'منتج أصلي · ضمان الجودة',
+            trustHelp: 'دعم الزبناء 7/7',
+            restock: 'أعلمني عند التوفر',
+            watching: 'سنخبرك عند توفره',
+            related: 'قد يعجبك أيضاً',
+        };
+
+    const openProductPage = () => {
+        onClose?.();
+        try {
+            sessionStorage.setItem(
+                'lastBrowseMode',
+                useStore.getState().browseMode === 'catalog' ? 'catalog' : 'shop',
+            );
+        } catch { /* ignore */ }
+        saveBrowseRestoreFromStore(useStore.getState);
+        const sku = encodeURIComponent(viewedProduct.ref || viewedProduct.id);
+        const slug = slugify(viewedProduct.name || '');
+        window.location.assign(`/p/${sku}${slug ? `/${slug}` : ''}`);
+    };
+
+    const shareProduct = async () => {
+        const url = `${window.location.origin}/p/${encodeURIComponent(viewedProduct.ref || viewedProduct.id)}`;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: fullTitle, text: `${fullTitle} — ${viewedProduct.price} DH`, url });
+                return;
+            }
+        } catch (e) {
+            if (e?.name === 'AbortError') return;
+        }
+        handleCopyRef();
+    };
+
+    const trustItems = [
+        { icon: Truck, label: t.trustShip },
+        { icon: CreditCard, label: t.trustPay },
+        { icon: ShieldCheck, label: t.trustOrig },
+        { icon: Headset, label: t.trustHelp },
+    ];
+
+    const qtyControls = (
+        <div className="flex items-center gap-3" dir="ltr">
+            <button
+                type="button"
+                onClick={() => updateQty(-1)}
+                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-90
+                    ${dm ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                aria-label="-1"
+            >
+                <Minus size={16} />
+            </button>
+            <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={quantity === 0 ? '' : quantity}
+                onChange={(e) => handleQtyInput(e.target.value)}
+                onBlur={commitQty}
+                onFocus={(e) => e.target.select()}
+                aria-label={t.qty}
+                className={`w-10 text-center text-lg font-bold bg-transparent outline-none ${dm ? 'text-white' : 'text-slate-900'}`}
+            />
+            <button
+                type="button"
+                onClick={() => updateQty(1)}
+                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-90
+                    ${dm ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                aria-label="+1"
+            >
+                <Plus size={16} />
+            </button>
+        </div>
+    );
+
+    const cartButton = isOutOfStock ? (
+        <button
+            type="button"
+            onClick={handleRestockAlert}
+            className={`w-full font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.97]
+                ${isWatchingRestock
+                    ? 'bg-amber-500 text-white'
+                    : dm ? 'bg-gray-800 text-amber-400 border border-amber-500/30' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}
+        >
+            {isWatchingRestock ? <BellRing size={18} /> : <Bell size={18} />}
+            {isWatchingRestock ? t.watching : t.restock}
+        </button>
+    ) : (
+        <button
+            type="button"
+            onClick={handleAddToCart}
+            className={`w-full font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-white transition-all active:scale-[0.97] shadow-[0_10px_24px_-8px_rgba(25,127,230,0.55)]
+                ${addedToCart ? 'bg-emerald-500' : 'bg-primary hover:bg-primary-dark'}`}
+        >
+            {addedToCart ? <><Check size={18} /> {t.added}</> : <><ShoppingCart size={18} /> {t.add}</>}
+        </button>
+    );
 
     return (
         <>
@@ -220,299 +364,281 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 100, opacity: 0 }}
                         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                        className={`relative w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col
-                            rounded-t-3xl sm:rounded-2xl shadow-2xl border
-                            ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}
-                       
+                        className={`relative w-full sm:max-w-5xl max-h-[96vh] overflow-hidden flex flex-col
+                            rounded-t-3xl sm:rounded-[28px] shadow-[0_24px_80px_rgba(15,23,42,0.18)] border
+                            ${dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-100'}`}
+                        dir={isFr ? 'ltr' : 'rtl'}
                     >
-                        {/* Close Button */}
                         <button
                             onClick={onClose}
-                            className={`absolute top-3 left-3 z-20 p-2 rounded-full transition-colors
-                                ${dm ? 'bg-gray-800/80 hover:bg-gray-700 text-gray-300' : 'bg-white/80 hover:bg-white text-slate-500'} backdrop-blur-sm shadow-lg`}
+                            className={`absolute top-3 start-3 z-20 p-2 rounded-full transition-colors
+                                ${dm ? 'bg-gray-800/90 hover:bg-gray-700 text-gray-300' : 'bg-white hover:bg-slate-50 text-slate-500'} shadow-md`}
                         >
                             <X size={18} />
                         </button>
 
-                        {/* Out of Stock Badge */}
-                        {isOutOfStock && (
-                            <div className="absolute top-3 right-3 z-20 bg-red-600/90 text-white font-bold px-3 py-1 rounded-lg text-xs shadow-lg">
-                                نفد من المخزون
-                            </div>
-                        )}
-
-                        {/* Image Gallery */}
-                        <div className={`relative w-full aspect-square sm:aspect-[4/3] overflow-hidden ${dm ? 'bg-gray-950' : 'bg-slate-50'}`}>
-                            {allImages.length > 0 ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setLightboxOpen(true)}
-                                    className="block w-full h-full cursor-zoom-in"
-                                    aria-label="تكبير الصورة"
-                                    title="اضغط للتكبير"
-                                >
-                                    <img
-                                        src={allImages[currentIndex]}
-                                        alt={`${viewedProduct.name || viewedProduct.ref} - إلكترونيات بالجملة Errayhany Store`}
-                                        className="w-full h-full object-contain p-4 pointer-events-none"
-                                        draggable={false}
-                                    />
-                                </button>
-                            ) : (
-                                <div className={`w-full h-full flex items-center justify-center text-sm ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
-                                    لا توجد صورة
-                                </div>
-                            )}
-
-                            {/* Navigation Arrows */}
-                            {allImages.length > 1 && (
-                                <>
-                                    <button onClick={handlePrev}
-                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all backdrop-blur-sm z-10">
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                    <button onClick={handleNext}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all backdrop-blur-sm z-10">
-                                        <ChevronRight size={20} />
-                                    </button>
-                                </>
-                            )}
-
-                            {/* Small thumbs on the image card — same pattern as ProductCard */}
-                            {allImages.length > 1 && (
-                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 px-2">
-                                    {allImages.slice(0, 4).map((img, idx) => (
-                                        <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setCurrentIndex(idx);
-                                            }}
-                                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md border-2 overflow-hidden transition-all hover:scale-110 shadow-sm
-                                                ${currentIndex === idx
-                                                    ? 'border-primary shadow-md scale-105'
-                                                    : dm ? 'border-gray-600 bg-gray-800/90' : 'border-white bg-white/95'}`}
-                                            aria-label={`صورة ${idx + 1}`}
-                                        >
-                                            <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Product Info */}
                         <div className="relative flex-1 min-h-0 flex flex-col">
                         <div
                             ref={infoRef}
                             onScroll={syncInfoScroll}
-                            className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4"
+                            className="flex-1 overflow-y-auto"
                         >
-                            {/* Price and Ref */}
-                            <div className="flex items-center justify-between gap-3">
+                            <div className="grid sm:grid-cols-2 gap-5 sm:gap-8 p-4 sm:p-6 pt-14 sm:pt-8">
+                                {/* Gallery */}
                                 <div>
-                                    <span className="text-2xl font-extrabold text-primary">{viewedProduct.price} DH</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleToggleWishlist}
-                                        className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all active:scale-90
-                                            ${isWishlisted
-                                                ? 'bg-red-500 text-white'
-                                                : dm ? 'bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-slate-200'}`}
-                                        title={isWishlisted ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
-                                    >
-                                        <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
-                                    </button>
-                                    <button
-                                        onClick={handleCopyRef}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all
-                                            ${copied ? 'bg-green-500/15 text-green-500' : dm ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                                    >
-                                        {copied ? <Check size={12} /> : <Copy size={12} />}
-                                        REF: {viewedProduct.ref}
-                                    </button>
-                                </div>
-                            </div>
+                                    <div className={`relative aspect-square overflow-hidden rounded-2xl ${dm ? 'bg-gray-950' : 'bg-[#f4f7fb]'}`}>
+                                        {discount.percent > 0 && (
+                                            <span className="absolute top-4 start-4 z-10 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm">
+                                                -{discount.percent}%
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={handleToggleWishlist}
+                                            className={`absolute top-4 end-4 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all
+                                                ${isWishlisted
+                                                    ? 'bg-red-500 text-white'
+                                                    : dm ? 'bg-gray-800 text-gray-300' : 'bg-white text-slate-400 hover:text-red-500'}`}
+                                            title={isWishlisted ? (isFr ? 'Retirer des favoris' : 'إزالة من المفضلة') : (isFr ? 'Ajouter aux favoris' : 'إضافة للمفضلة')}
+                                        >
+                                            <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} className={isWishlisted ? 'animate-heart-pop' : ''} />
+                                        </button>
+                                        {allImages.length > 0 ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setLightboxOpen(true)}
+                                                className="block w-full h-full cursor-zoom-in"
+                                                aria-label={isFr ? 'Agrandir' : 'تكبير الصورة'}
+                                            >
+                                                <img
+                                                    src={allImages[currentIndex]}
+                                                    alt={`${viewedProduct.name || viewedProduct.ref} - Errayhany`}
+                                                    className="w-full h-full object-contain p-6 pointer-events-none"
+                                                    draggable={false}
+                                                />
+                                            </button>
+                                        ) : (
+                                            <div className={`w-full h-full flex items-center justify-center text-sm ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
+                                                {isFr ? 'Pas d’image' : 'لا توجد صورة'}
+                                            </div>
+                                        )}
+                                        {allImages.length > 1 && (
+                                            <>
+                                                <button type="button" onClick={handlePrev}
+                                                    className={`absolute start-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-md z-10
+                                                        ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-600'}`}>
+                                                    <ChevronLeft size={18} className={isFr ? '' : 'rotate-180'} />
+                                                </button>
+                                                <button type="button" onClick={handleNext}
+                                                    className={`absolute end-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-md z-10
+                                                        ${dm ? 'bg-gray-800 text-white' : 'bg-white text-slate-600'}`}>
+                                                    <ChevronRight size={18} className={isFr ? '' : 'rotate-180'} />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
 
-                            {/* Full product name (no truncation here) */}
-                            {fullTitle && fullTitle !== 'Unnamed Product' && (
-                                <h3
-                                    className={`text-base font-bold leading-relaxed ${titleRtl ? 'text-right' : 'text-left'} ${dm ? 'text-white' : 'text-slate-800'}`}
-                                    dir={titleRtl ? 'rtl' : 'ltr'}
-                                >
-                                    {fullTitle}
-                                </h3>
-                            )}
-
-                            {arabicTitle && arabicTitle !== fullTitle && (
-                                <p className={`text-xs leading-relaxed text-right ${dm ? 'text-gray-400' : 'text-slate-500'}`} dir="rtl">
-                                    {arabicTitle}
-                                </p>
-                            )}
-
-                            <ProductColorPicker
-                                variants={colorVariants}
-                                selectedId={selectedVariantId}
-                                onSelect={(id) => {
-                                    setSelectedVariantId(id);
-                                    setCurrentIndex(0);
-                                }}
-                                allowAll={colorSource !== 'tifawt'}
-                                dm={dm}
-                            />
-
-                            {/* Rating display only — voting happens on the product page */}
-                            <div className={`flex items-center justify-between gap-3 py-2 px-3 rounded-xl ${dm ? 'bg-gray-800/60' : 'bg-slate-50'}`}>
-                                <span className={`text-xs font-bold ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
-                                    التقييم
-                                </span>
-                                <ProductRatingStars
-                                    product={viewedProduct}
-                                    darkMode={dm}
-                                    size={18}
-                                    readOnly
-                                    onRequestRate={() => {
-                                        onClose?.();
-                                        try {
-                                            sessionStorage.setItem(
-                                                'lastBrowseMode',
-                                                useStore.getState().browseMode === 'catalog' ? 'catalog' : 'shop'
-                                            );
-                                        } catch {
-                                            /* ignore */
-                                        }
-                                          saveBrowseRestoreFromStore(useStore.getState);
-                                          const sku = encodeURIComponent(viewedProduct.ref || viewedProduct.id);
-                                          const slug = slugify(viewedProduct.name || '');
-                                          window.location.assign(`/p/${sku}${slug ? `/${slug}` : ''}`);
-                                      }}
-                                />
-                            </div>
-
-                            {/* Description details */}
-                            {(descriptionBullets.length > 0 || descriptionText) && (
-                                <div className="space-y-2">
-                                    <p className={`text-[11px] font-bold ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
-                                        التفاصيل
-                                    </p>
-                                    {descriptionBullets.length > 0 ? (
-                                        <ul className={`space-y-1.5 text-xs leading-relaxed list-disc ps-4 ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
-                                            {descriptionBullets.map((item, idx) => (
-                                                <li key={idx}>{item}</li>
+                                    {allImages.length > 1 && (
+                                        <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                            {allImages.slice(0, 6).map((img, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setCurrentIndex(idx)}
+                                                    className={`shrink-0 w-[72px] h-[72px] rounded-xl border-2 overflow-hidden transition
+                                                        ${currentIndex === idx
+                                                            ? 'border-primary shadow-sm'
+                                                            : dm ? 'border-gray-700 bg-gray-800' : 'border-slate-200 bg-slate-50'}`}
+                                                >
+                                                    <img src={img} alt="" className="w-full h-full object-contain p-1" loading="lazy" />
+                                                </button>
                                             ))}
-                                        </ul>
-                                    ) : (
-                                        <p className={`text-xs leading-relaxed ${dm ? 'text-gray-300' : 'text-slate-600'}`}>
-                                            {descriptionText}
+                                        </div>
+                                    )}
+
+                                    <div className={`mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                        {trustItems.map((item) => {
+                                            const Icon = item.icon;
+                                            return (
+                                                <div key={item.label} className="flex flex-col items-center text-center gap-1.5 px-1">
+                                                    <Icon size={18} className="opacity-80" />
+                                                    <span className="text-[10px] leading-snug font-medium">{item.label}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Offer */}
+                                <div className="flex flex-col gap-4 sm:pt-1">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <p className={`text-sm font-medium ${dm ? 'text-gray-400' : 'text-slate-400'}`}>
+                                            {brand || (isFr ? 'Errayhany' : 'Errayhany')}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={shareProduct}
+                                            className={`inline-flex items-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg transition
+                                                ${dm ? 'text-gray-300 hover:bg-gray-800' : 'text-slate-500 hover:bg-slate-50'}`}
+                                        >
+                                            <Share2 size={15} />
+                                            {t.share}
+                                        </button>
+                                    </div>
+
+                                    {fullTitle && fullTitle !== 'Unnamed Product' && (
+                                        <h3
+                                            className={`text-[1.65rem] sm:text-[1.85rem] font-extrabold leading-tight ${titleRtl ? 'text-right' : 'text-left'} ${dm ? 'text-white' : 'text-slate-900'}`}
+                                            dir={titleRtl ? 'rtl' : 'ltr'}
+                                        >
+                                            {fullTitle}
+                                        </h3>
+                                    )}
+                                    {subtitle && (
+                                        <p className={`text-sm leading-relaxed -mt-2 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                            {subtitle}
                                         </p>
                                     )}
+
+                                    <ProductRatingStars
+                                        product={viewedProduct}
+                                        darkMode={dm}
+                                        size={18}
+                                        readOnly
+                                        heroMeta
+                                        reviewsLabel={t.reviews}
+                                        onRequestRate={openProductPage}
+                                    />
+
+                                    <div className="flex flex-wrap items-end justify-between gap-3">
+                                        <div className="flex items-baseline gap-2.5 flex-wrap">
+                                            <span className={`text-[2rem] font-extrabold leading-none ${dm ? 'text-sky-400' : 'text-[#1d4ed8]'}`}>
+                                                DH {viewedProduct.price}
+                                            </span>
+                                            {discount.percent > 0 && (
+                                                <>
+                                                    <span className={`text-lg line-through ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
+                                                        DH {discount.oldPrice}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-red-500">-{discount.percent}%</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
+                                            <span className={`w-2 h-2 rounded-full ${isOutOfStock ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                                            {isOutOfStock ? t.out : t.stock}
+                                        </span>
+                                    </div>
+
+                                    {chips.length > 0 && (
+                                        <div className={`grid grid-cols-4 gap-2 py-3 border-y ${dm ? 'border-gray-800' : 'border-slate-100'}`}>
+                                            {chips.map((chip) => {
+                                                const Icon = chip.icon;
+                                                return (
+                                                    <div key={chip.label} className="flex flex-col items-center text-center gap-1.5">
+                                                        <Icon size={18} className={dm ? 'text-gray-300' : 'text-slate-600'} />
+                                                        <span className={`text-[10px] leading-snug font-medium ${dm ? 'text-gray-400' : 'text-slate-500'}`}>
+                                                            {chip.label}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <ProductColorPicker
+                                        variants={colorVariants}
+                                        selectedId={selectedVariantId}
+                                        onSelect={(id) => {
+                                            setSelectedVariantId(id);
+                                            setCurrentIndex(0);
+                                        }}
+                                        allowAll={colorSource !== 'tifawt'}
+                                        isFr={isFr}
+                                        dm={dm}
+                                        appearance="swatches"
+                                    />
+
+                                    {!isOutOfStock && (
+                                        <div className="hidden sm:flex items-center justify-between gap-3">
+                                            <span className={`text-sm font-semibold ${dm ? 'text-gray-300' : 'text-slate-700'}`}>{t.qty} :</span>
+                                            {qtyControls}
+                                        </div>
+                                    )}
+
+                                    <div className="hidden sm:block space-y-3">
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">{cartButton}</div>
+                                            <a
+                                                href={`https://wa.me/212664630566?text=${encodeURIComponent(`${isFr ? 'Bonjour, je suis intéressé par' : 'السلام عليكم، أريد الاستفسار بخصوص هذا المنتج'}:\n\n${fullTitle}\n${viewedProduct.ref}\n${viewedProduct.price} DH`)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center justify-center w-12 h-12 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all"
+                                                title="WhatsApp"
+                                            >
+                                                <img src={WA_ICON} alt="WhatsApp" className="w-6 h-6" />
+                                            </a>
+                                        </div>
+                                        <div className={`flex items-start gap-2.5 rounded-2xl px-3.5 py-3 ${dm ? 'bg-emerald-950/40 text-emerald-200' : 'bg-emerald-50 text-emerald-800'}`}>
+                                            <BadgeCheck size={18} className="shrink-0 mt-0.5 text-emerald-600" />
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold leading-snug">{t.ship}</p>
+                                                <p className={`text-[11px] mt-0.5 ${dm ? 'text-emerald-300/80' : 'text-emerald-700/80'}`}>{t.shipMeta}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleCopyRef}
+                                        className={`self-start text-[11px] font-mono ${copied ? 'text-emerald-500' : dm ? 'text-gray-500' : 'text-slate-400'}`}
+                                    >
+                                        {copied ? <span className="inline-flex items-center gap-1"><Check size={12} /> REF {viewedProduct.ref}</span> : `REF : ${viewedProduct.ref}`}
+                                    </button>
                                 </div>
-                            )}
+                            </div>
 
-                            {/* Category */}
-                            {viewedProduct.category && viewedProduct.category !== 'Out of Stock' && (
-                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${dm ? 'bg-gray-800 text-gray-400' : 'bg-slate-100 text-slate-500'}`}>
-                                    {viewedProduct.category}
-                                </span>
-                            )}
-
-                            <RelatedProducts
-                                product={viewedProduct}
-                                onSelect={setSelectedProduct}
-                            />
+                            <div className="px-4 sm:px-6 pb-4">
+                                <RelatedProducts
+                                    product={viewedProduct}
+                                    onSelect={setSelectedProduct}
+                                    titleAr={t.related}
+                                    titleFr={t.related}
+                                    lang={isFr ? 'fr' : 'ar'}
+                                />
+                            </div>
                         </div>
 
                         {infoScrollable && (
                             <button
                                 type="button"
                                 onClick={scrollInfo}
-                                className={`absolute bottom-2.5 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center
+                                className={`absolute bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center
                                     shadow-lg border backdrop-blur-sm transition-all active:scale-90
                                     ${dm
                                         ? 'bg-gray-800/90 border-gray-700 text-gray-300 hover:text-white'
                                         : 'bg-white/90 border-slate-200 text-slate-500 hover:text-primary'}`}
-                                title={infoAtBottom ? 'الرجوع للأعلى' : 'تمرير للأسفل'}
-                                aria-label={infoAtBottom ? 'الرجوع للأعلى' : 'تمرير للأسفل'}
+                                title={infoAtBottom ? (isFr ? 'Haut' : 'الرجوع للأعلى') : (isFr ? 'Bas' : 'تمرير للأسفل')}
                             >
                                 {infoAtBottom ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
                         )}
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className={`p-4 border-t space-y-3 ${dm ? 'border-gray-800 bg-gray-900' : 'border-slate-100 bg-white'}`}>
-                            {/* Quantity Controls */}
+                        <div className={`sm:hidden p-4 pt-2 border-t space-y-3 ${dm ? 'border-gray-800 bg-gray-900' : 'border-slate-100 bg-white'}`}>
                             {!isOutOfStock && (
-                                <div className="flex items-center justify-center gap-1" dir="ltr">
-                                    <button onClick={() => updateQty(-5)}
-                                        className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-90
-                                            ${dm ? 'bg-gray-800 text-red-400 hover:bg-gray-700 border border-gray-700' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-200'}`}>
-                                        -5
-                                    </button>
-                                    <button onClick={() => updateQty(-1)}
-                                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90
-                                            ${dm ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}>
-                                        <Minus size={16} />
-                                    </button>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        value={quantity === 0 ? '' : quantity}
-                                        onChange={(e) => handleQtyInput(e.target.value)}
-                                        onBlur={commitQty}
-                                        onFocus={(e) => e.target.select()}
-                                        aria-label="الكمية"
-                                        className={`w-14 h-10 rounded-xl text-lg font-extrabold text-center outline-none
-                                            focus:ring-2 focus:ring-primary/40
-                                            ${dm ? 'bg-gray-800 text-white border border-gray-700' : 'bg-slate-50 text-slate-900 border border-slate-200'}`}
-                                    />
-                                    <button onClick={() => updateQty(1)}
-                                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90
-                                            ${dm ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}>
-                                        <Plus size={16} />
-                                    </button>
-                                    <button onClick={() => updateQty(5)}
-                                        className={`w-10 h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-90
-                                            ${dm ? 'bg-gray-800 text-green-400 hover:bg-gray-700 border border-gray-700' : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'}`}>
-                                        +5
-                                    </button>
+                                <div className="flex items-center justify-between">
+                                    <span className={`text-sm font-semibold ${dm ? 'text-gray-300' : 'text-slate-700'}`}>{t.qty}</span>
+                                    {qtyControls}
                                 </div>
                             )}
-                            {/* Add to Cart / Restock alert + WhatsApp */}
                             <div className="flex gap-2">
-                                {isOutOfStock ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleRestockAlert}
-                                        className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.97] shadow-lg
-                                            ${isWatchingRestock
-                                                ? 'bg-amber-500 text-white shadow-amber-500/20'
-                                                : dm ? 'bg-gray-800 text-amber-400 border border-amber-500/30' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}
-                                    >
-                                        {isWatchingRestock ? <BellRing size={18} /> : <Bell size={18} />}
-                                        {isWatchingRestock ? 'سنخبرك عند توفره' : 'أعلمني عند التوفر'}
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleAddToCart}
-                                        className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-white transition-all active:scale-[0.97] shadow-lg
-                                            ${addedToCart ? 'bg-green-500 shadow-green-500/20' : 'bg-primary hover:bg-primary/90 shadow-primary/20'}`}
-                                    >
-                                        {addedToCart ? (
-                                            <><Check size={18} /> تمت الإضافة!</>
-                                        ) : (
-                                            <><ShoppingCart size={18} /> إضافة {quantity > 1 ? `(${quantity})` : ''} للسلة</>
-                                        )}
-                                    </button>
-                                )}
+                                <div className="flex-1">{cartButton}</div>
                                 <a
-                                    href={`https://wa.me/212664630566?text=السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:%0A%0A*المنتج:* ${viewedProduct.name || 'بدون اسم'}%0A*المرجع:* ${viewedProduct.ref}%0A*الثمن:* ${viewedProduct.price} DH`}
+                                    href={`https://wa.me/212664630566?text=${encodeURIComponent(`السلام عليكم، أريد الاستفسار بخصوص هذا المنتج:\n\n*المنتج:* ${viewedProduct.name || 'بدون اسم'}\n*المرجع:* ${viewedProduct.ref}\n*الثمن:* ${viewedProduct.price} DH`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all shadow-lg shadow-green-500/20"
+                                    className="flex items-center justify-center w-12 h-12 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 transition-all"
                                 >
                                     <img src={WA_ICON} alt="WhatsApp" className="w-6 h-6" />
                                 </a>

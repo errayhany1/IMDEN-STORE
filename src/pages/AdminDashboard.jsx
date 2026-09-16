@@ -21,6 +21,7 @@ import {
     verifyAdminSession,
 } from '../services/adminApi';
 import { initTelegramWebApp, adminTabFromQuery } from '../utils/telegramWebApp';
+import { extraCategoryIdFromRecord, extraCategoryNamesForRecord } from '../utils/productCategories';
 
 const NOCODB_URL = import.meta.env.VITE_NOCODB_URL;
 const ORDERS_TOKEN = import.meta.env.VITE_NOCODB_ORDERS_TOKEN || import.meta.env.VITE_NOCODB_API_TOKEN;
@@ -229,13 +230,26 @@ const AdminDashboard = () => {
                 }
             }
 
+            const extraCategoryId = Number(updatedProduct.Category_ID_2) || 0;
+            const extraFields = extraCategoryId && extraCategoryId !== Number(updatedProduct.Category_ID) && extraCategoryId !== 15
+                ? [
+                    { Category_ID_2: extraCategoryId, Extra_Categories: String(extraCategoryId) },
+                    { Extra_Categories: String(extraCategoryId) },
+                    { Category_ID_2: extraCategoryId },
+                    {},
+                ]
+                : [
+                    { Category_ID_2: null, Extra_Categories: '' },
+                    { Extra_Categories: '' },
+                    {},
+                ];
             const payload = {
                 Id: updatedProduct.Id,
                 Title: updatedProduct.Title,
                 SKU: updatedProduct.SKU,
                 price: updatedProduct.price,
                 Category_ID: updatedProduct.Category_ID,
-                category_id: updatedProduct.Category_ID
+                category_id: updatedProduct.Category_ID,
             };
 
             // Map uploaded files to Image columns
@@ -252,12 +266,25 @@ const AdminDashboard = () => {
                 payload.image3 = [uploadedFiles[2]];
             }
 
-            await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, payload, {
-                headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' }
-            });
+            let savedPayload = payload;
+            let lastPatchError = null;
+            for (const extraFieldsAttempt of extraFields) {
+                const attempt = { ...payload, ...extraFieldsAttempt };
+                try {
+                    await axios.patch(`${NOCODB_URL}/api/v2/tables/${PRODUCTS_TABLE}/records`, attempt, {
+                        headers: { 'xc-token': PRODUCTS_TOKEN, 'Content-Type': 'application/json' }
+                    });
+                    savedPayload = attempt;
+                    lastPatchError = null;
+                    break;
+                } catch (extraErr) {
+                    lastPatchError = extraErr;
+                }
+            }
+            if (lastPatchError) throw lastPatchError;
 
             // Optimistic update
-            setProducts(prev => prev.map(p => p.Id === updatedProduct.Id ? { ...p, ...updatedProduct, ...payload } : p));
+            setProducts(prev => prev.map(p => p.Id === updatedProduct.Id ? { ...p, ...updatedProduct, ...savedPayload } : p));
             setEditingProduct(null);
             setEditFiles([]);
         } catch (err) {
@@ -1163,6 +1190,7 @@ const AdminDashboard = () => {
                                                     
                                                     // Category Filter
                                                     const catId = p.Category_ID || p.category_id || p.CategoryId || p.categoryId;
+                                                    const extraId = extraCategoryIdFromRecord(p, catId);
                                                     const isPaused = p.POSTEBL === 'PAUSED';
                                                     const isOutOfStock = !isPaused && (catId == 15 || p.POSTEBL === 'NO POSTEBL');
                                                     const isInstock = !isPaused && !isOutOfStock;
@@ -1171,7 +1199,9 @@ const AdminDashboard = () => {
                                                     if (productCatFilter === 'outofstock') matchesCat = isOutOfStock;
                                                     else if (productCatFilter === 'instock') matchesCat = isInstock;
                                                     else if (productCatFilter === 'paused') matchesCat = isPaused;
-                                                    else if (productCatFilter !== 'all') matchesCat = catId == productCatFilter;
+                                                    else if (productCatFilter !== 'all') {
+                                                        matchesCat = catId == productCatFilter || extraId == productCatFilter;
+                                                    }
                                                     
                                                     return matchesSearch && matchesCat;
                                                 })
@@ -1180,6 +1210,8 @@ const AdminDashboard = () => {
                                                 const isPaused = p.POSTEBL === 'PAUSED';
                                                 const isOutOfStock = categoryId === 15 || p.POSTEBL === 'NO POSTEBL';
                                                 const catName = CAT_MAP[categoryId] || 'عام';
+                                                const extraCatName = extraCategoryNamesForRecord(p, catName)[0];
+                                                const catLabel = extraCatName ? `${catName} + ${extraCatName}` : catName;
                                                 
                                                 let imgSrc = '';
                                                 try {
@@ -1219,7 +1251,7 @@ const AdminDashboard = () => {
                                                     </td>
                                                     <td className="px-4 py-3 text-xs">
                                                         <span className={`px-2 py-1 rounded-md ${dm ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>
-                                                            {catName}
+                                                            {catLabel}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 font-bold text-green-500">
@@ -1312,7 +1344,14 @@ const AdminDashboard = () => {
                                                             </button>
                                                             <button 
                                                                 onClick={() => {
-                                                                    setEditingProduct({ ...p, Title: p.Title || p.title || '', SKU: p.SKU || p.Ref || '', price: p.price || p.Price || 0, Category_ID: categoryId });
+                                                                    setEditingProduct({
+                                                                        ...p,
+                                                                        Title: p.Title || p.title || '',
+                                                                        SKU: p.SKU || p.Ref || '',
+                                                                        price: p.price || p.Price || 0,
+                                                                        Category_ID: categoryId,
+                                                                        Category_ID_2: extraCategoryIdFromRecord(p, categoryId),
+                                                                    });
                                                                     setEditFiles([]);
                                                                 }}
                                                                 className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all border
@@ -1547,6 +1586,23 @@ const AdminDashboard = () => {
                                         <option key={id} value={id}>{name}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div>
+                                <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>تصنيف إضافي (اختياري)</label>
+                                <select
+                                    value={editingProduct.Category_ID_2 || 0}
+                                    onChange={e => setEditingProduct({...editingProduct, Category_ID_2: parseInt(e.target.value) || 0})}
+                                    className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${dm ? 'bg-gray-900 border-gray-700 focus:border-blue-500' : 'bg-slate-50 border-slate-200 focus:border-blue-500'}`}>
+                                    <option value={0}>بدون تصنيف إضافي</option>
+                                    {Object.entries(CAT_MAP)
+                                        .filter(([id]) => Number(id) !== 15 && Number(id) !== Number(editingProduct.Category_ID))
+                                        .map(([id, name]) => (
+                                            <option key={id} value={id}>{name}</option>
+                                        ))}
+                                </select>
+                                <p className={`text-[11px] mt-1 ${dm ? 'text-gray-500' : 'text-slate-400'}`}>
+                                    يظهر المنتج في التصنيفين معاً، مثلاً مبرد الهاتف في Cooling وGaming.
+                                </p>
                             </div>
                             <div>
                                 <label className={`block text-xs font-bold mb-1 ${dm ? 'text-gray-400' : 'text-slate-500'}`}>صور جديدة (يستبدل الصور الحالية إن وجدت)</label>

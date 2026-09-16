@@ -245,6 +245,7 @@ const productText = (product) => {
     od.Title,
     product?.baseCategory,
     product?.category,
+    ...(Array.isArray(product?.extraCategories) ? product.extraCategories : []),
   ].filter(Boolean).join(' ');
 };
 

@@ -15,7 +15,8 @@ import {
   Check,
   Search,
   Share2,
-  Link2,
+  Headset,
+  CreditCard,
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import {
@@ -42,6 +43,9 @@ import {
   isProductShotPath,
   isContentInfoImagePath,
 } from '../utils/productText';
+import { CATEGORY_LABEL_AR } from '../data/categories';
+import { productTypeNames } from '../utils/productCategories';
+import { productBrand, productDiscount, productFeatureChips } from '../utils/productOffer';
 
 const WA_NUMBER = '212664630566';
 const WA_ICON = 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
@@ -123,6 +127,7 @@ const ProductLandingPage = ({ sku: skuProp }) => {
   const appendProducts = useStore((s) => s.appendProducts);
   const toggleCart = useStore((s) => s.toggleCart);
   const toggleWishlistSidebar = useStore((s) => s.toggleWishlistSidebar);
+  const toggleWishlistItem = useStore((s) => s.toggleWishlistItem);
   const cart = useStore((s) => s.cart);
   const wishlist = useStore((s) => s.wishlist);
   const darkMode = useStore((s) => s.darkMode);
@@ -262,6 +267,14 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     return !textsOverlap(joined, title);
   }, [bullets, showHeroLine, heroLine, title]);
 
+  const discount = productDiscount(product);
+  const brandName = productBrand(product);
+  const featureChips = productFeatureChips(
+    `${title} ${heroLine} ${plainDesc} ${bullets.join(' ')}`,
+    isFr,
+    bullets,
+  );
+
   const faq = useMemo(
     () => parseFaq(isFr ? (od.Landing_FAQ_FR || od.faq_fr) : (od.Landing_FAQ_AR || od.faq_ar)),
     [od, isFr]
@@ -348,10 +361,13 @@ const ProductLandingPage = ({ sku: skuProp }) => {
     if (product?.ref) rows.push({ label: 'SKU', value: product.ref });
     if (od.brand || od.Brand) rows.push({ label: isFr ? 'Marque' : 'العلامة', value: od.brand || od.Brand });
     if (od.color || od.Color) rows.push({ label: isFr ? 'Couleur' : 'اللون', value: od.color || od.Color });
-    if (product?.baseCategory || (product?.category && product.category !== 'Out of Stock')) {
+    const typeNames = productTypeNames(product || {});
+    if (typeNames.length) {
       rows.push({
         label: isFr ? 'Catégorie' : 'الفئة',
-        value: product.baseCategory || product.category,
+        value: typeNames
+          .map((name) => (isFr ? name : (CATEGORY_LABEL_AR[name] || name)))
+          .join(' · '),
       });
     }
     if (product?.price != null) rows.push({ label: isFr ? 'Prix' : 'الثمن', value: `${product.price} DH` });
@@ -748,6 +764,9 @@ const ProductLandingPage = ({ sku: skuProp }) => {
       </header>
 
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 pt-4 md:pt-8">
+        <div className={`rounded-[28px] border p-4 sm:p-6 md:p-8 shadow-[0_18px_50px_rgba(15,23,42,0.08)] ${
+          dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-100'
+        }`}>
         <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
           {/* Gallery */}
           <section className="md:sticky md:top-20">
@@ -763,25 +782,28 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!carouselImages.length) return;
-                  setZoomImages(carouselImages);
-                  setZoomIndex(activeImg);
-                  setZoomOpen(true);
-                }}
+              <div
+                className={`relative flex-1 min-w-0 aspect-square overflow-hidden rounded-2xl ${dm ? 'bg-gray-950' : 'bg-[#f4f7fb]'}`}
                 onTouchStart={onTouchStart}
                 onTouchEnd={onTouchEnd}
-                className={`relative flex-1 min-w-0 aspect-square overflow-hidden rounded-2xl ${panel} ${dm ? '' : 'ring-1 ring-slate-200/80 shadow-sm'}`}
-                aria-label={t.zoom}
               >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!carouselImages.length) return;
+                    setZoomImages(carouselImages);
+                    setZoomIndex(activeImg);
+                    setZoomOpen(true);
+                  }}
+                  className="block w-full h-full cursor-zoom-in"
+                  aria-label={t.zoom}
+                >
                 {carouselImages[activeImg] ? (
                   <img
                     key={carouselImages[activeImg]}
                     src={carouselImages[activeImg]}
                     alt={title}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain p-4 sm:p-6 pointer-events-none"
                     loading="eager"
                     decoding="async"
                     onError={(e) => {
@@ -793,15 +815,25 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 ) : (
                   <div className={`w-full h-full flex items-center justify-center ${muted}`}>—</div>
                 )}
+                </button>
 
-                {carouselImages.length > 1 && (
-                  <span
-                    className={`absolute top-3 inset-inline-end-3 text-[11px] font-semibold px-2 py-0.5 rounded-md ${dm ? 'bg-black/50 text-white' : 'bg-white/90 text-slate-600'}`}
-                  >
-                    {activeImg + 1}/{carouselImages.length}
+                {discount.percent > 0 && (
+                  <span className="absolute top-4 start-4 z-10 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+                    -{discount.percent}%
                   </span>
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => toggleWishlistItem(product)}
+                  className={`absolute top-4 end-4 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-sm
+                    ${wishlist.some((item) => item.id === product.id)
+                      ? 'bg-red-500 text-white'
+                      : dm ? 'bg-gray-800 text-gray-300' : 'bg-white text-slate-400 hover:text-red-500'}`}
+                  aria-label={isFr ? 'Favoris' : 'المفضلة'}
+                >
+                  <Heart size={16} fill={wishlist.some((item) => item.id === product.id) ? 'currentColor' : 'none'} />
+                </button>
+              </div>
 
               {carouselImages.length > 1 && (
                 <button
@@ -822,59 +854,60 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                     key={src + i}
                     type="button"
                     onClick={() => setActiveImg(i)}
-                    className={`shrink-0 w-16 h-16 overflow-hidden rounded-xl border-2 transition ${
+                    className={`shrink-0 w-[72px] h-[72px] overflow-hidden rounded-xl border-2 transition ${
                       activeImg === i
                         ? 'border-primary'
                         : `${line} opacity-70 hover:opacity-100`
-                    } ${panel}`}
+                    } ${dm ? 'bg-gray-800' : 'bg-slate-50'}`}
                   >
-                    <img src={src} alt="" loading="lazy" className="w-full h-full object-contain" />
+                    <img src={src} alt="" loading="lazy" className="w-full h-full object-contain p-1" />
                   </button>
                 ))}
               </div>
             )}
+
+            <div className={`mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 ${muted}`}>
+              {[
+                { icon: Truck, text: isFr ? 'Livraison gratuite dans tout le Maroc' : 'توصيل مجاني في كل المغرب' },
+                { icon: CreditCard, text: isFr ? 'Paiement à la livraison' : 'الدفع عند الاستلام' },
+                { icon: ShieldCheck, text: isFr ? 'Produit original Garantie qualité' : 'منتج أصلي · ضمان الجودة' },
+                { icon: Headset, text: isFr ? 'Support client 7j/7' : 'دعم الزبناء 7/7' },
+              ].map((row) => {
+                const Icon = row.icon;
+                return (
+                  <div key={row.text} className="flex flex-col items-center text-center gap-1.5 px-1">
+                    <Icon size={18} />
+                    <span className="text-[10px] leading-snug font-medium">{row.text}</span>
+                  </div>
+                );
+              })}
+            </div>
 
           </section>
 
           {/* Buy column */}
           <section className="mt-5 md:mt-0 space-y-5">
             <div>
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                {!available && (
-                  <span
-                    className={`text-[11px] font-bold px-2 py-0.5 rounded ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-200 text-slate-600'}`}
-                  >
-                    {t.out}
-                  </span>
-                )}
-                {product.ref && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard?.writeText(product.ref);
-                      setRefCopied(true);
-                      setTimeout(() => setRefCopied(false), 1500);
-                    }}
-                    className={`inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-md border transition-colors
-                      ${refCopied
-                        ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
-                        : dm ? 'border-white/10 text-gray-400 hover:bg-white/10' : 'border-slate-200 text-slate-500 hover:bg-slate-100'}`}
-                    title={isFr ? 'Copier la référence' : 'نسخ المرجع'}
-                    aria-label={isFr ? 'Copier la référence' : 'نسخ المرجع'}
-                  >
-                    {refCopied ? <Check size={12} /> : <Copy size={12} />}
-                    {product.ref}
-                  </button>
-                )}
-                <ProductRatingStars
-                  product={product}
-                  size={16}
-                  emptyHint={null}
-                  darkMode={dm}
-                  className="!flex-row !items-center gap-1"
-                />
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <p className={`text-sm font-medium ${muted}`}>{brandName || BRAND}</p>
+                <button
+                  type="button"
+                  onClick={shareProduct}
+                  className={`inline-flex items-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-lg transition-colors
+                    ${shareFlash
+                      ? 'text-emerald-600'
+                      : dm ? 'text-gray-300 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                  {shareFlash ? <Check size={15} /> : <Share2 size={15} />}
+                  {shareFlash ? t.shareDone : t.share}
+                </button>
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-[1.85rem] font-bold leading-snug">
+              {!available && (
+                <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded mb-2 ${dm ? 'bg-gray-700 text-gray-300' : 'bg-slate-200 text-slate-600'}`}>
+                  {t.out}
+                </span>
+              )}
+              <h1 className="text-[1.65rem] sm:text-[1.85rem] md:text-[2rem] font-extrabold leading-tight">
                 {title}
               </h1>
               {showHeroLine && (
@@ -882,62 +915,100 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                   {heroLine}
                 </p>
               )}
-              {variants.length > 0 && (
-                <ProductColorPicker
-                  variants={variants}
-                  selectedId={selectedVariantId}
-                  onSelect={(id) => {
-                    setSelectedVariantId(id);
-                    setActiveImg(0);
-                  }}
-                  allowAll={product?.colorSource !== 'tifawt'}
-                  isFr={isFr}
-                  dm={dm}
+              <div className="mt-3">
+                <ProductRatingStars
+                  product={product}
+                  size={18}
+                  emptyHint={null}
+                  darkMode={dm}
+                  readOnly
+                  heroMeta
+                  reviewsLabel={isFr ? 'avis' : 'تقييم'}
+                  className="!flex-row !items-center gap-1"
                 />
-              )}
+              </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-3xl md:text-4xl font-extrabold text-primary leading-none">
-                {product.price}
-                <span className="text-base font-bold ms-1 opacity-80">DH</span>
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={shareProduct}
-                  className={`shrink-0 min-h-11 px-3 rounded-xl border flex items-center justify-center gap-1.5 text-sm font-semibold transition-colors
-                    ${shareFlash
-                      ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
-                      : dm ? 'border-white/10 text-gray-200 hover:bg-white/10' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-                  aria-label={t.share}
-                  title={t.share}
-                >
-                  {shareFlash ? <Check size={16} /> : <Share2 size={16} />}
-                  <span className="hidden sm:inline">{shareFlash ? t.shareDone : t.share}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={copyProductLink}
-                  className={`shrink-0 min-h-11 px-3 rounded-xl border flex items-center justify-center gap-1.5 text-sm font-semibold transition-colors
-                    ${linkCopied
-                      ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
-                      : dm ? 'border-white/10 text-gray-200 hover:bg-white/10' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-                  aria-label={t.copyLink}
-                  title={t.copyLink}
-                >
-                  {linkCopied ? <Check size={16} /> : <Link2 size={16} />}
-                  <span className="hidden sm:inline">{linkCopied ? t.linkCopied : t.copyLink}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAdd}
-                  disabled={!available}
-                  className="shrink-0 min-h-11 px-4 sm:px-5 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-45 hover:bg-primary-dark active:scale-[0.99] transition text-sm sm:text-base"
-                >
-                  <ShoppingCart size={18} />
-                  {addedFlash ? t.added : t.buy}
-                </button>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="flex items-baseline gap-2.5 flex-wrap">
+                <p className={`text-[2rem] md:text-[2.15rem] font-extrabold leading-none ${dm ? 'text-sky-400' : 'text-[#1d4ed8]'}`}>
+                  DH {product.price}
+                </p>
+                {discount.percent > 0 && (
+                  <>
+                    <span className={`text-lg line-through ${muted}`}>DH {discount.oldPrice}</span>
+                    <span className="text-sm font-bold text-red-500">-{discount.percent}%</span>
+                  </>
+                )}
+              </div>
+              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${available ? 'text-emerald-600' : 'text-red-500'}`}>
+                <span className={`w-2 h-2 rounded-full ${available ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                {available ? t.stock : t.out}
+              </span>
+            </div>
+
+            {featureChips.length > 0 && (
+              <div className={`grid grid-cols-4 gap-2 py-3 border-y ${line}`}>
+                {featureChips.map((chip) => {
+                  const Icon = chip.icon;
+                  return (
+                    <div key={chip.label} className="flex flex-col items-center text-center gap-1.5">
+                      <Icon size={18} className={soft} />
+                      <span className={`text-[10px] leading-snug font-medium ${muted}`}>{chip.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {variants.length > 0 && (
+              <ProductColorPicker
+                variants={variants}
+                selectedId={selectedVariantId}
+                onSelect={(id) => {
+                  setSelectedVariantId(id);
+                  setActiveImg(0);
+                }}
+                allowAll={product?.colorSource !== 'tifawt'}
+                isFr={isFr}
+                dm={dm}
+                appearance="swatches"
+              />
+            )}
+
+            {product.ref && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(product.ref);
+                  setRefCopied(true);
+                  setTimeout(() => setRefCopied(false), 1500);
+                }}
+                className={`inline-flex items-center gap-1.5 text-[11px] font-mono transition-colors
+                  ${refCopied ? 'text-emerald-600' : muted}`}
+              >
+                {refCopied ? <Check size={12} /> : <Copy size={12} />}
+                REF : {product.ref}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!available}
+              className="w-full min-h-12 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 disabled:opacity-45 hover:bg-primary-dark active:scale-[0.99] transition shadow-[0_10px_24px_-8px_rgba(25,127,230,0.55)]"
+            >
+              <ShoppingCart size={18} />
+              {addedFlash ? t.added : t.buy}
+            </button>
+
+            <div className={`flex items-start gap-2.5 rounded-2xl px-3.5 py-3 ${dm ? 'bg-emerald-950/40 text-emerald-200' : 'bg-emerald-50 text-emerald-800'}`}>
+              <BadgeCheck size={18} className="shrink-0 mt-0.5 text-emerald-600" />
+              <div>
+                <p className="text-sm font-semibold">{isFr ? 'Livraison gratuite partout au Maroc' : 'توصيل مجاني لجميع مدن المغرب'}</p>
+                <p className={`text-[11px] mt-0.5 ${dm ? 'text-emerald-300/80' : 'text-emerald-700/80'}`}>
+                  {isFr ? 'Paiement à la livraison  |  24 – 48 heures' : 'الدفع عند الاستلام  |  24 – 48 ساعة'}
+                </p>
               </div>
             </div>
 
@@ -946,45 +1017,14 @@ const ProductLandingPage = ({ sku: skuProp }) => {
                 href={`https://wa.me/${WA_NUMBER}?text=${waText}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 min-h-12 bg-whatsapp text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:brightness-110"
+                className="flex-1 min-h-12 bg-whatsapp text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:brightness-110"
               >
                 <img src={WA_ICON} alt="" aria-hidden="true" className="w-6 h-6 drop-shadow-md" />
                 {t.wa}
               </a>
             </div>
-
-            {showHighlights && (
-              <div className={`pt-1 border-t ${line}`}>
-                <p className={`text-[11px] font-bold uppercase tracking-wide mb-2.5 ${muted}`}>
-                  {t.highlights}
-                </p>
-                <ul className={`space-y-2.5 text-sm leading-relaxed list-disc ps-5 ${soft}`}>
-                  {bullets.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              {[
-                { icon: BadgeCheck, text: t.trustQuality },
-                { icon: Truck, text: t.trustShip },
-                { icon: ShieldCheck, text: t.trustCod },
-              ].map((row) => {
-                const TrustIcon = row.icon;
-                return (
-                  <div
-                    key={row.text}
-                    className={`flex items-start gap-2.5 rounded-xl px-3 py-2.5 border ${line} ${dm ? 'bg-gray-800/40' : 'bg-slate-50'}`}
-                  >
-                    <TrustIcon size={18} className="text-primary shrink-0 mt-0.5" />
-                    <span className={`text-xs leading-snug font-medium ${soft}`}>{row.text}</span>
-                  </div>
-                );
-              })}
-            </div>
           </section>
+        </div>
         </div>
 
         {/* Delivery */}

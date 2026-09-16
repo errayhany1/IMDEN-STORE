@@ -8,6 +8,11 @@ import ProductFilters from './ProductFilters';
 import { categoryTranslation } from './CategoryRail';
 import { getFamilyById } from '../data/families';
 import { LOCAL_CATEGORY_IMAGES } from '../data/categories';
+import {
+    extraCategorySearchText,
+    productMatchesCategory,
+    productMatchesFamily,
+} from '../utils/productCategories';
 const ProductGrid = () => {
     const {
         products,
@@ -90,7 +95,7 @@ const ProductGrid = () => {
                     const arabicTitle = p.originalData?.Arabic_Title || "";
                     const arabicDesc = p.originalData?.description_arabic || "";
                     const frenchTitle = `${p.originalData?.French_Title || ""} ${p.originalData?.Woo_Title || ""}`;
-                    const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${arabicTitle} ${arabicDesc} ${frenchTitle}`.toLowerCase();
+                    const searchableText = `${p.name || ""} ${p.ref || ""} ${p.category || ""} ${arabicCategory} ${extraCategorySearchText(p)} ${arabicTitle} ${arabicDesc} ${frenchTitle}`.toLowerCase();
                     matchesSearch = terms.every(term => searchableText.includes(term));
                 }
 
@@ -101,24 +106,15 @@ const ProductGrid = () => {
                 }
                 if (!matchesSearch) return false;
             } else if (familyCategories) {
-                // Family view: only products that belong to this family's categories
-                // (use baseCategory when stock forced the display category to Out of Stock)
-                const productType = p.baseCategory || p.category;
-                const inFamily = familyCategories.includes(productType)
-                    || (p.category !== 'Out of Stock' && familyCategories.includes(p.category));
-                if (!inFamily) return false;
+                if (!productMatchesFamily(p, familyCategories)) return false;
                 if (selectedCategory === 'All') {
                     if (p.category === 'Out of Stock' && stockFilter !== 'out-of-stock') return false;
-                } else if (!(productType === selectedCategory || p.category === selectedCategory)) {
+                } else if (!productMatchesCategory(p, selectedCategory)) {
                     return false;
                 }
-            } else {
-                // Home view: category filtering
-                const matchesCategory = (selectedCategory === 'All' && p.category !== 'Out of Stock')
-                    || p.category === selectedCategory;
-                if (!matchesCategory && !(stockFilter === 'out-of-stock' && selectedCategory === 'All' && isOutOfStock(p))) {
-                    return false;
-                }
+            } else if (!productMatchesCategory(p, selectedCategory)
+                && !(stockFilter === 'out-of-stock' && selectedCategory === 'All' && isOutOfStock(p))) {
+                return false;
             }
 
             if (stockFilter === 'in-stock' && isOutOfStock(p)) return false;
