@@ -41,6 +41,7 @@ export const BOT_SETTINGS_SCHEMA = {
     group: 'workflow', type: 'boolean', label: 'طلب الموافقة على الصور',
     description: 'لم يعد مستخدماً. الصور الأصلية تُحفظ مباشرة بعد توليد الوصف.',
     default: false,
+    hidden: true,
   },
   sheetSyncEnabled: {
     group: 'workflow', type: 'boolean', label: 'مزامنة Google Sheet',
@@ -76,6 +77,7 @@ export const BOT_SETTINGS_SCHEMA = {
     group: 'ai', type: 'text', label: 'نموذج صور OpenRouter',
     description: 'النموذج الأساسي لإنشاء صور الاستوديو (متوقف — البوت يولّد الوصف فقط).',
     default: textEnv('OPENROUTER_IMAGE_MODEL', 'google/gemini-2.5-flash-image'),
+    hidden: true,
   },
   openaiTextModel: {
     group: 'ai', type: 'text', label: 'نموذج OpenAI للنصوص',
@@ -96,6 +98,7 @@ export const BOT_SETTINGS_SCHEMA = {
     group: 'ai', type: 'text', label: 'نموذج Qwen للصور',
     description: 'النموذج الثانوي الاختياري للصور (متوقف — البوت يولّد الوصف فقط).',
     default: textEnv('QWEN_IMAGE_MODEL', 'qwen-image-2.0'),
+    hidden: true,
   },
   aiBackgroundTimeoutMs: {
     group: 'ai', type: 'number', label: 'مهلة المعالجة الخلفية',
@@ -106,16 +109,19 @@ export const BOT_SETTINGS_SCHEMA = {
     group: 'ai', type: 'number', label: 'مهلة إعادة البناء من Amazon',
     description: 'متوقف — البوت لا يكشط Amazon ولا يعيد البناء منها.',
     default: numberEnv('AI_ENRICH_TIMEOUT_MS_AMAZON', 360000), min: 30000, max: 1200000, step: 10000,
+    hidden: true,
   },
   localBackgroundRemoval: {
     group: 'images', type: 'boolean', label: 'إزالة الخلفية محلياً',
     description: 'إزالة الخلفية محلياً (متوقف مع مسار الوصف فقط).',
     default: false,
+    hidden: true,
   },
   localBackgroundTimeoutMs: {
     group: 'images', type: 'number', label: 'مهلة إزالة الخلفية',
     description: 'إيقاف المعالجة المحلية إذا تجاوزت هذه المدة.',
     default: numberEnv('LOCAL_BACKGROUND_TIMEOUT_MS', 60000), min: 10000, max: 300000, step: 5000,
+    hidden: true,
   },
   catalogImageSize: {
     group: 'images', type: 'number', label: 'حجم الصورة النهائية',
@@ -137,6 +143,7 @@ export const BOT_SETTINGS_SCHEMA = {
     group: 'images', type: 'number', label: 'نسبة ملء المنتج للإطار',
     description: 'حجم المنتج داخل صورة الاستوديو من 0.60 إلى 0.98.',
     default: numberEnv('STUDIO_PRODUCT_FILL', 0.91), min: 0.6, max: 0.98, step: 0.01,
+    hidden: true,
   },
   maxTelegramImageMb: {
     group: 'images', type: 'number', label: 'أقصى حجم لصورة Telegram',
@@ -540,10 +547,17 @@ export function getBotConnectionStatus() {
 }
 
 export function publicBotSettingsPayload() {
+  const schema = Object.fromEntries(
+    Object.entries(BOT_SETTINGS_SCHEMA).filter(([, definition]) => !definition.hidden),
+  );
+  const rawConnections = sharedConnections || getBotConnectionStatus();
+  const connections = Object.fromEntries(
+    Object.entries(rawConnections).filter(([key]) => key !== 'apify' && key !== 'qwen'),
+  );
   return {
     settings: getBotSettings(),
-    schema: BOT_SETTINGS_SCHEMA,
-    connections: sharedConnections || getBotConnectionStatus(),
+    schema,
+    connections,
     storage: {
       persistentPathConfigured: Boolean(nocoConfig().table),
       fileName: 'NocoDB shared settings',

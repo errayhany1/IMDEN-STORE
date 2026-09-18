@@ -74,8 +74,6 @@ const CONNECTIONS = {
   productVariants: { label: 'ProductVariants', icon: SlidersHorizontal },
   openrouter: { label: 'OpenRouter', icon: Sparkles },
   openai: { label: 'OpenAI', icon: BrainCircuit },
-  qwen: { label: 'Qwen', icon: Image },
-  apify: { label: 'Amazon / Apify', icon: CloudCog },
   tifawt: { label: 'Tifawt', icon: Database },
   jumia: { label: 'Jumia', icon: ShoppingBag },
   sheet: { label: 'Google Sheet', icon: CloudCog },
@@ -184,7 +182,9 @@ const BotSettingsTab = () => {
   }, [draft, payload]);
 
   const currentSettings = useMemo(
-    () => Object.entries(payload?.schema || {}).filter(([, definition]) => definition.group === activeGroup),
+    () => Object.entries(payload?.schema || {}).filter(
+      ([, definition]) => definition.group === activeGroup && !definition.hidden,
+    ),
     [payload, activeGroup],
   );
 
@@ -236,8 +236,11 @@ const BotSettingsTab = () => {
 
   const activeMeta = GROUPS.find((group) => group.id === activeGroup) || GROUPS[0];
   const ActiveIcon = activeMeta.icon;
-  const configuredCount = Object.values(payload?.connections || {}).filter(Boolean).length;
-  const totalConnections = Object.keys(payload?.connections || {}).length;
+  const visibleConnections = Object.entries(payload?.connections || {}).filter(
+    ([key]) => CONNECTIONS[key],
+  );
+  const configuredCount = visibleConnections.filter(([, connected]) => connected).length;
+  const totalConnections = visibleConnections.length;
 
   return (
     <section
@@ -304,7 +307,7 @@ const BotSettingsTab = () => {
           {GROUPS.map((group) => {
             const Icon = group.icon;
             const active = group.id === activeGroup;
-            const count = Object.values(payload?.schema || {}).filter((item) => item.group === group.id).length;
+            const count = Object.values(payload?.schema || {}).filter((item) => item.group === group.id && !item.hidden).length;
             return (
               <button
                 key={group.id}
@@ -401,7 +404,9 @@ const BotSettingsTab = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              {Object.entries(payload?.connections || {}).map(([key, connected]) => {
+              {Object.entries(payload?.connections || {})
+                .filter(([key]) => CONNECTIONS[key] && key !== 'apify' && key !== 'qwen')
+                .map(([key, connected]) => {
                 const meta = CONNECTIONS[key] || { label: key, icon: CloudCog };
                 const Icon = meta.icon;
                 return (

@@ -19,7 +19,7 @@ const useStore = create(
             user: null, // Firebase user object
             isAuthModalOpen: false,
             isAboutModalOpen: false,
-            primaryImageMode: typeof window !== 'undefined' ? getPrimaryImageMode() : 'ai',
+            primaryImageMode: typeof window !== 'undefined' ? getPrimaryImageMode() : 'original',
             categories: [
                 'All',
                 'Chargers',
