@@ -1,7 +1,7 @@
 /**
  * Enrichment after Telegram images downloaded.
  * Always uploads at least the real photos so products never go live without images.
- * With Amazon URL: scrape Apify → AI copy from Amazon data → gallery = AI + Amazon + real last.
+ * Amazon scrape / rebuild is retired: vision writes copy from seller photos only.
  */
 import {
   extractProductFacts,
@@ -20,12 +20,6 @@ import {
   createJumiaProduct,
   isJumiaConfigured,
 } from './jumiaClient.js';
-import {
-  scrapeAmazonProduct,
-  downloadImageBuffers,
-  isApifyConfigured,
-  normalizeAmazonUrl,
-} from './amazonScrape.js';
 import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   bulletsFromHtml,
@@ -200,34 +194,18 @@ export async function detectProductColorVariants({
 }
 
 /**
- * Build the normal storefront order. Color-only Jumia renders are appended
- * later by the approval flow into durable Image1…Image8 slots.
- * Image1 = AI studio hero (white packshot)
- * Image2 = real product cutout (local U²-Net, no generation)
- * Image3 = optional Qwen secondary studio render
- * then Amazon extras — never a rendered "specs card" JPEG.
+ * Build the catalog gallery from photos we already have.
+ * Image generation and Amazon ingest are retired: original seller photos only.
  */
-function orderGalleryUploads({
+export function orderGalleryUploads({
   aiUploads = [],
   cutoutUploads = [],
   amazonUploads = [],
   qwenUploads = [],
   realUploads = [],
 }) {
-  const hero = aiUploads.filter(Boolean);
-  const firstAi = hero[0] ? [hero[0]] : [];
-  const cutout = cutoutUploads[0] ? [cutoutUploads[0]] : [];
-  const real = !cutout.length && realUploads[0] ? [realUploads[0]] : [];
-  const amazon = amazonUploads.filter(Boolean);
-  const qwen = qwenUploads[0] ? [qwenUploads[0]] : [];
-  return [
-    ...firstAi,
-    ...cutout,
-    ...real,
-    ...amazon.slice(0, 1),
-    ...qwen,
-    ...amazon.slice(1),
-  ].slice(0, 5);
+  const real = realUploads.filter(Boolean);
+  return real.slice(0, 8);
 }
 
 function escapeHtml(value) {
@@ -366,7 +344,7 @@ export async function enrichProduct({
   oldPrice = 0,
   ref,
   amazonUrl = '',
-  amazonUrls = [],
+  amazonUrls: _amazonUrls = [],
   uploadToNocoDB,
   nocodbUrl,
   syncSheet = true,
@@ -378,16 +356,13 @@ export async function enrichProduct({
   cacheSourceHash = '',
   preparedVisionBuffers = null,
   /** Skip Gemini/Qwen studio images and local cutouts. Text agent still runs. */
-  skipAiImages = false,
+  skipAiImages = true,
   /** Regenerate title/description only; do not upload or replace gallery images. */
   copyOnly = false,
 }) {
-  const requestedAmazonUrls = Array.from(new Set(
-    [amazonUrl, ...(Array.isArray(amazonUrls) ? amazonUrls : [])]
-      .map(normalizeAmazonUrl)
-      .filter(Boolean),
-  )).slice(0, 4);
-  amazonUrl = requestedAmazonUrls[0] || '';
+  // Image generation and Amazon ingest are retired. Vision still reads photos to write copy.
+  skipAiImages = true;
+  amazonUrl = '';
   const enabled = Boolean(getBotSetting('productAiEnrichment'));
   const sellerSku = buildSellerSku(ref);
   const referenceClean = cleanReference(ref);
@@ -402,102 +377,28 @@ export async function enrichProduct({
   // Upload at most one DISPLAY original for gallery Image2 — never packaging backs.
   let originalUploads = [];
   let realPairs = [];
-  if (!copyOnly && publishRealOriginal && galleryRealBuffers[0]) {
+  if (!copyOnly && publishRealOriginal && galleryRealBuffers.length) {
     realPairs = await uploadBufferPairs(
       uploadToNocoDB,
-      galleryRealBuffers.slice(0, 1),
+      galleryRealBuffers.slice(0, 8),
       `real-${sellerSku}`
     );
     originalUploads = realPairs.map((p) => p.file);
   }
 
-  let amazonMeta = null;
-  let amazonUploads = [];
-  let amazonBuffers = [];
-  let amazonPairs = [];
-  let amazonDescriptionImageUrls = [];
+  // Amazon scrape is unwired: never call Apify and never replace seller photos.
+  const amazonMeta = null;
+  const amazonUploads = [];
+  const amazonBuffers = [];
+  const amazonPairs = [];
+  const amazonDescriptionImageUrls = [];
   const amazonJumiaSources = [];
-
-  if (amazonUrl) {
-    if (!isApifyConfigured()) {
-      throw new Error(
-        'Amazon scrape unavailable: APIFY_TOKEN is missing. Existing NocoDB images were not used.',
-      );
-    } else {
-      try {
-        const cleanAmazonUrl = normalizeAmazonUrl(amazonUrl);
-        amazonMeta = await scrapeAmazonProduct(cleanAmazonUrl);
-        console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || cleanAmazonUrl}`);
-        amazonJumiaSources.push({
-          index: 1,
-          url: cleanAmazonUrl,
-          title: amazonMeta.title || '',
-          imageUrls: amazonMeta.imageUrls || [],
-        });
-        amazonDescriptionImageUrls = amazonMeta.descriptionImageUrls || [];
-        amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 8 });
-        if (!amazonBuffers.length) {
-          throw new Error('Amazon returned no downloadable product images');
-        }
-        amazonPairs = await uploadBufferPairs(
-          uploadToNocoDB,
-          amazonBuffers,
-          `amazon-${sellerSku}`
-        );
-        amazonUploads = amazonPairs.map((pair) => pair.file);
-      } catch (e) {
-        console.error('Amazon scrape failed:', e.message);
-        throw new Error(
-          `Amazon scrape failed: ${e.message}. Existing NocoDB images were not used.`,
-        );
-      }
-    }
-
-    for (let i = 1; i < requestedAmazonUrls.length; i++) {
-      const extraUrl = requestedAmazonUrls[i];
-      try {
-        const extra = await scrapeAmazonProduct(extraUrl);
-        if (!extra.imageUrls?.length) {
-          throw new Error('Amazon returned no product images');
-        }
-        // Jumia only stays live while our proxy can re-fetch the bytes, so the
-        // extra links need NocoDB attachments too — Amazon CDN links and the
-        // local disk cache both disappear.
-        const extraBuffers = await downloadImageBuffers(extra.imageUrls, { max: 8 });
-        if (!extraBuffers.length) {
-          throw new Error('Amazon returned no downloadable product images');
-        }
-        const extraPairs = await uploadBufferPairs(
-          uploadToNocoDB,
-          extraBuffers,
-          `amazon${i + 1}-${sellerSku}`,
-        );
-        amazonJumiaSources.push({
-          index: i + 1,
-          url: extraUrl,
-          title: extra.title || '',
-          imageUrls: extra.imageUrls,
-          files: extraPairs.map((pair) => pair.file),
-        });
-        console.log(`Amazon Jumia-only source ${i + 1} OK: ${extra.title || extra.asin || extraUrl}`);
-      } catch (error) {
-        amazonJumiaSources.push({
-          index: i + 1,
-          url: extraUrl,
-          title: '',
-          imageUrls: [],
-          error: error.message,
-        });
-        console.warn(`Amazon Jumia-only source ${i + 1} failed:`, error.message);
-      }
-    }
-  }
 
   if (!enabled || !isOpenRouterConfigured()) {
     if (!originalUploads.length && galleryRealBuffers[0]) {
       originalUploads = await uploadBuffers(
         uploadToNocoDB,
-        galleryRealBuffers.slice(0, 1),
+        galleryRealBuffers.slice(0, 8),
         `real-${sellerSku}`
       );
     }
@@ -506,17 +407,7 @@ export async function enrichProduct({
       realUploads: originalUploads,
     });
     const imageUrls = nocoImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
-    const fallbackCopy = amazonMeta
-      ? {
-        french_title: amazonMeta.title || name,
-        arabic_title: name,
-        woo_title: amazonMeta.title || name,
-        // Description images from Amazon A+ content are intentionally excluded;
-        // they would appear in the wrong section of the storefront.
-        description_french: amazonMeta.description || '',
-        description_arabic: '',
-      }
-      : null;
+    const fallbackCopy = null;
     const productForSheet = {
       referenceClean,
       sellerSku,
@@ -544,7 +435,7 @@ export async function enrichProduct({
     };
     let sheetResult = null;
     if (amazonUrl) {
-      sheetResult = { skipped: true, reason: 'awaiting_gallery_approval' };
+      sheetResult = { skipped: true, reason: 'awaiting_description' };
     } else if (syncSheet && isSheetWebhookConfigured()) {
       try {
         sheetResult = await appendProductToSheet(productForSheet);
@@ -558,7 +449,7 @@ export async function enrichProduct({
       };
     }
     const jumiaResult = amazonUrl
-      ? { skipped: true, reason: 'awaiting_gallery_approval' }
+      ? { skipped: true, reason: 'awaiting_description' }
       : await maybeSyncJumia(productForSheet, syncJumia);
     const galleryCandidates = amazonPairs.map((pair, index) => ({
       id: `amazon-source-${index + 1}`,
@@ -589,7 +480,7 @@ export async function enrichProduct({
       ],
       hasAiImages: false,
       amazonSourceBuffers: amazonUrl ? amazonBuffers : [],
-      amazonAiChoiceRequired: Boolean(amazonUrl) && !skipAiImages && !copyOnly,
+      amazonAiChoiceRequired: false,
       amazonDescriptionImageCount: amazonDescriptionImageUrls.length,
       amazonJumiaSources,
     };
@@ -767,29 +658,14 @@ export async function enrichProduct({
   }
 
   const galleryCandidates = [
-    ...aiPairs.map((p, i) => ({
-      id: `ai-${i + 1}`,
-      kind: 'ai',
-      label: 'مولّدة بالذكاء',
-      file: p.file,
-      buffer: p.buffer,
-      selected: true,
-    })),
-    ...cutoutPairs.map((p) => ({
-      id: 'cutout',
-      kind: 'cutout',
-      label: 'المنتج الحقيقي — خلفية محذوفة محلياً',
-      file: p.file,
-      buffer: p.buffer,
-      selected: true,
-    })),
-    ...realPairs.map((p) => ({
-      id: 'real',
+    ...realPairs.map((p, index) => ({
+      id: `real-${index + 1}`,
       kind: 'real',
-      label: 'الصورة الأصلية — للمراجعة (لا تُرسل إلى Jumia)',
+      label: `الصورة الأصلية ${index + 1}`,
       file: p.file,
       buffer: p.buffer,
-      selected: false,
+      selected: true,
+      isPrimary: index === 0 && !amazonPairs.length,
     })),
     ...amazonPairs.map((p, index) => ({
       id: `amazon-source-${index + 1}`,
@@ -803,24 +679,15 @@ export async function enrichProduct({
   ];
 
   const nocoImages = orderGalleryUploads({
-    aiUploads,
-    cutoutUploads,
     amazonUploads,
-    qwenUploads,
-    // Raw seller photos are review references only. Jumia forbids ordinary
-    // backgrounds, so an AI/cutout failure must skip publishing instead.
-    realUploads: [],
+    realUploads: originalUploads,
   });
   // Fallback if ordering somehow empty
   const finalImages = nocoImages.length
     ? nocoImages
-    : (aiUploads.length ? aiUploads : (amazonUploads.length ? amazonUploads : []));
+    : (amazonUploads.length ? amazonUploads : originalUploads);
   const imageUrls = finalImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
-  // Multiple Amazon links explicitly define the independent Jumia listings;
-  // do not multiply them again through automatic color splitting.
-  const detectedColors = requestedAmazonUrls.length > 1
-    ? []
-    : parseColorList(copy?.color_variants || []);
+  const detectedColors = parseColorList(copy?.color_variants || []);
 
   const productForSheet = {
     referenceClean,
@@ -849,16 +716,10 @@ export async function enrichProduct({
     colorVariants: detectedColors,
   };
 
-  // Sheet/Jumia wait until the seller approves gallery images in Telegram
-  // (unless caller forces sync — e.g. tests). Default: defer.
-  // Multi-color products always defer: otherwise GALLERY_APPROVAL=false would
-  // publish a base Jumia listing before color confirmation creates per-color SKUs.
-  const deferForGallery = Boolean(getBotSetting('galleryApproval'));
+  // Jumia/sheet wait only when multiple colors still need confirmation.
   const deferForColors = detectedColors.length > 1;
-  const deferPublish = deferForGallery || deferForColors;
-  const deferReason = deferForColors
-    ? 'awaiting_color_approval'
-    : 'awaiting_gallery_approval';
+  const deferPublish = deferForColors;
+  const deferReason = 'awaiting_color_approval';
   const sheetResult = deferPublish
     ? { skipped: true, reason: deferReason }
     : await maybeSyncSheet(productForSheet, syncSheet);
@@ -873,7 +734,7 @@ export async function enrichProduct({
     copy,
     usage,
     gallery: {
-      status: galleryCandidates.length ? 'awaiting_approval' : 'no_candidates',
+      status: finalImages.length ? 'originals_ready' : 'no_candidates',
       assetNames: finalImages.map((file) => file?.title || file?.name || '').filter(Boolean),
     },
     errors: aiFailures,
@@ -917,7 +778,7 @@ export async function enrichProduct({
     hasSpecsImage,
     detectedColorVariants: detectedColors,
     amazonSourceBuffers: amazonUrl ? amazonBuffers : [],
-    amazonAiChoiceRequired: Boolean(amazonUrl) && !skipAiImages && !copyOnly,
+    amazonAiChoiceRequired: false,
     amazonDescriptionImageCount: amazonDescriptionImageUrls.length,
     amazonJumiaSources,
     enrichmentCache,

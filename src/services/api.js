@@ -186,18 +186,18 @@ const PRIMARY_IMAGE_MODE_KEY = 'ery_primary_image_mode';
 
 export const getPrimaryImageMode = () => {
     try {
-        const mode = localStorage.getItem(PRIMARY_IMAGE_MODE_KEY);
-        if (mode === 'amazon' || mode === 'original' || mode === 'ai') return mode;
+        if (localStorage.getItem(PRIMARY_IMAGE_MODE_KEY) !== 'original') {
+            localStorage.setItem(PRIMARY_IMAGE_MODE_KEY, 'original');
+        }
     } catch { /* ignore */ }
-    return 'ai';
+    return 'original';
 };
 
-export const setPrimaryImageModeStorage = (mode) => {
-    const next = mode === 'amazon' || mode === 'original' || mode === 'ai' ? mode : 'ai';
+export const setPrimaryImageModeStorage = () => {
     try {
-        localStorage.setItem(PRIMARY_IMAGE_MODE_KEY, next);
+        localStorage.setItem(PRIMARY_IMAGE_MODE_KEY, 'original');
     } catch { /* ignore */ }
-    return next;
+    return 'original';
 };
 
 /** Classify NocoDB attachment by upload filename prefix (ai- / amazon- / real-). */
@@ -279,12 +279,8 @@ export const buildImageSourcesFromRecord = (record, localOptimized = []) => {
     };
 };
 
-export const pickPrimaryFromSources = (imageSources, mode = getPrimaryImageMode()) => {
-    const order = mode === 'original'
-        ? ['original', 'ai', 'amazon']
-        : mode === 'amazon'
-            ? ['amazon', 'ai', 'original']
-            : ['ai', 'amazon', 'original'];
+export const pickPrimaryFromSources = (imageSources) => {
+    const order = ['original', 'ai', 'amazon'];
 
     for (const key of order) {
         if (key === 'original') {
@@ -318,7 +314,7 @@ export const applyPrimaryImageMode = (product, mode = getPrimaryImageMode()) => 
         all: product.images || (product.image ? [product.image] : []),
         thumbnails: {},
     };
-    const picked = pickPrimaryFromSources(sources, mode);
+    const picked = pickPrimaryFromSources(sources);
     return {
         ...product,
         image: picked.url || product.image,
