@@ -1,6 +1,7 @@
 /**
  * Amazon product scrape via Apify (same actor as the n8n workflow).
  * Token must come from env — never hardcode.
+ * Unwired from the Telegram bot: ingest/rebuild commands no longer call this module.
  */
 import axios from 'axios';
 

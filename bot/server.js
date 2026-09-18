@@ -45,7 +45,6 @@ import {
 import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
 import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
-import { normalizeAmazonUrl, normalizeAmazonUrls } from './amazonScrape.js';
 import {
   createJumiaProduct,
   isJumiaConfigured,
@@ -355,8 +354,6 @@ async function fetchNocoRowById(rowId) {
 
 function parseCaption(caption) {
   const lines = (caption || '').split('\n').map((l) => l.trim()).filter(Boolean);
-  const amazonUrls = normalizeAmazonUrls(caption, { max: 4 });
-  const amazonUrl = amazonUrls[0] || '';
   const contentLines = [];
 
   for (const line of lines) {
@@ -399,7 +396,7 @@ function parseCaption(caption) {
   const name = contentLines[nameIdx] || 'منتج غير محدد';
   let sku = contentLines[nameIdx + 1] || contentLines[nameIdx] || 'REF-000';
   if (/^https?:\/\//i.test(sku)) sku = contentLines[nameIdx] || 'REF-000';
-  return { price, oldPrice, name, sku, amazonUrl, amazonUrls };
+  return { price, oldPrice, name, sku, amazonUrl: '', amazonUrls: [] };
 }
 
 function skuCandidates(rawSku) {
@@ -1480,8 +1477,6 @@ async function executeAiPolish({
   price,
   oldPrice,
   ref,
-  amazonUrl,
-  amazonUrls = [],
   sellerSku,
   startMessage,
   postebl = 'POSTEBL',
@@ -1500,9 +1495,7 @@ async function executeAiPolish({
       ? `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId}...`
       : `⏳ جاري توليد الوصف للمنتج #${rowId} من الصور...`)
   );
-  const enrichTimeout = amazonUrl
-    ? Number(getBotSetting('amazonTimeoutMs'))
-    : Number(getBotSetting('aiBackgroundTimeoutMs'));
+  const enrichTimeout = Number(getBotSetting('aiBackgroundTimeoutMs'));
 
   // Cache is stored on the NocoDB record when the optional enrichment columns
   // exist. Older tables remain supported: their schema rejection is ignored.
@@ -1559,8 +1552,6 @@ async function executeAiPolish({
         price,
         oldPrice,
         ref,
-        amazonUrl,
-        amazonUrls,
         uploadToNocoDB,
         nocodbUrl: NOCODB_URL,
         syncSheet,
@@ -1648,11 +1639,7 @@ async function executeAiPolish({
       sellerSku,
       enrichment,
       // Photos are used to write copy; color SKUs reuse the same images.
-      sourceBuffers: (
-        enrichment.amazonSourceBuffers?.length
-          ? enrichment.amazonSourceBuffers
-          : originalBuffers
-      ).slice(0, 4),
+      sourceBuffers: originalBuffers.slice(0, 4),
     }, detectedColors);
     if (askedColors) {
       console.log(`🎨 Color approval pending #${rowId} ${sellerSku}: ${detectedColors.join(', ')}`);
@@ -1724,8 +1711,6 @@ function scheduleAiPolish({
   price,
   oldPrice,
   sku,
-  amazonUrl,
-  amazonUrls = [],
   sellerSku,
   publishRealOriginal = true,
   syncJumia = true,
@@ -1743,8 +1728,6 @@ function scheduleAiPolish({
     price,
     oldPrice,
     ref: sku,
-    amazonUrl,
-    amazonUrls,
     sellerSku,
     postebl: 'POSTEBL',
     publishRealOriginal,
@@ -1752,9 +1735,7 @@ function scheduleAiPolish({
     syncSheet,
     catalogPublished,
     nocoPostebl,
-    startMessage: amazonUrl
-      ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\nسأولّد الوصف وأحفظ صور Amazon كما هي.`
-      : `⏳ جاري توليد الوصف للمنتج #${rowId} من الصور...`,
+    startMessage: `⏳ جاري توليد الوصف للمنتج #${rowId} من الصور...`,
     skipAiImages: true,
   }));
 }
@@ -1764,7 +1745,6 @@ async function scheduleReenrichByRef(
   chatId,
   record,
   rawRef,
-  { amazonUrl = '', amazonUrls = [] } = {},
 ) {
   const rowId = record.Id || record.id;
   const sellerSku = buildSellerSku(record.SKU || rawRef);
@@ -1822,8 +1802,6 @@ async function scheduleReenrichByRef(
       price: Number(record.price) || 0,
       oldPrice: Number(record.old_price || record.Old_Price || 0) || 0,
       ref: cleanReference(record.SKU || rawRef),
-      amazonUrl: amazonUrl || '',
-      amazonUrls: amazonUrls.length ? amazonUrls : [amazonUrl].filter(Boolean),
       sellerSku,
       postebl: record.POSTEBL || record.Postebl || 'POSTEBL',
       // Preserve Jumia-only technical rows: never unhide PAUSED on re-enrich.
@@ -1831,13 +1809,12 @@ async function scheduleReenrichByRef(
       catalogPublished: !['PAUSED', 'HIDDEN'].includes(
         String(record.POSTEBL || record.Postebl || 'POSTEBL').toUpperCase(),
       ),
-      syncJumia: Boolean(amazonUrl),
-      syncSheet: Boolean(amazonUrl),
-      copyOnly: !amazonUrl,
+      syncJumia: false,
+      syncSheet: false,
+      copyOnly: true,
       skipAiImages: true,
-      startMessage: amazonUrl
-        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج ${amazonUrls.length || 1} رابط وصور Amazon\nسأولّد الوصف وأحفظ الصور كما هي.`
-        : `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId} (${sellerSku})...\n📷 الصور الحالية لن تتغير.\n🛒 بعد الانتهاء سأقترح إعادة نشره في Jumia.`,
+      startMessage:
+        `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId} (${sellerSku})...\n📷 الصور الحالية لن تتغير.\n🛒 بعد الانتهاء سأقترح إعادة نشره في Jumia.`,
     });
   });
 
@@ -1846,9 +1823,7 @@ async function scheduleReenrichByRef(
     : '';
   await sendMessage(
     chatId,
-    amazonUrl
-      ? `✅ تم إدراج (${sellerSku}) لإعادة البناء من Amazon.${queueNote}\n⏳ سأرسل لك الوصف عند الانتهاء.`
-      : `✅ تم إدراج (${sellerSku}) لإعادة توليد الوصف.${queueNote}\n⏳ سأرسل لك العنوان الجديد ثم أقترح Jumia.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
+    `✅ تم إدراج (${sellerSku}) لإعادة توليد الوصف.${queueNote}\n⏳ سأرسل لك العنوان الجديد ثم أقترح Jumia.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
   );
 }
 
@@ -1860,7 +1835,7 @@ async function processProduct(
   roles = null,
 ) {
   const {
-    price, oldPrice, name, sku, amazonUrl, amazonUrls,
+    price, oldPrice, name, sku,
   } = parseCaption(caption);
   const sellerSku = buildSellerSku(sku);
   const tifawtSku = toTifawtSku(sku, { fallback: 'REF' });
@@ -1873,7 +1848,7 @@ async function processProduct(
     ? roles
     : files.map(() => 'both');
   console.log(
-    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | roles=${effectiveRoles.join(',')} | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destinations=${destinationText}${amazonUrl ? ` | Amazon ${amazonUrl}` : ''}`
+    `📦 Processing product: "${name}" | ${price} DH${oldPrice ? ` (was ${oldPrice})` : ''} | ${files.length} images | roles=${effectiveRoles.join(',')} | NocoSKU ${sellerSku} | TifawtSKU ${tifawtSku} | destinations=${destinationText}`
   );
 
   await sendMessage(
@@ -1984,7 +1959,7 @@ async function processProduct(
   // AI polish patches Image1–5 only after studio generation succeeds.
   const enrichment = {
     sellerSku,
-    amazonUrl: amazonUrl || '',
+    amazonUrl: '',
     syncJumia: publishJumia,
     syncSheet: publishJumia,
     catalogPublished: publishNoco,
@@ -2020,10 +1995,10 @@ async function processProduct(
       : '\n🛒 Tifawt: أضف TIFAWT_EMAIL و TIFAWT_PASSWORD')
     : '';
   const nocoNote = publishNoco
-    ? '\n🌐 NocoDB: سيظهر المنتج في الموقع بعد اعتماد الصور'
+    ? '\n🌐 NocoDB: سيظهر المنتج في الموقع بعد توليد الوصف'
     : '\n🔒 NocoDB: سجل تقني مخفي لحفظ صور Jumia فقط';
   const jumiaChoiceNote = publishJumia
-    ? '\n🛒 Jumia: سيتم النشر بعد اعتماد الصور'
+    ? '\n🛒 Jumia: سيتم النشر بعد توليد الوصف'
     : '\n🛒 Jumia: غير محدد — لن يتم النشر';
   const roleNote = `\n🖼️ وصف: ${effectiveRoles.filter((r) => r === 'desc' || r === 'both').length} | عرض: ${effectiveRoles.filter((r) => r === 'display' || r === 'both').length}`;
 
@@ -2032,7 +2007,7 @@ async function processProduct(
   const keyboard = buildCategoryKeyboard(rowId);
   await sendMessage(
     chatId,
-    `✅ تم تجهيز المنتج #${rowId}.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n${amazonUrl ? `🔎 سيتم كشط ${amazonUrls.length || 1} رابط Amazon ثم تختار الصورة الأساسية.` : '✨ الصور الاحترافية تُضاف تلقائياً بعد التوليد.'}${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
+    `✅ تم تجهيز المنتج #${rowId}.\n\n📦 ${name}\n💰 ${price} DH | 📋 ${sellerSku}${saleNote}${roleNote}${nocoNote}${tifawtNote}${jumiaChoiceNote}${publishNoco ? `\n🔗 صفحة الهبوط: ${landing}` : ''}\n\n✨ سيتم توليد الوصف وحفظ الصور الأصلية.${publishNoco ? '\n\n⬇️ اختر تصنيف المنتج:' : ''}`,
     publishNoco ? keyboard : undefined
   );
 
@@ -2046,8 +2021,6 @@ async function processProduct(
     price,
     oldPrice,
     sku,
-    amazonUrl,
-    amazonUrls,
     sellerSku,
     syncJumia: publishJumia,
     syncSheet: publishJumia,
@@ -2173,19 +2146,17 @@ function isAddImagesCommand(text) {
     || text.startsWith('/add_images');
 }
 
+const AMAZON_STOPPED_MESSAGE = '⛔ ميزة Amazon متوقفة.\nالبوت ينشئ الوصف من صور البائع فقط ولا يكشط روابط Amazon ولا ينشئ منشورات Jumia منها.';
+
 function isAmazonReenrichCommand(text) {
   return text === '🛒 إعادة بناء من Amazon'
     || text.startsWith('/amazon_rebuild');
 }
 
-/** Shortcut: "<REF> 112" starts an Amazon-backed rebuild for that product. */
+/** Former shortcut: "<REF> 112" used to start an Amazon rebuild. */
 function amazonReenrichRef(text) {
   const match = String(text || '').trim().match(/^(.+?)\s+112$/i);
   return match?.[1]?.trim() || '';
-}
-
-function validAmazonProductUrl(text) {
-  return normalizeAmazonUrls(text, { max: 4 }).length > 0;
 }
 
 function isJumiaShipCommand(text) {
@@ -2459,55 +2430,14 @@ async function handleUpdate(update) {
 
     const amazonState = userState[chatId];
     if (amazonState?.type === 'AWAITING_AMAZON_REENRICH_URL') {
-      if (!validAmazonProductUrl(text)) {
-        await sendMessage(
-          chatId,
-          '❌ لم أجد رابط Amazon صالحاً. أرسل من رابط واحد إلى 4 روابط، كل رابط في سطر مستقل.'
-        );
-        return;
-      }
-
-      const amazonUrls = normalizeAmazonUrls(text, { max: 4 });
-      const amazonUrl = amazonUrls[0];
-      const record = await findProductBySku(amazonState.ref);
-      if (!record) {
-        delete userState[chatId];
-        await sendMessage(chatId, `❌ لم أعد أجد المنتج (${amazonState.ref}) في قاعدة البيانات.`);
-        return;
-      }
-
-      const recordId = record.Id || record.id;
-      await axios.patch(
-        `${NOCODB_URL}/api/v2/tables/${NOCODB_TABLE}/records`,
-        { Id: recordId, Amazon_URL: amazonUrl },
-        { headers: { 'xc-token': NOCODB_TOKEN, 'Content-Type': 'application/json' }, timeout: 30000 }
-      );
       delete userState[chatId];
-      await scheduleReenrichByRef(chatId, { ...record, Amazon_URL: amazonUrl }, amazonState.ref, {
-        amazonUrl,
-        amazonUrls,
-      });
+      await sendMessage(chatId, AMAZON_STOPPED_MESSAGE);
       return;
     }
 
     const amazonRef = amazonReenrichRef(text);
     if (amazonRef) {
-      const record = await findProductBySku(amazonRef);
-      if (!record) {
-        await sendMessage(
-          chatId,
-          `❌ لم أجد منتجاً بالمرجع (${amazonRef}).\nتأكد من المرجع ثم أرسل مثلاً: ${amazonRef} 112`
-        );
-        return;
-      }
-      userState[chatId] = {
-        type: 'AWAITING_AMAZON_REENRICH_URL',
-        ref: amazonRef,
-      };
-      await sendMessage(
-        chatId,
-        `✅ تم العثور على المنتج (${record.SKU || amazonRef}).\n\n🔗 أرسل من رابط واحد إلى 4 روابط Amazon لنفس المنتج.\nضع كل رابط في سطر مستقل. الرابط الأول سيُستخدم للمتجر، وسيُنشأ في Jumia منشور مستقل لكل رابط بمرجع مرقّم.`
-      );
+      await sendMessage(chatId, AMAZON_STOPPED_MESSAGE);
       return;
     }
 
@@ -2554,11 +2484,7 @@ async function handleUpdate(update) {
     }
 
     if (isAmazonReenrichCommand(text)) {
-      userState[chatId] = 'AWAITING_REF_AMAZON_REENRICH';
-      await sendMessage(
-        chatId,
-        '🛒 إعادة بناء منتج من Amazon\n\nأرسل الآن مرجع المنتج فقط (REF أو SKU).\nمثال: KP-2205\n\nبعد العثور عليه يمكنك إرسال من رابط واحد إلى 4 روابط Amazon لنفس المنتج. الرابط الأول للمتجر، وكل رابط ينشئ منشور Jumia مستقلاً.'
-      );
+      await sendMessage(chatId, AMAZON_STOPPED_MESSAGE);
       return;
     }
 
@@ -2745,14 +2671,8 @@ async function handleUpdate(update) {
           userState[chatId] = `AWAITING_NEW_PRICE_${sku}`;
           await sendMessage(chatId, `✅ تم العثور على المنتج (${sku}).\n💰 سعره الحالي: ${record.price || 0} DH\n\n⬇️ يرجى إرسال السعر الجديد الآن (أرقام فقط):`);
         } else if (state === 'AWAITING_REF_AMAZON_REENRICH') {
-          userState[chatId] = {
-            type: 'AWAITING_AMAZON_REENRICH_URL',
-            ref: sku,
-          };
-          await sendMessage(
-            chatId,
-            `✅ تم العثور على المنتج (${record.SKU || sku}).\n\n🔗 أرسل من رابط واحد إلى 4 روابط Amazon لنفس المنتج، كل رابط في سطر.\nالرابط الأول سيُستخدم للمتجر، وسيُنشأ منشور Jumia مرقّم لكل رابط.\nبعد الكشط سأرسل الصور لتختار الرئيسية وتقرر هل تريد توليد صورة بالذكاء.`
-          );
+          delete userState[chatId];
+          await sendMessage(chatId, AMAZON_STOPPED_MESSAGE);
         } else if (state === 'AWAITING_REF_REENRICH') {
           await scheduleReenrichByRef(chatId, record, sku);
         } else if (state === 'AWAITING_REF_ADD_COLORS') {

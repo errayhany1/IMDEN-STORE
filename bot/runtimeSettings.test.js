@@ -16,6 +16,7 @@ test('runtime bot settings sanitize only safe values', () => {
   assert.equal(updated.galleryApproval, false);
   assert.equal(BOT_SETTINGS_SCHEMA.galleryApproval.default, false);
   assert.match(BOT_SETTINGS_SCHEMA.productAiEnrichment.description, /بدون توليد صور/);
+  assert.match(BOT_SETTINGS_SCHEMA.amazonTimeoutMs.description, /متوقف/);
   assert.equal(updated.visionJpegQuality, 100);
   assert.equal(updated.openrouterTextModel, 'google/gemini-test');
   assert.equal(Object.hasOwn(updated, 'TELEGRAM_BOT_TOKEN'), false);

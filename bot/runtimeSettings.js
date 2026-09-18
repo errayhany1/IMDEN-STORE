@@ -104,7 +104,7 @@ export const BOT_SETTINGS_SCHEMA = {
   },
   amazonTimeoutMs: {
     group: 'ai', type: 'number', label: 'مهلة إعادة البناء من Amazon',
-    description: 'الحد الأقصى للكشط والتوليد من Amazon.',
+    description: 'متوقف — البوت لا يكشط Amazon ولا يعيد البناء منها.',
     default: numberEnv('AI_ENRICH_TIMEOUT_MS_AMAZON', 360000), min: 30000, max: 1200000, step: 10000,
   },
   localBackgroundRemoval: {

@@ -1,7 +1,7 @@
 /**
  * Enrichment after Telegram images downloaded.
  * Always uploads at least the real photos so products never go live without images.
- * With Amazon URL: scrape Apify → AI copy from Amazon data → gallery = AI + Amazon + real last.
+ * Amazon scrape / rebuild is retired: vision writes copy from seller photos only.
  */
 import {
   extractProductFacts,
@@ -20,12 +20,6 @@ import {
   createJumiaProduct,
   isJumiaConfigured,
 } from './jumiaClient.js';
-import {
-  scrapeAmazonProduct,
-  downloadImageBuffers,
-  isApifyConfigured,
-  normalizeAmazonUrl,
-} from './amazonScrape.js';
 import { prepareVisionBuffers } from './imageNormalize.js';
 import {
   bulletsFromHtml,
@@ -201,7 +195,7 @@ export async function detectProductColorVariants({
 
 /**
  * Build the catalog gallery from photos we already have.
- * Image generation is retired: originals and Amazon photos only.
+ * Image generation and Amazon ingest are retired: original seller photos only.
  */
 export function orderGalleryUploads({
   aiUploads = [],
@@ -210,9 +204,7 @@ export function orderGalleryUploads({
   qwenUploads = [],
   realUploads = [],
 }) {
-  const amazon = amazonUploads.filter(Boolean);
   const real = realUploads.filter(Boolean);
-  if (amazon.length) return amazon.slice(0, 8);
   return real.slice(0, 8);
 }
 
@@ -352,7 +344,7 @@ export async function enrichProduct({
   oldPrice = 0,
   ref,
   amazonUrl = '',
-  amazonUrls = [],
+  amazonUrls: _amazonUrls = [],
   uploadToNocoDB,
   nocodbUrl,
   syncSheet = true,
@@ -368,14 +360,9 @@ export async function enrichProduct({
   /** Regenerate title/description only; do not upload or replace gallery images. */
   copyOnly = false,
 }) {
-  // Image generation is retired. Vision still reads photos to write copy.
+  // Image generation and Amazon ingest are retired. Vision still reads photos to write copy.
   skipAiImages = true;
-  const requestedAmazonUrls = Array.from(new Set(
-    [amazonUrl, ...(Array.isArray(amazonUrls) ? amazonUrls : [])]
-      .map(normalizeAmazonUrl)
-      .filter(Boolean),
-  )).slice(0, 4);
-  amazonUrl = requestedAmazonUrls[0] || '';
+  amazonUrl = '';
   const enabled = Boolean(getBotSetting('productAiEnrichment'));
   const sellerSku = buildSellerSku(ref);
   const referenceClean = cleanReference(ref);
@@ -399,87 +386,13 @@ export async function enrichProduct({
     originalUploads = realPairs.map((p) => p.file);
   }
 
-  let amazonMeta = null;
-  let amazonUploads = [];
-  let amazonBuffers = [];
-  let amazonPairs = [];
-  let amazonDescriptionImageUrls = [];
+  // Amazon scrape is unwired: never call Apify and never replace seller photos.
+  const amazonMeta = null;
+  const amazonUploads = [];
+  const amazonBuffers = [];
+  const amazonPairs = [];
+  const amazonDescriptionImageUrls = [];
   const amazonJumiaSources = [];
-
-  if (amazonUrl) {
-    if (!isApifyConfigured()) {
-      throw new Error(
-        'Amazon scrape unavailable: APIFY_TOKEN is missing. Existing NocoDB images were not used.',
-      );
-    } else {
-      try {
-        const cleanAmazonUrl = normalizeAmazonUrl(amazonUrl);
-        amazonMeta = await scrapeAmazonProduct(cleanAmazonUrl);
-        console.log(`Amazon scrape OK: ${amazonMeta.title || amazonMeta.asin || cleanAmazonUrl}`);
-        amazonJumiaSources.push({
-          index: 1,
-          url: cleanAmazonUrl,
-          title: amazonMeta.title || '',
-          imageUrls: amazonMeta.imageUrls || [],
-        });
-        amazonDescriptionImageUrls = amazonMeta.descriptionImageUrls || [];
-        amazonBuffers = await downloadImageBuffers(amazonMeta.imageUrls, { max: 8 });
-        if (!amazonBuffers.length) {
-          throw new Error('Amazon returned no downloadable product images');
-        }
-        amazonPairs = await uploadBufferPairs(
-          uploadToNocoDB,
-          amazonBuffers,
-          `amazon-${sellerSku}`
-        );
-        amazonUploads = amazonPairs.map((pair) => pair.file);
-      } catch (e) {
-        console.error('Amazon scrape failed:', e.message);
-        throw new Error(
-          `Amazon scrape failed: ${e.message}. Existing NocoDB images were not used.`,
-        );
-      }
-    }
-
-    for (let i = 1; i < requestedAmazonUrls.length; i++) {
-      const extraUrl = requestedAmazonUrls[i];
-      try {
-        const extra = await scrapeAmazonProduct(extraUrl);
-        if (!extra.imageUrls?.length) {
-          throw new Error('Amazon returned no product images');
-        }
-        // Jumia only stays live while our proxy can re-fetch the bytes, so the
-        // extra links need NocoDB attachments too — Amazon CDN links and the
-        // local disk cache both disappear.
-        const extraBuffers = await downloadImageBuffers(extra.imageUrls, { max: 8 });
-        if (!extraBuffers.length) {
-          throw new Error('Amazon returned no downloadable product images');
-        }
-        const extraPairs = await uploadBufferPairs(
-          uploadToNocoDB,
-          extraBuffers,
-          `amazon${i + 1}-${sellerSku}`,
-        );
-        amazonJumiaSources.push({
-          index: i + 1,
-          url: extraUrl,
-          title: extra.title || '',
-          imageUrls: extra.imageUrls,
-          files: extraPairs.map((pair) => pair.file),
-        });
-        console.log(`Amazon Jumia-only source ${i + 1} OK: ${extra.title || extra.asin || extraUrl}`);
-      } catch (error) {
-        amazonJumiaSources.push({
-          index: i + 1,
-          url: extraUrl,
-          title: '',
-          imageUrls: [],
-          error: error.message,
-        });
-        console.warn(`Amazon Jumia-only source ${i + 1} failed:`, error.message);
-      }
-    }
-  }
 
   if (!enabled || !isOpenRouterConfigured()) {
     if (!originalUploads.length && galleryRealBuffers[0]) {
@@ -494,17 +407,7 @@ export async function enrichProduct({
       realUploads: originalUploads,
     });
     const imageUrls = nocoImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
-    const fallbackCopy = amazonMeta
-      ? {
-        french_title: amazonMeta.title || name,
-        arabic_title: name,
-        woo_title: amazonMeta.title || name,
-        // Description images from Amazon A+ content are intentionally excluded;
-        // they would appear in the wrong section of the storefront.
-        description_french: amazonMeta.description || '',
-        description_arabic: '',
-      }
-      : null;
+    const fallbackCopy = null;
     const productForSheet = {
       referenceClean,
       sellerSku,
@@ -784,11 +687,7 @@ export async function enrichProduct({
     ? nocoImages
     : (amazonUploads.length ? amazonUploads : originalUploads);
   const imageUrls = finalImages.map((f) => publicUrlFromNoco(f, nocodbUrl));
-  // Multiple Amazon links explicitly define the independent Jumia listings;
-  // do not multiply them again through automatic color splitting.
-  const detectedColors = requestedAmazonUrls.length > 1
-    ? []
-    : parseColorList(copy?.color_variants || []);
+  const detectedColors = parseColorList(copy?.color_variants || []);
 
   const productForSheet = {
     referenceClean,

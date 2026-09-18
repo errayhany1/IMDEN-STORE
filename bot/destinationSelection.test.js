@@ -47,7 +47,7 @@ test('sets default Category_ID only on initial create', () => {
   assert.equal(record.Category_ID, 2);
 });
 
-test('gallery prefers Amazon then original photos and ignores generated slots', () => {
+test('gallery uses original photos and ignores generated or Amazon slots', () => {
   const amazon = [{ title: 'amz.jpg' }];
   const real = [{ title: 'orig.jpg' }, { title: 'orig2.jpg' }];
   const ordered = orderGalleryUploads({
@@ -56,7 +56,7 @@ test('gallery prefers Amazon then original photos and ignores generated slots', 
     amazonUploads: amazon,
     realUploads: real,
   });
-  assert.deepEqual(ordered, amazon);
+  assert.deepEqual(ordered, real);
   assert.deepEqual(
     orderGalleryUploads({ realUploads: real }),
     real,
