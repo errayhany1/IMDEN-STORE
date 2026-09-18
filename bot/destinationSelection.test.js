@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildNocoRecordFromEnrichment } from './productEnrichment.js';
+import { buildNocoRecordFromEnrichment, orderGalleryUploads } from './productEnrichment.js';
 
 function enrichment(overrides = {}) {
   return {
@@ -45,4 +45,20 @@ test('sets default Category_ID only on initial create', () => {
     enrichment: enrichment({ includeCategory: true, categoryId: 2 }),
   });
   assert.equal(record.Category_ID, 2);
+});
+
+test('gallery prefers Amazon then original photos and ignores generated slots', () => {
+  const amazon = [{ title: 'amz.jpg' }];
+  const real = [{ title: 'orig.jpg' }, { title: 'orig2.jpg' }];
+  const ordered = orderGalleryUploads({
+    aiUploads: [{ title: 'ai.jpg' }],
+    cutoutUploads: [{ title: 'cut.jpg' }],
+    amazonUploads: amazon,
+    realUploads: real,
+  });
+  assert.deepEqual(ordered, amazon);
+  assert.deepEqual(
+    orderGalleryUploads({ realUploads: real }),
+    real,
+  );
 });

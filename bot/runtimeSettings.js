@@ -34,13 +34,13 @@ const textEnv = (name, fallback = '') => String(process.env[name] || fallback);
 export const BOT_SETTINGS_SCHEMA = {
   productAiEnrichment: {
     group: 'workflow', type: 'boolean', label: 'تحسين المنتجات بالذكاء الاصطناعي',
-    description: 'إنشاء الوصف والصور الاحترافية بعد حفظ المنتج.',
+    description: 'إنشاء العنوان والوصف من صور المنتج فقط، بدون توليد صور.',
     default: boolEnv('PRODUCT_AI_ENRICHMENT', true),
   },
   galleryApproval: {
     group: 'workflow', type: 'boolean', label: 'طلب الموافقة على الصور',
-    description: 'عرض الصور في Telegram قبل نشرها في الموقع وJumia.',
-    default: boolEnv('GALLERY_APPROVAL', true),
+    description: 'لم يعد مستخدماً. الصور الأصلية تُحفظ مباشرة بعد توليد الوصف.',
+    default: false,
   },
   sheetSyncEnabled: {
     group: 'workflow', type: 'boolean', label: 'مزامنة Google Sheet',
@@ -74,7 +74,7 @@ export const BOT_SETTINGS_SCHEMA = {
   },
   openrouterImageModel: {
     group: 'ai', type: 'text', label: 'نموذج صور OpenRouter',
-    description: 'النموذج الأساسي لإنشاء صور الاستوديو والألوان.',
+    description: 'النموذج الأساسي لإنشاء صور الاستوديو (متوقف — البوت يولّد الوصف فقط).',
     default: textEnv('OPENROUTER_IMAGE_MODEL', 'google/gemini-2.5-flash-image'),
   },
   openaiTextModel: {
@@ -94,7 +94,7 @@ export const BOT_SETTINGS_SCHEMA = {
   },
   qwenImageModel: {
     group: 'ai', type: 'text', label: 'نموذج Qwen للصور',
-    description: 'النموذج الثانوي الاختياري المعروض في معرض الموافقة.',
+    description: 'النموذج الثانوي الاختياري للصور (متوقف — البوت يولّد الوصف فقط).',
     default: textEnv('QWEN_IMAGE_MODEL', 'qwen-image-2.0'),
   },
   aiBackgroundTimeoutMs: {
@@ -109,8 +109,8 @@ export const BOT_SETTINGS_SCHEMA = {
   },
   localBackgroundRemoval: {
     group: 'images', type: 'boolean', label: 'إزالة الخلفية محلياً',
-    description: 'تشغيل U²-Net محلياً لإنشاء صورة حقيقية بخلفية شفافة.',
-    default: boolEnv('LOCAL_BACKGROUND_REMOVAL', true),
+    description: 'إزالة الخلفية محلياً (متوقف مع مسار الوصف فقط).',
+    default: false,
   },
   localBackgroundTimeoutMs: {
     group: 'images', type: 'number', label: 'مهلة إزالة الخلفية',

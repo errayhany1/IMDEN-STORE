@@ -21,8 +21,6 @@ import {
   buildSellerSku,
   cleanReference,
   detectProductColorVariants,
-  generateJumiaColorVariants,
-  generateOptionalAmazonHero,
   publicUrlFromNoco,
 } from './productEnrichment.js';
 import {
@@ -66,7 +64,7 @@ import { registerAdminRoutes } from './adminRoutes.js';
 import { registerPublicImageRoutes } from './jumiaPublicImages.js';
 import { resolveJumiaStock } from './jumiaPricing.js';
 import { toTifawtSku, resolveTifawtOrderSku } from './tifawtSku.js';
-import { parseColorList } from './colorVariants.js';
+import { parseColorList, buildColorVariants, buildJumiaColorSku } from './colorVariants.js';
 import {
   upsertProductVariant,
   setProductVariantActive,
@@ -695,8 +693,8 @@ async function requestImageRoles(chatId, files, caption, destination) {
   await sendMessage(
     chatId,
     `🖼️ صنّف صورك قبل الحفظ (${files.length}):\n\n`
-    + `• 🎨 للعرض فقط → قد تظهر في المعرض بعد التوليد الاحترافي\n`
-    + `• 📖 للوصف فقط → يقرأها الذكاء (ضهر العلبة/كاتالوج) ولن تُنشر خام\n`
+    + `• 🎨 للعرض فقط → تُحفظ في معرض المنتج كما هي\n`
+    + `• 📖 للوصف فقط → يقرأها الذكاء لكتابة الوصف ولن تُنشر\n`
     + `• 🔄 عرض+وصف → الاثنان\n`
     + `• ✖️ تجاهل → تُحذف من المعالجة\n\n`
     + `اضغط على كل صورة لتغيير دورها، ثم ✅ متابعة:\n\n`
@@ -714,7 +712,7 @@ function galleryApprovalSummary(candidates) {
 function colorApprovalKeyboard(token, { variantOnly = false } = {}) {
   return {
     inline_keyboard: [
-      [{ text: '✅ الألوان صحيحة — أنشئ صور Jumia', callback_data: `colors:${token}:approve` }],
+      [{ text: '✅ الألوان صحيحة — أنشر', callback_data: `colors:${token}:approve` }],
       [{ text: '✏️ غير صحيحة — سأكتبها بنفسي', callback_data: `colors:${token}:edit` }],
       [{
         text: variantOnly ? '✖️ إلغاء إضافة الألوان' : '⏭️ منتج واحد فقط على Jumia',
@@ -742,7 +740,7 @@ async function requestColorApproval(context, colors) {
     context.chatId,
     `🎨 اكتشفت ${variants.length} أشكال لونية في الصور:\n\n`
       + variants.map((color, index) => `${index + 1}. ${color}`).join('\n')
-      + '\n\nكل تركيبة مذكورة تعتبر منتجاً مستقلاً في Jumia، بينما يبقى منتجاً واحداً في Tifawt وNocoDB.\nلن أبدأ توليد صور الألوان المدفوعة قبل موافقتك.',
+      + '\n\nكل تركيبة مذكورة تعتبر منتجاً مستقلاً في Jumia، بينما يبقى منتجاً واحداً في Tifawt وNocoDB.',
     colorApprovalKeyboard(token, { variantOnly: context.variantOnly }),
   );
   return true;
@@ -760,42 +758,39 @@ async function continueAfterColorApproval(pending, colors) {
   if (shouldGenerateVariants) {
     await sendMessage(
       pending.chatId,
-      `⏳ تم اعتماد ${confirmed.length} ألوان. سأُنشئ الآن صورة احترافية منفصلة لكل لون، بالتتابع لتفادي الضغط والتكرار.`,
+      `⏳ تم اعتماد ${confirmed.length} ألوان. سأربطها بصور المنتج الحالية بدون توليد صور جديدة.`,
     );
-    let generated = [];
-    try {
-      generated = await generateJumiaColorVariants({
-        colors: confirmed,
-        sourceBuffers: pending.sourceBuffers,
-        title: pending.enrichment.copy?.french_title || pending.name,
-        sellerSku: pending.sellerSku,
-        uploadToNocoDB,
-      });
-    } catch (e) {
-      await sendMessage(
-        pending.chatId,
-        `❌ تعذر بدء توليد صور الألوان: ${e.message}\nلن يُنشر المنتج متعدد الألوان على Jumia بصورة غير صحيحة.`,
-      );
-    }
-    const successful = generated.filter((variant) => variant.file && variant.buffer);
-    const failed = generated.filter((variant) => variant.error);
-    for (const variant of successful) {
+    const sourceFile = (pending.enrichment.nocoImages || []).find(Boolean)
+      || (pending.enrichment.galleryCandidates || []).find((c) => c.file)?.file
+      || null;
+    const variants = buildColorVariants(confirmed);
+    const savedVariants = [];
+    const failed = [];
+    for (const variant of variants) {
       try {
+        const jumiaSku = buildJumiaColorSku(pending.sellerSku, variant);
         const saved = await upsertProductVariant({
           productId: pending.rowId,
-          colorLabel: variant.label.replace(/^Jumia\s*—\s*/i, ''),
+          colorLabel: variant.label,
           colorCode: variant.code,
-          jumiaSku: variant.sellerSku,
-          imageFiles: [variant.file],
+          jumiaSku,
+          imageFiles: sourceFile ? [sourceFile] : [],
           active: null,
         });
-        variant.variantRowId = saved.rowId;
+        savedVariants.push({
+          ...variant,
+          sellerSku: jumiaSku,
+          kind: 'jumia-color',
+          id: `jumia-color-${variant.code.toLowerCase()}`,
+          label: `Jumia — ${variant.label}`,
+          file: sourceFile,
+          selected: true,
+          variantRowId: saved.rowId,
+        });
       } catch (e) {
-        variant.error = `variant_save:${e.message}`;
-        failed.push(variant);
+        failed.push({ ...variant, error: e.message });
       }
     }
-    const savedVariants = successful.filter((variant) => variant.variantRowId && !variant.error);
     pending.enrichment.galleryCandidates = [
       ...(pending.enrichment.galleryCandidates || []),
       ...savedVariants,
@@ -803,7 +798,7 @@ async function continueAfterColorApproval(pending, colors) {
     if (failed.length) {
       await sendMessage(
         pending.chatId,
-        `⚠️ تعذر توليد ${failed.length} لون: ${failed.map((v) => v.label).join('، ')}.\nلن يُنشر اللون الذي فشلت صورته على Jumia.`,
+        `⚠️ تعذر تسجيل ${failed.length} لون: ${failed.map((v) => v.label).join('، ')}.`,
       );
     }
   } else if (!pending.variantOnly) {
@@ -816,9 +811,17 @@ async function continueAfterColorApproval(pending, colors) {
     }
   }
 
-  const asked = await requestGalleryApproval(pending);
-  if (!asked) {
-    await sendMessage(pending.chatId, '❌ لا توجد صور صالحة للموافقة. لم يتم النشر على Jumia.');
+  const candidates = (pending.enrichment.galleryCandidates || [])
+    .filter((c) => c?.file)
+    .map((c, i) => ({
+      ...c,
+      selected: c.selected !== false,
+      isPrimary: Boolean(c.isPrimary) || (i === 0 && c.kind !== 'jumia-color'),
+    }));
+  try {
+    await finalizeGalleryApproval({ ...pending, candidates }, { publishImages: true });
+  } catch (e) {
+    await sendMessage(pending.chatId, `❌ فشل النشر بعد اعتماد الألوان: ${e.message}`);
   }
 }
 
@@ -1056,10 +1059,9 @@ async function finalizeGalleryApproval(pending, { publishImages }) {
   // in ProductVariants and never displace normal product photography.
   const selectedFiles = normalFiles.slice(0, 8);
   const nocoFiles = selectedFiles;
-  // Raw seller photos may be shown in our own catalog, but Jumia requires
-  // marketplace-ready studio images. Never send a `real` candidate there.
+  // Raw seller photos are the catalog images now that generation is retired.
   const professionalFiles = publishImages
-    ? orderSelectedGalleryFiles(candidates.filter((c) => c.kind !== 'real'))
+    ? orderSelectedGalleryFiles(candidates)
     : [];
   const professionalImageUrls = professionalFiles.map(
     (f) => publicUrlFromNoco(f, enrichment.nocodbUrl || NOCODB_URL),
@@ -1496,7 +1498,7 @@ async function executeAiPolish({
     chatId,
     startMessage || (copyOnly
       ? `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId}...`
-      : `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId}...`)
+      : `⏳ جاري توليد الوصف للمنتج #${rowId} من الصور...`)
   );
   const enrichTimeout = amazonUrl
     ? Number(getBotSetting('amazonTimeoutMs'))
@@ -1587,7 +1589,7 @@ async function executeAiPolish({
     return;
   }
   await patchState(
-    enrichment?.galleryCandidates?.length ? 'awaiting_approval' : 'approved',
+    enrichment?.copy ? 'approved' : 'awaiting_approval',
     enrichment?.enrichmentCache,
     enrichment?.enrichmentAssets,
   );
@@ -1612,7 +1614,7 @@ async function executeAiPolish({
     return;
   }
 
-  // Save title/description first (no gallery yet).
+  // Save title/description first, then attach original photos automatically.
   const textOnly = {
     ...enrichment,
     nocoImages: [],
@@ -1645,8 +1647,7 @@ async function executeAiPolish({
       oldPrice,
       sellerSku,
       enrichment,
-      // Description-only photos may contain additional variants, so preserve
-      // the full vision set for color-specific generation.
+      // Photos are used to write copy; color SKUs reuse the same images.
       sourceBuffers: (
         enrichment.amazonSourceBuffers?.length
           ? enrichment.amazonSourceBuffers
@@ -1659,24 +1660,7 @@ async function executeAiPolish({
     }
   }
 
-  const wantsApproval = Boolean(amazonUrl || getBotSetting('galleryApproval'));
-  if (wantsApproval && enrichment.galleryCandidates?.length) {
-    const asked = await requestGalleryApproval({
-      chatId,
-      rowId,
-      recordUrl,
-      name,
-      price,
-      sellerSku,
-      enrichment,
-    });
-    if (asked) {
-      console.log(`⏳ Gallery approval pending #${rowId} ${sellerSku}`);
-      return;
-    }
-  }
-
-  // Fallback: no candidates to approve — publish whatever we have.
+  // Publish original photos with the generated description (no gallery approval).
   const patch = buildNocoRecordFromEnrichment({ price, name, enrichment });
   patch.Id = rowId;
   await http.patch(recordUrl, patch, {
@@ -1717,11 +1701,12 @@ async function executeAiPolish({
   await sendMessage(
     chatId,
     `✨ تم تحديث المنتج #${rowId}\n`
-    + `🎨 ${imgCount} صور في المعرض\n`
+    + `📝 تم إنشاء الوصف\n`
+    + (imgCount ? `📷 ${imgCount} صور أصلية في المعرض\n` : '')
     + `📦 ${enrichment.copy?.arabic_title || enrichment.copy?.french_title || name}\n`
     + `${enrichment.catalogPublished ? `🔗 ${SITE_URL}/p/${encodeURIComponent(sellerSku)}` : '🔒 سجل الصور التقني مخفي عن الموقع'}${sheetNote}${jumiaNote}`
   );
-  console.log(`✅ AI polish OK #${rowId} (no gallery approval UI)`);
+  console.log(`✅ AI polish OK #${rowId} (description only)`);
 }
 
 /**
@@ -1768,9 +1753,9 @@ function scheduleAiPolish({
     catalogPublished,
     nocoPostebl,
     startMessage: amazonUrl
-      ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\n⭐ سأرسل جميع الصور لاختيار الأساسية`
-      : `⏳ جاري توليد الوصف والصور الاحترافية للمنتج #${rowId} من الصور...`,
-    skipAiImages: false,
+      ? `⏳ جاري كشط ${amazonUrls.length || 1} رابط Amazon للمنتج #${rowId}...\nسأولّد الوصف وأحفظ صور Amazon كما هي.`
+      : `⏳ جاري توليد الوصف للمنتج #${rowId} من الصور...`,
+    skipAiImages: true,
   }));
 }
 
@@ -1851,7 +1836,7 @@ async function scheduleReenrichByRef(
       copyOnly: !amazonUrl,
       skipAiImages: true,
       startMessage: amazonUrl
-        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج ${amazonUrls.length || 1} رابط وصور Amazon\n⭐ سترسل لك الصور لاختيار الأساسية.`
+        ? `⏳ جاري إعادة بناء المنتج #${rowId} (${sellerSku}) من Amazon...\n🔎 استخراج ${amazonUrls.length || 1} رابط وصور Amazon\nسأولّد الوصف وأحفظ الصور كما هي.`
         : `⏳ جاري إعادة توليد العنوان والوصف للمنتج #${rowId} (${sellerSku})...\n📷 الصور الحالية لن تتغير.\n🛒 بعد الانتهاء سأقترح إعادة نشره في Jumia.`,
     });
   });
@@ -1862,7 +1847,7 @@ async function scheduleReenrichByRef(
   await sendMessage(
     chatId,
     amazonUrl
-      ? `✅ تم إدراج (${sellerSku}) لإعادة البناء من Amazon.${queueNote}\n⏳ سأرسل لك الصور والنتيجة عند الانتهاء.`
+      ? `✅ تم إدراج (${sellerSku}) لإعادة البناء من Amazon.${queueNote}\n⏳ سأرسل لك الوصف عند الانتهاء.`
       : `✅ تم إدراج (${sellerSku}) لإعادة توليد الوصف.${queueNote}\n⏳ سأرسل لك العنوان الجديد ثم أقترح Jumia.\n\n🔁 أرسل مرجعاً آخر أو اضغط 🔄 للخروج.`
   );
 }
@@ -3095,89 +3080,13 @@ async function handleUpdate(update) {
         return;
       }
 
-      // Amazon rebuilds force an explicit AI yes/no before publishing.
+      // Amazon rebuilds used to offer optional AI images. Generation is retired.
       if (action === 'ai') {
-        const choice = parts[3];
-        if (!pending.enrichment.amazonAiChoiceRequired || !['g', 'n'].includes(choice)) {
-          await answerCallback(cb.id, 'اختيار غير صالح');
-          return;
-        }
-        if (choice === 'n') {
-          pending.enrichment.amazonAiChoice = 'no';
-          releaseAmazonSourceBuffers(pending);
-          await answerCallback(cb.id, 'سيتم استخدام صور Amazon فقط');
-          try {
-            await editMessage(
-              chatId,
-              msgId,
-              `🚫 لن يتم إنشاء صورة بالذكاء. اختر الصورة الأساسية ⭐ ثم انشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
-              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-            );
-          } catch (e) {
-            await sendMessage(chatId, '🚫 تم اختيار صور Amazon فقط. اضغط اعتماد ونشر للمتابعة.');
-          }
-          return;
-        }
-        if (pending.enrichment.amazonAiChoice === 'generating') {
-          await answerCallback(cb.id, 'التوليد جارٍ بالفعل');
-          return;
-        }
-        pending.enrichment.amazonAiChoice = 'generating';
-        await answerCallback(cb.id, 'بدأ إنشاء الصورة');
-        try {
-          await editMessage(
-            chatId,
-            msgId,
-            `⏳ جاري إنشاء صورة أساسية من صور Amazon...\n\n${galleryApprovalSummary(pending.candidates)}`,
-            galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-          );
-        } catch (_) {
-          // Keep going — generation still runs even if the keyboard refresh fails.
-        }
-        enqueueAiPolish(async () => {
-          try {
-            const generated = await generateOptionalAmazonHero({
-              sourceBuffers: pending.enrichment.amazonSourceBuffers,
-              title: pending.enrichment.copy?.french_title || pending.name,
-              price: pending.price,
-              oldPrice: pending.oldPrice,
-              sellerSku: pending.sellerSku,
-              uploadToNocoDB,
-            });
-            pending.candidates.forEach((candidate) => {
-              if (candidate.kind !== 'jumia-color') candidate.isPrimary = false;
-            });
-            pending.candidates.unshift(generated);
-            pending.enrichment.galleryCandidates = pending.candidates;
-            pending.enrichment.amazonAiChoice = 'yes';
-            await sendPhotoBuffer(
-              chatId,
-              generated.buffer,
-              `⭐ صورة أساسية مولّدة بالذكاء\n#${pending.rowId} ${pending.sellerSku}`,
-            );
-            generated.buffer = null;
-            releaseAmazonSourceBuffers(pending);
-            await editMessage(
-              chatId,
-              msgId,
-              `✅ تم إنشاء الصورة. يمكنك تغيير الصورة الأساسية ⭐ أو تعطيل أي صورة ثم النشر.\n\n${galleryApprovalSummary(pending.candidates)}`,
-              galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-            );
-          } catch (error) {
-            pending.enrichment.amazonAiChoice = null;
-            await sendMessage(chatId, `❌ فشل إنشاء الصورة بالذكاء: ${error.message}`);
-            try {
-              await editMessage(
-                chatId,
-                msgId,
-                `⚠️ فشل التوليد. يمكنك إعادة المحاولة أو اختيار عدم التوليد.\n\n${galleryApprovalSummary(pending.candidates)}`,
-                galleryApprovalKeyboard(token, pending.candidates, pending.enrichment),
-              );
-            } catch (_) {
-              // Fallback message above already notified the user.
-            }
-          }
-        });
+        pending.enrichment.amazonAiChoice = 'no';
+        pending.enrichment.amazonAiChoiceRequired = false;
+        releaseAmazonSourceBuffers(pending);
+        await answerCallback(cb.id, 'توليد الصور متوقف — استخدم الصور الحالية');
+        await sendMessage(chatId, 'ℹ️ لم نعد نولّد صوراً. اضغط اعتماد ونشر لحفظ الصور الحالية مع الوصف.');
         return;
       }
 
@@ -3190,19 +3099,6 @@ async function handleUpdate(update) {
       }
 
       if (action === 'go') {
-        if (
-          pending.enrichment.amazonAiChoiceRequired
-          && !['yes', 'no'].includes(pending.enrichment.amazonAiChoice)
-        ) {
-          await answerCallback(
-            cb.id,
-            pending.enrichment.amazonAiChoice === 'generating'
-              ? 'انتظر اكتمال توليد الصورة'
-              : 'اختر أولاً أحد الزرين: إنشاء صورة بالذكاء أو استخدام صور Amazon',
-            { showAlert: true },
-          );
-          return;
-        }
         const selected = pending.candidates.filter((c) => c.selected);
         if (!selected.length) {
           await answerCallback(cb.id, 'اختر صورة واحدة على الأقل', { showAlert: true });
