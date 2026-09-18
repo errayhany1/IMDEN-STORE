@@ -37,6 +37,17 @@ test('gallery publish uses seller originals even if Amazon files are present', (
   );
 });
 
+test('Telegram menu and welcome no longer advertise Amazon or studio images', () => {
+  assert.match(serverSrc, /WELCOME_MESSAGE/);
+  assert.match(serverSrc, /ميزة Amazon وتوليد صور الاستوديو متوقفتان/);
+  assert.doesNotMatch(serverSrc, /رابط Amazon واحد/);
+  assert.doesNotMatch(serverSrc, /text: '🛒 إعادة بناء من Amazon'/);
+  assert.match(serverSrc, /IMAGE_TEMPLATES_STOPPED_MESSAGE/);
+  assert.match(serverSrc, /setMyCommands/);
+  assert.doesNotMatch(serverSrc, /command: 'amazon_rebuild'/);
+  assert.doesNotMatch(serverSrc, /sendTemplateGallery\(/);
+});
+
 test('Amazon timeout setting is marked stopped', () => {
   assert.match(BOT_SETTINGS_SCHEMA.amazonTimeoutMs.description, /متوقف/);
 });

@@ -34,14 +34,6 @@ import {
   PICKER_CATEGORY_IDS,
   STORE_CATEGORY_LABEL_BOT,
 } from './storeCategories.js';
-import {
-  REGULAR_TEMPLATES,
-  SALE_TEMPLATES,
-  loadTemplateSelection,
-  toggleTemplateInSelection,
-  renderTemplatePreview,
-  getTemplateById,
-} from './imageTemplates.js';
 import { getCustomerOrders, normalizePhone } from './tifawtOrders.js';
 import { verifyFirebaseIdToken, verifyPhoneIdToken } from './firebasePhoneToken.js';
 import { resolveLinkedPhone } from './linkedCustomerPhone.js';
@@ -164,6 +156,31 @@ const MAIN_KEYBOARD = {
   resize_keyboard: true,
   is_persistent: true,
 };
+
+const WELCOME_MESSAGE = 'أهلاً بك في بوت إدارة الكتالوج! 📦\n'
+  + 'البوت يحفظ الصور الأصلية ويولّد العنوان والوصف فقط.\n'
+  + 'ميزة Amazon وتوليد صور الاستوديو متوقفتان.\n\n'
+  + 'يمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل:\n\n'
+  + '🌐 زر OPEN: يفتح لوحة التحكم على الويب.\n\n'
+  + '📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\n\n'
+  + '🔥 تخفيض: 120/200 (الجديد/القديم)\n'
+  + '💡 Tifawt يستلم الاسم والمرجع والصور كما أرسلتها.\n\n'
+  + '✨ إعادة توليد الوصف: يحدّث العنوان والوصف فقط، ثم يقترح إعادة النشر في Jumia.\n'
+  + '🎨 إضافة ألوان: أرسل المرجع ثم صور الألوان.\n\n'
+  + 'إذا ظهر زر Amazon القديم في القائمة، اضغط 🔄 إعادة تشغيل البوت لتحديث الأزرار.';
+
+const IMAGE_TEMPLATES_STOPPED_MESSAGE = '⛔ توليد صور الاستوديو وقوالب الخلفيات متوقف.\nالبوت يحفظ الصور الأصلية ويكتب الوصف فقط.';
+
+const TELEGRAM_BOT_COMMANDS = [
+  { command: 'start', description: 'تحديث القائمة وإعادة التشغيل' },
+  { command: 'reenrich', description: 'إعادة توليد العنوان والوصف' },
+  { command: 'add_images', description: 'إضافة صور لمنتج' },
+  { command: 'add_colors', description: 'إضافة ألوان لمنتج موجود' },
+  { command: 'stop', description: 'إيقاف منتج (نفد المخزون)' },
+  { command: 'price', description: 'تغيير سعر منتج' },
+  { command: 'category', description: 'تغيير تصنيف منتج' },
+  { command: 'menu', description: 'إظهار القائمة' },
+];
 
 /** Minimal keyboard shown after the full admin menu is hidden. */
 const SHOW_KEYBOARD = {
@@ -295,6 +312,18 @@ async function setupTelegramWebAppMenu() {
     console.log(`🌐 Telegram OPEN menu → ${TELEGRAM_WEBAPP_URL}`);
   } catch (e) {
     console.warn('setChatMenuButton failed:', e?.response?.data || e.message);
+  }
+}
+
+async function setupTelegramBotCommands() {
+  if (!BOT_TOKEN) return;
+  try {
+    await axios.post(`${TG_API}/setMyCommands`, {
+      commands: TELEGRAM_BOT_COMMANDS,
+    }, { timeout: 15000 });
+    console.log('📋 Telegram command list updated (Amazon rebuild removed)');
+  } catch (e) {
+    console.warn('setMyCommands failed:', e?.response?.data || e.message);
   }
 }
 
@@ -2073,42 +2102,6 @@ function isSaleTemplatesCommand(text) {
     || t === '🔥 خلفيات التخفيض';
 }
 
-async function sendTemplateGallery(chatId, kind = 'regular') {
-  const pool = kind === 'sale' ? SALE_TEMPLATES : REGULAR_TEMPLATES;
-  const sel = loadTemplateSelection();
-  const active = new Set(sel[kind] || []);
-
-  await sendMessage(
-    chatId,
-    kind === 'sale'
-      ? '🔥 شارة التخفيض\nصور الموقع أصبحت خلفية بيضاء مع ظل وملء الإطار.\nهذا الخيار يخص شارة التخفيض عندما ترسل سعراً قديماً (مثال: 120/200).'
-      : '🎨 صور الموقع\nالصور الجديدة تُنشأ تلقائياً على خلفية بيضاء مع ظل ناعم، والمنتج يملأ الإطار.\nالقوالب الملونة لم تعد تُستخدم للمنتجات الجديدة.'
-  );
-
-  for (const tpl of pool) {
-    const on = active.has(tpl.id);
-    const preview = await renderTemplatePreview(tpl);
-    await sendPhotoBuffer(
-      chatId,
-      preview,
-      `${on ? '✅ مفعّل' : '⬜ غير مفعّل'}\n${tpl.nameAr}\n${tpl.blurbAr}\n🆔 ${tpl.id}`,
-      {
-        inline_keyboard: [[
-          {
-            text: on ? '✅ مفعّل — اضغط للإيقاف' : '⬜ تفعيل هذا القالب',
-            callback_data: `tpl:${kind}:${tpl.id}`,
-          },
-        ]],
-      }
-    );
-  }
-
-  const activeNames = [...active]
-    .map((id) => getTemplateById(id)?.nameAr || id)
-    .join(' · ') || '—';
-  await sendMessage(chatId, `📌 القوالب المفعّلة الآن:\n${activeNames}`);
-}
-
 function isStopCommand(text) {
   return text === '❌ إيقاف منتج (نفد المخزون)'
     || text.startsWith('/stop');
@@ -2374,7 +2367,7 @@ async function handleUpdate(update) {
         chatId,
         text === '/ping'
           ? `✅ البوت يعمل (${TELEGRAM_MODE}).`
-          : 'أهلاً بك في بوت إدارة الكتالوج! 📦\nيمكنك إرسال صور المنتجات لرفعها، أو استخدام الأزرار بالأسفل لإدارة المنتجات:\n\n🌐 زر OPEN: يفتح لوحة التحكم على الويب.\n\n📝 صيغة المنتج:\nالسعر\nالاسم\nالمرجع\n\n🔥 تخفيض: 120/200 (الجديد/القديم)\n💡 Tifawt يستلم الاسم والمرجع والصور كما أرسلتها.\n\n✨ إعادة توليد الوصف: يحدّث العنوان والوصف فقط، ثم يقترح إعادة النشر في Jumia.\n🎨 إضافة ألوان: أرسل المرجع ثم صور الألوان.',
+      : WELCOME_MESSAGE,
         MAIN_KEYBOARD
       );
       return;
@@ -2394,13 +2387,8 @@ async function handleUpdate(update) {
       return;
     }
 
-    if (isTemplatesCommand(text)) {
-      await sendTemplateGallery(chatId, 'regular');
-      return;
-    }
-
-    if (isSaleTemplatesCommand(text)) {
-      await sendTemplateGallery(chatId, 'sale');
+    if (isTemplatesCommand(text) || isSaleTemplatesCommand(text)) {
+      await sendMessage(chatId, IMAGE_TEMPLATES_STOPPED_MESSAGE);
       return;
     }
 
@@ -2832,36 +2820,8 @@ async function handleUpdate(update) {
     }
 
     if (data.startsWith('tpl:')) {
-      const [, kind, templateId] = data.split(':');
-      if ((kind !== 'regular' && kind !== 'sale') || !getTemplateById(templateId)) {
-        await answerCallback(cb.id, 'قالب غير معروف');
-        return;
-      }
-      const result = toggleTemplateInSelection(kind, templateId);
-      if (!result.ok) {
-        await answerCallback(cb.id, 'يجب الإبقاء على قالب واحد على الأقل');
-        return;
-      }
-      const on = (result.selection[kind] || []).includes(templateId);
-      const tpl = getTemplateById(templateId);
-      await answerCallback(cb.id, on ? `تم تفعيل: ${tpl.nameAr}` : `تم إيقاف: ${tpl.nameAr}`);
-      try {
-        await axios.post(`${TG_API}/editMessageCaption`, {
-          chat_id: chatId,
-          message_id: msgId,
-          caption: `${on ? '✅ مفعّل' : '⬜ غير مفعّل'}\n${tpl.nameAr}\n${tpl.blurbAr}\n🆔 ${tpl.id}`,
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: on ? '✅ مفعّل — اضغط للإيقاف' : '⬜ تفعيل هذا القالب',
-                callback_data: `tpl:${kind}:${templateId}`,
-              },
-            ]],
-          },
-        }, { timeout: 30000 });
-      } catch (e) {
-        console.warn('editMessageCaption failed:', e.message);
-      }
+      await answerCallback(cb.id, 'توليد الصور والقوالب متوقف');
+      await editMessage(chatId, msgId, IMAGE_TEMPLATES_STOPPED_MESSAGE);
       return;
     }
 
@@ -3669,6 +3629,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   }
 
   await setupTelegramWebAppMenu();
+  await setupTelegramBotCommands();
 
   try {
     if (TELEGRAM_MODE === 'webhook') {
