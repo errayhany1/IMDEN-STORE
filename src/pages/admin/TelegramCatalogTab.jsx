@@ -36,6 +36,14 @@ function formatWhen(iso) {
   return date.toLocaleString('ar-MA', { timeZone: 'Africa/Casablanca' });
 }
 
+function formatIntervalLabel({ hours = 0, minutes = 0, seconds = 0 } = {}) {
+  const parts = [];
+  if (hours) parts.push(`${hours} س`);
+  if (minutes) parts.push(`${minutes} د`);
+  if (seconds) parts.push(`${seconds} ث`);
+  return parts.length ? parts.join(' · ') : 'ساعة واحدة';
+}
+
 export default function TelegramCatalogTab({ dm }) {
   const card = dm ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200';
   const muted = dm ? 'text-gray-400' : 'text-slate-500';
@@ -55,7 +63,15 @@ export default function TelegramCatalogTab({ dm }) {
     setStatus(data);
     setDraft({
       tgCatalogEnabled: Boolean(data.enabled),
-      tgCatalogIntervalHours: data.intervalHours ?? 1,
+      tgCatalogIntervalHours: data.intervalHours
+        ?? data.settings?.tgCatalogIntervalHours
+        ?? 1,
+      tgCatalogIntervalMinutes: data.intervalMinutes
+        ?? data.settings?.tgCatalogIntervalMinutes
+        ?? 0,
+      tgCatalogIntervalSeconds: data.intervalSeconds
+        ?? data.settings?.tgCatalogIntervalSeconds
+        ?? 0,
       tgCatalogStartHour: data.startHour ?? 8,
       tgCatalogEndHour: data.endHour ?? 23,
       tgCatalogImdenEnabled: data.imdenEnabled !== false,
@@ -264,16 +280,48 @@ export default function TelegramCatalogTab({ dm }) {
         <h4 className="font-bold">الجدول</h4>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="text-sm">
-            <span className={muted}>كل كم ساعة</span>
+            <span className={muted}>ساعات</span>
             <input
               type="number"
-              min={1}
+              min={0}
               max={24}
-              value={draft.tgCatalogIntervalHours ?? 1}
+              value={draft.tgCatalogIntervalHours ?? 0}
               onChange={(e) => setField('tgCatalogIntervalHours', Number(e.target.value))}
               className={`mt-1 w-full rounded-xl border px-3 py-2 ${input}`}
             />
           </label>
+          <label className="text-sm">
+            <span className={muted}>دقائق</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={draft.tgCatalogIntervalMinutes ?? 0}
+              onChange={(e) => setField('tgCatalogIntervalMinutes', Number(e.target.value))}
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${input}`}
+            />
+          </label>
+          <label className="text-sm">
+            <span className={muted}>ثوانٍ</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={draft.tgCatalogIntervalSeconds ?? 0}
+              onChange={(e) => setField('tgCatalogIntervalSeconds', Number(e.target.value))}
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${input}`}
+            />
+          </label>
+        </div>
+        <p className={`text-xs ${muted}`}>
+          الفترة الحالية: {formatIntervalLabel({
+            hours: draft.tgCatalogIntervalHours,
+            minutes: draft.tgCatalogIntervalMinutes,
+            seconds: draft.tgCatalogIntervalSeconds,
+          })}
+          {' '}• الحد الأدنى 10 ثوانٍ
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm">
             <span className={muted}>من الساعة</span>
             <input

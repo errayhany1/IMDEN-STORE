@@ -75,6 +75,12 @@ const ProductGrid = () => {
 
     const filteredProducts = products
         .filter(p => {
+            const hasImage = Boolean(
+                p?.image
+                || p?.thumbnail
+                || (Array.isArray(p?.images) && p.images.some(Boolean)),
+            );
+            if (!hasImage) return false;
             const imageMatches = imageSearchResults
                 ? imageSearchResults.some((match) => String(match.sku) === String(p.ref || p.SKU || p.id))
                 : true;

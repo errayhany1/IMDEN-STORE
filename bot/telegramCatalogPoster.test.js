@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   catalogImageLimit,
+  catalogIntervalMs,
   formatCatalogCaption,
   isHourInWindow,
 } from './telegramCatalogPoster.js';
@@ -37,4 +38,31 @@ test('catalog hour window handles overnight range', () => {
   assert.equal(isHourInWindow(23, 8, 23), true);
   assert.equal(isHourInWindow(2, 22, 6), true);
   assert.equal(isHourInWindow(12, 22, 6), false);
+});
+
+test('catalog interval supports hours minutes and seconds', () => {
+  assert.equal(
+    catalogIntervalMs({
+      tgCatalogIntervalHours: 0,
+      tgCatalogIntervalMinutes: 2,
+      tgCatalogIntervalSeconds: 30,
+    }),
+    150_000,
+  );
+  assert.equal(
+    catalogIntervalMs({
+      tgCatalogIntervalHours: 0,
+      tgCatalogIntervalMinutes: 0,
+      tgCatalogIntervalSeconds: 5,
+    }),
+    10_000,
+  );
+  assert.equal(
+    catalogIntervalMs({
+      tgCatalogIntervalHours: 0,
+      tgCatalogIntervalMinutes: 0,
+      tgCatalogIntervalSeconds: 0,
+    }),
+    3_600_000,
+  );
 });

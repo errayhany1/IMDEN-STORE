@@ -381,15 +381,16 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
     // 3. Show the same-origin build snapshot immediately. NocoDB is refreshed
     // in the background, so first-time visitors do not wait before seeing images.
     const staticCatalog = await getStaticCatalog();
-    const hasStaticCatalog = Boolean(staticCatalog?.products?.length);
+    const staticProducts = (staticCatalog?.products || []).filter(productHasDisplayImage);
+    const hasStaticCatalog = Boolean(staticProducts.length);
     if (hasStaticCatalog && onChunk) {
         onChunk(
-            staticCatalog.products,
+            staticProducts,
             staticCatalog.categoryImages || {},
             { replace: true, source: 'static-cache' }
         );
-        withTifawtColorMap(staticCatalog.products).then((colored) => {
-            if (colored !== staticCatalog.products && onChunk) {
+        withTifawtColorMap(staticProducts).then((colored) => {
+            if (colored !== staticProducts && onChunk) {
                 onChunk(colored, staticCatalog.categoryImages || {}, {
                     replace: true,
                     source: 'static-colors',
@@ -532,7 +533,7 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                         isAvailable: !isOutOfStock,
                         originalData: record
                     };
-                });
+                }).filter(productHasDisplayImage);
 
                 allRecords = [...allRecords, ...mappedChunk];
                 cache.products = [...cache.products, ...mappedChunk];
@@ -571,7 +572,7 @@ export const fetchProducts = async (onChunk, forceRefresh = false) => {
                 return cache.products;
             }
             if (hasStaticCatalog) {
-                cache.products = staticCatalog.products;
+                cache.products = staticProducts;
                 cache.categoryImages = staticCatalog.categoryImages || {};
                 return cache.products;
             }
@@ -655,8 +656,27 @@ export const normalizeSku = (value) =>
         .replace(/^-+|-+$/g, '');
 
 /** Same visibility rule as the catalog list: paused technical rows stay hidden. */
+export const recordHasProductImage = (record) => {
+    for (let i = 1; i <= 8; i += 1) {
+        const hasSlot = asAttachmentList(record?.[`Image${i}`]).some((img) => {
+            if (!img) return false;
+            if (typeof img === 'string') return Boolean(img.trim());
+            return Boolean(img.signedUrl || img.url || img.path);
+        });
+        if (hasSlot) return true;
+    }
+    return false;
+};
+
+export const productHasDisplayImage = (product) => Boolean(
+    product?.image
+    || product?.thumbnail
+    || (Array.isArray(product?.images) && product.images.some(Boolean)),
+);
+
 export const isStorefrontVisibleRecord = (record) => {
     if (String(record?.SKU || '').trim().toUpperCase() === 'ERY-BOT-SETTINGS') return false;
+    if (!recordHasProductImage(record)) return false;
     const status = String(record?.POSTEBL || '').trim().toUpperCase();
     return status === 'POSTEBL' || status === 'NO POSTEBL';
 };

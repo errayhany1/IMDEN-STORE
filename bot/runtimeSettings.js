@@ -197,8 +197,18 @@ export const BOT_SETTINGS_SCHEMA = {
   },
   tgCatalogIntervalHours: {
     group: 'telegramCatalog', type: 'number', label: 'الفترة بين منشورين (ساعات)',
-    description: 'كم ساعة بين كل منتج والآخر.',
-    default: 1, min: 1, max: 24, step: 1,
+    description: 'ساعات الانتظار بين كل منتج والآخر (يمكن 0 مع الدقائق/الثواني).',
+    default: 1, min: 0, max: 24, step: 1,
+  },
+  tgCatalogIntervalMinutes: {
+    group: 'telegramCatalog', type: 'number', label: 'الفترة (دقائق)',
+    description: 'دقائق إضافية بين المنشورات.',
+    default: 0, min: 0, max: 59, step: 1,
+  },
+  tgCatalogIntervalSeconds: {
+    group: 'telegramCatalog', type: 'number', label: 'الفترة (ثوانٍ)',
+    description: 'ثوانٍ إضافية بين المنشورات. الحد الأدنى الكلي 10 ثوانٍ.',
+    default: 0, min: 0, max: 59, step: 1,
   },
   tgCatalogStartHour: {
     group: 'telegramCatalog', type: 'number', label: 'ساعة البداية',

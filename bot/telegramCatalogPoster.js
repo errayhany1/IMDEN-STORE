@@ -7,7 +7,8 @@ import { getBotSetting, updateBotSettings } from './runtimeSettings.js';
 
 const DATE_FIELD = 'last postin date';
 const LOG_LIMIT = 30;
-const TICK_MS = 30_000;
+const TICK_MS = 5_000;
+const MIN_INTERVAL_MS = 10_000;
 
 const DEFAULT_PROMO = [
   '📦 **البيع بالجملة فقط**',
@@ -130,16 +131,20 @@ function attachmentUrl(field) {
 }
 
 function imageUrls(record) {
-  const sku = encodeURIComponent(String(record?.SKU || '').trim());
-  const site = storeSite();
   const limit = catalogImageLimit();
   const urls = [];
   for (let i = 1; i <= limit; i += 1) {
     const fromNoco = attachmentUrl(record?.[`Image${i}`]);
     if (fromNoco) urls.push(fromNoco);
-    else if (i === 1 && sku) urls.push(`${site}/bot-api/public-images/p/${sku}/1.jpg`);
   }
   return [...new Set(urls.filter(Boolean))];
+}
+
+function recordHasCatalogImage(record) {
+  for (let i = 1; i <= 8; i += 1) {
+    if (attachmentUrl(record?.[`Image${i}`])) return true;
+  }
+  return false;
 }
 
 function botToken(kind) {
@@ -216,24 +221,32 @@ async function fetchNextProduct() {
     error.statusCode = 503;
     throw error;
   }
-  const { data, status } = await axios.get(`${url}/api/v2/tables/${table}/records`, {
-    headers: { 'xc-token': token, accept: 'application/json' },
-    params: {
-      limit: 20,
-      where: '(POSTEBL,eq,POSTEBL)',
-      sort: DATE_FIELD,
-      fields: `Id,SKU,price,POSTEBL,Arabic_Title,Title,French_Title,Woo_Title,Image1,Image2,Image3,Image4,Image5,Image6,Image7,Image8,${DATE_FIELD}`,
-    },
-    timeout: 30000,
-    validateStatus: () => true,
-  });
-  if (status >= 400) {
-    const error = new Error(data?.msg || data?.message || `nocodb_http_${status}`);
-    error.statusCode = status;
-    throw error;
+  const pageSize = 50;
+  for (let offset = 0; offset < 500; offset += pageSize) {
+    // eslint-disable-next-line no-await-in-loop
+    const { data, status } = await axios.get(`${url}/api/v2/tables/${table}/records`, {
+      headers: { 'xc-token': token, accept: 'application/json' },
+      params: {
+        limit: pageSize,
+        offset,
+        where: '(POSTEBL,eq,POSTEBL)',
+        sort: DATE_FIELD,
+        fields: `Id,SKU,price,POSTEBL,Arabic_Title,Title,French_Title,Woo_Title,Image1,Image2,Image3,Image4,Image5,Image6,Image7,Image8,${DATE_FIELD}`,
+      },
+      timeout: 30000,
+      validateStatus: () => true,
+    });
+    if (status >= 400) {
+      const error = new Error(data?.msg || data?.message || `nocodb_http_${status}`);
+      error.statusCode = status;
+      throw error;
+    }
+    const list = data?.list || [];
+    const hit = list.find((row) => recordHasCatalogImage(row));
+    if (hit) return hit;
+    if (list.length < pageSize) break;
   }
-  const list = data?.list || [];
-  return list.find((row) => attachmentUrl(row.Image1) || String(row.SKU || '').trim()) || null;
+  return null;
 }
 
 async function markPosted(record) {
@@ -301,8 +314,28 @@ function lastRunMs() {
   return 0;
 }
 
+export function catalogIntervalParts(settings = null) {
+  const get = (key) => (
+    settings && Object.prototype.hasOwnProperty.call(settings, key)
+      ? settings[key]
+      : getBotSetting(key)
+  );
+  const hours = Math.max(0, Math.min(24, Math.round(Number(get('tgCatalogIntervalHours')) || 0)));
+  const minutes = Math.max(0, Math.min(59, Math.round(Number(get('tgCatalogIntervalMinutes')) || 0)));
+  const seconds = Math.max(0, Math.min(59, Math.round(Number(get('tgCatalogIntervalSeconds')) || 0)));
+  return { hours, minutes, seconds };
+}
+
+export function catalogIntervalMs(settings = null) {
+  const { hours, minutes, seconds } = catalogIntervalParts(settings);
+  const total = (((hours * 60) + minutes) * 60 + seconds) * 1000;
+  // Preserve old default of 1 hour when everything is zero/empty.
+  if (total <= 0) return 60 * 60 * 1000;
+  return Math.max(MIN_INTERVAL_MS, total);
+}
+
 function intervalMs() {
-  return Math.max(1, Number(getBotSetting('tgCatalogIntervalHours')) || 1) * 60 * 60 * 1000;
+  return catalogIntervalMs();
 }
 
 async function rememberRun(now = Date.now(), sku = '') {
@@ -319,7 +352,8 @@ async function rememberRun(now = Date.now(), sku = '') {
 
 export function telegramCatalogStatus() {
   const enabled = Boolean(getBotSetting('tgCatalogEnabled'));
-  const hours = Number(getBotSetting('tgCatalogIntervalHours')) || 1;
+  const interval = catalogIntervalParts();
+  const intervalMsValue = catalogIntervalMs();
   const inWindow = isCatalogWindow();
   const channelStatus = channels().map((ch) => ({
     id: ch.id,
@@ -329,14 +363,17 @@ export function telegramCatalogStatus() {
     promoEvery: ch.promoEvery,
   }));
   const ranAt = lastRunMs();
-  const nextAt = ranAt ? new Date(ranAt + intervalMs()).toISOString() : null;
+  const nextAt = ranAt ? new Date(ranAt + intervalMsValue).toISOString() : null;
   return {
     enabled,
     inWindow,
     inFlight: state.inFlight,
     hour: hourInCasablanca(),
     timezone: 'Africa/Casablanca',
-    intervalHours: hours,
+    intervalHours: interval.hours,
+    intervalMinutes: interval.minutes,
+    intervalSeconds: interval.seconds,
+    intervalMs: intervalMsValue,
     startHour: Number(getBotSetting('tgCatalogStartHour')),
     endHour: Number(getBotSetting('tgCatalogEndHour')),
     maxImages: catalogImageLimit(),
@@ -357,6 +394,9 @@ export function telegramCatalogStatus() {
       tgCatalogEcomChatId: getBotSetting('tgCatalogEcomChatId'),
       tgCatalogMaxImages: catalogImageLimit(),
       tgCatalogIncludeName: Boolean(getBotSetting('tgCatalogIncludeName')),
+      tgCatalogIntervalHours: interval.hours,
+      tgCatalogIntervalMinutes: interval.minutes,
+      tgCatalogIntervalSeconds: interval.seconds,
     },
   };
 }
@@ -379,6 +419,12 @@ export async function runTelegramCatalogPost({ force = false } = {}) {
       const result = { ok: false, error: 'no_product' };
       state.lastResult = result;
       pushLog({ ok: false, error: 'no_product' });
+      return result;
+    }
+    if (!imageUrls(record).length) {
+      const result = { ok: false, error: 'no_product', sku: record.SKU, hint: 'بدون صورة' };
+      state.lastResult = result;
+      pushLog(result);
       return result;
     }
 
